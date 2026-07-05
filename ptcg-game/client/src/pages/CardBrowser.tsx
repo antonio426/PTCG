@@ -373,7 +373,7 @@ export default function CardBrowser() {
   const [selectedSet, setSelectedSet] = useState('');
   const [hpMin, setHpMin] = useState('');
   const [hpMax, setHpMax] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
   const [page, setPage] = useState(1);
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);

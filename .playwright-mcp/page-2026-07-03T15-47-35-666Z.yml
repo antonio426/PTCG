@@ -1,0 +1,154 @@
+- generic [active] [ref=f4e1]:
+  - banner [ref=f4e2]:
+    - generic [ref=f4e3]:
+      - link "寶可夢集換式卡牌遊戲 訓練家網站":
+        - /url: https://asia.pokemon-card.com/tw/
+        - img "寶可夢集換式卡牌遊戲 訓練家網站" [ref=f4e4] [cursor=pointer]
+    - navigation [ref=f4e5]:
+      - list [ref=f4e6]:
+        - listitem [ref=f4e7]:
+          - link "新手指南" [ref=f4e8] [cursor=pointer]:
+            - /url: https://asia.pokemon-card.com/tw/about/
+        - listitem [ref=f4e9]:
+          - link "商品資訊" [ref=f4e10] [cursor=pointer]:
+            - /url: https://asia.pokemon-card.com/tw/products/
+        - listitem [ref=f4e11]:
+          - link "卡牌" [ref=f4e12] [cursor=pointer]:
+            - /url: https://asia.pokemon-card.com/tw/card-search
+        - listitem [ref=f4e13]:
+          - link "牌組構築" [ref=f4e14] [cursor=pointer]:
+            - /url: https://asia.pokemon-card.com/tw/deck/
+        - listitem [ref=f4e15]:
+          - link "規則" [ref=f4e16] [cursor=pointer]:
+            - /url: https://asia.pokemon-card.com/tw/rules/
+        - listitem [ref=f4e17]:
+          - link "活動" [ref=f4e18] [cursor=pointer]:
+            - /url: https://asia.pokemon-card.com/tw/event/?startDate=07-03-2026
+        - listitem [ref=f4e19]:
+          - link "店鋪搜尋" [ref=f4e20] [cursor=pointer]:
+            - /url: https://asia.pokemon-card.com/tw/shopmap/
+    - navigation [ref=f4e21]:
+      - list [ref=f4e22]:
+        - listitem [ref=f4e23]:
+          - button "" [ref=f4e24] [cursor=pointer]:
+            - generic [ref=f4e25]: 
+        - listitem [ref=f4e26]:
+          - link "登入" [ref=f4e27] [cursor=pointer]:
+            - /url: /tw/mypage/
+            - img "登入" [ref=f4e28]
+        - listitem
+  - main [ref=f4e29]:
+    - generic [ref=f4e30]:
+      - heading "基礎 熱帶龍" [level=1] [ref=f4e32]:
+        - generic [ref=f4e33]: 基礎
+        - text: 熱帶龍
+      - generic [ref=f4e34]:
+        - img [ref=f4e37]
+        - generic [ref=f4e38]:
+          - paragraph [ref=f4e39]:
+            - generic [ref=f4e40]: HP
+            - generic [ref=f4e41]: "110"
+            - generic [ref=f4e42]: /
+            - generic [ref=f4e43]: 屬性
+            - img [ref=f4e44]
+          - generic [ref=f4e45]:
+            - heading " 招式" [level=3] [ref=f4e46]
+            - generic [ref=f4e47]:
+              - paragraph [ref=f4e48]:
+                - generic [ref=f4e49]: 果實香氣
+                - img [ref=f4e51]
+              - paragraph [ref=f4e52]: 查看自己的牌庫上方6張卡，從其中選擇任意數量的寶可夢卡，在給對手看過後加入手牌。將剩餘卡放回牌庫並重洗。
+            - generic [ref=f4e53]:
+              - paragraph [ref=f4e54]:
+                - generic [ref=f4e55]: 日光束
+                - generic [ref=f4e56]:
+                  - img [ref=f4e57]
+                  - img [ref=f4e58]
+                - generic [ref=f4e59]: "60"
+              - paragraph
+          - table [ref=f4e61]:
+            - rowgroup [ref=f4e62]:
+              - row "弱點 抵抗力 撤退" [ref=f4e63]:
+                - columnheader "弱點" [ref=f4e64]
+                - columnheader "抵抗力" [ref=f4e65]
+                - columnheader "撤退" [ref=f4e66]
+              - row "×2 --" [ref=f4e67]:
+                - cell "×2" [ref=f4e68]:
+                  - img [ref=f4e69]
+                  - text: ×2
+                - cell "--" [ref=f4e70]
+                - cell [ref=f4e71]:
+                  - img [ref=f4e72]
+        - paragraph [ref=f4e74]:
+          - img [ref=f4e76]
+          - generic [ref=f4e77]: J
+          - generic [ref=f4e78]: 001/081
+        - generic [ref=f4e79]:
+          - generic [ref=f4e80]:
+            - heading " 進化" [level=3] [ref=f4e81]
+            - list [ref=f4e82]:
+              - listitem [ref=f4e83]:
+                - link "熱帶龍" [ref=f4e84] [cursor=pointer]:
+                  - /url: http://asia.pokemon-card.com/tw/card-search/list/?keyword=熱帶龍&searchType=evolve
+          - generic [ref=f4e85]:
+            - heading "No.357 水果寶可夢" [level=3] [ref=f4e86]
+            - paragraph [ref=f4e87]: 身高2.0m / 體重100.0kg
+            - paragraph [ref=f4e88]: 因為平時不斷吃著同種水果， 以至於自己的喉嚨上結出了極為美味的水果來。
+          - generic [ref=f4e89]:
+            - heading "繪師" [level=3] [ref=f4e90]
+            - link "Akino Fukuji" [ref=f4e91] [cursor=pointer]:
+              - /url: /tw/card-search/list/?illustratorName=Akino%20Fukuji
+          - link "此卡牌的Q&A" [ref=f4e93] [cursor=pointer]:
+            - /url: /tw/rules/search/?keyword=%E7%86%B1%E5%B8%B6%E9%BE%8D
+        - generic [ref=f4e94]:
+          - heading "收錄商品" [level=3] [ref=f4e95]
+          - link " 擴充包「深淵之瞳」" [ref=f4e96] [cursor=pointer]:
+            - /url: /tw/card-search/list/?expansionCodes=M5
+        - button "返回 " [ref=f4e98] [cursor=pointer]
+    - navigation [ref=f4e99]:
+      - list [ref=f4e100]:
+        - listitem [ref=f4e101]:
+          - link "TOP" [ref=f4e102] [cursor=pointer]:
+            - /url: https://asia.pokemon-card.com/tw/
+          - text: 
+        - listitem [ref=f4e103]:
+          - link "卡牌" [ref=f4e104] [cursor=pointer]:
+            - /url: /tw/card-search/
+          - text: 
+        - listitem [ref=f4e105]:
+          - link "卡牌搜尋結果" [ref=f4e106] [cursor=pointer]:
+            - /url: /tw/card-search/list/
+          - text: 
+        - listitem [ref=f4e107]: 熱帶龍
+  - contentinfo [ref=f4e108]:
+    - generic [ref=f4e109]:
+      - link " Contact " [ref=f4e111] [cursor=pointer]:
+        - /url: /tw/contact/
+        - button " Contact " [ref=f4e112]
+      - navigation [ref=f4e113]:
+        - list [ref=f4e114]:
+          - listitem [ref=f4e115]:
+            - link "Site Map" [ref=f4e116] [cursor=pointer]:
+              - /url: https://asia.pokemon-card.com/tw/sitemap/
+          - listitem [ref=f4e117]:
+            - link "Term of Use" [ref=f4e118] [cursor=pointer]:
+              - /url: https://asia.pokemon-card.com/tw/policy/
+          - listitem [ref=f4e119]:
+            - link "Privacy Notice" [ref=f4e120] [cursor=pointer]:
+              - /url: https://tw.portal-pokemon.com/privacypolicy/
+      - navigation [ref=f4e121]:
+        - list [ref=f4e122]:
+          - listitem [ref=f4e123]:
+            - link "Pokémon Trading Card Game Website" [ref=f4e124] [cursor=pointer]:
+              - /url: https://asia.pokemon-card.com/
+          - listitem [ref=f4e125]:
+            - link "The official Pokemon Website" [ref=f4e126] [cursor=pointer]:
+              - /url: https://tw.portal-pokemon.com
+          - listitem [ref=f4e127]:
+            - link "Pokémon Asia Championship Series WEB Site" [ref=f4e128] [cursor=pointer]:
+              - /url: https://pacs.portal-pokemon.com/2025-26/tw/?utm_source=tr-website&utm_medium=referral&utm_campaign=pacs-2025-26
+      - generic [ref=f4e129]:
+        - paragraph [ref=f4e130]: ©Pokémon/Nintendo/Creatures/GAME FREAK
+        - paragraph [ref=f4e131]: TM, Ⓡ, and character names are trademarks of Nintendo.
+  - text:        
+  - button "" [ref=f4e132] [cursor=pointer]

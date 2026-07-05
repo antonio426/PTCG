@@ -7,6 +7,12 @@ import * as cache from './cache';
 
 const API_BASE = 'https://api.tcgdex.net/v2';
 
+/** Shape returned by /categories/{name} */
+interface CategoryResponse {
+  name: string;
+  cards: TcgdexCardSummary[];
+}
+
 let inMemoryCards: MapCard[] | null = null;
 let inMemorySets: SetData[] | null = null;
 // Serie (series short code) lookup by set ID, e.g. { "SV1" -> "SV", "S8b" -> "S" }
@@ -196,27 +202,51 @@ export async function fetchAllCards(lang = 'zh-tw'): Promise<MapCard[]> {
   // Ensure set/serie map is loaded
   await fetchAllSets(lang);
 
-  const summaries = await apiFetch<TcgdexCardSummary[]>(`/${lang}/cards`);
-  const cards = summaries.map(s => {
-    // Extract setId from card id (e.g. "SV4M-001" -> "SV4M")
-    const setId = s.id.split('-')[0] || '';
-    const serie = getSerieForSet(setId);
-    return summaryToMapCard(s, setId, serie, lang);
-  });
+  // Fetch 3 category endpoints in parallel.
+  // Each includes the same summary fields {id, localId, name, image} but
+  // scoped to one category, so we know the supertype for every card.
+  const [pokemonCat, trainerCat, energyCat] = await Promise.all([
+    apiFetch<CategoryResponse>(`/${lang}/categories/Pokemon`),
+    apiFetch<CategoryResponse>(`/${lang}/categories/Trainer`),
+    apiFetch<CategoryResponse>(`/${lang}/categories/Energy`),
+  ]);
+
+  const categoryToSupertype: Array<[CategoryResponse, Supertype]> = [
+    [pokemonCat, 'Pokémon'],
+    [trainerCat, 'Trainer'],
+    [energyCat, 'Energy'],
+  ];
+
+  const cards: MapCard[] = [];
+  for (const [cat, supertype] of categoryToSupertype) {
+    for (const s of cat.cards) {
+      const setId = s.id.split('-')[0] || '';
+      const serie = getSerieForSet(setId);
+      const card = summaryToMapCard(s, setId, serie, lang);
+      card.supertype = supertype;
+      cards.push(card);
+    }
+  }
+
+  const total = pokemonCat.cards.length + trainerCat.cards.length + energyCat.cards.length;
+  console.log(`[tcgdex] Loaded ${cards.length}/${total} cards via category endpoints`);
+
   inMemoryCards = cards;
   cache.saveCardCache(cards);
   return cards;
 }
 
 export async function fetchCardById(id: string, lang = 'zh-tw'): Promise<MapCard | null> {
+  // Check in-memory cache for full detail (artist = present only on detail-fetched cards)
   if (inMemoryCards) {
     const found = inMemoryCards.find(c => c.id === id);
-    if (found && found.supertype !== 'Pokémon') return found;
+    if (found && found.artist) return found;
   }
+  // Check file cache
   const fileCached = cache.loadCardCache();
   if (fileCached) {
     const found = fileCached.find(c => c.id === id);
-    if (found && found.supertype !== 'Pokémon') { inMemoryCards = fileCached; return found; }
+    if (found && found.artist) { inMemoryCards = fileCached; return found; }
   }
   try {
     const detail = await apiFetch<TcgdexCardDetail>(`/${lang}/cards/${id}`);
@@ -239,7 +269,7 @@ export async function fetchCardsByIds(ids: string[], lang = 'zh-tw'): Promise<Re
   if (inMemoryCards) {
     for (const id of ids) {
       const found = inMemoryCards.find(c => c.id === id);
-      if (found && found.supertype !== 'Pokémon') result[id] = found;
+      if (found && found.artist) result[id] = found;
       else uncached.push(id);
     }
   } else {
@@ -247,7 +277,7 @@ export async function fetchCardsByIds(ids: string[], lang = 'zh-tw'): Promise<Re
     if (fileCached) {
       for (const id of ids) {
         const found = fileCached.find(c => c.id === id);
-        if (found && found.supertype !== 'Pokémon') result[id] = found;
+        if (found && found.artist) result[id] = found;
         else uncached.push(id);
       }
     } else {

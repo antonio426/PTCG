@@ -1,0 +1,267 @@
+- generic [active] [ref=f2e1]:
+  - banner [ref=f2e2]:
+    - generic [ref=f2e3]:
+      - link "寶可夢集換式卡牌遊戲 訓練家網站":
+        - /url: https://asia.pokemon-card.com/tw/
+        - img "寶可夢集換式卡牌遊戲 訓練家網站" [ref=f2e4] [cursor=pointer]
+    - navigation [ref=f2e5]:
+      - list [ref=f2e6]:
+        - listitem [ref=f2e7]:
+          - link "新手指南" [ref=f2e8] [cursor=pointer]:
+            - /url: https://asia.pokemon-card.com/tw/about/
+        - listitem [ref=f2e9]:
+          - link "商品資訊" [ref=f2e10] [cursor=pointer]:
+            - /url: https://asia.pokemon-card.com/tw/products/
+        - listitem [ref=f2e11]:
+          - link "卡牌" [ref=f2e12] [cursor=pointer]:
+            - /url: https://asia.pokemon-card.com/tw/card-search
+        - listitem [ref=f2e13]:
+          - link "牌組構築" [ref=f2e14] [cursor=pointer]:
+            - /url: https://asia.pokemon-card.com/tw/deck/
+        - listitem [ref=f2e15]:
+          - link "規則" [ref=f2e16] [cursor=pointer]:
+            - /url: https://asia.pokemon-card.com/tw/rules/
+        - listitem [ref=f2e17]:
+          - link "活動" [ref=f2e18] [cursor=pointer]:
+            - /url: https://asia.pokemon-card.com/tw/event/?startDate=07-03-2026
+        - listitem [ref=f2e19]:
+          - link "店鋪搜尋" [ref=f2e20] [cursor=pointer]:
+            - /url: https://asia.pokemon-card.com/tw/shopmap/
+    - navigation [ref=f2e21]:
+      - list [ref=f2e22]:
+        - listitem [ref=f2e23]:
+          - button "" [ref=f2e24] [cursor=pointer]:
+            - generic [ref=f2e25]: 
+        - listitem [ref=f2e26]:
+          - link "登入" [ref=f2e27] [cursor=pointer]:
+            - /url: /tw/mypage/
+            - img "登入" [ref=f2e28]
+        - listitem
+  - main [ref=f2e29]:
+    - generic [ref=f2e30]:
+      - heading "卡牌搜尋結果" [level=1] [ref=f2e32]
+      - generic [ref=f2e34]:
+        - generic [ref=f2e35]:
+          - generic [ref=f2e36]:
+            - paragraph [ref=f2e37]: 搜尋結果
+            - paragraph [ref=f2e38]: "5146"
+            - paragraph [ref=f2e39]: 個
+            - paragraph [ref=f2e40]: 第 1 頁
+            - paragraph [ref=f2e41]: / 共 258 頁
+          - generic [ref=f2e42]:
+            - combobox [ref=f2e43]:
+              - option "排序" [selected]
+              - option "依HP排序"
+              - option "依發售日排序"
+              - option "依招式傷害值排序"
+              - option "依圖鑑編號排序"
+            - text: 
+        - generic [ref=f2e44]:
+          - generic [ref=f2e45]:
+            - generic [ref=f2e46]:
+              - heading "卡牌搜尋" [level=5] [ref=f2e47]
+              - separator [ref=f2e48]
+              - generic [ref=f2e49]:
+                - generic [ref=f2e50]:
+                  - text: 
+                  - textbox "關鍵字篩選" [ref=f2e51]
+                - text: 
+              - generic [ref=f2e52]:
+                - heading "卡牌種類" [level=5] [ref=f2e53]
+                - generic [ref=f2e54]:
+                  - generic [ref=f2e55]:
+                    - radio "全部" [checked] [ref=f2e56]
+                    - generic [ref=f2e57] [cursor=pointer]: 全部
+                  - generic [ref=f2e58]:
+                    - radio "寶可夢卡" [ref=f2e59]
+                    - generic [ref=f2e60] [cursor=pointer]: 寶可夢卡
+                  - generic [ref=f2e61]:
+                    - radio "訓練家卡" [ref=f2e62]
+                    - generic [ref=f2e63] [cursor=pointer]: 訓練家卡
+                  - generic [ref=f2e64]:
+                    - radio "能量卡" [ref=f2e65]
+                    - generic [ref=f2e66] [cursor=pointer]: 能量卡
+              - generic [ref=f2e68]:
+                - generic [ref=f2e69]:
+                  - heading "賽制" [level=5] [ref=f2e70]
+                  - generic [ref=f2e71]:
+                    - generic [ref=f2e72]:
+                      - radio "標準" [checked] [ref=f2e73]
+                      - generic [ref=f2e74] [cursor=pointer]: 標準
+                    - generic [ref=f2e75]:
+                      - radio "開放" [ref=f2e76]
+                      - generic [ref=f2e77] [cursor=pointer]: 開放
+                    - generic [ref=f2e78]:
+                      - radio "其他" [ref=f2e79]
+                      - generic [ref=f2e80] [cursor=pointer]: 其他
+                    - generic [ref=f2e81]:
+                      - radio "全部" [ref=f2e82]
+                      - generic [ref=f2e83] [cursor=pointer]: 全部
+                - generic [ref=f2e84]:
+                  - heading "商品" [level=5] [ref=f2e85]
+                  - button "商品名 " [ref=f2e87] [cursor=pointer]
+                - text:    
+                - generic [ref=f2e88]:
+                  - heading "特別卡牌" [level=5] [ref=f2e89]
+                  - generic [ref=f2e90]:
+                    - generic [ref=f2e92] [cursor=pointer]: 一擊
+                    - generic [ref=f2e94] [cursor=pointer]: 連擊
+                    - generic [ref=f2e96] [cursor=pointer]: 匯流
+                    - generic [ref=f2e98] [cursor=pointer]: ACE SPEC
+                    - generic [ref=f2e100] [cursor=pointer]: 古代
+                    - generic [ref=f2e102] [cursor=pointer]: 未來
+                - generic [ref=f2e103]:
+                  - heading "稀有度" [level=5] [ref=f2e104]
+                  - generic [ref=f2e106]:
+                    - generic [ref=f2e108] [cursor=pointer]: U
+                    - generic [ref=f2e110] [cursor=pointer]: MA
+                    - generic [ref=f2e112] [cursor=pointer]: MUR
+                    - generic [ref=f2e114] [cursor=pointer]: BWR
+                    - generic [ref=f2e116] [cursor=pointer]: ACE
+                    - generic [ref=f2e118] [cursor=pointer]: SSR
+                    - generic [ref=f2e120] [cursor=pointer]: S
+                    - generic [ref=f2e122] [cursor=pointer]: SAR
+                    - generic [ref=f2e124] [cursor=pointer]: AR
+                    - generic [ref=f2e126] [cursor=pointer]: K
+                    - generic [ref=f2e128] [cursor=pointer]: UR
+                    - generic [ref=f2e130] [cursor=pointer]: SR
+                    - generic [ref=f2e132] [cursor=pointer]: RRR
+                    - generic [ref=f2e134] [cursor=pointer]: RR
+                    - generic [ref=f2e136] [cursor=pointer]: R
+                    - generic [ref=f2e138] [cursor=pointer]: C
+                    - generic [ref=f2e140] [cursor=pointer]: 無標記
+                - generic [ref=f2e141]:
+                  - heading "繪師姓名" [level=5] [ref=f2e142]
+                  - textbox "繪師姓名等" [ref=f2e144]
+              - generic [ref=f2e145]:
+                - button "清空條件" [ref=f2e146] [cursor=pointer]
+                - button " 搜尋" [ref=f2e147] [cursor=pointer]
+            - text:  － － － －   
+          - generic [ref=f2e148]:
+            - text: 
+            - list [ref=f2e149]:
+              - listitem [ref=f2e150]:
+                - link [ref=f2e151] [cursor=pointer]:
+                  - /url: /tw/card-search/detail/19145/
+              - listitem [ref=f2e153]:
+                - link [ref=f2e154] [cursor=pointer]:
+                  - /url: /tw/card-search/detail/19146/
+              - listitem [ref=f2e156]:
+                - link [ref=f2e157] [cursor=pointer]:
+                  - /url: /tw/card-search/detail/19147/
+              - listitem [ref=f2e159]:
+                - link [ref=f2e160] [cursor=pointer]:
+                  - /url: /tw/card-search/detail/19148/
+              - listitem [ref=f2e162]:
+                - link [ref=f2e163] [cursor=pointer]:
+                  - /url: /tw/card-search/detail/19149/
+              - listitem [ref=f2e165]:
+                - link [ref=f2e166] [cursor=pointer]:
+                  - /url: /tw/card-search/detail/19150/
+              - listitem [ref=f2e168]:
+                - link [ref=f2e169] [cursor=pointer]:
+                  - /url: /tw/card-search/detail/19151/
+              - listitem [ref=f2e171]:
+                - link [ref=f2e172] [cursor=pointer]:
+                  - /url: /tw/card-search/detail/19152/
+              - listitem [ref=f2e174]:
+                - link [ref=f2e175] [cursor=pointer]:
+                  - /url: /tw/card-search/detail/19153/
+              - listitem [ref=f2e177]:
+                - link [ref=f2e178] [cursor=pointer]:
+                  - /url: /tw/card-search/detail/19154/
+              - listitem [ref=f2e180]:
+                - link [ref=f2e181] [cursor=pointer]:
+                  - /url: /tw/card-search/detail/19155/
+              - listitem [ref=f2e183]:
+                - link [ref=f2e184] [cursor=pointer]:
+                  - /url: /tw/card-search/detail/19156/
+              - listitem [ref=f2e186]:
+                - link [ref=f2e187] [cursor=pointer]:
+                  - /url: /tw/card-search/detail/19157/
+              - listitem [ref=f2e189]:
+                - link [ref=f2e190] [cursor=pointer]:
+                  - /url: /tw/card-search/detail/19158/
+              - listitem [ref=f2e192]:
+                - link [ref=f2e193] [cursor=pointer]:
+                  - /url: /tw/card-search/detail/19159/
+              - listitem [ref=f2e195]:
+                - link [ref=f2e196] [cursor=pointer]:
+                  - /url: /tw/card-search/detail/19160/
+              - listitem [ref=f2e198]:
+                - link [ref=f2e199] [cursor=pointer]:
+                  - /url: /tw/card-search/detail/19161/
+              - listitem [ref=f2e201]:
+                - link [ref=f2e202] [cursor=pointer]:
+                  - /url: /tw/card-search/detail/19162/
+              - listitem [ref=f2e204]:
+                - link [ref=f2e205] [cursor=pointer]:
+                  - /url: /tw/card-search/detail/19163/
+              - listitem [ref=f2e207]:
+                - link [ref=f2e208] [cursor=pointer]:
+                  - /url: /tw/card-search/detail/19164/
+            - navigation [ref=f2e211]:
+              - list [ref=f2e212]:
+                - listitem [ref=f2e213]:
+                  - generic [ref=f2e214]:  Prev
+                - listitem [ref=f2e215]:
+                  - generic [ref=f2e216]: "1"
+                - listitem [ref=f2e217]:
+                  - link "2" [ref=f2e218] [cursor=pointer]:
+                    - /url: /tw/card-search/list/?pageNo=2&sortCondition=&keyword=&cardType=all&regulation=1&pokemonEnergy=&pokemonWeakness=&pokemonResistance=&pokemonMoveEnergy=&hpLowerLimit=none&hpUpperLimit=none&retreatCostLowerLimit=0&retreatCostUpperLimit=none&illustratorName=&expansionCodes=
+                - listitem [ref=f2e219]:
+                  - link "3" [ref=f2e220] [cursor=pointer]:
+                    - /url: /tw/card-search/list/?pageNo=3&sortCondition=&keyword=&cardType=all&regulation=1&pokemonEnergy=&pokemonWeakness=&pokemonResistance=&pokemonMoveEnergy=&hpLowerLimit=none&hpUpperLimit=none&retreatCostLowerLimit=0&retreatCostUpperLimit=none&illustratorName=&expansionCodes=
+                - listitem [ref=f2e221]:
+                  - link "4" [ref=f2e222] [cursor=pointer]:
+                    - /url: /tw/card-search/list/?pageNo=4&sortCondition=&keyword=&cardType=all&regulation=1&pokemonEnergy=&pokemonWeakness=&pokemonResistance=&pokemonMoveEnergy=&hpLowerLimit=none&hpUpperLimit=none&retreatCostLowerLimit=0&retreatCostUpperLimit=none&illustratorName=&expansionCodes=
+                - listitem [ref=f2e223]:
+                  - link "5" [ref=f2e224] [cursor=pointer]:
+                    - /url: /tw/card-search/list/?pageNo=5&sortCondition=&keyword=&cardType=all&regulation=1&pokemonEnergy=&pokemonWeakness=&pokemonResistance=&pokemonMoveEnergy=&hpLowerLimit=none&hpUpperLimit=none&retreatCostLowerLimit=0&retreatCostUpperLimit=none&illustratorName=&expansionCodes=
+                - listitem [ref=f2e225]:
+                  - link "Next " [ref=f2e226] [cursor=pointer]:
+                    - /url: /tw/card-search/list/?pageNo=2&sortCondition=&keyword=&cardType=all&regulation=1&pokemonEnergy=&pokemonWeakness=&pokemonResistance=&pokemonMoveEnergy=&hpLowerLimit=none&hpUpperLimit=none&retreatCostLowerLimit=0&retreatCostUpperLimit=none&illustratorName=&expansionCodes=
+          - generic: 
+    - navigation [ref=f2e227]:
+      - list [ref=f2e228]:
+        - listitem [ref=f2e229]:
+          - link "TOP" [ref=f2e230] [cursor=pointer]:
+            - /url: https://asia.pokemon-card.com/tw/
+          - text: 
+        - listitem [ref=f2e231]:
+          - link "卡牌" [ref=f2e232] [cursor=pointer]:
+            - /url: /tw/card-search/
+          - text: 
+        - listitem [ref=f2e233]: 卡牌搜尋結果
+  - contentinfo [ref=f2e234]:
+    - generic [ref=f2e235]:
+      - link " Contact " [ref=f2e237] [cursor=pointer]:
+        - /url: /tw/contact/
+        - button " Contact " [ref=f2e238]
+      - navigation [ref=f2e239]:
+        - list [ref=f2e240]:
+          - listitem [ref=f2e241]:
+            - link "Site Map" [ref=f2e242] [cursor=pointer]:
+              - /url: https://asia.pokemon-card.com/tw/sitemap/
+          - listitem [ref=f2e243]:
+            - link "Term of Use" [ref=f2e244] [cursor=pointer]:
+              - /url: https://asia.pokemon-card.com/tw/policy/
+          - listitem [ref=f2e245]:
+            - link "Privacy Notice" [ref=f2e246] [cursor=pointer]:
+              - /url: https://tw.portal-pokemon.com/privacypolicy/
+      - navigation [ref=f2e247]:
+        - list [ref=f2e248]:
+          - listitem [ref=f2e249]:
+            - link "Pokémon Trading Card Game Website" [ref=f2e250] [cursor=pointer]:
+              - /url: https://asia.pokemon-card.com/
+          - listitem [ref=f2e251]:
+            - link "The official Pokemon Website" [ref=f2e252] [cursor=pointer]:
+              - /url: https://tw.portal-pokemon.com
+          - listitem [ref=f2e253]:
+            - link "Pokémon Asia Championship Series WEB Site" [ref=f2e254] [cursor=pointer]:
+              - /url: https://pacs.portal-pokemon.com/2025-26/tw/?utm_source=tr-website&utm_medium=referral&utm_campaign=pacs-2025-26
+      - generic [ref=f2e255]:
+        - paragraph [ref=f2e256]: ©Pokémon/Nintendo/Creatures/GAME FREAK
+        - paragraph [ref=f2e257]: TM, Ⓡ, and character names are trademarks of Nintendo.
+  - text:        
+  - button "" [ref=f2e258] [cursor=pointer]

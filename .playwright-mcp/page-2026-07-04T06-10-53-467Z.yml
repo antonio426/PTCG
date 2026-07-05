@@ -1,0 +1,37 @@
+- generic [ref=e3]:
+  - navigation [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: PTCG
+      - generic [ref=e7]:
+        - link "首頁" [ref=e8] [cursor=pointer]:
+          - /url: /
+        - link "卡牌瀏覽" [ref=e9] [cursor=pointer]:
+          - /url: /cards
+        - link "牌組構築" [ref=e10] [cursor=pointer]:
+          - /url: /deck
+        - link "對戰" [ref=e11] [cursor=pointer]:
+          - /url: /battle
+        - link "AI 實驗室" [active] [ref=e12] [cursor=pointer]:
+          - /url: /lab
+  - main [ref=e13]:
+    - generic [ref=e697]:
+      - heading "AI 牌組實驗室" [level=1] [ref=e698]
+      - generic [ref=e699]:
+        - generic [ref=e700]:
+          - generic [ref=e701]:
+            - generic [ref=e702]: 牌組 A
+            - paragraph [ref=e703]: 無可用牌組
+          - generic [ref=e704]:
+            - generic [ref=e705]: 牌組 B
+            - paragraph [ref=e706]: 無可用牌組
+          - generic [ref=e707]:
+            - generic [ref=e708]: 對戰場數
+            - combobox [ref=e709]:
+              - option "10 場"
+              - option "100 場" [selected]
+              - option "1000 場"
+        - button "開始測試" [disabled] [ref=e711]
+      - generic [ref=e712]:
+        - generic [ref=e713]: 🧪
+        - paragraph [ref=e714]: 選擇兩副牌組並開始測試
+        - paragraph [ref=e715]: 系統將模擬 AI 對戰並統計結果

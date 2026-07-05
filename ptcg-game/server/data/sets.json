@@ -1,0 +1,789 @@
+{
+  "timestamp": 1783270282034,
+  "data": [
+    {
+      "id": "SC2a",
+      "name": "無極力量 SET A",
+      "series": "",
+      "printedTotal": 145,
+      "total": 145,
+      "releaseDate": ""
+    },
+    {
+      "id": "SC2b",
+      "name": "無極力量 SET B",
+      "series": "",
+      "printedTotal": 144,
+      "total": 144,
+      "releaseDate": ""
+    },
+    {
+      "id": "SC2D",
+      "name": "無極力量",
+      "series": "",
+      "printedTotal": 157,
+      "total": 157,
+      "releaseDate": ""
+    },
+    {
+      "id": "CS1.5",
+      "name": "三連音爆",
+      "series": "",
+      "printedTotal": 101,
+      "total": 101,
+      "releaseDate": ""
+    },
+    {
+      "id": "CS2b",
+      "name": "三連音爆",
+      "series": "",
+      "printedTotal": 101,
+      "total": 101,
+      "releaseDate": ""
+    },
+    {
+      "id": "CS1b",
+      "name": "三連音爆",
+      "series": "",
+      "printedTotal": 101,
+      "total": 101,
+      "releaseDate": ""
+    },
+    {
+      "id": "sv1a",
+      "name": "三連音爆",
+      "series": "",
+      "printedTotal": 101,
+      "total": 101,
+      "releaseDate": ""
+    },
+    {
+      "id": "sv1a",
+      "name": "三連音爆",
+      "series": "",
+      "printedTotal": 101,
+      "total": 101,
+      "releaseDate": ""
+    },
+    {
+      "id": "sv1a",
+      "name": "三連音爆",
+      "series": "",
+      "printedTotal": 101,
+      "total": 101,
+      "releaseDate": ""
+    },
+    {
+      "id": "sv1a",
+      "name": "三連音爆",
+      "series": "",
+      "printedTotal": 101,
+      "total": 101,
+      "releaseDate": ""
+    },
+    {
+      "id": "sv1a",
+      "name": "三連音爆",
+      "series": "",
+      "printedTotal": 101,
+      "total": 101,
+      "releaseDate": ""
+    },
+    {
+      "id": "CS2a",
+      "name": "三連音爆",
+      "series": "",
+      "printedTotal": 101,
+      "total": 101,
+      "releaseDate": ""
+    },
+    {
+      "id": "CS2.5",
+      "name": "三連音爆",
+      "series": "",
+      "printedTotal": 101,
+      "total": 101,
+      "releaseDate": ""
+    },
+    {
+      "id": "CS3.5",
+      "name": "三連音爆",
+      "series": "",
+      "printedTotal": 101,
+      "total": 101,
+      "releaseDate": ""
+    },
+    {
+      "id": "sv1a",
+      "name": "三連音爆",
+      "series": "",
+      "printedTotal": 101,
+      "total": 101,
+      "releaseDate": ""
+    },
+    {
+      "id": "sv1a",
+      "name": "三連音爆",
+      "series": "",
+      "printedTotal": 101,
+      "total": 101,
+      "releaseDate": ""
+    },
+    {
+      "id": "sv1a",
+      "name": "三連音爆",
+      "series": "",
+      "printedTotal": 101,
+      "total": 101,
+      "releaseDate": ""
+    },
+    {
+      "id": "CS1a",
+      "name": "三連音爆",
+      "series": "",
+      "printedTotal": 101,
+      "total": 101,
+      "releaseDate": ""
+    },
+    {
+      "id": "S11",
+      "name": "三連音爆",
+      "series": "",
+      "printedTotal": 100,
+      "total": 100,
+      "releaseDate": ""
+    },
+    {
+      "id": "SDL",
+      "name": "噴火龍",
+      "series": "",
+      "printedTotal": 21,
+      "total": 21,
+      "releaseDate": ""
+    },
+    {
+      "id": "SC1b",
+      "name": "劍&盾 SET B",
+      "series": "",
+      "printedTotal": 171,
+      "total": 153,
+      "releaseDate": ""
+    },
+    {
+      "id": "SP5",
+      "name": "強大",
+      "series": "",
+      "printedTotal": 4,
+      "total": 0,
+      "releaseDate": ""
+    },
+    {
+      "id": "SI",
+      "name": "初階牌組100",
+      "series": "",
+      "printedTotal": 422,
+      "total": 414,
+      "releaseDate": ""
+    },
+    {
+      "id": "S6K",
+      "name": "漆黑幽魂",
+      "series": "",
+      "printedTotal": 70,
+      "total": 70,
+      "releaseDate": ""
+    },
+    {
+      "id": "SCC",
+      "name": "進化",
+      "series": "",
+      "printedTotal": 172,
+      "total": 172,
+      "releaseDate": ""
+    },
+    {
+      "id": "S11a",
+      "name": "白熱奧祕",
+      "series": "",
+      "printedTotal": 68,
+      "total": 68,
+      "releaseDate": ""
+    },
+    {
+      "id": "S12a",
+      "name": "天地萬物VSTAR",
+      "series": "",
+      "printedTotal": 250,
+      "total": 172,
+      "releaseDate": ""
+    },
+    {
+      "id": "SDM",
+      "name": "超夢",
+      "series": "",
+      "printedTotal": 22,
+      "total": 22,
+      "releaseDate": ""
+    },
+    {
+      "id": "S4",
+      "name": "驚天伏特攻擊",
+      "series": "",
+      "printedTotal": 100,
+      "total": 100,
+      "releaseDate": ""
+    },
+    {
+      "id": "SCD",
+      "name": "強大",
+      "series": "",
+      "printedTotal": 159,
+      "total": 159,
+      "releaseDate": ""
+    },
+    {
+      "id": "S12",
+      "name": "思維激盪",
+      "series": "",
+      "printedTotal": 114,
+      "total": 98,
+      "releaseDate": ""
+    },
+    {
+      "id": "SLD",
+      "name": "起始組合VSTAR 達克萊伊",
+      "series": "",
+      "printedTotal": 21,
+      "total": 20,
+      "releaseDate": ""
+    },
+    {
+      "id": "S8b",
+      "name": "VMAX絕群壓軸",
+      "series": "",
+      "printedTotal": 184,
+      "total": 184,
+      "releaseDate": ""
+    },
+    {
+      "id": "SH",
+      "name": "寶可夢卡牌家庭組合",
+      "series": "",
+      "printedTotal": 59,
+      "total": 38,
+      "releaseDate": ""
+    },
+    {
+      "id": "S10D",
+      "name": "時間觀察者",
+      "series": "",
+      "printedTotal": 67,
+      "total": 67,
+      "releaseDate": ""
+    },
+    {
+      "id": "SC1D",
+      "name": "劍&盾",
+      "series": "",
+      "printedTotal": 164,
+      "total": 164,
+      "releaseDate": ""
+    },
+    {
+      "id": "S7R",
+      "name": "蒼空烈流",
+      "series": "",
+      "printedTotal": 67,
+      "total": 67,
+      "releaseDate": ""
+    },
+    {
+      "id": "S5R",
+      "name": "連撃大師",
+      "series": "",
+      "printedTotal": 70,
+      "total": 70,
+      "releaseDate": ""
+    },
+    {
+      "id": "S10P",
+      "name": "空間魔術師",
+      "series": "",
+      "printedTotal": 67,
+      "total": 67,
+      "releaseDate": ""
+    },
+    {
+      "id": "SCA",
+      "name": "搭檔",
+      "series": "",
+      "printedTotal": 135,
+      "total": 135,
+      "releaseDate": ""
+    },
+    {
+      "id": "SLL",
+      "name": "起始組合VSTAR 路卡利歐",
+      "series": "",
+      "printedTotal": 22,
+      "total": 21,
+      "releaseDate": ""
+    },
+    {
+      "id": "S5I",
+      "name": "一撃大師",
+      "series": "",
+      "printedTotal": 70,
+      "total": 70,
+      "releaseDate": ""
+    },
+    {
+      "id": "S9",
+      "name": "星星誕生",
+      "series": "",
+      "printedTotal": 100,
+      "total": 100,
+      "releaseDate": ""
+    },
+    {
+      "id": "S6a",
+      "name": "伊布英雄",
+      "series": "",
+      "printedTotal": 69,
+      "total": 69,
+      "releaseDate": ""
+    },
+    {
+      "id": "S9a",
+      "name": "對戰地區",
+      "series": "",
+      "printedTotal": 67,
+      "total": 67,
+      "releaseDate": ""
+    },
+    {
+      "id": "SN",
+      "name": "初階牌組100 特別版",
+      "series": "",
+      "printedTotal": 25,
+      "total": 24,
+      "releaseDate": ""
+    },
+    {
+      "id": "SC1a",
+      "name": "劍&盾 SET A",
+      "series": "",
+      "printedTotal": 172,
+      "total": 154,
+      "releaseDate": ""
+    },
+    {
+      "id": "SDP",
+      "name": "皮卡丘",
+      "series": "",
+      "printedTotal": 22,
+      "total": 22,
+      "releaseDate": ""
+    },
+    {
+      "id": "S4a",
+      "name": "閃色明星V",
+      "series": "",
+      "printedTotal": 190,
+      "total": 190,
+      "releaseDate": ""
+    },
+    {
+      "id": "S5a",
+      "name": "雙璧戰士",
+      "series": "",
+      "printedTotal": 70,
+      "total": 70,
+      "releaseDate": ""
+    },
+    {
+      "id": "S8",
+      "name": "匯流藝術",
+      "series": "",
+      "printedTotal": 100,
+      "total": 100,
+      "releaseDate": ""
+    },
+    {
+      "id": "SPD",
+      "name": "VSTAR&VMAX 高級牌組 代歐奇希斯",
+      "series": "",
+      "printedTotal": 20,
+      "total": 20,
+      "releaseDate": ""
+    },
+    {
+      "id": "SCB",
+      "name": "挑戰",
+      "series": "",
+      "printedTotal": 156,
+      "total": 156,
+      "releaseDate": ""
+    },
+    {
+      "id": "S10b",
+      "name": "Pokémon GO",
+      "series": "",
+      "printedTotal": 79,
+      "total": 71,
+      "releaseDate": ""
+    },
+    {
+      "id": "SP6",
+      "name": "VSTAR特別組合",
+      "series": "",
+      "printedTotal": 6,
+      "total": 6,
+      "releaseDate": ""
+    },
+    {
+      "id": "S8a",
+      "name": "25週年收藏款",
+      "series": "",
+      "printedTotal": 33,
+      "total": 28,
+      "releaseDate": ""
+    },
+    {
+      "id": "S10a",
+      "name": "黑暗亡靈",
+      "series": "",
+      "printedTotal": 71,
+      "total": 71,
+      "releaseDate": ""
+    },
+    {
+      "id": "S6H",
+      "name": "銀白戰槍",
+      "series": "",
+      "printedTotal": 70,
+      "total": 70,
+      "releaseDate": ""
+    },
+    {
+      "id": "SPZ",
+      "name": "VSTAR&VMAX 高級牌組 捷拉奧拉",
+      "series": "",
+      "printedTotal": 20,
+      "total": 20,
+      "releaseDate": ""
+    },
+    {
+      "id": "S7D",
+      "name": "摩天巔峰",
+      "series": "",
+      "printedTotal": 67,
+      "total": 67,
+      "releaseDate": ""
+    },
+    {
+      "id": "SK",
+      "name": "頂級訓練家收藏箱 VSTAR",
+      "series": "",
+      "printedTotal": 30,
+      "total": 30,
+      "releaseDate": ""
+    },
+    {
+      "id": "SJ",
+      "name": "藏瑪然特VS無極汰那",
+      "series": "",
+      "printedTotal": 30,
+      "total": 28,
+      "releaseDate": ""
+    },
+    {
+      "id": "SVB",
+      "name": "頂級訓練家收藏箱ex",
+      "series": "",
+      "printedTotal": 36,
+      "total": 28,
+      "releaseDate": ""
+    },
+    {
+      "id": "SV1S",
+      "name": "朱ex",
+      "series": "",
+      "printedTotal": 78,
+      "total": 78,
+      "releaseDate": ""
+    },
+    {
+      "id": "SVHM",
+      "name": "閃色寶藏ex",
+      "series": "",
+      "printedTotal": 24,
+      "total": 22,
+      "releaseDate": ""
+    },
+    {
+      "id": "SVAL",
+      "name": "起始組合ex 呆火鱷&電龍 ex",
+      "series": "",
+      "printedTotal": 23,
+      "total": 21,
+      "releaseDate": ""
+    },
+    {
+      "id": "SV3a",
+      "name": "激狂駭浪",
+      "series": "",
+      "printedTotal": 89,
+      "total": 62,
+      "releaseDate": ""
+    },
+    {
+      "id": "SVF",
+      "name": "黯焰支配者",
+      "series": "",
+      "printedTotal": 46,
+      "total": 38,
+      "releaseDate": ""
+    },
+    {
+      "id": "SVEL",
+      "name": "骨紋巨聲鱷ex",
+      "series": "",
+      "printedTotal": 21,
+      "total": 20,
+      "releaseDate": ""
+    },
+    {
+      "id": "SVAW",
+      "name": "起始組合ex 潤水鴨&謎擬Ｑ ex",
+      "series": "",
+      "printedTotal": 25,
+      "total": 23,
+      "releaseDate": ""
+    },
+    {
+      "id": "SV2a",
+      "name": "寶可夢卡牌151",
+      "series": "",
+      "printedTotal": 207,
+      "total": 165,
+      "releaseDate": ""
+    },
+    {
+      "id": "SV7",
+      "name": "星晶奇跡",
+      "series": "",
+      "printedTotal": 132,
+      "total": 102,
+      "releaseDate": ""
+    },
+    {
+      "id": "SVHK",
+      "name": "未來密勒頓ex",
+      "series": "",
+      "printedTotal": 24,
+      "total": 22,
+      "releaseDate": ""
+    },
+    {
+      "id": "SVEM",
+      "name": "超夢ex",
+      "series": "",
+      "printedTotal": 21,
+      "total": 20,
+      "releaseDate": ""
+    },
+    {
+      "id": "SVAM",
+      "name": "起始組合ex 新葉喵&路卡利歐 ex",
+      "series": "",
+      "printedTotal": 25,
+      "total": 23,
+      "releaseDate": ""
+    },
+    {
+      "id": "SVP1",
+      "name": "ex特別組合",
+      "series": "",
+      "printedTotal": 7,
+      "total": 7,
+      "releaseDate": ""
+    },
+    {
+      "id": "SV4K",
+      "name": "古代咆哮",
+      "series": "",
+      "printedTotal": 66,
+      "total": 66,
+      "releaseDate": ""
+    },
+    {
+      "id": "SV1a",
+      "name": "三連音爆",
+      "series": "",
+      "printedTotal": 73,
+      "total": 73,
+      "releaseDate": ""
+    },
+    {
+      "id": "SV2D",
+      "name": "碟旋暴擊",
+      "series": "",
+      "printedTotal": 71,
+      "total": 71,
+      "releaseDate": ""
+    },
+    {
+      "id": "SV5M",
+      "name": "異度審判",
+      "series": "",
+      "printedTotal": 97,
+      "total": 71,
+      "releaseDate": ""
+    },
+    {
+      "id": "SV6",
+      "name": "變幻假面",
+      "series": "",
+      "printedTotal": 130,
+      "total": 101,
+      "releaseDate": ""
+    },
+    {
+      "id": "SV5a",
+      "name": "緋紅薄霧",
+      "series": "",
+      "printedTotal": 66,
+      "total": 66,
+      "releaseDate": ""
+    },
+    {
+      "id": "SVC",
+      "name": "皮卡丘特別組合",
+      "series": "",
+      "printedTotal": 22,
+      "total": 21,
+      "releaseDate": ""
+    },
+    {
+      "id": "SV5K",
+      "name": "狂野之力",
+      "series": "",
+      "printedTotal": 71,
+      "total": 71,
+      "releaseDate": ""
+    },
+    {
+      "id": "SVD",
+      "name": "ex初階牌組",
+      "series": "",
+      "printedTotal": 147,
+      "total": 139,
+      "releaseDate": ""
+    },
+    {
+      "id": "SV2P",
+      "name": "冰雪險境",
+      "series": "",
+      "printedTotal": 71,
+      "total": 71,
+      "releaseDate": ""
+    },
+    {
+      "id": "SV6a",
+      "name": "黑夜漫遊者",
+      "series": "",
+      "printedTotal": 64,
+      "total": 64,
+      "releaseDate": ""
+    },
+    {
+      "id": "SV1V",
+      "name": "紫ex",
+      "series": "",
+      "printedTotal": 78,
+      "total": 78,
+      "releaseDate": ""
+    },
+    {
+      "id": "SV-P",
+      "name": "特典卡 朱&紫",
+      "series": "",
+      "printedTotal": 94,
+      "total": 0,
+      "releaseDate": ""
+    },
+    {
+      "id": "SV8a",
+      "name": "太晶慶典ex",
+      "series": "",
+      "printedTotal": 237,
+      "total": 187,
+      "releaseDate": ""
+    },
+    {
+      "id": "SV3",
+      "name": "黯焰支配者",
+      "series": "",
+      "printedTotal": 138,
+      "total": 108,
+      "releaseDate": ""
+    },
+    {
+      "id": "SV4M",
+      "name": "未來閃光",
+      "series": "",
+      "printedTotal": 66,
+      "total": 66,
+      "releaseDate": ""
+    },
+    {
+      "id": "SV4a",
+      "name": "閃色寶藏ex",
+      "series": "",
+      "printedTotal": 314,
+      "total": 190,
+      "releaseDate": ""
+    },
+    {
+      "id": "SV7a",
+      "name": "樂園騰龍",
+      "series": "",
+      "printedTotal": 64,
+      "total": 64,
+      "releaseDate": ""
+    },
+    {
+      "id": "SV8",
+      "name": "超電突圍",
+      "series": "",
+      "printedTotal": 106,
+      "total": 106,
+      "releaseDate": ""
+    },
+    {
+      "id": "SV10",
+      "name": "火箭隊的榮耀",
+      "series": "",
+      "printedTotal": 98,
+      "total": 98,
+      "releaseDate": ""
+    },
+    {
+      "id": "SV9a",
+      "name": "熱風競技場",
+      "series": "",
+      "printedTotal": 92,
+      "total": 63,
+      "releaseDate": ""
+    },
+    {
+      "id": "SV9",
+      "name": "對戰搭檔",
+      "series": "",
+      "printedTotal": 100,
+      "total": 100,
+      "releaseDate": ""
+    }
+  ]
+}

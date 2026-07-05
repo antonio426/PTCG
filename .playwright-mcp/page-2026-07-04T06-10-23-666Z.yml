@@ -1,0 +1,273 @@
+- generic [ref=e3]:
+  - navigation [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: PTCG
+      - generic [ref=e7]:
+        - link "首頁" [ref=e8] [cursor=pointer]:
+          - /url: /
+        - link "卡牌瀏覽" [ref=e9] [cursor=pointer]:
+          - /url: /cards
+        - link "牌組構築" [active] [ref=e10] [cursor=pointer]:
+          - /url: /deck
+        - link "對戰" [ref=e11] [cursor=pointer]:
+          - /url: /battle
+        - link "AI 實驗室" [ref=e12] [cursor=pointer]:
+          - /url: /lab
+  - main [ref=e13]:
+    - generic [ref=e477]:
+      - generic [ref=e478]:
+        - generic [ref=e479]:
+          - heading "牌組構築" [level=1] [ref=e480]
+          - button "已存牌組 (0)" [ref=e481] [cursor=pointer]
+        - generic [ref=e482]:
+          - textbox "搜尋卡牌..." [ref=e483]
+          - combobox [ref=e484]:
+            - option "全部系列" [selected]
+            - option "無極力量 SET A"
+            - option "無極力量 SET B"
+            - option "無極力量"
+            - option "三連音爆"
+            - option "三連音爆"
+            - option "三連音爆"
+            - option "三連音爆"
+            - option "三連音爆"
+            - option "三連音爆"
+            - option "三連音爆"
+            - option "三連音爆"
+            - option "三連音爆"
+            - option "噴火龍"
+            - option "劍&盾 SET B"
+            - option "強大"
+            - option "初階牌組100"
+            - option "漆黑幽魂"
+            - option "進化"
+            - option "白熱奧祕"
+            - option "天地萬物VSTAR"
+            - option "超夢"
+            - option "驚天伏特攻擊"
+            - option "強大"
+            - option "思維激盪"
+            - option "起始組合VSTAR 達克萊伊"
+            - option "VMAX絕群壓軸"
+            - option "寶可夢卡牌家庭組合"
+            - option "時間觀察者"
+            - option "劍&盾"
+            - option "蒼空烈流"
+            - option "連撃大師"
+            - option "空間魔術師"
+            - option "搭檔"
+            - option "起始組合VSTAR 路卡利歐"
+            - option "一撃大師"
+            - option "星星誕生"
+            - option "伊布英雄"
+            - option "對戰地區"
+            - option "初階牌組100 特別版"
+            - option "劍&盾 SET A"
+            - option "皮卡丘"
+            - option "閃色明星V"
+            - option "雙璧戰士"
+            - option "匯流藝術"
+            - option "VSTAR&VMAX 高級牌組 代歐奇希斯"
+            - option "挑戰"
+            - option "Pokémon GO"
+            - option "VSTAR特別組合"
+            - option "25週年收藏款"
+            - option "黑暗亡靈"
+            - option "銀白戰槍"
+            - option "VSTAR&VMAX 高級牌組 捷拉奧拉"
+            - option "摩天巔峰"
+            - option "頂級訓練家收藏箱 VSTAR"
+            - option "藏瑪然特VS無極汰那"
+            - option "頂級訓練家收藏箱ex"
+            - option "朱ex"
+            - option "閃色寶藏ex"
+            - option "起始組合ex 呆火鱷&電龍 ex"
+            - option "激狂駭浪"
+            - option "黯焰支配者"
+            - option "骨紋巨聲鱷ex"
+            - option "起始組合ex 潤水鴨&謎擬Ｑ ex"
+            - option "寶可夢卡牌151"
+            - option "星晶奇跡"
+            - option "未來密勒頓ex"
+            - option "超夢ex"
+            - option "起始組合ex 新葉喵&路卡利歐 ex"
+            - option "ex特別組合"
+            - option "古代咆哮"
+            - option "碟旋暴擊"
+            - option "異度審判"
+            - option "變幻假面"
+            - option "緋紅薄霧"
+            - option "皮卡丘特別組合"
+            - option "狂野之力"
+            - option "ex初階牌組"
+            - option "冰雪險境"
+            - option "黑夜漫遊者"
+            - option "紫ex"
+            - option "特典卡 朱&紫"
+            - option "太晶慶典ex"
+            - option "黯焰支配者"
+            - option "未來閃光"
+            - option "閃色寶藏ex"
+            - option "樂園騰龍"
+            - option "超電突圍"
+            - option "火箭隊的榮耀"
+            - option "熱風競技場"
+            - option "對戰搭檔"
+        - generic [ref=e485]:
+          - button "全部" [ref=e486] [cursor=pointer]
+          - button "寶可夢" [ref=e487] [cursor=pointer]
+          - button "訓練家" [ref=e488] [cursor=pointer]
+          - button "能量" [ref=e489] [cursor=pointer]
+          - button "草" [ref=e491] [cursor=pointer]
+          - button "火" [ref=e492] [cursor=pointer]
+          - button "水" [ref=e493] [cursor=pointer]
+          - button "雷" [ref=e494] [cursor=pointer]
+          - button "超" [ref=e495] [cursor=pointer]
+          - button "鬥" [ref=e496] [cursor=pointer]
+          - button "惡" [ref=e497] [cursor=pointer]
+          - button "鋼" [ref=e498] [cursor=pointer]
+          - button "妖" [ref=e499] [cursor=pointer]
+          - button "龍" [ref=e500] [cursor=pointer]
+          - button "無" [ref=e501] [cursor=pointer]
+        - generic [ref=e502]:
+          - button "溜溜糖球 溜溜糖球 G" [ref=e503] [cursor=pointer]:
+            - img "溜溜糖球" [ref=e505]
+            - generic [ref=e506]:
+              - paragraph [ref=e507]: 溜溜糖球
+              - generic "Grass" [ref=e509]: G
+          - button "榛果球 榛果球 G" [ref=e510] [cursor=pointer]:
+            - img "榛果球" [ref=e512]
+            - generic [ref=e513]:
+              - paragraph [ref=e514]: 榛果球
+              - generic "Grass" [ref=e516]: G
+          - button "<阿響的>凱羅斯 <阿響的>凱羅斯 G" [ref=e517] [cursor=pointer]:
+            - img "<阿響的>凱羅斯" [ref=e519]
+            - generic [ref=e520]:
+              - paragraph [ref=e521]: <阿響的>凱羅斯
+              - generic "Grass" [ref=e523]: G
+          - button "小火馬 小火馬 F" [ref=e524] [cursor=pointer]:
+            - img "小火馬" [ref=e526]
+            - generic [ref=e527]:
+              - paragraph [ref=e528]: 小火馬
+              - generic "Fire" [ref=e530]: F
+          - button "溜溜糖球 溜溜糖球 G" [ref=e531] [cursor=pointer]:
+            - img "溜溜糖球" [ref=e533]
+            - generic [ref=e534]:
+              - paragraph [ref=e535]: 溜溜糖球
+              - generic "Grass" [ref=e537]: G
+          - button "熱帶龍 熱帶龍 G" [ref=e538] [cursor=pointer]:
+            - img "熱帶龍" [ref=e540]
+            - generic [ref=e541]:
+              - paragraph [ref=e542]: 熱帶龍
+              - generic "Grass" [ref=e544]: G
+          - button "卡蒂狗 卡蒂狗 F" [ref=e545] [cursor=pointer]:
+            - img "卡蒂狗" [ref=e547]
+            - generic [ref=e548]:
+              - paragraph [ref=e549]: 卡蒂狗
+              - generic "Fire" [ref=e551]: F
+          - button "向日種子 向日種子 G" [ref=e552] [cursor=pointer]:
+            - img "向日種子" [ref=e554]
+            - generic [ref=e555]:
+              - paragraph [ref=e556]: 向日種子
+              - generic "Grass" [ref=e558]: G
+          - button "蛋蛋 蛋蛋 G" [ref=e559] [cursor=pointer]:
+            - img "蛋蛋" [ref=e561]
+            - generic [ref=e562]:
+              - paragraph [ref=e563]: 蛋蛋
+              - generic "Grass" [ref=e565]: G
+          - button "毽子草 毽子草 G" [ref=e566] [cursor=pointer]:
+            - img "毽子草" [ref=e568]
+            - generic [ref=e569]:
+              - paragraph [ref=e570]: 毽子草
+              - generic "Grass" [ref=e572]: G
+          - button "刺球仙人掌 刺球仙人掌 G" [ref=e573] [cursor=pointer]:
+            - img "刺球仙人掌" [ref=e575]
+            - generic [ref=e576]:
+              - paragraph [ref=e577]: 刺球仙人掌
+              - generic "Grass" [ref=e579]: G
+          - button "巢穴球 巢穴球" [ref=e580] [cursor=pointer]:
+            - img "巢穴球" [ref=e582]
+            - paragraph [ref=e584]: 巢穴球
+          - button "霓虹魚V 霓虹魚V W" [ref=e585] [cursor=pointer]:
+            - img "霓虹魚V" [ref=e587]
+            - generic [ref=e588]:
+              - paragraph [ref=e589]: 霓虹魚V
+              - generic "Water" [ref=e591]: W
+          - button "超夢ex 超夢ex L" [ref=e592] [cursor=pointer]:
+            - img "超夢ex" [ref=e594]
+            - generic [ref=e595]:
+              - paragraph [ref=e596]: 超夢ex
+              - generic "Lightning" [ref=e598]: L
+          - button "妙蛙種子 妙蛙種子 G" [ref=e599] [cursor=pointer]:
+            - img "妙蛙種子" [ref=e601]
+            - generic [ref=e602]:
+              - paragraph [ref=e603]: 妙蛙種子
+              - generic "Grass" [ref=e605]: G
+          - button "蔓藤怪 蔓藤怪 G" [ref=e606] [cursor=pointer]:
+            - img "蔓藤怪" [ref=e608]
+            - generic [ref=e609]:
+              - paragraph [ref=e610]: 蔓藤怪
+              - generic "Grass" [ref=e612]: G
+          - button "光輝噴火龍 光輝噴火龍 F" [ref=e613] [cursor=pointer]:
+            - img "光輝噴火龍" [ref=e615]
+            - generic [ref=e616]:
+              - paragraph [ref=e617]: 光輝噴火龍
+              - generic "Fire" [ref=e619]: F
+          - button "蛋蛋 蛋蛋 G" [ref=e620] [cursor=pointer]:
+            - img "蛋蛋" [ref=e622]
+            - generic [ref=e623]:
+              - paragraph [ref=e624]: 蛋蛋
+              - generic "Grass" [ref=e626]: G
+          - button "榛果球 榛果球 G" [ref=e627] [cursor=pointer]:
+            - img "榛果球" [ref=e629]
+            - generic [ref=e630]:
+              - paragraph [ref=e631]: 榛果球
+              - generic "Grass" [ref=e633]: G
+          - button "原野水母 原野水母 G" [ref=e634] [cursor=pointer]:
+            - img "原野水母" [ref=e636]
+            - generic [ref=e637]:
+              - paragraph [ref=e638]: 原野水母
+              - generic "Grass" [ref=e640]: G
+          - button "含羞苞 含羞苞 G" [ref=e641] [cursor=pointer]:
+            - img "含羞苞" [ref=e643]
+            - generic [ref=e644]:
+              - paragraph [ref=e645]: 含羞苞
+              - generic "Grass" [ref=e647]: G
+          - button "飛天螳螂 飛天螳螂 G" [ref=e648] [cursor=pointer]:
+            - img "飛天螳螂" [ref=e650]
+            - generic [ref=e651]:
+              - paragraph [ref=e652]: 飛天螳螂
+              - generic "Grass" [ref=e654]: G
+          - button "獨角蟲 獨角蟲 G" [ref=e655] [cursor=pointer]:
+            - img "獨角蟲" [ref=e657]
+            - generic [ref=e658]:
+              - paragraph [ref=e659]: 獨角蟲
+              - generic "Grass" [ref=e661]: G
+          - button "芭瓢蟲 芭瓢蟲 G" [ref=e662] [cursor=pointer]:
+            - img "芭瓢蟲" [ref=e664]
+            - generic [ref=e665]:
+              - paragraph [ref=e666]: 芭瓢蟲
+              - generic "Grass" [ref=e668]: G
+        - generic [ref=e669]:
+          - button "上一頁" [disabled] [ref=e670]
+          - button "1" [ref=e671] [cursor=pointer]
+          - button "2" [ref=e672] [cursor=pointer]
+          - button "3" [ref=e673] [cursor=pointer]
+          - button "4" [ref=e674] [cursor=pointer]
+          - button "5" [ref=e675] [cursor=pointer]
+          - button "6" [ref=e676] [cursor=pointer]
+          - button "7" [ref=e677] [cursor=pointer]
+          - button "下一頁" [ref=e678] [cursor=pointer]
+      - generic [ref=e680]:
+        - generic [ref=e681]:
+          - textbox "牌組名稱" [ref=e682]
+          - generic [ref=e683]: 0/60
+        - generic [ref=e684]:
+          - textbox "新牌組名稱..." [ref=e685]
+          - button "新增" [ref=e686] [cursor=pointer]
+        - generic [ref=e687]:
+          - button "儲存牌組" [disabled] [ref=e688]
+          - button "刪除" [disabled] [ref=e689]
+        - generic [ref=e691]: 牌組不合法
+        - paragraph [ref=e694]: 牌組至少需要 60 張卡牌（目前 0 張）
+        - generic [ref=e696]: 牌組為空，從左側選擇卡牌
