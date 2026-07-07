@@ -17,6 +17,8 @@ let inMemoryCards: MapCard[] | null = null;
 let inMemorySets: SetData[] | null = null;
 // Serie (series short code) lookup by set ID, e.g. { "SV1" -> "SV", "S8b" -> "S" }
 let serieBySet: Record<string, string> = {};
+// Set legality lookup by set ID, populated from set API data
+let setLegality: Record<string, { standard: boolean; expanded: boolean }> = {};
 
 function getSerieForSet(setId: string): string {
   return serieBySet[setId] || '';
@@ -46,15 +48,37 @@ function toEnergyType(t: string): EnergyType | undefined {
   return ENERGY_MAP[t.charAt(0).toUpperCase() + t.slice(1).toLowerCase()];
 }
 
+// TCGdex trainerType uses short names; our Subtype type uses Pokémon TCG display names.
+const TRAINER_TYPE_MAP: Record<string, Subtype> = {
+  'Item': 'Item',
+  'Supporter': 'Supporter',
+  'Stadium': 'Stadium',
+  'Tool': 'Pokémon Tool',
+  'Tool F': 'Pokémon Tool F',
+};
+
+// TCGdex stage values use no-space format; our Subtype type expects spaces
+const STAGE_MAP: Record<string, Subtype> = {
+  'Basic': 'Basic',
+  'Stage1': 'Stage 1',
+  'Stage2': 'Stage 2',
+};
+
+// TCGdex suffix values use uppercase; our Subtype type may differ
+const SUFFIX_MAP: Record<string, Subtype | undefined> = {
+  'MEGA': 'Mega',
+};
+
 function buildSubtypes(detail: TcgdexCardDetail): Subtype[] {
   const result: Subtype[] = [];
   if (detail.category === 'Pokemon' || detail.category === 'Pokémon') {
-    if (detail.stage) result.push(detail.stage as Subtype);
-    if (detail.suffix) result.push(detail.suffix as Subtype);
+    if (detail.stage) result.push(STAGE_MAP[detail.stage] ?? detail.stage as Subtype);
+    if (detail.suffix) result.push(SUFFIX_MAP[detail.suffix] ?? detail.suffix as Subtype);
   } else if (detail.category === 'Trainer' && detail.trainerType) {
-    result.push(detail.trainerType as Subtype);
+    result.push(TRAINER_TYPE_MAP[detail.trainerType] ?? detail.trainerType as Subtype);
   } else if (detail.category === 'Energy') {
-    result.push(detail.energyType === 'Basic' ? 'Basic Energy' : 'Special Energy');
+    // TCGdex energyType: "Normal" = Basic Energy, "Special" = Special Energy
+    result.push(detail.energyType === 'Normal' ? 'Basic Energy' : 'Special Energy');
   }
   return result;
 }
@@ -101,10 +125,10 @@ function inferSerie(setId: string, serie = ''): string {
   return letterPrefix || setId;
 }
 
-// Build CDN image URL: https://assets.tcgdex.net/{lang}/{serie}/{setId}/{localId}/{variant}.png
+// Build image URL — uses local API proxy that serves from disk or CDN fallback
 function buildImageUrl(lang: string, setId: string, localId: string, serie: string, variant: 'high' | 'low'): string {
   const resolvedSerie = inferSerie(setId, serie);
-  return `https://assets.tcgdex.net/${lang}/${resolvedSerie}/${setId}/${localId}/${variant}.png`;
+  return `/api/images/${resolvedSerie}/${setId}/${localId}/${variant === 'low' ? 'low' : 'high'}`;
 }
 
 function buildRetreatCost(retreat: number | undefined): { cost: EnergyType[]; converted: number } {
@@ -171,6 +195,14 @@ function summaryToMapCard(s: TcgdexCardSummary, setId: string, serie: string, la
     large: buildImageUrl(lang, setId, localId, serie, 'high'),
   };
 
+  // Use set-level legality for summary cards (card-level detail has its own)
+  const setLegal = setLegality[setId];
+  const legalities: MapCard['legalities'] = {};
+  if (setLegal) {
+    if (setLegal.standard) legalities.standard = 'Legal';
+    if (setLegal.expanded) legalities.expanded = 'Legal';
+  }
+
   return {
     id: s.id,
     name: s.name,
@@ -178,7 +210,7 @@ function summaryToMapCard(s: TcgdexCardSummary, setId: string, serie: string, la
     subtypes: ['Basic' as Subtype],
     set: { id: setId, name: '', series: serie, printedTotal: 0, total: 0, releaseDate: '' },
     number: localId,
-    legalities: {},
+    legalities,
     images,
     localId,
   };
@@ -197,7 +229,14 @@ async function fetchWithRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> 
 export async function fetchAllCards(lang = 'zh-tw'): Promise<MapCard[]> {
   if (inMemoryCards) return inMemoryCards;
   const fileCached = cache.loadCardCache();
-  if (fileCached) { inMemoryCards = fileCached; return fileCached; }
+  if (fileCached) {
+    inMemoryCards = fileCached;
+    // setLegality must be populated for standardOnly filter to work on cached cards
+    await fetchAllSets(lang);
+    // Start background enrichment (updates in-memory + saves to cache periodically)
+    enrichAllCardsInBackground(lang);
+    return fileCached;
+  }
 
   // Ensure set/serie map is loaded
   await fetchAllSets(lang);
@@ -237,22 +276,24 @@ export async function fetchAllCards(lang = 'zh-tw'): Promise<MapCard[]> {
 }
 
 export async function fetchCardById(id: string, lang = 'zh-tw'): Promise<MapCard | null> {
-  // Check in-memory cache for full detail (artist = present only on detail-fetched cards)
+  const enrichedCheck = (c: MapCard) => c.artist || c._enriched;
+  // Check in-memory cache for full detail
   if (inMemoryCards) {
     const found = inMemoryCards.find(c => c.id === id);
-    if (found && found.artist) return found;
+    if (found && enrichedCheck(found)) return found;
   }
   // Check file cache
   const fileCached = cache.loadCardCache();
   if (fileCached) {
     const found = fileCached.find(c => c.id === id);
-    if (found && found.artist) { inMemoryCards = fileCached; return found; }
+    if (found && enrichedCheck(found)) { inMemoryCards = fileCached; return found; }
   }
   try {
     const detail = await apiFetch<TcgdexCardDetail>(`/${lang}/cards/${id}`);
     const setId = detail.set?.id || id.split('-')[0] || '';
     const serie = getSerieForSet(setId);
     const card = detailToMapCard(detail, lang, serie);
+    card._enriched = true;
     if (inMemoryCards) {
       const idx = inMemoryCards.findIndex(c => c.id === id);
       if (idx >= 0) inMemoryCards[idx] = card;
@@ -266,10 +307,11 @@ export async function fetchCardsByIds(ids: string[], lang = 'zh-tw'): Promise<Re
   const result: Record<string, MapCard> = {};
   const uncached: string[] = [];
 
+  const enrichedCheck = (c: MapCard) => c.artist || c._enriched;
   if (inMemoryCards) {
     for (const id of ids) {
       const found = inMemoryCards.find(c => c.id === id);
-      if (found && found.artist) result[id] = found;
+      if (found && enrichedCheck(found)) result[id] = found;
       else uncached.push(id);
     }
   } else {
@@ -277,7 +319,7 @@ export async function fetchCardsByIds(ids: string[], lang = 'zh-tw'): Promise<Re
     if (fileCached) {
       for (const id of ids) {
         const found = fileCached.find(c => c.id === id);
-        if (found && found.artist) result[id] = found;
+        if (found && enrichedCheck(found)) result[id] = found;
         else uncached.push(id);
       }
     } else {
@@ -302,6 +344,7 @@ export async function fetchCardsByIds(ids: string[], lang = 'zh-tw'): Promise<Re
     const resolved = await Promise.all(promises);
     for (const r of resolved) {
       if (r) {
+        r.card._enriched = true;
         result[r.id] = r.card;
         if (inMemoryCards) {
           const idx = inMemoryCards.findIndex(c => c.id === r.id);
@@ -318,14 +361,30 @@ export async function fetchCardsByIds(ids: string[], lang = 'zh-tw'): Promise<Re
 export async function fetchAllSets(lang = 'zh-tw'): Promise<SetData[]> {
   if (inMemorySets) return inMemorySets;
   const fileCached = cache.loadSetCache();
-  if (fileCached) { inMemorySets = fileCached; return fileCached; }
+  if (fileCached) {
+    inMemorySets = fileCached;
+    for (const s of fileCached) {
+      if (s.legal) { setLegality[s.id] = s.legal; }
+    }
+    return fileCached;
+  }
 
   const raw = await apiFetch<TcgdexSet[]>(`/${lang}/sets`);
-  const sets = raw.map(s => {
+  // Deduplicate by set id AND by set name (TCGdex API returns many duplicate
+  // entries — same id repeated, plus different Chinese-exclusive codes that
+  // share the same Chinese name). Keep the first occurrence of each name.
+  const seenId = new Set<string>();
+  const seenName = new Set<string>();
+  const sets: SetData[] = [];
+  for (const s of raw) {
+    if (seenId.has(s.id)) continue;
+    seenId.add(s.id);
+    if (seenName.has(s.name)) continue;
+    seenName.add(s.name);
     const serieId = s.serie?.id || s.series || '';
-    // Build serie lookup map
     if (serieId) { serieBySet[s.id] = serieId; }
-    return {
+    if (s.legal) { setLegality[s.id] = s.legal; }
+    sets.push({
       id: s.id,
       name: s.name,
       series: serieId,
@@ -334,8 +393,9 @@ export async function fetchAllSets(lang = 'zh-tw'): Promise<SetData[]> {
       releaseDate: s.releaseDate || '',
       symbol: s.symbol,
       logo: s.logo,
-    };
-  });
+      legal: s.legal,
+    });
+  }
   inMemorySets = sets;
   cache.saveSetCache(sets);
   return sets;
@@ -344,15 +404,24 @@ export async function fetchAllSets(lang = 'zh-tw'): Promise<SetData[]> {
 export async function fetchSetById(id: string, lang = 'zh-tw'): Promise<SetData | null> {
   if (inMemorySets) { const f = inMemorySets.find(s => s.id === id); if (f) return f; }
   const fileCached = cache.loadSetCache();
-  if (fileCached) { const f = fileCached.find(s => s.id === id); if (f) { inMemorySets = fileCached; return f; } }
+  if (fileCached) {
+    const f = fileCached.find(s => s.id === id);
+    if (f) {
+      inMemorySets = fileCached;
+      if (f.legal) { setLegality[f.id] = f.legal; }
+      return f;
+    }
+  }
   try {
     const raw = await apiFetch<TcgdexSet>(`/${lang}/sets/${id}`);
     const serieId = raw.serie?.id || raw.series || '';
     if (serieId) { serieBySet[raw.id] = serieId; }
+    if (raw.legal) { setLegality[raw.id] = raw.legal; }
     return {
       id: raw.id, name: raw.name, series: serieId,
       printedTotal: raw.cardCount.total, total: raw.cardCount.official,
       releaseDate: raw.releaseDate || '', symbol: raw.symbol, logo: raw.logo,
+      legal: raw.legal,
     };
   } catch { return null; }
 }
@@ -375,4 +444,98 @@ export async function refreshCache(lang = 'zh-tw'): Promise<{ cards: number; set
   const cards = await fetchAllCards(lang);
   const sets = await fetchAllSets(lang);
   return { cards: cards.length, sets: sets.length };
+}
+
+// ——— Enrichment: batch-fetch detail for every summary-only card ———
+
+let enrichmentStats = { total: 0, done: 0, failed: 0 };
+
+export function getEnrichmentStats() { return enrichmentStats; }
+
+const ENRICH_BATCH_SIZE = 5;
+
+/**
+ * Enrich all cards in the in-memory cache by fetching individual detail
+ * endpoints. Runs until every card has proper data (artist present).
+ * Saves progress to file cache periodically.
+ */
+export async function enrichAllCards(lang = 'zh-tw'): Promise<void> {
+  const cards = inMemoryCards;
+  if (!cards || cards.length === 0) return;
+
+  // ——— Migration: update image URLs from CDN to local API ———
+  let migrated = 0;
+  for (const c of cards) {
+    if (c.images?.small?.startsWith('https://assets.tcgdex.net')) {
+      const setId = c.set.id;
+      const localId = c.localId || c.number || '';
+      const serie = c.set.series || inferSerie(setId);
+      c.images.small = `/api/images/${serie}/${setId}/${localId}/low`;
+      c.images.large = `/api/images/${serie}/${setId}/${localId}/high`;
+      migrated++;
+    }
+  }
+  if (migrated > 0) {
+    console.log(`[enrich] Migrated ${migrated} cards to local image URLs`);
+    cache.saveCardCache(cards);
+  }
+
+  // Stale subtype values from prior mapping versions that need re-fetch
+  const STALE_SUBTYPES = new Set<string>(['Tool', 'Tool F', 'Stage1', 'Stage2']);
+  const needsEnrich = (c: MapCard) => 
+    !c.artist || c.subtypes.length === 0
+    || c.subtypes.some(s => STALE_SUBTYPES.has(s))
+    || (c.subtypes.length === 1 && c.subtypes[0] === 'Basic' && c.supertype !== 'Pokémon');
+
+  const toEnrich = cards.filter(needsEnrich);
+  // Mark already-enriched cards to skip re-check next time
+  for (const c of cards) {
+    if (c.artist && !STALE_SUBTYPES.has((c.subtypes as string[])[0])) c._enriched = true;
+  }
+  enrichmentStats = { total: toEnrich.length, done: 0, failed: 0 };
+
+  if (toEnrich.length === 0) {
+    console.log('[enrich] All cards already enriched');
+    return;
+  }
+
+  console.log(`[enrich] Starting enrichment of ${toEnrich.length} cards (batch: ${ENRICH_BATCH_SIZE})`);
+
+  for (let i = 0; i < toEnrich.length; i += ENRICH_BATCH_SIZE) {
+    const batch = toEnrich.slice(i, i + ENRICH_BATCH_SIZE);
+    const promises = batch.map(card =>
+      apiFetch<TcgdexCardDetail>(`/${lang}/cards/${card.id}`)
+        .then(detail => ({ id: detail.id, detail }))
+        .catch(() => null)
+    );
+    const results = await Promise.all(promises);
+
+    for (const r of results) {
+      if (!r) { enrichmentStats.failed++; continue; }
+      const idx = cards.findIndex(c => c.id === r.id);
+      if (idx >= 0) {
+        const setId = r.detail.set?.id || r.id.split('-')[0] || '';
+        const serie = getSerieForSet(setId);
+        const enriched = detailToMapCard(r.detail, lang, serie);
+        enriched._enriched = true;
+        cards[idx] = enriched;
+      }
+      enrichmentStats.done++;
+    }
+
+    // Save to file cache every 100 cards
+    if (enrichmentStats.done % 100 === 0) {
+      cache.saveCardCache(cards);
+      console.log(`[enrich] ${enrichmentStats.done}/${enrichmentStats.total} done (${enrichmentStats.failed} failed)`);
+    }
+  }
+
+  // Final save
+  cache.saveCardCache(cards);
+  console.log(`[enrich] Completed: ${enrichmentStats.done} enriched, ${enrichmentStats.failed} failed`);
+}
+
+// Start enrichment in background after initial load; returns immediately
+export function enrichAllCardsInBackground(lang = 'zh-tw'): void {
+  enrichAllCards(lang).catch(e => console.error('[enrich] Background enrichment error:', e));
 }

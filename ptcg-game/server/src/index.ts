@@ -6,6 +6,7 @@ import { PtcgGame } from './game/PtcgGame';
 import { cardRoutes } from './routes/cards';
 import { battleRoutes } from './routes/battles';
 import { imageRoutes } from './routes/images';
+import { fetchAllCards } from './card-api/tcgdex';
 
 const PORT = parseInt(process.env.PORT || '3001', 10);
 
@@ -25,6 +26,13 @@ apiRouter.use('/images', imageRoutes.routes(), imageRoutes.allowedMethods());
 app.use(apiRouter.routes());
 app.use(apiRouter.allowedMethods());
 
-server.run(PORT, () => {
+server.run(PORT, async () => {
   console.log(`PTCG Server running on port ${PORT}`);
+  // Preload cards on startup so enrichment starts early
+  try {
+    const cards = await fetchAllCards();
+    console.log(`Preloaded ${cards.length} cards`);
+  } catch (e: any) {
+    console.error('Failed to preload cards:', e.message);
+  }
 });

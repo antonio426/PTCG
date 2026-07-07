@@ -8,10 +8,10 @@ const CDN = 'https://assets.tcgdex.net';
 const router = new Router();
 
 // Serve card images from local cache, with CDN fallback
-// URL format: /api/images/:set/:localId/:variant  (no .png extension)
-// CDN format: https://assets.tcgdex.net/{lang}/{setId}/{localId}/{variant}.png
-router.get('/:set/:localId/:variant', async (ctx) => {
-  const { set: setId, localId, variant } = ctx.params;
+// URL format: /api/images/:serie/:set/:localId/:variant  (no .png extension)
+// CDN format: https://assets.tcgdex.net/{lang}/{serie}/{setId}/{localId}/{variant}.png
+router.get('/:serie/:set/:localId/:variant', async (ctx) => {
+  const { serie, set: setId, localId, variant } = ctx.params;
 
   if (variant !== 'low' && variant !== 'high') {
     ctx.status = 400;
@@ -29,8 +29,7 @@ router.get('/:set/:localId/:variant', async (ctx) => {
   }
 
   // Fallback: proxy from CDN
-  // Correct format: https://assets.tcgdex.net/zh-tw/{setId}/{localId}/{variant}.png
-  const cdnUrl = `${CDN}/zh-tw/${setId}/${localId}/high.png`;
+  const cdnUrl = `${CDN}/zh-tw/${serie}/${setId}/${localId}/high.png`;
   try {
     const response = await fetch(cdnUrl, { signal: AbortSignal.timeout(5000) });
     if (response.ok) {

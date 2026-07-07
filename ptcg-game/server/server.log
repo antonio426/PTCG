@@ -411,3 +411,101 @@ Node.js v24.18.0
 上午12:43:53 [tsx] change in ./src\card-api\tcgdex.ts Rerunning...
 cPTCG Server running on port 3001
 INFO: App serving on 3001...
+上午2:02:39 [tsx] change in ./src\card-api\tcgdex.ts Rerunning...
+cnode:events:487
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::3001
+    at Server.setupListenHandle [as _listen2] (node:net:2009:16)
+    at listenInCluster (node:net:2066:12)
+    at Server.listen (node:net:2171:7)
+    at Application.listen (C:\Users\antonio\Desktop\PTCG\ptcg-game\node_modules\koa-socket-2\index.js:112:27)
+    at C:\Users\antonio\Desktop\PTCG\ptcg-game\node_modules\boardgame.io\dist\cjs\server.js:4047:33
+    at new Promise (<anonymous>)
+    at Object.run (C:\Users\antonio\Desktop\PTCG\ptcg-game\node_modules\boardgame.io\dist\cjs\server.js:4046:19)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:2045:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3001
+}
+
+Node.js v24.18.0
+下午8:16:47 [tsx] change in ./src\card-api\tcgdex.ts Rerunning...
+cnode:events:487
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::3001
+    at Server.setupListenHandle [as _listen2] (node:net:2009:16)
+    at listenInCluster (node:net:2066:12)
+    at Server.listen (node:net:2171:7)
+    at Application.listen (C:\Users\antonio\Desktop\PTCG\ptcg-game\node_modules\koa-socket-2\index.js:112:27)
+    at C:\Users\antonio\Desktop\PTCG\ptcg-game\node_modules\boardgame.io\dist\cjs\server.js:4047:33
+    at new Promise (<anonymous>)
+    at Object.run (C:\Users\antonio\Desktop\PTCG\ptcg-game\node_modules\boardgame.io\dist\cjs\server.js:4046:19)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:2045:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3001
+}
+
+Node.js v24.18.0
+下午8:40:53 [tsx] change in ./src\card-api\tcgdex.ts Rerunning...
+cnode:events:487
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::3001
+    at Server.setupListenHandle [as _listen2] (node:net:2009:16)
+    at listenInCluster (node:net:2066:12)
+    at Server.listen (node:net:2171:7)
+    at Application.listen (C:\Users\antonio\Desktop\PTCG\ptcg-game\node_modules\koa-socket-2\index.js:112:27)
+    at C:\Users\antonio\Desktop\PTCG\ptcg-game\node_modules\boardgame.io\dist\cjs\server.js:4047:33
+    at new Promise (<anonymous>)
+    at Object.run (C:\Users\antonio\Desktop\PTCG\ptcg-game\node_modules\boardgame.io\dist\cjs\server.js:4046:19)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:2045:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3001
+}
+
+Node.js v24.18.0
+下午8:56:24 [tsx] change in ./src\routes\battles.ts Rerunning...
+cnode:events:487
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::3001
+    at Server.setupListenHandle [as _listen2] (node:net:2009:16)
+    at listenInCluster (node:net:2066:12)
+    at Server.listen (node:net:2171:7)
+    at Application.listen (C:\Users\antonio\Desktop\PTCG\ptcg-game\node_modules\koa-socket-2\index.js:112:27)
+    at C:\Users\antonio\Desktop\PTCG\ptcg-game\node_modules\boardgame.io\dist\cjs\server.js:4047:33
+    at new Promise (<anonymous>)
+    at Object.run (C:\Users\antonio\Desktop\PTCG\ptcg-game\node_modules\boardgame.io\dist\cjs\server.js:4046:19)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:2045:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3001
+}
+
+Node.js v24.18.0
+
+C:\Users\antonio\Desktop\PTCG\ptcg-game\server>

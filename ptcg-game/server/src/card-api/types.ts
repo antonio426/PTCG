@@ -4,7 +4,7 @@ export type EnergyType = 'Grass' | 'Fire' | 'Water' | 'Lightning' | 'Psychic'
 export type Supertype = 'Pokémon' | 'Trainer' | 'Energy';
 
 export type Subtype = 'Basic' | 'Stage 1' | 'Stage 2' | 'V' | 'VMAX' | 'VSTAR'
-  | 'GX' | 'EX' | 'ex' | 'Mega' | 'Radiant' | 'TAG TEAM' | 'V-UNION'
+  | 'GX' | 'EX' | 'ex' | 'Mega' | 'Radiant' | 'TAG TEAM'
   | 'Item' | 'Supporter' | 'Stadium' | 'Pokémon Tool' | 'Pokémon Tool F'
   | 'Special Energy' | 'Basic Energy'
   | 'Ancient' | 'Future' | 'Rapid Strike' | 'Single Strike' | 'Fusion Strike'
@@ -48,6 +48,8 @@ export interface MapCard {
   name: string;
   supertype: Supertype;
   subtypes: Subtype[];
+  /** @internal Set to true after enrichment fetches detail data from TCGdex API */
+  _enriched?: boolean;
   hp?: string;
   types?: EnergyType[];
   evolvesFrom?: string;
@@ -82,6 +84,7 @@ export interface SetData {
   releaseDate: string;
   symbol?: string;
   logo?: string;
+  legal?: { standard: boolean; expanded: boolean };
 }
 
 export interface TcgdexCardSummary {
@@ -130,6 +133,7 @@ export interface TcgdexSet {
   releaseDate?: string;
   series?: string;
   serie?: { id: string; name: string };
+  legal?: { standard: boolean; expanded: boolean };
 }
 
 export interface CacheData<T> {

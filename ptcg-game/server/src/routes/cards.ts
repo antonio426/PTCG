@@ -2,6 +2,7 @@ import Router from '@koa/router';
 import {
   fetchAllCards, fetchCardById, fetchCardsByIds,
   fetchAllSets, refreshCache, getCachedCards,
+  getEnrichmentStats,
 } from '../card-api/tcgdex';
 
 const router = new Router();
@@ -65,6 +66,10 @@ router.post('/batch-detail', async (ctx) => {
     ctx.status = 500;
     ctx.body = { error: 'Batch fetch failed', detail: err.message };
   }
+});
+
+router.get('/enrich-stats', async (ctx) => {
+  ctx.body = getEnrichmentStats();
 });
 
 router.get('/:id', async (ctx) => {

@@ -75,7 +75,6 @@ async function simulateBattle(decks: string[][], seed: number): Promise<{ winner
       executeMove(G, move, player);
       const winner = checkWinner(G);
       if (winner !== null) { G.winner = winner; break; }
-      if (G.phase === 'end') break;
     }
     if (G.winner !== null) break;
     G.currentPlayer = (1 - G.currentPlayer) as 0 | 1;

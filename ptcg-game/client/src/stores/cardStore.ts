@@ -7,7 +7,14 @@ interface CardFilters {
   subtypes?: Subtype[];
   types?: string[];
   set?: string;
+  rarity?: string[];
+  sortOrder?: SortOrder;
+  namePrefix?: string;
+  /** Filter cards whose name ends with this string (e.g. 'EX') */
+  nameSuffix?: string;
 }
+
+type SortOrder = 'number-asc' | 'number-desc' | 'name-asc' | 'name-desc' | 'hp-desc' | 'hp-asc';
 
 interface CardState {
   cards: Card[];
@@ -21,6 +28,7 @@ interface CardState {
   fetchCardDetail: (id: string) => Promise<Card | undefined>;
 }
 
+export type { SortOrder };
 export const useCardStore = create<CardState>((set, get) => ({
   cards: [],
   sets: [],
@@ -83,6 +91,51 @@ export const useCardStore = create<CardState>((set, get) => ({
 
     if (filters?.set) {
       result = result.filter((c) => c.set.id === filters.set);
+    }
+
+    if (filters?.rarity?.length) {
+      result = result.filter(
+        (c) => c.rarity && filters.rarity!.includes(c.rarity),
+      );
+    }
+
+    if (filters?.namePrefix) {
+      result = result.filter((c) => c.name.startsWith(filters.namePrefix!));
+    }
+
+    if (filters?.nameSuffix) {
+      result = result.filter(
+        (c) => c.name.endsWith(filters.nameSuffix!) && !c.name.startsWith('超級'),
+      );
+    }
+
+    // Apply sort
+    if (filters?.sortOrder) {
+      const order = filters.sortOrder;
+      result = [...result].sort((a, b) => {
+        switch (order) {
+          case 'number-asc':
+            return a.id.localeCompare(b.id);
+          case 'number-desc':
+            return b.id.localeCompare(a.id);
+          case 'name-asc':
+            return a.name.localeCompare(b.name);
+          case 'name-desc':
+            return b.name.localeCompare(a.name);
+          case 'hp-desc': {
+            const ha = a.hp ? parseInt(a.hp, 10) : 0;
+            const hb = b.hp ? parseInt(b.hp, 10) : 0;
+            return hb - ha;
+          }
+          case 'hp-asc': {
+            const ha = a.hp ? parseInt(a.hp, 10) : 0;
+            const hb = b.hp ? parseInt(b.hp, 10) : 0;
+            return ha - hb;
+          }
+          default:
+            return 0;
+        }
+      });
     }
 
     return result;
