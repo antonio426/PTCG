@@ -7,6 +7,30 @@ const CDN = 'https://assets.tcgdex.net';
 
 const router = new Router();
 
+// Serve scraped (scr-*) card images from local cache
+// URL format: /api/images/scr/:id/:variant  (no .png extension)
+// Local path: data/images/scr/{id}.png
+router.get('/scr/:id/:variant', async (ctx) => {
+  const { id, variant } = ctx.params;
+
+  if (variant !== 'low' && variant !== 'high') {
+    ctx.status = 400;
+    ctx.body = { error: 'Invalid variant' };
+    return;
+  }
+
+  const localPath = path.join(IMAGES_DIR, 'scr', `${id}.png`);
+
+  if (fs.existsSync(localPath)) {
+    ctx.type = 'image/png';
+    ctx.body = fs.createReadStream(localPath);
+    return;
+  }
+
+  ctx.status = 404;
+  ctx.body = { error: 'Image not found' };
+});
+
 // Serve card images from local cache, with CDN fallback
 // URL format: /api/images/:serie/:set/:localId/:variant  (no .png extension)
 // CDN format: https://assets.tcgdex.net/{lang}/{serie}/{setId}/{localId}/{variant}.png
