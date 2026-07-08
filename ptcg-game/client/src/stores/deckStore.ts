@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { MAX_DECK_SIZE, MIN_DECK_SIZE, MAX_COPIES_PER_CARD } from '@ptcg/shared';
+import type { Card, Subtype } from '@ptcg/shared';
 
 interface Deck {
   id: string;
@@ -21,12 +22,12 @@ interface DeckState {
   presetDecks: Deck[];
   presetDecksLoading: boolean;
   createDeck: (name: string) => void;
-  addCard: (cardId: string) => void;
+  addCard: (cardId: string, skipCopyLimit?: boolean) => void;
   removeCard: (cardId: string) => void;
   saveDeck: () => void;
   loadDeck: (id: string) => void;
   deleteDeck: (id: string) => void;
-  validateDeck: () => { valid: boolean; errors: string[] };
+  validateDeck: (allCards?: Card[]) => { valid: boolean; errors: string[] };
   setDeckName: (name: string) => void;
   fetchPresetDecks: () => Promise<void>;
   loadPresetDeck: (id: string) => void;
@@ -60,12 +61,12 @@ export const useDeckStore = create<DeckState>((set, get) => ({
     });
   },
 
-  addCard: (cardId: string) => {
+  addCard: (cardId: string, skipCopyLimit?: boolean) => {
     const { currentDeck } = get();
     const cardCount = currentDeck.cards.filter((id) => id === cardId).length;
 
     if (currentDeck.cards.length >= MAX_DECK_SIZE) return;
-    if (cardCount >= MAX_COPIES_PER_CARD) return;
+    if (!skipCopyLimit && cardCount >= MAX_COPIES_PER_CARD) return;
 
     set({
       currentDeck: {
@@ -136,7 +137,7 @@ export const useDeckStore = create<DeckState>((set, get) => ({
     saveDecks(updated);
   },
 
-  validateDeck: () => {
+  validateDeck: (allCards?: Card[]) => {
     const { currentDeck } = get();
     const errors: string[] = [];
 
@@ -155,6 +156,11 @@ export const useDeckStore = create<DeckState>((set, get) => ({
 
     for (const [id, count] of countMap) {
       if (count > MAX_COPIES_PER_CARD) {
+        // Basic Energy 不受 4 張上限限制
+        if (allCards) {
+          const card = allCards.find((c) => c.id === id);
+          if (card?.subtypes.includes('Basic Energy' as Subtype)) continue;
+        }
         errors.push(`卡牌 ${id} 超過了 ${MAX_COPIES_PER_CARD} 張的上限（目前 ${count} 張）`);
       }
     }
