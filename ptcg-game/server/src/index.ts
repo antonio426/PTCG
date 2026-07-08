@@ -6,6 +6,7 @@ import { PtcgGame } from './game/PtcgGame';
 import { cardRoutes } from './routes/cards';
 import { battleRoutes } from './routes/battles';
 import { imageRoutes } from './routes/images';
+import { presetDeckRoutes } from './routes/preset-decks';
 import { fetchAllCards } from './card-api/tcgdex';
 
 const PORT = parseInt(process.env.PORT || '3001', 10);
@@ -23,6 +24,7 @@ const apiRouter = new Router({ prefix: '/api' });
 apiRouter.use('/cards', cardRoutes.routes(), cardRoutes.allowedMethods());
 apiRouter.use('/battles', battleRoutes.routes(), battleRoutes.allowedMethods());
 apiRouter.use('/images', imageRoutes.routes(), imageRoutes.allowedMethods());
+apiRouter.use('/preset-decks', presetDeckRoutes.routes(), presetDeckRoutes.allowedMethods());
 app.use(apiRouter.routes());
 app.use(apiRouter.allowedMethods());
 

@@ -74,7 +74,11 @@ function groupBySupertype(cards: Card[], deckCardIds: string[]) {
 
 export default function DeckBuilder() {
   const { cards, sets, loading, fetchCards, searchCards } = useCardStore();
-  const { decks, currentDeck, createDeck, addCard, removeCard, saveDeck, loadDeck, deleteDeck, validateDeck, setDeckName } = useDeckStore();
+  const {
+    decks, currentDeck, presetDecks, presetDecksLoading,
+    createDeck, addCard, removeCard, saveDeck, loadDeck, deleteDeck, validateDeck, setDeckName,
+    fetchPresetDecks, loadPresetDeck,
+  } = useDeckStore();
 
   const [query, setQuery] = useState('');
   const [supertype, setSupertype] = useState<Supertype | ''>('');
@@ -86,7 +90,8 @@ export default function DeckBuilder() {
 
   useEffect(() => {
     fetchCards();
-  }, [fetchCards]);
+    fetchPresetDecks();
+  }, [fetchCards, fetchPresetDecks]);
 
   useEffect(() => {
     const result = validateDeck();
@@ -226,12 +231,12 @@ export default function DeckBuilder() {
 
       <div className="w-full lg:w-96 xl:w-[28rem] flex flex-col min-h-0">
         {showSaved && (
-          <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 mb-4 max-h-60 overflow-y-auto">
-            <h3 className="text-sm font-semibold text-slate-300 mb-2">已存牌組</h3>
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 mb-4 max-h-80 overflow-y-auto">
+            <h3 className="text-sm font-semibold text-slate-300 mb-2">我的牌組</h3>
             {decks.length === 0 ? (
-              <p className="text-slate-500 text-xs">尚未儲存任何牌組</p>
+              <p className="text-slate-500 text-xs mb-3">尚未儲存任何牌組</p>
             ) : (
-              <div className="space-y-1">
+              <div className="space-y-1 mb-3">
                 {decks.map((deck) => (
                   <div key={deck.id} className="flex items-center gap-2 bg-slate-700/50 rounded-lg px-3 py-2">
                     <div className="flex-1 min-w-0">
@@ -244,6 +249,35 @@ export default function DeckBuilder() {
                 ))}
               </div>
             )}
+
+            <details className="group">
+              <summary className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-300 hover:text-slate-100 mb-2 select-none">
+                <span className="transform transition-transform group-open:rotate-90">▶</span>
+                內建預組（唯讀）{presetDecks.length} 套
+              </summary>
+              {presetDecksLoading ? (
+                <div className="text-center py-4 text-slate-500 text-xs">載入中...</div>
+              ) : presetDecks.length === 0 ? (
+                <p className="text-slate-500 text-xs">暫無內建預組</p>
+              ) : (
+                <div className="space-y-1">
+                  {presetDecks.map((deck) => (
+                    <div key={deck.id} className="flex items-center gap-2 bg-slate-700/30 rounded-lg px-3 py-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-white truncate">{deck.name}</p>
+                        <p className="text-xs text-slate-500">{deck.cards.length} 張卡牌</p>
+                      </div>
+                      <button
+                        onClick={() => loadPresetDeck(deck.id)}
+                        className="px-2 py-1 text-xs bg-emerald-700 text-white rounded hover:bg-emerald-600"
+                      >
+                        載入
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </details>
           </div>
         )}
 

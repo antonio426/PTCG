@@ -18,6 +18,8 @@ interface CurrentDeck {
 interface DeckState {
   decks: Deck[];
   currentDeck: CurrentDeck;
+  presetDecks: Deck[];
+  presetDecksLoading: boolean;
   createDeck: (name: string) => void;
   addCard: (cardId: string) => void;
   removeCard: (cardId: string) => void;
@@ -26,6 +28,8 @@ interface DeckState {
   deleteDeck: (id: string) => void;
   validateDeck: () => { valid: boolean; errors: string[] };
   setDeckName: (name: string) => void;
+  fetchPresetDecks: () => Promise<void>;
+  loadPresetDeck: (id: string) => void;
 }
 
 function generateId(): string {
@@ -47,6 +51,8 @@ function saveDecks(decks: Deck[]): void {
 export const useDeckStore = create<DeckState>((set, get) => ({
   decks: loadDecks(),
   currentDeck: { id: null, name: '', cards: [] },
+  presetDecks: [],
+  presetDecksLoading: false,
 
   createDeck: (name: string) => {
     set({
@@ -159,5 +165,26 @@ export const useDeckStore = create<DeckState>((set, get) => ({
   setDeckName: (name: string) => {
     const { currentDeck } = get();
     set({ currentDeck: { ...currentDeck, name } });
+  },
+
+  fetchPresetDecks: async () => {
+    set({ presetDecksLoading: true });
+    try {
+      const res = await fetch('/api/preset-decks');
+      if (!res.ok) throw new Error('Failed to fetch preset decks');
+      const decks: Deck[] = await res.json();
+      set({ presetDecks: decks, presetDecksLoading: false });
+    } catch {
+      set({ presetDecksLoading: false });
+    }
+  },
+
+  loadPresetDeck: (id: string) => {
+    const { presetDecks } = get();
+    const deck = presetDecks.find((d) => d.id === id);
+    if (!deck) return;
+    set({
+      currentDeck: { id: null, name: `[預組] ${deck.name}`, cards: [...deck.cards] },
+    });
   },
 }));
