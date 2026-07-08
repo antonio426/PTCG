@@ -296,7 +296,13 @@ export async function fetchCardById(id: string, lang = 'zh-tw'): Promise<MapCard
     card._enriched = true;
     if (inMemoryCards) {
       const idx = inMemoryCards.findIndex(c => c.id === id);
-      if (idx >= 0) inMemoryCards[idx] = card;
+      if (idx >= 0) {
+        const originalRarity = inMemoryCards[idx].rarity;
+        if (originalRarity === 'ACE SPEC Rare' && card.rarity !== 'ACE SPEC Rare') {
+          card.rarity = originalRarity;
+        }
+        inMemoryCards[idx] = card;
+      }
       else inMemoryCards.push(card);
     }
     return card;
@@ -348,7 +354,13 @@ export async function fetchCardsByIds(ids: string[], lang = 'zh-tw'): Promise<Re
         result[r.id] = r.card;
         if (inMemoryCards) {
           const idx = inMemoryCards.findIndex(c => c.id === r.id);
-          if (idx >= 0) inMemoryCards[idx] = r.card;
+          if (idx >= 0) {
+            const originalRarity = inMemoryCards[idx].rarity;
+            if (originalRarity === 'ACE SPEC Rare' && r.card.rarity !== 'ACE SPEC Rare') {
+              r.card.rarity = originalRarity;
+            }
+            inMemoryCards[idx] = r.card;
+          }
           else inMemoryCards.push(r.card);
         }
       }
@@ -516,8 +528,13 @@ export async function enrichAllCards(lang = 'zh-tw'): Promise<void> {
       if (idx >= 0) {
         const setId = r.detail.set?.id || r.id.split('-')[0] || '';
         const serie = getSerieForSet(setId);
+        const originalRarity = cards[idx].rarity;
         const enriched = detailToMapCard(r.detail, lang, serie);
         enriched._enriched = true;
+        // Preserve ACE SPEC rarity — TCGdex API doesn't always return it
+        if (originalRarity === 'ACE SPEC Rare' && enriched.rarity !== 'ACE SPEC Rare') {
+          enriched.rarity = originalRarity;
+        }
         cards[idx] = enriched;
       }
       enrichmentStats.done++;

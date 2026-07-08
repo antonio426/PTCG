@@ -3,13 +3,15 @@ import { useCardStore } from '../stores/cardStore';
 import type { SortOrder } from '../stores/cardStore';
 import type { Card, Supertype, EnergyType, Subtype } from '@ptcg/shared';
 
-/** Card type filter defs (shown as independent multi-toggle) */
+/** Card type filter defs (single-select) */
 const CARD_TYPE_DEFS = [
   { label: '寶可夢', supertype: 'Pokémon' as Supertype },
-  { label: '訓練家', supertype: 'Trainer' as Supertype },
+  { label: '訓練家', supertype: 'Trainer' as Supertype, excludeSubtypes: ['Item', 'Pokémon Tool', 'Stadium'] as Subtype[] },
+  { label: '能量', supertype: 'Energy' as Supertype },
   { label: '寶可夢道具', subtype: 'Pokémon Tool' as Subtype },
   { label: '競技場', subtype: 'Stadium' as Subtype },
   { label: '物品', subtype: 'Item' as Subtype },
+  { label: 'ACE SPEC', rarity: 'ACE SPEC Rare' },
 ] as const;
 
 /** Evolution stage filter defs (independent multi-toggle) */
@@ -500,6 +502,10 @@ export default function CardBrowser() {
       if (def) {
         if ('supertype' in def) typeMatch = c.supertype === def.supertype;
         if ('subtype' in def) typeMatch = c.subtypes?.includes(def.subtype);
+        if ('rarity' in def) typeMatch = c.rarity === def.rarity;
+        if ('excludeSubtypes' in def && def.excludeSubtypes) {
+          typeMatch = typeMatch && !def.excludeSubtypes.some(s => c.subtypes?.includes(s));
+        }
       }
     }
     // Evolution stage check

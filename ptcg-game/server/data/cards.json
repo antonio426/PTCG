@@ -1,5 +1,5 @@
 {
-  "timestamp": 1783446422710,
+  "timestamp": 1783520750078,
   "data": [
     {
       "id": "SV1V-001",
@@ -395016,7 +395016,7 @@
       "name": "森林封印石",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Pokémon Tool"
       ],
       "abilities": [],
       "attacks": [],
@@ -396335,7 +396335,7 @@
       },
       "number": "052",
       "artist": "Toyste Beach",
-      "rarity": "None",
+      "rarity": "ACE SPEC Rare",
       "legalities": {
         "standard": "Legal"
       },
@@ -396409,7 +396409,8 @@
         "large": "/api/images/SV/SV5a/053/high"
       },
       "localId": "053",
-      "_enriched": true
+      "_enriched": true,
+      "rarity": "ACE SPEC Rare"
     },
     {
       "id": "SV7a-053",
@@ -396769,7 +396770,8 @@
         "large": "/api/images/SV/SV5a/055/high"
       },
       "localId": "055",
-      "_enriched": true
+      "_enriched": true,
+      "rarity": "ACE SPEC Rare"
     },
     {
       "id": "SV7a-055",
@@ -396925,7 +396927,7 @@
       },
       "number": "056",
       "artist": "Toyste Beach",
-      "rarity": "None",
+      "rarity": "ACE SPEC Rare",
       "legalities": {
         "standard": "Legal"
       },
@@ -397618,7 +397620,8 @@
         "large": "/api/images/SV/SV5a/059/high"
       },
       "localId": "059",
-      "_enriched": true
+      "_enriched": true,
+      "rarity": "ACE SPEC Rare"
     },
     {
       "id": "SV7a-059",
@@ -399128,7 +399131,8 @@
         "large": "/api/images/SV/SV5M/062/high"
       },
       "localId": "062",
-      "_enriched": true
+      "_enriched": true,
+      "rarity": "ACE SPEC Rare"
     },
     {
       "id": "SV4K-062",
@@ -399737,7 +399741,8 @@
         "large": "/api/images/SV/SV5M/063/high"
       },
       "localId": "063",
-      "_enriched": true
+      "_enriched": true,
+      "rarity": "ACE SPEC Rare"
     },
     {
       "id": "SV4K-063",
@@ -400338,7 +400343,8 @@
         "large": "/api/images/SV/SV5M/064/high"
       },
       "localId": "064",
-      "_enriched": true
+      "_enriched": true,
+      "rarity": "ACE SPEC Rare"
     },
     {
       "id": "SV4K-064",
@@ -405685,7 +405691,8 @@
         "large": "/api/images/SV/SV6/092/high"
       },
       "localId": "092",
-      "_enriched": true
+      "_enriched": true,
+      "rarity": "ACE SPEC Rare"
     },
     {
       "id": "SV5K-092",
@@ -406105,7 +406112,8 @@
         "large": "/api/images/SV/SV6/093/high"
       },
       "localId": "093",
-      "_enriched": true
+      "_enriched": true,
+      "rarity": "ACE SPEC Rare"
     },
     {
       "id": "SV7-093",
@@ -406520,7 +406528,7 @@
       },
       "number": "094",
       "artist": "Toyste Beach",
-      "rarity": "None",
+      "rarity": "ACE SPEC Rare",
       "legalities": {
         "standard": "Legal"
       },
@@ -406810,7 +406818,7 @@
       },
       "number": "095",
       "artist": "Ayaka Yoshida",
-      "rarity": "None",
+      "rarity": "ACE SPEC Rare",
       "legalities": {
         "standard": "Legal"
       },
@@ -407269,7 +407277,7 @@
       },
       "number": "096",
       "artist": "inose yukie",
-      "rarity": "None",
+      "rarity": "ACE SPEC Rare",
       "legalities": {
         "standard": "Legal"
       },
@@ -407592,7 +407600,7 @@
       },
       "number": "097",
       "artist": "inose yukie",
-      "rarity": "None",
+      "rarity": "ACE SPEC Rare",
       "legalities": {
         "standard": "Legal"
       },
@@ -407982,7 +407990,7 @@
       },
       "number": "098",
       "artist": "Toyste Beach",
-      "rarity": "None",
+      "rarity": "ACE SPEC Rare",
       "legalities": {
         "standard": "Legal"
       },
@@ -408732,7 +408740,7 @@
       },
       "number": "101",
       "artist": "AYUMI ODASHIMA",
-      "rarity": "None",
+      "rarity": "ACE SPEC Rare",
       "legalities": {
         "standard": "Legal"
       },
@@ -415775,7 +415783,7 @@
       },
       "number": "142",
       "artist": "Toyste Beach",
-      "rarity": "None",
+      "rarity": "ACE SPEC Rare",
       "legalities": {
         "standard": "Legal"
       },
@@ -416992,7 +417000,7 @@
       },
       "number": "146",
       "artist": "inose yukie",
-      "rarity": "None",
+      "rarity": "ACE SPEC Rare",
       "legalities": {
         "standard": "Legal"
       },
@@ -417587,7 +417595,7 @@
       },
       "number": "148",
       "artist": "Toyste Beach",
-      "rarity": "None",
+      "rarity": "ACE SPEC Rare",
       "legalities": {
         "standard": "Legal"
       },
@@ -417869,7 +417877,7 @@
       },
       "number": "149",
       "artist": "Toyste Beach",
-      "rarity": "None",
+      "rarity": "ACE SPEC Rare",
       "legalities": {
         "standard": "Legal"
       },
@@ -418715,7 +418723,7 @@
       },
       "number": "152",
       "artist": "Toyste Beach",
-      "rarity": "None",
+      "rarity": "ACE SPEC Rare",
       "legalities": {
         "standard": "Legal"
       },
@@ -420290,7 +420298,7 @@
       },
       "number": "159",
       "artist": "inose yukie",
-      "rarity": "None",
+      "rarity": "ACE SPEC Rare",
       "legalities": {
         "standard": "Legal"
       },
@@ -423926,7 +423934,7 @@
       },
       "number": "184",
       "artist": "imoniii",
-      "rarity": "None",
+      "rarity": "ACE SPEC Rare",
       "legalities": {
         "standard": "Legal"
       },
@@ -427267,9 +427275,9 @@
     {
       "id": "SVAL-011",
       "name": "能量輸送",
-      "supertype": "Energy",
+      "supertype": "Trainer",
       "subtypes": [
-        "Special Energy"
+        "Item"
       ],
       "abilities": [],
       "attacks": [],
@@ -427301,9 +427309,9 @@
     {
       "id": "SVAL-012",
       "name": "巢穴球",
-      "supertype": "Energy",
+      "supertype": "Trainer",
       "subtypes": [
-        "Special Energy"
+        "Item"
       ],
       "abilities": [],
       "attacks": [],
@@ -427335,9 +427343,9 @@
     {
       "id": "SVAW-019",
       "name": "活力頭帶",
-      "supertype": "Energy",
+      "supertype": "Trainer",
       "subtypes": [
-        "Special Energy"
+        "Pokémon Tool"
       ],
       "abilities": [],
       "attacks": [],
@@ -427570,7 +427578,7 @@
       },
       "number": "064",
       "artist": "5ban Graphics",
-      "rarity": "None",
+      "rarity": "ACE SPEC Rare",
       "legalities": {
         "standard": "Legal"
       },
@@ -428476,7 +428484,8 @@
         "large": "/api/images/SV/SV6/101/high"
       },
       "localId": "101",
-      "_enriched": true
+      "_enriched": true,
+      "rarity": "ACE SPEC Rare"
     },
     {
       "id": "SCA-124",
@@ -430753,7 +430762,7 @@
         "releaseDate": ""
       },
       "number": "187",
-      "rarity": "None",
+      "rarity": "ACE SPEC Rare",
       "legalities": {
         "standard": "Legal"
       },
@@ -433706,7 +433715,8 @@
       },
       "artist": "Toyste Beach",
       "regulationMark": "H",
-      "_enriched": true
+      "_enriched": true,
+      "rarity": "ACE SPEC Rare"
     },
     {
       "id": "scr-9769",
@@ -442269,7 +442279,7 @@
       "name": "火箭隊的催眠裝置",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Pokémon Tool"
       ],
       "set": {
         "id": "SV",
@@ -444567,7 +444577,7 @@
       "name": "猛攻手鐲",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Pokémon Tool"
       ],
       "set": {
         "id": "SV11W",
@@ -445011,7 +445021,7 @@
       "name": "猛攻手鐲",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Pokémon Tool"
       ],
       "set": {
         "id": "SV11W",
@@ -448979,7 +448989,7 @@
       "name": "龐克頭盔",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Pokémon Tool"
       ],
       "set": {
         "id": "MBG",
@@ -451033,7 +451043,7 @@
       "name": "神聖護符",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Pokémon Tool"
       ],
       "set": {
         "id": "M2",
@@ -451425,7 +451435,7 @@
       "name": "逆境保險",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Pokémon Tool"
       ],
       "set": {
         "id": "M",
@@ -454004,7 +454014,7 @@
       "name": "電氣球",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Pokémon Tool"
       ],
       "set": {
         "id": "M2a",
@@ -454031,7 +454041,7 @@
       "name": "渾厚鱗片",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Pokémon Tool"
       ],
       "set": {
         "id": "M2a",
@@ -454058,7 +454068,7 @@
       "name": "猛攻手鐲",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Pokémon Tool"
       ],
       "set": {
         "id": "M2a",
@@ -464756,7 +464766,7 @@
       "name": "猛攻手鐲",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Pokémon Tool"
       ],
       "set": {
         "id": "MC",
@@ -466323,7 +466333,7 @@
       "name": "核心記憶碟",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Pokémon Tool"
       ],
       "set": {
         "id": "M3",
@@ -466341,20 +466351,6 @@
         "small": "https://asia.pokemon-card.com/tw/card-img/tw00018049.png",
         "large": "https://asia.pokemon-card.com/tw/card-img/tw00018049.png"
       },
-      "attacks": [
-        {
-          "name": "大地光炮",
-          "cost": [
-            "Fighting",
-            "Fighting",
-            "Fighting",
-            "Fighting"
-          ],
-          "convertedEnergyCost": 4,
-          "damage": "350",
-          "text": "將這隻寶可夢身上附加的能量卡全部丟棄。"
-        }
-      ],
       "artist": "Toyste Beach",
       "regulationMark": "J",
       "_enriched": true
@@ -466808,7 +466804,7 @@
       "name": "猛攻手鐲",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Pokémon Tool"
       ],
       "set": {
         "id": "M",
@@ -468300,7 +468296,7 @@
       "name": "猛攻手鐲",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Pokémon Tool"
       ],
       "set": {
         "id": "MC",
@@ -473241,7 +473237,7 @@
       "name": "神聖護符",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Pokémon Tool"
       ],
       "set": {
         "id": "M2",
@@ -473268,7 +473264,7 @@
       "name": "龐克頭盔",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Pokémon Tool"
       ],
       "set": {
         "id": "M2",
@@ -474662,7 +474658,7 @@
       "name": "豪邁炸彈",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Pokémon Tool"
       ],
       "set": {
         "id": "M5",
@@ -474689,7 +474685,7 @@
       "name": "重試徽章",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Pokémon Tool"
       ],
       "set": {
         "id": "M5",
@@ -475699,7 +475695,7 @@
       "name": "豪邁炸彈",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Pokémon Tool"
       ],
       "set": {
         "id": "M5",
@@ -475726,7 +475722,7 @@
       "name": "猛攻手鐲",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Pokémon Tool"
       ],
       "set": {
         "id": "M5",
