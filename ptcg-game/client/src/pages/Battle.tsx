@@ -1,167 +1,154 @@
-import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useDeckStore } from '../stores/deckStore';
 import { useCardStore } from '../stores/cardStore';
-import { useGameStore } from '../stores/gameStore';
-import type { Card } from '@ptcg/shared';
+import { useGameStore, type SanitizedGameCard } from '../stores/gameStore';
+import type { Card, LegalAction } from '@ptcg/shared';
 
-type GamePhase = 'select' | 'playing' | 'ended';
+/* ====================================================== */
+/*  Energy icons                                           */
+/* ====================================================== */
 
-interface LogEntry {
-  player: number;
-  action: string;
-  detail: string;
-  turn: number;
+const ENERGY_COLORS: Record<string, string> = {
+  Grass: 'bg-green-500', Fire: 'bg-red-500', Water: 'bg-blue-500',
+  Lightning: 'bg-yellow-400', Psychic: 'bg-purple-500', Fighting: 'bg-orange-600',
+  Darkness: 'bg-stone-800', Metal: 'bg-slate-400', Dragon: 'bg-indigo-500',
+  Fairy: 'bg-pink-400', Colorless: 'bg-gray-400',
+};
+
+const ENERGY_LABELS: Record<string, string> = {
+  Grass: '草', Fire: '炎', Water: '水', Lightning: '雷',
+  Psychic: '超', Fighting: '闘', Darkness: '悪', Metal: '鋼',
+  Dragon: '竜', Fairy: '妖', Colorless: '無',
+};
+
+function EnergyIcon({ type, size = 'sm' }: { type: string; size?: 'sm' | 'md' }) {
+  const cls = size === 'md' ? 'w-5 h-5 text-[10px]' : 'w-4 h-4 text-[8px]';
+  return (
+    <span className={`inline-flex items-center justify-center rounded-full ${ENERGY_COLORS[type] || 'bg-gray-500'} text-white font-bold ${cls}`}>
+      {ENERGY_LABELS[type] || '?'}
+    </span>
+  );
 }
 
-function ActiveCard({ card, faceDown, label }: { card?: Card | null; faceDown?: boolean; label?: string }) {
-  if (!card || faceDown) {
-    return (
-      <div className="flex flex-col items-center gap-1">
-        <div className="w-20 h-28 bg-slate-700 border-2 border-dashed border-slate-600 rounded-lg flex items-center justify-center">
-          <span className="text-slate-500 text-xs">?</span>
-        </div>
-        {label && <span className="text-xs text-slate-500">{label}</span>}
-      </div>
-    );
+/* ====================================================== */
+/*  HP Bar                                                */
+/* ====================================================== */
+
+function HpBar({ current, max }: { current: number; max: number }) {
+  const pct = max > 0 ? Math.max(0, Math.min(100, (current / max) * 100)) : 0;
+  const color = pct > 50 ? 'bg-green-500' : pct > 20 ? 'bg-yellow-500' : 'bg-red-500';
+  return (
+    <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
+      <div className={`h-full ${color} transition-all duration-300`} style={{ width: `${pct}%` }} />
+    </div>
+  );
+}
+
+/* ====================================================== */
+/*  Helper: group legal moves by hand card                */
+/* ====================================================== */
+
+interface HandCardAction {
+  cardData: Card;
+  moves: LegalAction[];
+}
+
+function groupMovesByHandCard(legalMoves: LegalAction[], hand: Card[]): HandCardAction[] {
+  const result: HandCardAction[] = [];
+  for (const hc of hand) {
+    const moves = legalMoves.filter(m => {
+      if (m.type === 'play_pokemon' || m.type === 'evolve_pokemon' || m.type === 'attach_energy' || m.type === 'play_trainer') {
+        return m.payload?.cardId === hc.id;
+      }
+      return false;
+    });
+    if (moves.length > 0) {
+      result.push({ cardData: hc, moves });
+    }
   }
-
-  return (
-    <div className="flex flex-col items-center gap-1 group cursor-pointer">
-      <div className="w-20 h-28 bg-slate-700 border-2 border-slate-600 rounded-lg overflow-hidden group-hover:border-yellow-500 transition-colors">
-        <img src={card.images.small} alt={card.name} className="w-full h-full object-contain" />
-      </div>
-      <span className="text-xs text-white truncate max-w-20 text-center">{card.name}</span>
-      {label && <span className="text-xs text-slate-500">{label}</span>}
-    </div>
-  );
+  return result;
 }
 
-function BenchCard({ card, faceDown }: { card?: Card | null; faceDown?: boolean }) {
-  if (!card || faceDown) {
-    return (
-      <div className="w-14 h-20 bg-slate-800 border border-dashed border-slate-600 rounded-md flex items-center justify-center">
-        <span className="text-slate-600 text-xs">?</span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-14 h-20 bg-slate-700 border border-slate-600 rounded-md overflow-hidden cursor-pointer hover:border-slate-500 transition-colors">
-      <img src={card.images.small} alt={card.name} className="w-full h-full object-contain" />
-    </div>
-  );
-}
-
-function HandCard({ card }: { card: Card }) {
-  return (
-    <div className="w-16 h-22 bg-slate-700 border border-slate-600 rounded-lg overflow-hidden hover:border-yellow-500 hover:-translate-y-2 transition-all cursor-pointer shadow-lg flex-shrink-0">
-      <img src={card.images.small} alt={card.name} className="w-full h-full object-contain" />
-    </div>
-  );
-}
+/* ====================================================== */
+/*  Main Battle Component                                 */
+/* ====================================================== */
 
 export default function Battle() {
-  const { id: routeGameId } = useParams<{ id: string }>();
-  const { decks, loadDeck, currentDeck } = useDeckStore();
+  const { decks } = useDeckStore();
   const { cards, fetchCards } = useCardStore();
-  const { createAIBattle, leaveGame } = useGameStore();
+  const {
+    battleState, loading, error, battlePhase,
+    createBattle, submitMove, leaveGame,
+  } = useGameStore();
 
-  const [phase, setPhase] = useState<GamePhase>('select');
   const [selectedDeckId, setSelectedDeckId] = useState('');
-  const [gameLog, setGameLog] = useState<LogEntry[]>([]);
-  const [opponentActive, setOpponentActive] = useState<Card | null>(null);
-  const [opponentBench, setOpponentBench] = useState<(Card | null)[]>([null, null, null, null, null]);
-  const [playerHand, setPlayerHand] = useState<Card[]>([]);
-  const [playerActive, setPlayerActive] = useState<Card | null>(null);
-  const [playerBench, setPlayerBench] = useState<(Card | null)[]>([null, null, null, null, null]);
-  const [playerPrizes, setPlayerPrizes] = useState(6);
-  const [opponentPrizes, setOpponentPrizes] = useState(6);
-  const [isMyTurn, setIsMyTurn] = useState(true);
-  const [turnNumber, setTurnNumber] = useState(1);
-  const [winner, setWinner] = useState<number | null>(null);
+  const [selectedCardInHand, setSelectedCardInHand] = useState<string | null>(null);
   const [showPlayerDiscard, setShowPlayerDiscard] = useState(false);
   const [showOpponentDiscard, setShowOpponentDiscard] = useState(false);
+  const [showOpponentHand, setShowOpponentHand] = useState(false);
 
   useEffect(() => {
     fetchCards();
   }, [fetchCards]);
 
-  useEffect(() => {
-    if (routeGameId) {
-      setPhase('playing');
-    }
-  }, [routeGameId]);
+  // Group legal moves by hand card for the action UI
+  const handCardActions = useMemo(() => {
+    if (!battleState) return [];
+    return groupMovesByHandCard(battleState.legalMoves, battleState.player.hand);
+  }, [battleState]);
 
-  const handleStartBattle = async () => {
+  // Quick actions: moves that don't need a hand card (plus end_turn)
+  const quickActions = useMemo(() => {
+    if (!battleState) return [];
+    return battleState.legalMoves.filter(m =>
+      m.type === 'draw_card' || m.type === 'retreat' || m.type === 'end_turn' || m.type === 'attack'
+    );
+  }, [battleState]);
+
+  // Play trainer actions (shown separately)
+  const trainerActions = useMemo(() => {
+    if (!battleState) return [];
+    return battleState.legalMoves.filter(m => m.type === 'play_trainer');
+  }, [battleState]);
+
+  const handleStartBattle = useCallback(async () => {
     if (!selectedDeckId) return;
-    const deck = decks.find((d) => d.id === selectedDeckId);
+    const deck = decks.find(d => d.id === selectedDeckId);
     if (!deck) return;
+    try {
+      await createBattle(deck.cards);
+    } catch { /* handled by store */ }
+  }, [selectedDeckId, decks, createBattle]);
 
-    setPhase('playing');
-    setTurnNumber(1);
-    setIsMyTurn(true);
-    setGameLog([
-      { player: 0, action: '對戰開始', detail: '雙方各抽 7 張手牌', turn: 0 },
-      { player: 0, action: '決定先攻', detail: '你先攻！', turn: 0 },
-    ]);
-    setPlayerPrizes(6);
-    setOpponentPrizes(6);
-    setWinner(null);
+  const handleSubmitMove = useCallback((move: LegalAction) => {
+    setSelectedCardInHand(null);
+    submitMove(move.type, move.payload);
+  }, [submitMove]);
 
-    const deckCards = deck.cards.map((id) => cards.find((c) => c.id === id)).filter(Boolean) as Card[];
-    const hand = deckCards.slice(0, 7);
-    setPlayerHand(hand);
+  const handleCardClick = useCallback((cardId: string) => {
+    setSelectedCardInHand(prev => prev === cardId ? null : cardId);
+  }, []);
 
-    if (hand.length > 0) {
-      const basic = hand.find((c) => c.subtypes.includes('Basic'));
-      if (basic) {
-        setPlayerActive(basic);
-        setPlayerHand((prev) => prev.filter((c) => c.id !== basic.id));
-      }
-    }
+  const handleRetry = useCallback(() => {
+    leaveGame();
+  }, [leaveGame]);
+
+  const bs = battleState;
+  const phaseLabels: Record<string, string> = {
+    draw: '抽牌階段', main: '主要階段', attack: '攻擊階段', end: '結束階段',
   };
 
-  const handleEndTurn = () => {
-    setIsMyTurn(false);
-    setTurnNumber((t) => t + 1);
-    setGameLog((prev) => [
-      ...prev,
-      { player: 0, action: '結束回合', detail: `第 ${turnNumber} 回合結束`, turn: turnNumber },
-    ]);
-
-    setTimeout(() => {
-      setIsMyTurn(true);
-      setGameLog((prev) => [
-        ...prev,
-        { player: 1, action: 'AI 思考中', detail: 'AI 正在決定行動...', turn: turnNumber },
-      ]);
-
-      setTimeout(() => {
-        const basicCards = cards.filter((c) => c.subtypes.includes('Basic'));
-        if (basicCards.length > 0) {
-          const randomActive = basicCards[Math.floor(Math.random() * basicCards.length)];
-          setOpponentActive(randomActive);
-        }
-        setGameLog((prev) => [
-          ...prev,
-          { player: 1, action: 'AI 結束回合', detail: `第 ${turnNumber} 回合結束`, turn: turnNumber },
-        ]);
-      }, 1500);
-    }, 500);
-  };
-
-  const selectedDeck = decks.find((d) => d.id === selectedDeckId);
-
-  if (phase === 'select') {
+  /* ======================== */
+  /*  Phase: Select Deck (no server battle active)     */
+  /* ======================== */
+  if (battlePhase === 'select') {
     return (
       <div className="flex items-center justify-center min-h-[70vh]">
         <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 w-full max-w-md">
           <h1 className="text-2xl font-bold text-white text-center mb-6">AI 對戰練習</h1>
-
           <div className="space-y-4">
             <div>
-              <label className="text-sm text-slate-400 mb-1.5 block">選擇牌組</label>
+              <label className="text-sm text-slate-400 mb-1.5 block">選擇你的牌組</label>
               {decks.length === 0 ? (
                 <p className="text-slate-500 text-sm bg-slate-700/50 rounded-lg p-3 text-center">
                   尚無可用牌組，請先到牌組構築建立牌組
@@ -179,178 +166,483 @@ export default function Battle() {
                 </select>
               )}
             </div>
-
-            {selectedDeck && (
-              <div className="bg-slate-700/40 rounded-lg p-3 text-sm text-slate-300">
-                <p>牌組: {selectedDeck.name}</p>
-                <p>卡牌: {selectedDeck.cards.length} 張</p>
-              </div>
-            )}
-
             <button
               onClick={handleStartBattle}
-              disabled={!selectedDeckId}
+              disabled={!selectedDeckId || loading}
               className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
-              開始對戰
+              {loading ? '建立對戰中...' : '開始對戰'}
             </button>
+            {error && <p className="text-red-400 text-sm text-center">{error}</p>}
           </div>
         </div>
       </div>
     );
   }
 
+  /* ======================== */
+  /*  Loading state           */
+  /* ======================== */
+  if (!bs) {
+    return (
+      <div className="flex items-center justify-center min-h-[70vh]">
+        <div className="flex items-center gap-2 text-slate-400">
+          <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-blue-500" />
+          <span>載入中...</span>
+        </div>
+      </div>
+    );
+  }
+
+  /* ======================== */
+  /*  Helper sub-components   */
+  /* ======================== */
+
+  function PokemonCardView({
+    card, size = 'normal', showHp = true, onClick, highlight, selected,
+  }: {
+    card: SanitizedGameCard;
+    size?: 'normal' | 'small';
+    showHp?: boolean;
+    onClick?: () => void;
+    highlight?: boolean;
+    selected?: boolean;
+  }) {
+    const cd = card.cardData;
+    const hp = cd.hp ? parseInt(cd.hp) : 0;
+    const remainingHp = Math.max(0, hp - card.damage);
+    const isW = size === 'small';
+    const wCls = isW ? 'w-24' : 'w-32';
+    const imgH = isW ? 'h-[4.25rem]' : 'h-[6.5rem]';
+
+    return (
+      <div
+        className={`flex flex-col items-center gap-0.5 cursor-pointer transition-all
+          ${highlight ? 'ring-2 ring-yellow-400 rounded-lg' : ''}
+          ${selected ? 'ring-2 ring-blue-400 rounded-lg' : ''}
+          ${onClick ? 'hover:-translate-y-1' : ''}`}
+        onClick={onClick}
+      >
+        <div className={`${wCls} ${imgH} bg-slate-700 border-2 border-slate-600 rounded-lg overflow-hidden`}>
+          <img src={cd.images.small} alt={cd.name} className="w-full h-full object-contain" />
+        </div>
+        {showHp && hp > 0 && (
+          <div className="w-full px-0.5">
+            <div className="flex justify-between text-[10px] text-slate-300 mb-0.5">
+              <span className="truncate max-w-[60%]">{cd.name}</span>
+              <span>{remainingHp}/{hp}</span>
+            </div>
+            <HpBar current={remainingHp} max={hp} />
+          </div>
+        )}
+        {!showHp && (
+          <span className="text-[10px] text-slate-400 truncate max-w-[90%]">{cd.name}</span>
+        )}
+        {card.attachedEnergy.length > 0 && (
+          <div className="flex gap-0.5 flex-wrap justify-center mt-0.5">
+            {card.attachedEnergy.map((e, i) => (
+              <EnergyIcon key={i} type={e.type} size={isW ? 'sm' : 'sm'} />
+            ))}
+          </div>
+        )}
+        {card.damage > 0 && (
+          <span className="text-[10px] text-red-400 font-bold">-{card.damage}</span>
+        )}
+        {card.statusConditions.length > 0 && (
+          <span className="text-[10px] text-yellow-400">{card.statusConditions.join(' ')}</span>
+        )}
+      </div>
+    );
+  }
+
+  function PrizeDisplay({ count, label }: { count: number; label: string }) {
+    return (
+      <div className="flex items-center gap-1">
+        {label && <span className="text-xs text-slate-400">{label}</span>}
+        <div className="flex gap-0.5">
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className={`w-2.5 h-2.5 rounded-full ${i < count ? 'bg-yellow-400' : 'bg-slate-700'}`} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  /* ======================== */
+  /*  Main Battle Layout      */
+  /* ======================== */
+
+  const isOver = bs.winner !== null;
+
   return (
-    <div className="flex gap-4 h-[calc(100vh-8rem)] min-h-0">
-      <div className="flex-1 flex flex-col min-h-0">
-        <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 mb-3">
-          <div className="flex items-center justify-between mb-2">
+    <div className="flex gap-3 h-[calc(100vh-7rem)] min-h-0">
+
+      {/* Left column: battlefield */}
+      <div className="flex-1 flex flex-col min-h-0 gap-2">
+
+        {/* Opponent area */}
+        <div className="bg-slate-800/80 border border-slate-700 rounded-xl p-3">
+          <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-red-400">對手</span>
-              <div className="flex gap-1">
-                {Array.from({ length: 6 }, (_, i) => (
-                  <div key={i} className={`w-3 h-3 rounded-full ${i < opponentPrizes ? 'bg-yellow-400' : 'bg-slate-700'}`} />
-                ))}
-              </div>
-              <button onClick={() => setShowOpponentDiscard(true)} className="text-xs text-slate-500 hover:text-slate-300">
-                棄牌堆
+              <PrizeDisplay count={bs.opponent.prizes} label="" />
+              <button
+                onClick={() => setShowOpponentHand(true)}
+                className="text-xs text-slate-500 hover:text-slate-300"
+              >
+                手牌 ({bs.opponent.handCount})
               </button>
+              <button
+                onClick={() => setShowOpponentDiscard(true)}
+                className="text-xs text-slate-500 hover:text-slate-300"
+              >
+                棄牌 ({bs.opponent.discardCount})
+              </button>
+              <span className="text-xs text-slate-600">牌庫 {bs.opponent.deckCount}</span>
             </div>
-            <span className="text-xs text-slate-500">回合 {turnNumber}</span>
           </div>
 
-          <div className="flex justify-center mb-3">
-            <ActiveCard card={opponentActive} label="戰鬥寶可夢" />
+          <div className="flex justify-center mb-1">
+            {bs.opponent.active ? (
+              <PokemonCardView card={bs.opponent.active} size="normal" showHp={true} />
+            ) : (
+              <div className="w-32 h-[6.5rem] bg-slate-700/50 border-2 border-dashed border-slate-600 rounded-lg flex items-center justify-center">
+                <span className="text-slate-600 text-xs">無寶可夢</span>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-center gap-2">
-            {opponentBench.map((card, i) => (
-              <BenchCard key={i} card={card} />
-            ))}
+            {Array.from({ length: 5 }, (_, i) => {
+              const c = bs.opponent.bench[i];
+              return c ? (
+                <PokemonCardView key={c.id} card={c} size="small" showHp={false} />
+              ) : (
+                <div key={i} className="w-24 h-[4.25rem] bg-slate-700/30 border border-dashed border-slate-600 rounded-md flex items-center justify-center">
+                  <span className="text-slate-600 text-xs">?</span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 mb-3 flex-1 flex flex-col items-center justify-center min-h-0">
-          {winner !== null ? (
-            <div className="text-center">
+        {/* Middle: Actions / Turn info */}
+        <div className="bg-slate-800/80 border border-slate-700 rounded-xl p-3 flex-1 min-h-0 flex flex-col">
+
+          {/* Turn info bar */}
+          <div className="flex items-center justify-between mb-2 text-xs">
+            <span className="text-slate-400">
+              回合 {bs.turn}
+              {bs.phase !== 'draw' && (
+                <span className="ml-2 text-slate-500">| {phaseLabels[bs.phase] || bs.phase}</span>
+              )}
+              {bs.isPlayerTurn ? (
+                <span className="text-green-400 ml-2">你的回合</span>
+              ) : (
+                <span className="text-red-400 ml-2">對手回合</span>
+              )}
+            </span>
+            <span className="text-slate-500">
+              牌庫 {bs.player.deckCount} | 棄牌 {bs.player.discardPile.length}
+            </span>
+          </div>
+
+          {/* Error display */}
+          {error && (
+            <div className="mb-2 p-2 bg-red-900/50 border border-red-700 rounded text-red-300 text-xs">
+              {error}
+            </div>
+          )}
+
+          {/* Game over */}
+          {isOver && (
+            <div className="flex-1 flex flex-col items-center justify-center">
               <p className="text-2xl font-bold text-yellow-400 mb-2">
-                {winner === 0 ? '你贏了！' : '你輸了！'}
+                {bs.winner === 0 ? '你贏了！' : '你輸了！'}
               </p>
+              <p className="text-sm text-slate-400 mb-4">{bs.winReason}</p>
               <button
-                onClick={() => setPhase('select')}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                onClick={handleRetry}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
               >
                 返回大廳
               </button>
             </div>
-          ) : isMyTurn ? (
-            <div className="flex gap-4">
-              <button className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700">抽牌</button>
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">使用支援者</button>
-              <button className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700">進化</button>
-              <button className="px-4 py-2 bg-yellow-600 text-white rounded-lg text-sm hover:bg-yellow-700">能量</button>
-              <button className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">撤退</button>
-              <button onClick={handleEndTurn} className="px-4 py-2 bg-slate-600 text-white rounded-lg text-sm hover:bg-slate-500">
-                結束回合
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 text-slate-400">
-              <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-500" />
+          )}
+
+          {/* Waiting for AI */}
+          {!isOver && !bs.isPlayerTurn && (
+            <div className="flex-1 flex items-center justify-center gap-2 text-slate-400">
+              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-blue-500" />
               AI 思考中...
+            </div>
+          )}
+
+          {/* Player actions */}
+          {!isOver && bs.isPlayerTurn && (
+            <div className="flex-1 overflow-y-auto min-h-0">
+
+              {/* Draw phase */}
+              {bs.phase === 'draw' && (
+                <div className="flex items-center justify-center h-full">
+                  <button
+                    onClick={() => {
+                      const drawMove = quickActions.find(m => m.type === 'draw_card');
+                      if (drawMove) handleSubmitMove(drawMove);
+                    }}
+                    className="px-8 py-4 bg-blue-600 text-white rounded-xl text-lg font-medium hover:bg-blue-700 transition-colors"
+                  >
+                    抽牌
+                  </button>
+                </div>
+              )}
+
+              {/* Main / Attack phase */}
+              {(bs.phase === 'main' || bs.phase === 'attack') && (
+                <div className="space-y-2">
+
+                  {/* End turn button */}
+                  <div className="flex flex-wrap gap-1.5">
+                    {quickActions.filter(m => m.type === 'end_turn').map((m, i) => (
+                      <button
+                        key={i}
+                        onClick={() => handleSubmitMove(m)}
+                        className="px-3 py-1.5 bg-slate-600 text-white rounded-lg text-xs hover:bg-slate-500 transition-colors"
+                      >
+                        {m.description}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Retreat button */}
+                  {quickActions.filter(m => m.type === 'retreat').map((m, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleSubmitMove(m)}
+                      className="px-3 py-1.5 bg-orange-600 text-white rounded-lg text-xs hover:bg-orange-500 transition-colors"
+                    >
+                      {m.description}
+                    </button>
+                  ))}
+
+                  {/* Attack buttons */}
+                  {quickActions.filter(m => m.type === 'attack').map((m, i) => {
+                    const atkIdx = m.payload?.attackIndex as number;
+                    const atk = bs.player.active?.cardData.attacks?.[atkIdx];
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => handleSubmitMove(m)}
+                        className="px-3 py-1.5 bg-red-700 text-white rounded-lg text-xs hover:bg-red-600 transition-colors mr-1.5 mb-1"
+                      >
+                        ⚔ {atk?.name || m.description} {atk?.damage ? `(${atk.damage})` : ''}
+                      </button>
+                    );
+                  })}
+
+                  {/* Hand card actions */}
+                  {handCardActions.length > 0 && (
+                    <div>
+                      <p className="text-xs text-slate-500 mb-1">手牌卡牌（點擊選擇動作）：</p>
+                      <div className="flex flex-wrap gap-2">
+                        {handCardActions.map((hca, idx) => {
+                          const isSelected = selectedCardInHand === hca.cardData.id;
+                          return (
+                            <div key={idx} className="flex flex-col items-center">
+                              <img
+                                src={hca.cardData.images.small}
+                                alt={hca.cardData.name}
+                                className={`w-14 h-[4.5rem] rounded-lg cursor-pointer transition-all object-contain border-2
+                                  ${isSelected ? 'border-blue-400 -translate-y-1' : 'border-slate-600 hover:border-slate-400'}`}
+                                onClick={() => handleCardClick(hca.cardData.id)}
+                              />
+                              <span className="text-[10px] text-slate-400 mt-0.5 truncate max-w-16 text-center">
+                                {hca.cardData.name}
+                              </span>
+                              {isSelected && (
+                                <div className="flex flex-col gap-0.5 mt-0.5 w-full">
+                                  {hca.moves.map((m, mi) => (
+                                    <button
+                                      key={mi}
+                                      onClick={() => handleSubmitMove(m)}
+                                      className="px-1.5 py-0.5 bg-blue-600 text-white rounded text-[10px] hover:bg-blue-500 transition-colors"
+                                    >
+                                      {m.description.replace(/^(Play|Attach|Evolve) /, '')}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Trainer card actions (separate row) */}
+                  {trainerActions.length > 0 && handCardActions.length === 0 && (
+                    <div>
+                      <p className="text-xs text-slate-500 mb-1">訓練家卡（點擊使用）：</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {trainerActions.map((m, i) => (
+                          <button
+                            key={i}
+                            onClick={() => handleSubmitMove(m)}
+                            className="px-2 py-1 bg-indigo-700 text-white rounded text-[10px] hover:bg-indigo-600 transition-colors"
+                          >
+                            {m.description}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* No legal moves indicator */}
+                  {battleState.legalMoves.filter(m => m.type !== 'forfeit').length === 0 && (
+                    <p className="text-slate-500 text-xs text-center py-8">沒有可行的行動</p>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
 
-        <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
+        {/* Player area */}
+        <div className="bg-slate-800/80 border border-slate-700 rounded-xl p-3">
+          <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-blue-400">你</span>
-              <div className="flex gap-1">
-                {Array.from({ length: 6 }, (_, i) => (
-                  <div key={i} className={`w-3 h-3 rounded-full ${i < playerPrizes ? 'bg-yellow-400' : 'bg-slate-700'}`} />
-                ))}
-              </div>
-              <button onClick={() => setShowPlayerDiscard(true)} className="text-xs text-slate-500 hover:text-slate-300">
-                棄牌堆
+              <PrizeDisplay count={bs.player.prizes} label="" />
+              <button
+                onClick={() => setShowPlayerDiscard(true)}
+                className="text-xs text-slate-500 hover:text-slate-300"
+              >
+                棄牌 ({bs.player.discardPile.length})
               </button>
+              <span className="text-xs text-slate-600">牌庫 {bs.player.deckCount}</span>
             </div>
-            <span className="text-xs text-slate-500">手牌 {playerHand.length}</span>
+            <span className="text-xs text-slate-500">手牌 {bs.player.hand.length}</span>
           </div>
 
-          <div className="flex justify-center mb-3">
-            <ActiveCard card={playerActive} label="戰鬥寶可夢" />
-          </div>
-
-          <div className="flex justify-center gap-2 mb-3">
-            {playerBench.map((card, i) => (
-              <BenchCard key={i} card={card} />
-            ))}
-          </div>
-
-          <div className="flex justify-center gap-2 overflow-x-auto pb-2">
-            {playerHand.length === 0 ? (
-              <div className="text-slate-600 text-sm py-4">手牌為空</div>
+          <div className="flex justify-center mb-1">
+            {bs.player.active ? (
+              <PokemonCardView card={bs.player.active} size="normal" showHp={true} />
             ) : (
-              <div className="flex gap-2">
-                {playerHand.slice(0, 10).map((card, i) => (
+              <div className="w-32 h-[6.5rem] bg-slate-700/50 border-2 border-dashed border-slate-600 rounded-lg flex items-center justify-center">
+                <span className="text-slate-600 text-xs">無寶可夢</span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-center gap-2 mb-1">
+            {Array.from({ length: 5 }, (_, i) => {
+              const c = bs.player.bench[i];
+              return c ? (
+                <PokemonCardView key={c.id} card={c} size="small" showHp={false} />
+              ) : (
+                <div key={i} className="w-24 h-[4.25rem] bg-slate-700/30 border border-dashed border-slate-600 rounded-md flex items-center justify-center">
+                  <span className="text-slate-600 text-xs">?</span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Player hand row */}
+          <div className="flex justify-center gap-1.5 overflow-x-auto pb-1">
+            {bs.player.hand.length === 0 ? (
+              <div className="text-slate-600 text-xs py-2">手牌為空</div>
+            ) : (
+              bs.player.hand.map((card, i) => {
+                const isSelected = selectedCardInHand === card.id;
+                return (
                   <div
                     key={i}
-                    className="flex-shrink-0 w-14 h-20 bg-slate-700 border border-slate-600 rounded-md overflow-hidden hover:border-yellow-500 hover:-translate-y-2 transition-all cursor-pointer shadow-lg"
+                    className={`flex-shrink-0 w-14 h-20 bg-slate-700 border-2 rounded-md overflow-hidden
+                      ${isSelected ? 'border-blue-400 -translate-y-2' : 'border-slate-600 hover:border-slate-400'}
+                      transition-all cursor-pointer shadow-lg`}
+                    onClick={() => handleCardClick(card.id)}
                   >
                     <img src={card.images.small} alt={card.name} className="w-full h-full object-contain" />
                   </div>
-                ))}
-                {playerHand.length > 10 && (
-                  <div className="flex items-center text-slate-500 text-xs px-2">
-                    +{playerHand.length - 10}
-                  </div>
-                )}
-              </div>
+                );
+              })
             )}
           </div>
         </div>
       </div>
 
-      <div className="w-72 flex-shrink-0 bg-slate-800 border border-slate-700 rounded-xl p-4 flex flex-col min-h-0">
+      {/* Right column: Turn log */}
+      <div className="w-64 flex-shrink-0 bg-slate-800 border border-slate-700 rounded-xl p-3 flex flex-col min-h-0">
         <h3 className="text-sm font-semibold text-slate-300 mb-3">對戰紀錄</h3>
-        <div className="flex-1 overflow-y-auto space-y-1.5">
-          {gameLog.length === 0 ? (
+        <div className="flex-1 overflow-y-auto space-y-1">
+          {bs.turnLog.length === 0 ? (
             <p className="text-slate-600 text-xs">尚無紀錄</p>
           ) : (
-            [...gameLog].reverse().map((entry, i) => (
+            [...bs.turnLog].reverse().slice(0, 100).map((entry, i) => (
               <div key={i} className="text-xs border-l-2 border-slate-700 pl-2 py-0.5">
                 <span className={`font-medium ${entry.player === 0 ? 'text-blue-400' : 'text-red-400'}`}>
                   [{entry.turn}]
                 </span>{' '}
                 <span className="text-slate-200">{entry.action}</span>
-                {entry.detail && <p className="text-slate-500 mt-0.5">{entry.detail}</p>}
+                {entry.details && <p className="text-slate-500 mt-0.5">{entry.details}</p>}
               </div>
             ))
           )}
         </div>
+        <div className="mt-2 pt-2 border-t border-slate-700">
+          <button
+            onClick={leaveGame}
+            className="w-full py-1.5 bg-slate-700 text-slate-300 rounded-lg text-xs hover:bg-slate-600 transition-colors"
+          >
+            離開對戰
+          </button>
+        </div>
       </div>
 
+      {/* Player discard modal */}
       {showPlayerDiscard && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowPlayerDiscard(false)}>
-          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-white font-semibold">你的棄牌堆</h3>
-              <button onClick={() => setShowPlayerDiscard(false)} className="text-slate-400 hover:text-white">&times;</button>
+              <button onClick={() => setShowPlayerDiscard(false)} className="text-slate-400 hover:text-white text-xl">&times;</button>
             </div>
-            <p className="text-slate-500 text-sm">暫無棄牌</p>
+            {bs.player.discardPile.length === 0 ? (
+              <p className="text-slate-500 text-sm">暫無棄牌</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {bs.player.discardPile.map((c, i) => (
+                  <img key={i} src={c.cardData.images.small} alt={c.cardData.name}
+                    className="w-16 h-[4.5rem] rounded object-contain bg-slate-700" />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
 
+      {/* Opponent discard modal */}
       {showOpponentDiscard && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowOpponentDiscard(false)}>
-          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-white font-semibold">對手棄牌堆</h3>
-              <button onClick={() => setShowOpponentDiscard(false)} className="text-slate-400 hover:text-white">&times;</button>
+              <button onClick={() => setShowOpponentDiscard(false)} className="text-slate-400 hover:text-white text-xl">&times;</button>
             </div>
-            <p className="text-slate-500 text-sm">暫無棄牌</p>
+            <p className="text-slate-500 text-sm">對手棄牌堆（{bs.opponent.discardCount} 張）</p>
+          </div>
+        </div>
+      )}
+
+      {/* Opponent hand modal */}
+      {showOpponentHand && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowOpponentHand(false)}>
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-white font-semibold">對手手牌</h3>
+              <button onClick={() => setShowOpponentHand(false)} className="text-slate-400 hover:text-white text-xl">&times;</button>
+            </div>
+            <p className="text-slate-500 text-sm">對手有 {bs.opponent.handCount} 張手牌</p>
           </div>
         </div>
       )}

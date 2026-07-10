@@ -160,6 +160,8 @@ export const useDeckStore = create<DeckState>((set, get) => ({
         if (allCards) {
           const card = allCards.find((c) => c.id === id);
           if (card?.subtypes.includes('Basic Energy' as Subtype)) continue;
+          // 如果卡片不在當前目錄中（可能是舊格式 scr-* ID），跳過檢查
+          if (!card) continue;
         }
         errors.push(`卡牌 ${id} 超過了 ${MAX_COPIES_PER_CARD} 張的上限（目前 ${count} 張）`);
       }

@@ -1,0 +1,390 @@
+- generic [ref=f1e3]:
+  - navigation [ref=f1e4]:
+    - generic [ref=f1e5]:
+      - generic [ref=f1e6]: PTCG
+      - generic [ref=f1e7]:
+        - link "首頁" [ref=f1e8] [cursor=pointer]:
+          - /url: /
+        - link "卡牌瀏覽" [ref=f1e9] [cursor=pointer]:
+          - /url: /cards
+        - link "牌組構築" [ref=f1e10] [cursor=pointer]:
+          - /url: /deck
+        - link "對戰" [ref=f1e11] [cursor=pointer]:
+          - /url: /battle
+        - link "AI 實驗室" [ref=f1e12] [cursor=pointer]:
+          - /url: /lab
+  - main [ref=f1e13]:
+    - generic [ref=f1e16]:
+      - generic [ref=f1e17]:
+        - generic [ref=f1e18]:
+          - heading "牌組構築" [level=1] [ref=f1e19]
+          - button "已存牌組 (0)" [ref=f1e20] [cursor=pointer]
+        - generic [ref=f1e21]:
+          - textbox "搜尋卡牌名稱或編號..." [ref=f1e22]
+          - combobox [ref=f1e23]:
+            - option "全部系列" [selected]
+            - option "無極力量 SET B (SC2b)"
+            - option "無極力量 SET A (SC2a)"
+            - option "無極力量 (SC2D)"
+            - option "三連音爆 (CS3D)"
+            - option "特典卡 朱&紫 (SV-P)"
+            - option "星晶奇跡 (SV7)"
+            - option "未來密勒頓ex (SVHK)"
+            - option "未來閃光 (SV4M)"
+            - option "黯焰支配者 (SV3)"
+            - option "熱風競技場 (SV9a)"
+            - option "激狂駭浪 (SV3a)"
+            - option "冰雪險境 (SV2P)"
+            - option "異度審判 (SV5M)"
+            - option "對戰搭檔 (SV9)"
+            - option "骨紋巨聲鱷ex (SVEL)"
+            - option "頂級訓練家收藏箱ex (SVB)"
+            - option "火箭隊的榮耀 (SV10)"
+            - option "朱ex (SV1S)"
+            - option "ex初階牌組 (SVD)"
+            - option "閃色寶藏ex (SVHM)"
+            - option "超夢ex (SVEM)"
+            - option "黑夜漫遊者 (SV6a)"
+            - option "碟旋暴擊 (SV2D)"
+            - option "變幻假面 (SV6)"
+            - option "起始組合ex 呆火鱷&電龍 ex (SVAL)"
+            - option "緋紅薄霧 (SV5a)"
+            - option "紫ex (SV1V)"
+            - option "樂園騰龍 (SV7a)"
+            - option "起始組合ex 新葉喵&路卡利歐 ex (SVAM)"
+            - option "狂野之力 (SV5K)"
+            - option "ex特別組合 (SVP1)"
+            - option "皮卡丘特別組合 (SVC)"
+            - option "寶可夢卡牌151 (SV2a)"
+            - option "太晶慶典ex (SV8a)"
+            - option "古代咆哮 (SV4K)"
+            - option "起始組合ex 潤水鴨&謎擬Ｑ ex (SVAW)"
+            - option "超電突圍 (SV8)"
+            - option "摩天巔峰 (S7D)"
+            - option "皮卡丘 (SDP)"
+            - option "白熱奧祕 (S11a)"
+            - option "藏瑪然特VS無極汰那 (SJ)"
+            - option "雙璧戰士 (S5a)"
+            - option "星星誕生 (S9)"
+            - option "頂級訓練家收藏箱 VSTAR (SK)"
+            - option "噴火龍 (SDL)"
+            - option "VSTAR&VMAX 高級牌組 捷拉奧拉 (SPZ)"
+            - option "驚天伏特攻擊 (S4)"
+            - option "匯流藝術 (S8)"
+            - option "伊布英雄 (S6a)"
+            - option "起始組合VSTAR 路卡利歐 (SLL)"
+            - option "劍&盾 SET A (SC1a)"
+            - option "強大 (SCD)"
+            - option "超夢 (SDM)"
+            - option "起始組合VSTAR 達克萊伊 (SLD)"
+            - option "連撃大師 (S5R)"
+            - option "VSTAR特別組合 (SP6)"
+            - option "對戰地區 (S9a)"
+            - option "思維激盪 (S12)"
+            - option "銀白戰槍 (S6H)"
+            - option "VMAX絕群壓軸 (S8b)"
+            - option "挑戰 (SCB)"
+            - option "漆黑幽魂 (S6K)"
+            - option "寶可夢卡牌家庭組合 (SH)"
+            - option "一撃大師 (S5I)"
+            - option "Pokémon GO (S10b)"
+            - option "搭檔 (SCA)"
+            - option "蒼空烈流 (S7R)"
+            - option "進化 (SCC)"
+            - option "VSTAR&VMAX 高級牌組 代歐奇希斯 (SPD)"
+            - option "黑暗亡靈 (S10a)"
+            - option "初階牌組100 特別版 (SN)"
+            - option "時間觀察者 (S10D)"
+            - option "劍&盾 SET B (SC1b)"
+            - option "初階牌組100 (SI)"
+            - option "空間魔術師 (S10P)"
+            - option "劍&盾 (SC1D)"
+            - option "25週年收藏款 (S8a)"
+            - option "天地萬物VSTAR (S12a)"
+            - option "閃色明星V (S4a)"
+          - button "篩選" [ref=f1e24] [cursor=pointer]
+        - paragraph [ref=f1e26]: 共 2400 張卡牌 (顯示 24 張)
+        - generic [ref=f1e27]:
+          - 'button "古玉魚 F HP 110 古玉魚 吸引 大地熔化 SV5a #018/066 +" [ref=f1e28] [cursor=pointer]':
+            - generic [ref=f1e29]:
+              - img "古玉魚" [ref=f1e30]
+              - generic "Fire" [ref=f1e32]: F
+              - generic [ref=f1e33]: HP 110
+            - generic [ref=f1e34]:
+              - heading "古玉魚" [level=3] [ref=f1e35]
+              - generic [ref=f1e36]:
+                - generic [ref=f1e37]: 吸引
+                - generic [ref=f1e39]: 大地熔化
+              - paragraph [ref=f1e43]: "SV5a #018/066"
+              - generic [ref=f1e44]:
+                - generic: +
+          - 'button "眷戀雲 超 HP 120 眷戀雲 愛心標誌 愛之同感 SV5a #039/066 +" [ref=f1e45] [cursor=pointer]':
+            - generic [ref=f1e46]:
+              - img "眷戀雲" [ref=f1e47]
+              - generic "Psychic" [ref=f1e49]: 超
+              - generic [ref=f1e50]: HP 120
+            - generic [ref=f1e51]:
+              - heading "眷戀雲" [level=3] [ref=f1e52]
+              - generic [ref=f1e53]:
+                - generic [ref=f1e54]: 愛心標誌
+                - generic [ref=f1e56]: 愛之同感
+              - paragraph [ref=f1e61]: "SV5a #039/066"
+              - generic [ref=f1e62]:
+                - generic: +
+          - 'button "甲賀忍蛙ex 鬥 HP 310 甲賀忍蛙ex Stage 2 忍之利刃 分身連打 SV5a #045/066 +" [ref=f1e63] [cursor=pointer]':
+            - generic [ref=f1e64]:
+              - img "甲賀忍蛙ex" [ref=f1e65]
+              - generic "Fighting" [ref=f1e67]: 鬥
+              - generic [ref=f1e68]: HP 310
+            - generic [ref=f1e69]:
+              - heading "甲賀忍蛙ex" [level=3] [ref=f1e70]
+              - generic [ref=f1e72]: Stage 2
+              - generic [ref=f1e73]:
+                - generic [ref=f1e74]: 忍之利刃
+                - generic [ref=f1e76]: 分身連打
+              - paragraph [ref=f1e81]: "SV5a #045/066"
+              - generic [ref=f1e82]:
+                - generic: +
+          - 'button "月月熊 赫月 ex 無 HP 260 月月熊 赫月 ex 血月 SV5a #052/066 +" [ref=f1e83] [cursor=pointer]':
+            - generic [ref=f1e84]:
+              - img "月月熊 赫月 ex" [ref=f1e85]
+              - generic "Colorless" [ref=f1e87]: 無
+              - generic [ref=f1e88]: HP 260
+            - generic [ref=f1e89]:
+              - heading "月月熊 赫月 ex" [level=3] [ref=f1e90]
+              - generic [ref=f1e92]: 血月
+              - paragraph [ref=f1e99]: "SV5a #052/066"
+              - generic [ref=f1e100]:
+                - generic: +
+          - 'button "不公印章 不公印章 Trainer SV5a #053/066 +" [ref=f1e101] [cursor=pointer]':
+            - img "不公印章" [ref=f1e103]
+            - generic [ref=f1e104]:
+              - heading "不公印章" [level=3] [ref=f1e105]
+              - generic [ref=f1e107]: Trainer
+              - paragraph [ref=f1e109]: "SV5a #053/066"
+              - generic [ref=f1e110]:
+                - generic: +
+          - 'button "居民會館 居民會館 Trainer SV5a #065/066 +" [ref=f1e111] [cursor=pointer]':
+            - img "居民會館" [ref=f1e113]
+            - generic [ref=f1e114]:
+              - heading "居民會館" [level=3] [ref=f1e115]
+              - generic [ref=f1e117]: Trainer
+              - paragraph [ref=f1e119]: "SV5a #065/066"
+              - generic [ref=f1e120]:
+                - generic: +
+          - 'button "敲音猴 G HP 70 敲音猴 踢飛 木枝突刺 SV6 #008/101 +" [ref=f1e121] [cursor=pointer]':
+            - generic [ref=f1e122]:
+              - img "敲音猴" [ref=f1e123]
+              - generic "Grass" [ref=f1e125]: G
+              - generic [ref=f1e126]: HP 70
+            - generic [ref=f1e127]:
+              - heading "敲音猴" [level=3] [ref=f1e128]
+              - generic [ref=f1e129]:
+                - generic [ref=f1e130]: 踢飛
+                - generic [ref=f1e132]: 木枝突刺
+              - paragraph [ref=f1e136]: "SV6 #008/101"
+              - generic [ref=f1e137]:
+                - generic: +
+          - 'button "啪咚猴 G HP 100 啪咚猴 Stage 1 敲擊 SV6 #009/101 +" [ref=f1e138] [cursor=pointer]':
+            - generic [ref=f1e139]:
+              - img "啪咚猴" [ref=f1e140]
+              - generic "Grass" [ref=f1e142]: G
+              - generic [ref=f1e143]: HP 100
+            - generic [ref=f1e144]:
+              - heading "啪咚猴" [level=3] [ref=f1e145]
+              - generic [ref=f1e147]: Stage 1
+              - generic [ref=f1e149]: 敲擊
+              - paragraph [ref=f1e153]: "SV6 #009/101"
+              - generic [ref=f1e154]:
+                - generic: +
+          - 'button "裹蜜蟲 G HP 80 裹蜜蟲 Stage 1 朋友之環 SV6 #012/101 +" [ref=f1e155] [cursor=pointer]':
+            - generic [ref=f1e156]:
+              - img "裹蜜蟲" [ref=f1e157]
+              - generic "Grass" [ref=f1e159]: G
+              - generic [ref=f1e160]: HP 80
+            - generic [ref=f1e161]:
+              - heading "裹蜜蟲" [level=3] [ref=f1e162]
+              - generic [ref=f1e164]: Stage 1
+              - generic [ref=f1e166]: 朋友之環
+              - paragraph [ref=f1e169]: "SV6 #012/101"
+              - generic [ref=f1e170]:
+                - generic: +
+          - 'button "厄鬼椪 碧草面具ex G HP 210 厄鬼椪 碧草面具ex 萬葉陣雨 SV6 #016/101 +" [ref=f1e171] [cursor=pointer]':
+            - generic [ref=f1e172]:
+              - img "厄鬼椪 碧草面具ex" [ref=f1e173]
+              - generic "Grass" [ref=f1e175]: G
+              - generic [ref=f1e176]: HP 210
+            - generic [ref=f1e177]:
+              - heading "厄鬼椪 碧草面具ex" [level=3] [ref=f1e178]
+              - generic [ref=f1e180]: 萬葉陣雨
+              - paragraph [ref=f1e185]: "SV6 #016/101"
+              - generic [ref=f1e186]:
+                - generic: +
+          - 'button "角金魚 W HP 50 角金魚 潮旋 SV6 #026/101 +" [ref=f1e187] [cursor=pointer]':
+            - generic [ref=f1e188]:
+              - img "角金魚" [ref=f1e189]
+              - generic "Water" [ref=f1e191]: W
+              - generic [ref=f1e192]: HP 50
+            - generic [ref=f1e193]:
+              - heading "角金魚" [level=3] [ref=f1e194]
+              - generic [ref=f1e196]: 潮旋
+              - paragraph [ref=f1e200]: "SV6 #026/101"
+              - generic [ref=f1e201]:
+                - generic: +
+          - 'button "雪童子 W HP 60 雪童子 驚嚇 SV6 #031/101 +" [ref=f1e202] [cursor=pointer]':
+            - generic [ref=f1e203]:
+              - img "雪童子" [ref=f1e204]
+              - generic "Water" [ref=f1e206]: W
+              - generic [ref=f1e207]: HP 60
+            - generic [ref=f1e208]:
+              - heading "雪童子" [level=3] [ref=f1e209]
+              - generic [ref=f1e211]: 驚嚇
+              - paragraph [ref=f1e215]: "SV6 #031/101"
+              - generic [ref=f1e216]:
+                - generic: +
+          - 'button "冰鬼護 W HP 120 冰鬼護 Stage 1 傷害律動 瘋狂頭 SV6 #032/101 +" [ref=f1e217] [cursor=pointer]':
+            - generic [ref=f1e218]:
+              - img "冰鬼護" [ref=f1e219]
+              - generic "Water" [ref=f1e221]: W
+              - generic [ref=f1e222]: HP 120
+            - generic [ref=f1e223]:
+              - heading "冰鬼護" [level=3] [ref=f1e224]
+              - generic [ref=f1e226]: Stage 1
+              - generic [ref=f1e227]:
+                - generic [ref=f1e228]: 傷害律動
+                - generic [ref=f1e230]: 瘋狂頭
+              - paragraph [ref=f1e235]: "SV6 #032/101"
+              - generic [ref=f1e236]:
+                - generic: +
+          - 'button "雪妖女 W HP 90 雪妖女 Stage 1 冰霜粉碎 SV6 #033/101 +" [ref=f1e237] [cursor=pointer]':
+            - generic [ref=f1e238]:
+              - img "雪妖女" [ref=f1e239]
+              - generic "Water" [ref=f1e241]: W
+              - generic [ref=f1e242]: HP 90
+            - generic [ref=f1e243]:
+              - heading "雪妖女" [level=3] [ref=f1e244]
+              - generic [ref=f1e246]: Stage 1
+              - generic [ref=f1e248]: 冰霜粉碎
+              - paragraph [ref=f1e252]: "SV6 #033/101"
+              - generic [ref=f1e253]:
+                - generic: +
+          - 'button "厄鬼椪 水井面具ex W HP 210 厄鬼椪 水井面具ex 啜泣 激流水泵 SV6 #038/101 +" [ref=f1e254] [cursor=pointer]':
+            - generic [ref=f1e255]:
+              - img "厄鬼椪 水井面具ex" [ref=f1e256]
+              - generic "Water" [ref=f1e258]: W
+              - generic [ref=f1e259]: HP 210
+            - generic [ref=f1e260]:
+              - heading "厄鬼椪 水井面具ex" [level=3] [ref=f1e261]
+              - generic [ref=f1e262]:
+                - generic [ref=f1e263]: 啜泣
+                - generic [ref=f1e265]: 激流水泵
+              - paragraph [ref=f1e270]: "SV6 #038/101"
+              - generic [ref=f1e271]:
+                - generic: +
+          - 'button "願增猿 超 HP 110 願增猿 精神歪曲 SV6 #055/101 +" [ref=f1e272] [cursor=pointer]':
+            - generic [ref=f1e273]:
+              - img "願增猿" [ref=f1e274]
+              - generic "Psychic" [ref=f1e276]: 超
+              - generic [ref=f1e277]: HP 110
+            - generic [ref=f1e278]:
+              - heading "願增猿" [level=3] [ref=f1e279]
+              - generic [ref=f1e281]: 精神歪曲
+              - paragraph [ref=f1e285]: "SV6 #055/101"
+              - generic [ref=f1e286]:
+                - generic: +
+          - 'button "夠讚狗 鬥 HP 130 夠讚狗 好拳 SV6 #064/101 +" [ref=f1e287] [cursor=pointer]':
+            - generic [ref=f1e288]:
+              - img "夠讚狗" [ref=f1e289]
+              - generic "Fighting" [ref=f1e291]: 鬥
+              - generic [ref=f1e292]: HP 130
+            - generic [ref=f1e293]:
+              - heading "夠讚狗" [level=3] [ref=f1e294]
+              - generic [ref=f1e296]: 好拳
+              - paragraph [ref=f1e300]: "SV6 #064/101"
+              - generic [ref=f1e301]:
+                - generic: +
+          - 'button "席多藍恩 鋼 HP 140 席多藍恩 鋼鐵爆炸 SV6 #076/101 +" [ref=f1e302] [cursor=pointer]':
+            - generic [ref=f1e303]:
+              - img "席多藍恩" [ref=f1e304]
+              - generic "Metal" [ref=f1e306]: 鋼
+              - generic [ref=f1e307]: HP 140
+            - generic [ref=f1e308]:
+              - heading "席多藍恩" [level=3] [ref=f1e309]
+              - generic [ref=f1e311]: 鋼鐵爆炸
+              - paragraph [ref=f1e316]: "SV6 #076/101"
+              - generic [ref=f1e317]:
+                - generic: +
+          - 'button "米立龍 龍 HP 70 米立龍 衝浪 SV6 #082/101 +" [ref=f1e318] [cursor=pointer]':
+            - generic [ref=f1e319]:
+              - img "米立龍" [ref=f1e320]
+              - generic "Dragon" [ref=f1e322]: 龍
+              - generic [ref=f1e323]: HP 70
+            - generic [ref=f1e324]:
+              - heading "米立龍" [level=3] [ref=f1e325]
+              - generic [ref=f1e327]: 衝浪
+              - paragraph [ref=f1e331]: "SV6 #082/101"
+              - generic [ref=f1e332]:
+                - generic: +
+          - 'button "秘密箱 秘密箱 Trainer SV6 #092/101 +" [ref=f1e333] [cursor=pointer]':
+            - img "秘密箱" [ref=f1e335]
+            - generic [ref=f1e336]:
+              - heading "秘密箱" [level=3] [ref=f1e337]
+              - generic [ref=f1e339]: Trainer
+              - paragraph [ref=f1e341]: "SV6 #092/101"
+              - generic [ref=f1e342]:
+                - generic: +
+          - 'button "捕蟲組合 捕蟲組合 Trainer SV6 #094/101 +" [ref=f1e343] [cursor=pointer]':
+            - img "捕蟲組合" [ref=f1e345]
+            - generic [ref=f1e346]:
+              - heading "捕蟲組合" [level=3] [ref=f1e347]
+              - generic [ref=f1e349]: Trainer
+              - paragraph [ref=f1e351]: "SV6 #094/101"
+              - generic [ref=f1e352]:
+                - generic: +
+          - 'button "烏栗 烏栗 Trainer SV6 #096/101 +" [ref=f1e353] [cursor=pointer]':
+            - img "烏栗" [ref=f1e355]
+            - generic [ref=f1e356]:
+              - heading "烏栗" [level=3] [ref=f1e357]
+              - generic [ref=f1e359]: Trainer
+              - paragraph [ref=f1e361]: "SV6 #096/101"
+              - generic [ref=f1e362]:
+                - generic: +
+          - 'button "祭典會場 祭典會場 Trainer SV6 #099/101 +" [ref=f1e363] [cursor=pointer]':
+            - img "祭典會場" [ref=f1e365]
+            - generic [ref=f1e366]:
+              - heading "祭典會場" [level=3] [ref=f1e367]
+              - generic [ref=f1e369]: Trainer
+              - paragraph [ref=f1e371]: "SV6 #099/101"
+              - generic [ref=f1e372]:
+                - generic: +
+          - 'button "古舊能量 古舊能量 Energy SV6 #101/101 +" [ref=f1e373] [cursor=pointer]':
+            - img "古舊能量" [ref=f1e375]
+            - generic [ref=f1e376]:
+              - heading "古舊能量" [level=3] [ref=f1e377]
+              - generic [ref=f1e379]: Energy
+              - paragraph [ref=f1e381]: "SV6 #101/101"
+              - generic [ref=f1e382]:
+                - generic: +
+        - generic [ref=f1e383]:
+          - button "上一頁" [disabled] [ref=f1e384]
+          - button "1" [ref=f1e385] [cursor=pointer]
+          - button "2" [ref=f1e386] [cursor=pointer]
+          - button "3" [ref=f1e387] [cursor=pointer]
+          - button "4" [ref=f1e388] [cursor=pointer]
+          - button "5" [ref=f1e389] [cursor=pointer]
+          - button "6" [ref=f1e390] [cursor=pointer]
+          - button "7" [ref=f1e391] [cursor=pointer]
+          - button "下一頁" [ref=f1e392] [cursor=pointer]
+      - generic [ref=f1e394]:
+        - generic [ref=f1e395]:
+          - textbox "牌組名稱" [ref=f1e396]
+          - generic [ref=f1e397]: 0/60
+        - generic [ref=f1e398]:
+          - textbox "新牌組名稱..." [ref=f1e399]
+          - button "新增" [ref=f1e400] [cursor=pointer]
+        - generic [ref=f1e401]:
+          - button "儲存牌組" [disabled] [ref=f1e402]
+          - button "刪除" [disabled] [ref=f1e403]
+        - generic [ref=f1e405]: 牌組不合法
+        - paragraph [ref=f1e408]: 牌組至少需要 60 張卡牌（目前 0 張）
+        - generic [ref=f1e410]: 牌組為空，從左側選擇卡牌

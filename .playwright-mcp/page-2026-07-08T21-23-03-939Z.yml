@@ -1,0 +1,16 @@
+- generic [ref=e3]:
+  - navigation [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: PTCG
+      - generic [ref=e7]:
+        - link "首頁" [ref=e8] [cursor=pointer]:
+          - /url: /
+        - link "卡牌瀏覽" [ref=e9] [cursor=pointer]:
+          - /url: /cards
+        - link "牌組構築" [ref=e10] [cursor=pointer]:
+          - /url: /deck
+        - link "對戰" [ref=e11] [cursor=pointer]:
+          - /url: /battle
+        - link "AI 實驗室" [ref=e12] [cursor=pointer]:
+          - /url: /lab
+  - main [ref=e13]

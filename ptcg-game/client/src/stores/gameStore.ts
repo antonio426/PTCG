@@ -1,59 +1,182 @@
 import { create } from 'zustand';
-import type { Card } from '@ptcg/shared';
+import type { Card, LegalAction, TurnAction } from '@ptcg/shared';
 
-interface MatchResult {
-  wins: number;
-  losses: number;
-  total: number;
+/* ------------------------------------------------------- */
+/*  Types mirroring server response                        */
+/* ------------------------------------------------------- */
+
+export interface SanitizedGameCard {
+  id: string;
+  cardData: Card;
+  damage: number;
+  statusConditions: string[];
+  attachedEnergy: { id: string; type: string }[];
 }
+
+export interface BattlePlayerState {
+  hand: Card[];
+  active: SanitizedGameCard | null;
+  bench: (SanitizedGameCard | null)[];
+  prizes: number;
+  discardPile: SanitizedGameCard[];
+  deckCount: number;
+}
+
+export interface BattleOpponentState {
+  active: SanitizedGameCard | null;
+  bench: (SanitizedGameCard | null)[];
+  handCount: number;
+  prizes: number;
+  discardCount: number;
+  deckCount: number;
+}
+
+export interface BattleState {
+  player: BattlePlayerState;
+  opponent: BattleOpponentState;
+  turn: number;
+  isPlayerTurn: boolean;
+  phase: string;
+  legalMoves: LegalAction[];
+  turnLog: TurnAction[];
+  winner: number | null;
+  winReason: string | null;
+}
+
+export type BattlePhase = 'select' | 'playing' | 'ended';
+
+/* ------------------------------------------------------- */
+/*  Store                                                  */
+/* ------------------------------------------------------- */
 
 interface GameState {
-  gameId: string | null;
+  sessionId: string | null;
+  battleState: BattleState | null;
+  loading: boolean;
+  error: string | null;
+  battlePhase: BattlePhase;
+
+  matchResult: { wins: number; losses: number; total: number };
   playerName: string;
-  matchResult: MatchResult;
-  createAIBattle: (deckA: string[], deckB: string[]) => Promise<string>;
-  joinBattle: (gameId: string) => void;
-  updateMatchResult: (result: Partial<MatchResult>) => void;
-  setPlayerName: (name: string) => void;
+
+  createBattle: (deckA: string[], deckB?: string[]) => Promise<string>;
+  submitMove: (type: string, payload?: Record<string, unknown>) => Promise<void>;
+  refreshState: () => Promise<void>;
   leaveGame: () => void;
+  setPlayerName: (name: string) => void;
+  updateMatchResult: (result: Partial<{ wins: number; losses: number; total: number }>) => void;
 }
 
-export const useGameStore = create<GameState>((set) => ({
-  gameId: null,
-  playerName: 'Player',
+const BASE = '/api/human-battle';
+
+export const useGameStore = create<GameState>((set, get) => ({
+  sessionId: null,
+  battleState: null,
+  loading: false,
+  error: null,
+  battlePhase: 'select',
   matchResult: { wins: 0, losses: 0, total: 0 },
+  playerName: 'Player',
 
-  createAIBattle: async (deckA: string[], deckB: string[]) => {
-    const res = await fetch('/api/games/ai-battle', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deckA, deckB }),
-    });
-
-    if (!res.ok) {
-      throw new Error('Failed to create AI battle');
+  createBattle: async (deckA: string[], deckB?: string[]) => {
+    set({ loading: true, error: null });
+    try {
+      const res = await fetch(BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deckA, deckB }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to create battle');
+      }
+      const data = await res.json();
+      set({
+        sessionId: data.sessionId,
+        battleState: data.state,
+        battlePhase: 'playing',
+        loading: false,
+      });
+      return data.sessionId;
+    } catch (err) {
+      set({
+        loading: false,
+        error: err instanceof Error ? err.message : 'Unknown error',
+      });
+      throw err;
     }
-
-    const data = await res.json();
-    set({ gameId: data.gameId });
-    return data.gameId;
   },
 
-  joinBattle: (gameId: string) => {
-    set({ gameId });
+  submitMove: async (type: string, payload?: Record<string, unknown>) => {
+    const { sessionId, battleState } = get();
+    if (!sessionId || !battleState) return;
+    if (battleState.winner !== null) return;
+
+    set({ loading: true, error: null });
+    try {
+      const res = await fetch(`${BASE}/${sessionId}/move`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, payload }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        if (errData.state) {
+          set({ battleState: errData.state, loading: false });
+        }
+        throw new Error(errData.error || 'Move rejected');
+      }
+      const data = await res.json();
+      set({ battleState: data.state, loading: false });
+
+      if (data.state.winner !== null) {
+        set((s) => ({
+          battlePhase: 'ended',
+          matchResult: {
+            wins: s.matchResult.wins + (data.state.winner === 0 ? 1 : 0),
+            losses: s.matchResult.losses + (data.state.winner === 1 ? 1 : 0),
+            total: s.matchResult.total + 1,
+          },
+        }));
+      }
+    } catch (err) {
+      set({
+        loading: false,
+        error: err instanceof Error ? err.message : 'Move failed',
+      });
+    }
   },
 
-  updateMatchResult: (result: Partial<MatchResult>) => {
-    set((state) => ({
-      matchResult: { ...state.matchResult, ...result },
-    }));
+  refreshState: async () => {
+    const { sessionId } = get();
+    if (!sessionId) return;
+    try {
+      const res = await fetch(`${BASE}/${sessionId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      set({ battleState: data.state });
+    } catch {
+      // ignore
+    }
+  },
+
+  leaveGame: () => {
+    set({
+      sessionId: null,
+      battleState: null,
+      battlePhase: 'select',
+      error: null,
+      loading: false,
+    });
   },
 
   setPlayerName: (name: string) => {
     set({ playerName: name });
   },
 
-  leaveGame: () => {
-    set({ gameId: null });
+  updateMatchResult: (result: Partial<{ wins: number; losses: number; total: number }>) => {
+    set((state) => ({
+      matchResult: { ...state.matchResult, ...result },
+    }));
   },
 }));

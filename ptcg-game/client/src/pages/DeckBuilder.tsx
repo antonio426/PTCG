@@ -455,9 +455,9 @@ export default function DeckBuilder() {
                   onClick={() => toggleType(to.value)}
                   className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
                     selectedTypes.includes(to.value)
-                      ? 'text-white ring-2 ring-offset-1 ring-offset-slate-900'
-                      : 'text-slate-300 bg-slate-700 hover:bg-slate-600'
-                  } ${TYPE_COLORS[to.value]} ${selectedTypes.includes(to.value) ? 'brightness-110' : 'opacity-70'}`}
+                      ? `text-white ring-2 ring-offset-1 ring-offset-slate-900 ${TYPE_COLORS[to.value]} brightness-110`
+                      : `text-slate-300 ${TYPE_COLORS[to.value]} opacity-60 hover:opacity-90`
+                  }`}
                 >
                   {to.label}
                 </button>
