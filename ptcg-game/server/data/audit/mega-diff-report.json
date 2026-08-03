@@ -1,0 +1,1182 @@
+{
+  "officialCount": 138,
+  "uniqueOfficialNames": 45,
+  "localMegaCount": 19,
+  "m6MegaCount": 4,
+  "localPlusM6Count": 23,
+  "missingNameCount": 23,
+  "missingNames": [
+    "超級呆殼獸ex",
+    "超級噴火駝ex",
+    "超級噴火龍Yex",
+    "超級基格爾德ex",
+    "超級大力鱷ex",
+    "超級妖火紅狐ex",
+    "超級差不多娃娃ex",
+    "超級拉帝亞斯ex",
+    "超級捷拉奧拉ex",
+    "超級摔角鷹人ex",
+    "超級暴雪王ex",
+    "超級毒藻龍ex",
+    "超級水晶燈火靈ex",
+    "超級火炎獅ex",
+    "超級炎武王ex",
+    "超級皮可西ex",
+    "超級艾路雷朵ex",
+    "超級花葉蒂ex",
+    "超級赫拉克羅斯ex",
+    "超級達克萊伊ex",
+    "超級雷電獸ex",
+    "超級頭巾混混ex",
+    "超級麻麻鰻魚王ex"
+  ],
+  "officialByName": [
+    {
+      "name": "超級具甲武者ex",
+      "officialEntries": [
+        {
+          "id": "19559",
+          "collector": "009/076",
+          "product": "擴充包「綠寶石風暴」"
+        }
+      ],
+      "inLocal": false,
+      "inM6": true
+    },
+    {
+      "name": "超級呆殼獸ex",
+      "officialEntries": [
+        {
+          "id": "18073",
+          "collector": "077/M-P",
+          "product": "特典卡 超級進化"
+        }
+      ],
+      "inLocal": false,
+      "inM6": false
+    },
+    {
+      "name": "超級噴火駝ex",
+      "officialEntries": [
+        {
+          "id": "13970",
+          "collector": "013/063",
+          "product": "擴充包「超級勇氣」"
+        },
+        {
+          "id": "14195",
+          "collector": "077/063",
+          "product": "擴充包「超級勇氣」"
+        }
+      ],
+      "inLocal": false,
+      "inM6": false
+    },
+    {
+      "name": "超級噴火龍Xex",
+      "officialEntries": [
+        {
+          "id": "19286",
+          "collector": "003/023",
+          "product": "戰術牌組「超級噴火龍Xex」"
+        },
+        {
+          "id": "15971",
+          "collector": "223/193",
+          "product": "高級擴充包「超級進化夢想ex」"
+        },
+        {
+          "id": "14331",
+          "collector": "013/080",
+          "product": "擴充包「烈獄狂火X」"
+        },
+        {
+          "id": "18579",
+          "collector": "094/080",
+          "product": "擴充包「烈獄狂火X」"
+        },
+        {
+          "id": "18595",
+          "collector": "110/080",
+          "product": "擴充包「烈獄狂火X」"
+        },
+        {
+          "id": "18601",
+          "collector": "116/080",
+          "product": "擴充包「烈獄狂火X」"
+        },
+        {
+          "id": "14425",
+          "collector": "029/M-P",
+          "product": "特典卡 超級進化"
+        }
+      ],
+      "inLocal": true,
+      "inM6": false
+    },
+    {
+      "name": "超級噴火龍Yex",
+      "officialEntries": [
+        {
+          "id": "16556",
+          "collector": "085/742",
+          "product": "初階牌組 100對戰收藏"
+        },
+        {
+          "id": "18221",
+          "collector": "085/742",
+          "product": "初階牌組 100對戰收藏"
+        },
+        {
+          "id": "18357",
+          "collector": "766/742",
+          "product": "初階牌組 100對戰收藏"
+        },
+        {
+          "id": "18069",
+          "collector": "073/M-P",
+          "product": "特典卡 超級進化"
+        }
+      ],
+      "inLocal": false,
+      "inM6": false
+    },
+    {
+      "name": "超級基格爾德ex",
+      "officialEntries": [
+        {
+          "id": "18023",
+          "collector": "046/080",
+          "product": "擴充包「虛無歸零」"
+        },
+        {
+          "id": "18400",
+          "collector": "097/080",
+          "product": "擴充包「虛無歸零」"
+        },
+        {
+          "id": "18416",
+          "collector": "113/080",
+          "product": "擴充包「虛無歸零」"
+        },
+        {
+          "id": "18420",
+          "collector": "117/080",
+          "product": "擴充包「虛無歸零」"
+        }
+      ],
+      "inLocal": false,
+      "inM6": false
+    },
+    {
+      "name": "超級大力鱷ex",
+      "officialEntries": [
+        {
+          "id": "16640",
+          "collector": "169/742",
+          "product": "初階牌組 100對戰收藏"
+        },
+        {
+          "id": "18240",
+          "collector": "169/742",
+          "product": "初階牌組 100對戰收藏"
+        },
+        {
+          "id": "18354",
+          "collector": "763/742",
+          "product": "初階牌組 100對戰收藏"
+        },
+        {
+          "id": "19544",
+          "collector": "163/M-P",
+          "product": "特典卡 超級進化"
+        }
+      ],
+      "inLocal": false,
+      "inM6": false
+    },
+    {
+      "name": "超級大嘴娃ex",
+      "officialEntries": [
+        {
+          "id": "14003",
+          "collector": "046/063",
+          "product": "擴充包「超級勇氣」"
+        },
+        {
+          "id": "14198",
+          "collector": "080/063",
+          "product": "擴充包「超級勇氣」"
+        }
+      ],
+      "inLocal": true,
+      "inM6": false
+    },
+    {
+      "name": "超級大竺葵ex",
+      "officialEntries": [
+        {
+          "id": "16489",
+          "collector": "018/742",
+          "product": "初階牌組 100對戰收藏"
+        },
+        {
+          "id": "18208",
+          "collector": "018/742",
+          "product": "初階牌組 100對戰收藏"
+        },
+        {
+          "id": "18352",
+          "collector": "761/742",
+          "product": "初階牌組 100對戰收藏"
+        },
+        {
+          "id": "19538",
+          "collector": "157/M-P",
+          "product": "特典卡 超級進化"
+        }
+      ],
+      "inLocal": true,
+      "inM6": false
+    },
+    {
+      "name": "超級妖火紅狐ex",
+      "officialEntries": [
+        {
+          "id": "18560",
+          "collector": "103/M-P",
+          "product": "特典卡 超級進化"
+        }
+      ],
+      "inLocal": false,
+      "inM6": false
+    },
+    {
+      "name": "超級妙蛙花ex",
+      "officialEntries": [
+        {
+          "id": "13960",
+          "collector": "003/063",
+          "product": "擴充包「超級勇氣」"
+        },
+        {
+          "id": "14194",
+          "collector": "076/063",
+          "product": "擴充包「超級勇氣」"
+        },
+        {
+          "id": "14205",
+          "collector": "087/063",
+          "product": "擴充包「超級勇氣」"
+        }
+      ],
+      "inLocal": true,
+      "inM6": false
+    },
+    {
+      "name": "超級寶石海星ex",
+      "officialEntries": [
+        {
+          "id": "17998",
+          "collector": "021/080",
+          "product": "擴充包「虛無歸零」"
+        },
+        {
+          "id": "18398",
+          "collector": "095/080",
+          "product": "擴充包「虛無歸零」"
+        },
+        {
+          "id": "18414",
+          "collector": "111/080",
+          "product": "擴充包「虛無歸零」"
+        }
+      ],
+      "inLocal": true,
+      "inM6": false
+    },
+    {
+      "name": "超級巨牙鯊ex",
+      "officialEntries": [
+        {
+          "id": "19310",
+          "collector": "003/020",
+          "product": "戰術牌組「超級巨牙鯊ex」"
+        },
+        {
+          "id": "14369",
+          "collector": "051/080",
+          "product": "擴充包「烈獄狂火X」"
+        },
+        {
+          "id": "18583",
+          "collector": "098/080",
+          "product": "擴充包「烈獄狂火X」"
+        },
+        {
+          "id": "18598",
+          "collector": "113/080",
+          "product": "擴充包「烈獄狂火X」"
+        }
+      ],
+      "inLocal": true,
+      "inM6": false
+    },
+    {
+      "name": "超級差不多娃娃ex",
+      "officialEntries": [
+        {
+          "id": "17073",
+          "collector": "602/742",
+          "product": "初階牌組 100對戰收藏"
+        },
+        {
+          "id": "18350",
+          "collector": "759/742",
+          "product": "初階牌組 100對戰收藏"
+        }
+      ],
+      "inLocal": false,
+      "inM6": false
+    },
+    {
+      "name": "超級快龍ex",
+      "officialEntries": [
+        {
+          "id": "19360",
+          "collector": "008/023",
+          "product": "戰術牌組「超級快龍ex」"
+        },
+        {
+          "id": "14786",
+          "collector": "126/193",
+          "product": "高級擴充包「超級進化夢想ex」"
+        },
+        {
+          "id": "15980",
+          "collector": "232/193",
+          "product": "高級擴充包「超級進化夢想ex」"
+        },
+        {
+          "id": "15994",
+          "collector": "246/193",
+          "product": "高級擴充包「超級進化夢想ex」"
+        },
+        {
+          "id": "15998",
+          "collector": "250/193",
+          "product": "高級擴充包「超級進化夢想ex」"
+        }
+      ],
+      "inLocal": true,
+      "inM6": false
+    },
+    {
+      "name": "超級拉帝亞斯ex",
+      "officialEntries": [
+        {
+          "id": "14069",
+          "collector": "049/063",
+          "product": "擴充包「超級交響樂」"
+        },
+        {
+          "id": "14226",
+          "collector": "079/063",
+          "product": "擴充包「超級交響樂」"
+        },
+        {
+          "id": "14235",
+          "collector": "088/063",
+          "product": "擴充包「超級交響樂」"
+        }
+      ],
+      "inLocal": false,
+      "inM6": false
+    },
+    {
+      "name": "超級捷拉奧拉ex",
+      "officialEntries": [
+        {
+          "id": "19170",
+          "collector": "026/081",
+          "product": "擴充包「深淵之瞳」"
+        },
+        {
+          "id": "19261",
+          "collector": "096/081",
+          "product": "擴充包「深淵之瞳」"
+        },
+        {
+          "id": "19277",
+          "collector": "112/081",
+          "product": "擴充包「深淵之瞳」"
+        }
+      ],
+      "inLocal": false,
+      "inM6": false
+    },
+    {
+      "name": "超級摔角鷹人ex",
+      "officialEntries": [
+        {
+          "id": "14754",
+          "collector": "094/193",
+          "product": "高級擴充包「超級進化夢想ex」"
+        },
+        {
+          "id": "15977",
+          "collector": "229/193",
+          "product": "高級擴充包「超級進化夢想ex」"
+        },
+        {
+          "id": "15987",
+          "collector": "239/193",
+          "product": "高級擴充包「超級進化夢想ex」"
+        }
+      ],
+      "inLocal": false,
+      "inM6": false
+    },
+    {
+      "name": "超級暴雪王ex",
+      "officialEntries": [
+        {
+          "id": "14038",
+          "collector": "018/063",
+          "product": "擴充包「超級交響樂」"
+        },
+        {
+          "id": "14223",
+          "collector": "076/063",
+          "product": "擴充包「超級交響樂」"
+        }
+      ],
+      "inLocal": false,
+      "inM6": false
+    },
+    {
+      "name": "超級毒藻龍ex",
+      "officialEntries": [
+        {
+          "id": "18483",
+          "collector": "063/083",
+          "product": "擴充包「忍者飛旋」"
+        },
+        {
+          "id": "18539",
+          "collector": "102/083",
+          "product": "擴充包「忍者飛旋」"
+        },
+        {
+          "id": "18553",
+          "collector": "116/083",
+          "product": "擴充包「忍者飛旋」"
+        }
+      ],
+      "inLocal": false,
+      "inM6": false
+    },
+    {
+      "name": "超級水晶燈火靈ex",
+      "officialEntries": [
+        {
+          "id": "19180",
+          "collector": "036/081",
+          "product": "擴充包「深淵之瞳」"
+        },
+        {
+          "id": "19262",
+          "collector": "097/081",
+          "product": "擴充包「深淵之瞳」"
+        },
+        {
+          "id": "19278",
+          "collector": "113/081",
+          "product": "擴充包「深淵之瞳」"
+        }
+      ],
+      "inLocal": false,
+      "inM6": false
+    },
+    {
+      "name": "超級沙奈朵ex",
+      "officialEntries": [
+        {
+          "id": "19332",
+          "collector": "004/023",
+          "product": "戰術牌組「超級沙奈朵ex」"
+        },
+        {
+          "id": "14731",
+          "collector": "071/193",
+          "product": "高級擴充包「超級進化夢想ex」"
+        },
+        {
+          "id": "15974",
+          "collector": "226/193",
+          "product": "高級擴充包「超級進化夢想ex」"
+        },
+        {
+          "id": "14062",
+          "collector": "042/063",
+          "product": "擴充包「超級交響樂」"
+        },
+        {
+          "id": "14225",
+          "collector": "078/063",
+          "product": "擴充包「超級交響樂」"
+        },
+        {
+          "id": "14234",
+          "collector": "087/063",
+          "product": "擴充包「超級交響樂」"
+        },
+        {
+          "id": "14239",
+          "collector": "092/063",
+          "product": "擴充包「超級交響樂」"
+        }
+      ],
+      "inLocal": true,
+      "inM6": false
+    },
+    {
+      "name": "超級泥偶巨人ex",
+      "officialEntries": [
+        {
+          "id": "19583",
+          "collector": "033/076",
+          "product": "擴充包「綠寶石風暴」"
+        }
+      ],
+      "inLocal": false,
+      "inM6": true
+    },
+    {
+      "name": "超級火炎獅ex",
+      "officialEntries": [
+        {
+          "id": "18435",
+          "collector": "015/083",
+          "product": "擴充包「忍者飛旋」"
+        },
+        {
+          "id": "18534",
+          "collector": "097/083",
+          "product": "擴充包「忍者飛旋」"
+        }
+      ],
+      "inLocal": false,
+      "inM6": false
+    },
+    {
+      "name": "超級炎武王ex",
+      "officialEntries": [
+        {
+          "id": "16584",
+          "collector": "113/742",
+          "product": "初階牌組 100對戰收藏"
+        },
+        {
+          "id": "18228",
+          "collector": "113/742",
+          "product": "初階牌組 100對戰收藏"
+        },
+        {
+          "id": "18353",
+          "collector": "762/742",
+          "product": "初階牌組 100對戰收藏"
+        },
+        {
+          "id": "19541",
+          "collector": "160/M-P",
+          "product": "特典卡 超級進化"
+        }
+      ],
+      "inLocal": false,
+      "inM6": false
+    },
+    {
+      "name": "超級烈空坐ex",
+      "officialEntries": [
+        {
+          "id": "19608",
+          "collector": "058/076",
+          "product": "擴充包「綠寶石風暴」"
+        }
+      ],
+      "inLocal": false,
+      "inM6": true
+    },
+    {
+      "name": "超級烏賊王ex",
+      "officialEntries": [
+        {
+          "id": "19598",
+          "collector": "048/076",
+          "product": "擴充包「綠寶石風暴」"
+        }
+      ],
+      "inLocal": false,
+      "inM6": true
+    },
+    {
+      "name": "超級甲賀忍蛙ex",
+      "officialEntries": [
+        {
+          "id": "18442",
+          "collector": "022/083",
+          "product": "擴充包「忍者飛旋」"
+        },
+        {
+          "id": "18535",
+          "collector": "098/083",
+          "product": "擴充包「忍者飛旋」"
+        },
+        {
+          "id": "18551",
+          "collector": "114/083",
+          "product": "擴充包「忍者飛旋」"
+        },
+        {
+          "id": "18557",
+          "collector": "120/083",
+          "product": "擴充包「忍者飛旋」"
+        },
+        {
+          "id": "18516",
+          "collector": "095/M-P",
+          "product": "特典卡 超級進化"
+        }
+      ],
+      "inLocal": true,
+      "inM6": false
+    },
+    {
+      "name": "超級皮可西ex",
+      "officialEntries": [
+        {
+          "id": "18007",
+          "collector": "030/080",
+          "product": "擴充包「虛無歸零」"
+        },
+        {
+          "id": "18399",
+          "collector": "096/080",
+          "product": "擴充包「虛無歸零」"
+        },
+        {
+          "id": "18415",
+          "collector": "112/080",
+          "product": "擴充包「虛無歸零」"
+        }
+      ],
+      "inLocal": false,
+      "inM6": false
+    },
+    {
+      "name": "超級盔甲鳥ex",
+      "officialEntries": [
+        {
+          "id": "18031",
+          "collector": "054/080",
+          "product": "擴充包「虛無歸零」"
+        },
+        {
+          "id": "18402",
+          "collector": "099/080",
+          "product": "擴充包「虛無歸零」"
+        }
+      ],
+      "inLocal": true,
+      "inM6": false
+    },
+    {
+      "name": "超級耿鬼ex",
+      "officialEntries": [
+        {
+          "id": "15978",
+          "collector": "230/193",
+          "product": "高級擴充包「超級進化夢想ex」"
+        },
+        {
+          "id": "15988",
+          "collector": "240/193",
+          "product": "高級擴充包「超級進化夢想ex」"
+        },
+        {
+          "id": "14131",
+          "collector": "003/022",
+          "product": "挑戰牌組「超級耿鬼ex」"
+        }
+      ],
+      "inLocal": true,
+      "inM6": false
+    },
+    {
+      "name": "超級艾路雷朵ex",
+      "officialEntries": [
+        {
+          "id": "17975",
+          "collector": "059/M-P",
+          "product": "特典卡 超級進化"
+        },
+        {
+          "id": "19550",
+          "collector": "208/M-P",
+          "product": "特典卡 超級進化"
+        }
+      ],
+      "inLocal": false,
+      "inM6": false
+    },
+    {
+      "name": "超級花葉蒂ex",
+      "officialEntries": [
+        {
+          "id": "18455",
+          "collector": "035/083",
+          "product": "擴充包「忍者飛旋」"
+        },
+        {
+          "id": "18536",
+          "collector": "099/083",
+          "product": "擴充包「忍者飛旋」"
+        },
+        {
+          "id": "18552",
+          "collector": "115/083",
+          "product": "擴充包「忍者飛旋」"
+        }
+      ],
+      "inLocal": false,
+      "inM6": false
+    },
+    {
+      "name": "超級蒂安希ex",
+      "officialEntries": [
+        {
+          "id": "19336",
+          "collector": "008/023",
+          "product": "戰術牌組「超級沙奈朵ex」"
+        },
+        {
+          "id": "15975",
+          "collector": "227/193",
+          "product": "高級擴充包「超級進化夢想ex」"
+        },
+        {
+          "id": "15986",
+          "collector": "238/193",
+          "product": "高級擴充包「超級進化夢想ex」"
+        },
+        {
+          "id": "14110",
+          "collector": "006/022",
+          "product": "挑戰牌組 「超級蒂安希ex」"
+        }
+      ],
+      "inLocal": true,
+      "inM6": false
+    },
+    {
+      "name": "超級袋獸ex",
+      "officialEntries": [
+        {
+          "id": "19363",
+          "collector": "011/023",
+          "product": "戰術牌組「超級快龍ex」"
+        },
+        {
+          "id": "14071",
+          "collector": "051/063",
+          "product": "擴充包「超級交響樂」"
+        },
+        {
+          "id": "14227",
+          "collector": "080/063",
+          "product": "擴充包「超級交響樂」"
+        },
+        {
+          "id": "14236",
+          "collector": "089/063",
+          "product": "擴充包「超級交響樂」"
+        }
+      ],
+      "inLocal": true,
+      "inM6": false
+    },
+    {
+      "name": "超級赫拉克羅斯ex",
+      "officialEntries": [
+        {
+          "id": "14322",
+          "collector": "004/080",
+          "product": "擴充包「烈獄狂火X」"
+        },
+        {
+          "id": "18578",
+          "collector": "093/080",
+          "product": "擴充包「烈獄狂火X」"
+        }
+      ],
+      "inLocal": false,
+      "inM6": false
+    },
+    {
+      "name": "超級路卡利歐ex",
+      "officialEntries": [
+        {
+          "id": "14752",
+          "collector": "092/193",
+          "product": "高級擴充包「超級進化夢想ex」"
+        },
+        {
+          "id": "15976",
+          "collector": "228/193",
+          "product": "高級擴充包「超級進化夢想ex」"
+        },
+        {
+          "id": "13986",
+          "collector": "029/063",
+          "product": "擴充包「超級勇氣」"
+        },
+        {
+          "id": "14196",
+          "collector": "078/063",
+          "product": "擴充包「超級勇氣」"
+        },
+        {
+          "id": "14206",
+          "collector": "088/063",
+          "product": "擴充包「超級勇氣」"
+        },
+        {
+          "id": "14210",
+          "collector": "092/063",
+          "product": "擴充包「超級勇氣」"
+        }
+      ],
+      "inLocal": true,
+      "inM6": false
+    },
+    {
+      "name": "超級達克萊伊ex",
+      "officialEntries": [
+        {
+          "id": "19190",
+          "collector": "046/081",
+          "product": "擴充包「深淵之瞳」"
+        },
+        {
+          "id": "19264",
+          "collector": "099/081",
+          "product": "擴充包「深淵之瞳」"
+        },
+        {
+          "id": "19279",
+          "collector": "114/081",
+          "product": "擴充包「深淵之瞳」"
+        },
+        {
+          "id": "19283",
+          "collector": "118/081",
+          "product": "擴充包「深淵之瞳」"
+        },
+        {
+          "id": "19236",
+          "collector": "139/M-P",
+          "product": "特典卡 超級進化"
+        }
+      ],
+      "inLocal": false,
+      "inM6": false
+    },
+    {
+      "name": "超級長耳兔ex",
+      "officialEntries": [
+        {
+          "id": "14390",
+          "collector": "072/080",
+          "product": "擴充包「烈獄狂火X」"
+        },
+        {
+          "id": "18585",
+          "collector": "100/080",
+          "product": "擴充包「烈獄狂火X」"
+        },
+        {
+          "id": "18599",
+          "collector": "114/080",
+          "product": "擴充包「烈獄狂火X」"
+        }
+      ],
+      "inLocal": true,
+      "inM6": false
+    },
+    {
+      "name": "超級阿勃梭魯ex",
+      "officialEntries": [
+        {
+          "id": "13995",
+          "collector": "038/063",
+          "product": "擴充包「超級勇氣」"
+        },
+        {
+          "id": "14197",
+          "collector": "079/063",
+          "product": "擴充包「超級勇氣」"
+        },
+        {
+          "id": "14207",
+          "collector": "089/063",
+          "product": "擴充包「超級勇氣」"
+        }
+      ],
+      "inLocal": true,
+      "inM6": false
+    },
+    {
+      "name": "超級雪妖女ex",
+      "officialEntries": [
+        {
+          "id": "14696",
+          "collector": "036/193",
+          "product": "高級擴充包「超級進化夢想ex」"
+        },
+        {
+          "id": "15972",
+          "collector": "224/193",
+          "product": "高級擴充包「超級進化夢想ex」"
+        },
+        {
+          "id": "15981",
+          "collector": "233/193",
+          "product": "高級擴充包「超級進化夢想ex」"
+        }
+      ],
+      "inLocal": true,
+      "inM6": false
+    },
+    {
+      "name": "超級雷電獸ex",
+      "officialEntries": [
+        {
+          "id": "14052",
+          "collector": "032/063",
+          "product": "擴充包「超級交響樂」"
+        },
+        {
+          "id": "14224",
+          "collector": "077/063",
+          "product": "擴充包「超級交響樂」"
+        }
+      ],
+      "inLocal": false,
+      "inM6": false
+    },
+    {
+      "name": "超級頭巾混混ex",
+      "officialEntries": [
+        {
+          "id": "14770",
+          "collector": "110/193",
+          "product": "高級擴充包「超級進化夢想ex」"
+        },
+        {
+          "id": "15979",
+          "collector": "231/193",
+          "product": "高級擴充包「超級進化夢想ex」"
+        },
+        {
+          "id": "15989",
+          "collector": "241/193",
+          "product": "高級擴充包「超級進化夢想ex」"
+        }
+      ],
+      "inLocal": false,
+      "inM6": false
+    },
+    {
+      "name": "超級麻麻鰻魚王ex",
+      "officialEntries": [
+        {
+          "id": "14709",
+          "collector": "049/193",
+          "product": "高級擴充包「超級進化夢想ex」"
+        },
+        {
+          "id": "15973",
+          "collector": "225/193",
+          "product": "高級擴充包「超級進化夢想ex」"
+        },
+        {
+          "id": "15983",
+          "collector": "235/193",
+          "product": "高級擴充包「超級進化夢想ex」"
+        }
+      ],
+      "inLocal": false,
+      "inM6": false
+    },
+    {
+      "name": "超級龍頭地鼠ex",
+      "officialEntries": [
+        {
+          "id": "19207",
+          "collector": "063/081",
+          "product": "擴充包「深淵之瞳」"
+        },
+        {
+          "id": "19266",
+          "collector": "101/081",
+          "product": "擴充包「深淵之瞳」"
+        }
+      ],
+      "inLocal": true,
+      "inM6": false
+    }
+  ],
+  "localMega": [
+    {
+      "id": "MBG-003",
+      "name": "超級耿鬼ex",
+      "number": "003/022",
+      "set": "挑戰牌組「超級耿鬼ex」"
+    },
+    {
+      "id": "MBD-006",
+      "name": "超級蒂安希ex",
+      "number": "006/022",
+      "set": "挑戰牌組 「超級蒂安希ex」"
+    },
+    {
+      "id": "M1S-051",
+      "name": "超級袋獸ex",
+      "number": "051/063",
+      "set": "擴充包「超級交響樂」"
+    },
+    {
+      "id": "M2a-092",
+      "name": "超級路卡利歐ex",
+      "number": "092/193",
+      "set": "高級擴充包「超級進化夢想ex」"
+    },
+    {
+      "id": "M1L-046",
+      "name": "超級大嘴娃ex",
+      "number": "046/063",
+      "set": "擴充包「超級勇氣」"
+    },
+    {
+      "id": "M2a-036",
+      "name": "超級雪妖女ex",
+      "number": "036/193",
+      "set": "高級擴充包「超級進化夢想ex」"
+    },
+    {
+      "id": "M3-021",
+      "name": "超級寶石海星ex",
+      "number": "021/080",
+      "set": "擴充包「虛無歸零」"
+    },
+    {
+      "id": "M1L-038",
+      "name": "超級阿勃梭魯ex",
+      "number": "038/063",
+      "set": "擴充包「超級勇氣」"
+    },
+    {
+      "id": "M4-022",
+      "name": "超級甲賀忍蛙ex",
+      "number": "022/083",
+      "set": "擴充包「忍者飛旋」"
+    },
+    {
+      "id": "M2-072",
+      "name": "超級長耳兔ex",
+      "number": "072/080",
+      "set": "擴充包「烈獄狂火X」"
+    },
+    {
+      "id": "MC-018",
+      "name": "超級大竺葵ex",
+      "number": "018/742",
+      "set": "初階牌組 100對戰收藏"
+    },
+    {
+      "id": "M1L-003",
+      "name": "超級妙蛙花ex",
+      "number": "003/063",
+      "set": "擴充包「超級勇氣」"
+    },
+    {
+      "id": "M3-054",
+      "name": "超級盔甲鳥ex",
+      "number": "054/080",
+      "set": "擴充包「虛無歸零」"
+    },
+    {
+      "id": "M2a-227",
+      "name": "超級蒂安希ex",
+      "number": "227/193",
+      "set": "高級擴充包「超級進化夢想ex」"
+    },
+    {
+      "id": "M2-051",
+      "name": "超級巨牙鯊ex",
+      "number": "051/080",
+      "set": "擴充包「烈獄狂火X」"
+    },
+    {
+      "id": "M5-063",
+      "name": "超級龍頭地鼠ex",
+      "number": "063/081",
+      "set": "擴充包「深淵之瞳」"
+    },
+    {
+      "id": "M2a-126",
+      "name": "超級快龍ex",
+      "number": "126/193",
+      "set": "高級擴充包「超級進化夢想ex」"
+    },
+    {
+      "id": "M2-013",
+      "name": "超級噴火龍Xex",
+      "number": "013/080",
+      "set": "擴充包「烈獄狂火X」"
+    },
+    {
+      "id": "M1S-042",
+      "name": "超級沙奈朵ex",
+      "number": "042/063",
+      "set": "擴充包「超級交響樂」"
+    }
+  ],
+  "m6Mega": [
+    {
+      "id": 19559,
+      "name": "1階進化 超級具甲武者ex",
+      "collector": "009/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "id": 19583,
+      "name": "1階進化 超級泥偶巨人ex",
+      "collector": "033/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "id": 19598,
+      "name": "1階進化 超級烏賊王ex",
+      "collector": "048/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "id": 19608,
+      "name": "基礎 超級烈空坐ex",
+      "collector": "058/076",
+      "product": "擴充包「綠寶石風暴」"
+    }
+  ]
+}

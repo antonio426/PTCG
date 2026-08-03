@@ -1,0 +1,278 @@
+{
+  "timestamp": 1785695189040,
+  "stdEntries": 5342,
+  "cacheBefore": 7627,
+  "added": 2826,
+  "addedUnderNewSet": 255,
+  "legalityFixed": 0,
+  "nameNumDup": 1196,
+  "imagesOk": 2826,
+  "imagesMissing": 0,
+  "newSets": [
+    {
+      "id": "EXT01",
+      "product": "TrianersCamp",
+      "count": 115,
+      "added": 0
+    },
+    {
+      "id": "EXT02",
+      "product": "戰術牌組超級快龍ex",
+      "count": 25,
+      "added": 0
+    },
+    {
+      "id": "EXT03",
+      "product": "戰術牌組超級噴火龍Xex",
+      "count": 24,
+      "added": 0
+    },
+    {
+      "id": "EXT04",
+      "product": "戰術牌組超級沙奈朵ex",
+      "count": 24,
+      "added": 0
+    },
+    {
+      "id": "EXT05",
+      "product": "NewTrainerJourney",
+      "count": 23,
+      "added": 0
+    },
+    {
+      "id": "EXT06",
+      "product": "戰術牌組超級巨牙鯊ex",
+      "count": 21,
+      "added": 0
+    },
+    {
+      "id": "EXT07",
+      "product": "G超起始牌組傳說交鋒",
+      "count": 17,
+      "added": 0
+    },
+    {
+      "id": "EXT08",
+      "product": "起始組合古代故勒頓ex",
+      "count": 15,
+      "added": 0
+    },
+    {
+      "id": "EXT09",
+      "product": "起始組合未來密勒頓ex",
+      "count": 15,
+      "added": 0
+    },
+    {
+      "id": "EXT10",
+      "product": "ex初階牌組噴火龍",
+      "count": 14,
+      "added": 0
+    },
+    {
+      "id": "EXT11",
+      "product": "牌組構築BOX黯焰支配者",
+      "count": 12,
+      "added": 0
+    },
+    {
+      "id": "EXT12",
+      "product": "V起始牌組無極力量",
+      "count": 12,
+      "added": 0
+    },
+    {
+      "id": "EXT13",
+      "product": "戰術牌組巨鉗螳螂ex",
+      "count": 11,
+      "added": 0
+    },
+    {
+      "id": "EXT14",
+      "product": "V起始牌組劍&盾",
+      "count": 11,
+      "added": 0
+    },
+    {
+      "id": "EXT15",
+      "product": "G超起始牌組雙倍爆擊",
+      "count": 10,
+      "added": 0
+    },
+    {
+      "id": "EXT16",
+      "product": "G超起始牌組眾星雲集組合篇",
+      "count": 10,
+      "added": 0
+    },
+    {
+      "id": "EXT17",
+      "product": "戰術牌組魔幻假面喵ex",
+      "count": 9,
+      "added": 0
+    },
+    {
+      "id": "EXT18",
+      "product": "ex特別組合太晶屬性：星晶仙子伊布ex",
+      "count": 8,
+      "added": 0
+    },
+    {
+      "id": "EXT19",
+      "product": "ex特別組合太晶屬性：星晶蒼炎刃鬼ex",
+      "count": 8,
+      "added": 0
+    },
+    {
+      "id": "EXT20",
+      "product": "特別牌組組合噴火龍VSTARvs烈空坐VMAX",
+      "count": 8,
+      "added": 0
+    },
+    {
+      "id": "EXT21",
+      "product": "G超起始牌組美夢成真組合篇",
+      "count": 8,
+      "added": 0
+    },
+    {
+      "id": "EXT22",
+      "product": "起始組合ex皮卡丘特別組合",
+      "count": 7,
+      "added": 0
+    },
+    {
+      "id": "EXT23",
+      "product": "V初階牌組噴火龍",
+      "count": 7,
+      "added": 0
+    },
+    {
+      "id": "EXT24",
+      "product": "戰術牌組太晶烈咬陸鯊ex",
+      "count": 6,
+      "added": 0
+    },
+    {
+      "id": "EXT25",
+      "product": "戰術牌組太晶噴火龍ex",
+      "count": 6,
+      "added": 0
+    },
+    {
+      "id": "EXT26",
+      "product": "戰術牌組密勒頓ex",
+      "count": 6,
+      "added": 0
+    },
+    {
+      "id": "EXT27",
+      "product": "戰術牌組沙奈朵ex",
+      "count": 6,
+      "added": 0
+    },
+    {
+      "id": "EXT28",
+      "product": "起始組合太晶骨紋巨聲鱷ex",
+      "count": 6,
+      "added": 0
+    },
+    {
+      "id": "EXT29",
+      "product": "V初階牌組皮卡丘",
+      "count": 6,
+      "added": 0
+    },
+    {
+      "id": "EXT30",
+      "product": "V起始牌組搭檔",
+      "count": 6,
+      "added": 0
+    },
+    {
+      "id": "EXT31",
+      "product": "起始組合太晶超夢ex",
+      "count": 5,
+      "added": 0
+    },
+    {
+      "id": "EXT32",
+      "product": "V初階牌組超夢",
+      "count": 5,
+      "added": 0
+    },
+    {
+      "id": "EXT33",
+      "product": "V起始牌組強大",
+      "count": 5,
+      "added": 0
+    },
+    {
+      "id": "EXT34",
+      "product": "V起始牌組挑戰",
+      "count": 5,
+      "added": 0
+    },
+    {
+      "id": "EXT35",
+      "product": "V起始牌組進化",
+      "count": 4,
+      "added": 0
+    },
+    {
+      "id": "EXT36",
+      "product": "特典卡劍&盾",
+      "count": 3,
+      "added": 0
+    },
+    {
+      "id": "EXT37",
+      "product": "特別牌組組合蒼響・藏瑪然特VS無極汰那",
+      "count": 3,
+      "added": 0
+    },
+    {
+      "id": "EXT38",
+      "product": "眾星雲集組合篇SETA",
+      "count": 3,
+      "added": 0
+    },
+    {
+      "id": "EXT39",
+      "product": "眾星雲集組合篇SETB",
+      "count": 3,
+      "added": 0
+    },
+    {
+      "id": "EXT40",
+      "product": "雙倍爆擊SETA",
+      "count": 2,
+      "added": 0
+    },
+    {
+      "id": "EXT41",
+      "product": "雙倍爆擊SETB",
+      "count": 2,
+      "added": 0
+    },
+    {
+      "id": "EXT42",
+      "product": "傳說交鋒SETB",
+      "count": 1,
+      "added": 0
+    },
+    {
+      "id": "EXT43",
+      "product": "美夢成真組合篇SETA",
+      "count": 1,
+      "added": 0
+    },
+    {
+      "id": "EXT44",
+      "product": "美夢成真組合篇SETB",
+      "count": 1,
+      "added": 0
+    }
+  ],
+  "totalAfter": 10453
+}

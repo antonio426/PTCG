@@ -1,0 +1,1363 @@
+{
+  "stats": {
+    "totalScrIds": 452,
+    "mapped": 123,
+    "unmapped": 329,
+    "coverage": "27.2%",
+    "methods": {
+      "directSetNumber": 120,
+      "byNameExact": 0,
+      "byNameFuzzy": 3,
+      "noMatch": 329,
+      "noScrapedData": 329
+    },
+    "newCardsAdded": 621
+  },
+  "newCardsBySet": {
+    "AS5D": 1,
+    "AS6D": 1,
+    "AC1a": 1,
+    "AC1D": 1,
+    "AC2D": 1,
+    "S": 1,
+    "SVK": 2,
+    "SVI": 3,
+    "SVM": 27,
+    "SVOD": 9,
+    "SVOM": 10,
+    "SV11B": 30,
+    "SV11W": 29,
+    "SVQP": 3,
+    "SVQL": 2,
+    "M1L": 28,
+    "M1S": 30,
+    "M": 29,
+    "MBD": 6,
+    "MBG": 4,
+    "M2": 39,
+    "M2a": 88,
+    "MC": 119,
+    "M3": 54,
+    "MJ": 3,
+    "M4": 50,
+    "M5": 50
+  },
+  "unmapped": {
+    "scr-14129": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14130": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14151": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14132": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14133": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14134": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14135": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14136": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14137": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14138": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14139": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14140": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14141": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14142": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14143": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14145": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14147": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14148": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14149": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14152": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14105": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14106": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14107": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14108": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14109": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14127": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14112": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14113": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14114": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14115": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14116": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14117": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14118": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14120": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14122": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14123": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14124": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14128": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-11526": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10300": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-11672": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-11676": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-12718": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17182": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17195": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-12844": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17215": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16960": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17019": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17018": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17017": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16780": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16779": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16781": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16829": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17104": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17141": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17126": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17122": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17193": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17119": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17167": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17188": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-11706": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-12846": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17216": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17214": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17220": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14056": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14057": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14058": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-12540": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-11655": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14692": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14672": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14808": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17183": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-12278": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17211": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10445": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10447": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-13997": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17020": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17159": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17205": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16758": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17146": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17138": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17109": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17162": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17202": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17206": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17204": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17203": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-12847": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17217": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17213": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17025": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16553": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17021": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14812": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17107": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17131": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17136": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17218": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-18072": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10934": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16783": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10629": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-18479": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14740": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17127": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17134": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-11689": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17169": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10646": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17209": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16843": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16842": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16850": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17046": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-11286": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-12937": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16542": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16541": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16540": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14443": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10967": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16997": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14381": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14465": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14799": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-15970": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17219": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16657": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-18062": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17166": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17212": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17221": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16941": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16940": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16590": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16589": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17016": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16928": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14671": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16962": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17106": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17152": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-11282": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17170": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14841": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-12768": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-12769": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14849": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10478": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10607": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-18019": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-18018": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14332": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10622": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17198": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14374": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14375": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16961": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16958": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-18404": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17176": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14691": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16616": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-9880": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17186": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-18440": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-18441": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10292": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10927": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10584": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-11213": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16695": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-11659": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16548": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16622": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16693": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14811": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17110": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-12558": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14843": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10997": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14703": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10286": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16878": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10312": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-12462": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-11192": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-9827": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-12552": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10506": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-12714": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-12721": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17184": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-11277": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14389": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10975": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-9912": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10905": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10426": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10907": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-13963": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-12411": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-11651": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-11547": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-11594": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-11528": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10971": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10972": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10452": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17151": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14844": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17158": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17111": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16769": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16832": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10299": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-11212": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14809": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-12396": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-9887": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10490": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10976": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-11048": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-11285": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17163": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-13958": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-13959": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-9799": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-9798": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-12151": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14345": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14004": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-18452": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10422": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10423": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10440": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-12339": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10513": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-12520": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-12133": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-12132": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10469": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-13398": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-9803": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17154": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-12412": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10588": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14368": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10496": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17997": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14695": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10446": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17185": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10970": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16896": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-9907": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14673": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14674": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16899": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14850": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17208": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14662": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16493": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-9826": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-12417": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-11091": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-19188": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-9888": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14820": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-9762": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14825": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-13948": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14839": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10510": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14434": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10430": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-11049": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-11255": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14720": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10620": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10265": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10508": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-12427": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10638": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-9908": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-18382": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-12664": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-19158": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-18061": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-17996": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10641": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-11090": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-18519": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10515": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-19150": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-19175": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-19181": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-19149": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-19176": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14785": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14784": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-12698": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14707": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14708": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-18450": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-9765": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14828": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-18383": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-10621": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14370": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-9903": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14329": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-13879": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14330": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14335": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-16591": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-13436": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14807": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-13185": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14061": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-14060": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    },
+    "scr-9905": {
+      "unmapped": true,
+      "reason": "not in scraped data"
+    }
+  }
+}

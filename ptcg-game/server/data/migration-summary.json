@@ -1,0 +1,821 @@
+{
+  "stats": {
+    "totalScrIds": 0,
+    "fromExistingMapping": 337,
+    "fromScrapedMapping": 115,
+    "totalMapped": 452,
+    "coverage": "Infinity%",
+    "stillUnmapped": 0,
+    "cardsAddedToCache": 115,
+    "cacheSize": 7551,
+    "entriesUpdated": 0,
+    "entriesUnmapped": 0
+  },
+  "addedCards": [
+    {
+      "id": "MBG-003",
+      "name": "超級耿鬼ex",
+      "supertype": "Pokémon",
+      "set": "MBG",
+      "number": "003/022"
+    },
+    {
+      "id": "MBG-016",
+      "name": "超級信號",
+      "supertype": "Trainer",
+      "set": "MBG",
+      "number": "016/022"
+    },
+    {
+      "id": "MBG-018",
+      "name": "龐克頭盔",
+      "supertype": "Trainer",
+      "set": "MBG",
+      "number": "018/022"
+    },
+    {
+      "id": "MBG-022",
+      "name": "莉莉艾的決意",
+      "supertype": "Trainer",
+      "set": "MBG",
+      "number": "022/022"
+    },
+    {
+      "id": "MBD-006",
+      "name": "超級蒂安希ex",
+      "supertype": "Pokémon",
+      "set": "MBD",
+      "number": "006/022"
+    },
+    {
+      "id": "MBD-007",
+      "name": "謎擬Q",
+      "supertype": "Pokémon",
+      "set": "MBD",
+      "number": "007/022"
+    },
+    {
+      "id": "MBD-015",
+      "name": "超級信號",
+      "supertype": "Trainer",
+      "set": "MBD",
+      "number": "015/022"
+    },
+    {
+      "id": "MBD-017",
+      "name": "奇跡修正檔",
+      "supertype": "Trainer",
+      "set": "MBD",
+      "number": "017/022"
+    },
+    {
+      "id": "MBD-021",
+      "name": "莉莉艾的決意",
+      "supertype": "Trainer",
+      "set": "MBD",
+      "number": "021/022"
+    },
+    {
+      "id": "MBD-022",
+      "name": "神秘花園",
+      "supertype": "Trainer",
+      "set": "MBD",
+      "number": "022/022"
+    },
+    {
+      "id": "M2a-089",
+      "name": "竹蘭的尖牙陸鯊",
+      "supertype": "Pokémon",
+      "set": "M2a",
+      "number": "089/193"
+    },
+    {
+      "id": "M2a-088",
+      "name": "竹蘭的圓陸鯊",
+      "supertype": "Pokémon",
+      "set": "M2a",
+      "number": "088/193"
+    },
+    {
+      "id": "MC-032",
+      "name": "竹蘭的毒薔薇",
+      "supertype": "Pokémon",
+      "set": "MC",
+      "number": "032/742"
+    },
+    {
+      "id": "MC-652",
+      "name": "力量蛋白飲",
+      "supertype": "Trainer",
+      "set": "MC",
+      "number": "652/742"
+    },
+    {
+      "id": "MC-654",
+      "name": "戰鬥鑼",
+      "supertype": "Trainer",
+      "set": "MC",
+      "number": "654/742"
+    },
+    {
+      "id": "MC-662",
+      "name": "寶可平板",
+      "supertype": "Trainer",
+      "set": "MC",
+      "number": "662/742"
+    },
+    {
+      "id": "MC-729",
+      "name": "莉莉艾的決意",
+      "supertype": "Trainer",
+      "set": "MC",
+      "number": "729/742"
+    },
+    {
+      "id": "M3-080",
+      "name": "硬岩【鬥】能量",
+      "supertype": "Energy",
+      "set": "M3",
+      "number": "080/080"
+    },
+    {
+      "id": "M3-061",
+      "name": "喵喵ex",
+      "supertype": "Pokémon",
+      "set": "M3",
+      "number": "061/080"
+    },
+    {
+      "id": "M4-072",
+      "name": "特殊紅牌",
+      "supertype": "Trainer",
+      "set": "M4",
+      "number": "072/083"
+    },
+    {
+      "id": "M3-075",
+      "name": "鳴依的勉勵",
+      "supertype": "Trainer",
+      "set": "M3",
+      "number": "075/080"
+    },
+    {
+      "id": "M3-104",
+      "name": "奇跡修正檔",
+      "supertype": "Trainer",
+      "set": "M3",
+      "number": "104/080"
+    },
+    {
+      "id": "M2-077",
+      "name": "小光",
+      "supertype": "Trainer",
+      "set": "M2",
+      "number": "077/080"
+    },
+    {
+      "id": "MC-718",
+      "name": "鬥子",
+      "supertype": "Trainer",
+      "set": "MC",
+      "number": "718/742"
+    },
+    {
+      "id": "M2-079",
+      "name": "對戰圓形競技場",
+      "supertype": "Trainer",
+      "set": "M2",
+      "number": "079/080"
+    },
+    {
+      "id": "M3-079",
+      "name": "感應【超】能量",
+      "supertype": "Energy",
+      "set": "M3",
+      "number": "079/080"
+    },
+    {
+      "id": "SVOM-007",
+      "name": "瑪俐的長毛巨魔ex",
+      "supertype": "Pokémon",
+      "set": "SVOM",
+      "number": "007/021"
+    },
+    {
+      "id": "SVOM-006",
+      "name": "瑪俐的詐唬魔",
+      "supertype": "Pokémon",
+      "set": "SVOM",
+      "number": "006/021"
+    },
+    {
+      "id": "SVOM-005",
+      "name": "瑪俐的搗蛋小妖",
+      "supertype": "Pokémon",
+      "set": "SVOM",
+      "number": "005/021"
+    },
+    {
+      "id": "SVOM-021",
+      "name": "尖釘鎮道館",
+      "supertype": "Trainer",
+      "set": "SVOM",
+      "number": "021/021"
+    },
+    {
+      "id": "MC-290",
+      "name": "火箭隊的超夢ex",
+      "supertype": "Pokémon",
+      "set": "MC",
+      "number": "290/742"
+    },
+    {
+      "id": "M2a-015",
+      "name": "火箭隊的團珠蛛",
+      "supertype": "Pokémon",
+      "set": "M2a",
+      "number": "015/193"
+    },
+    {
+      "id": "M2a-016",
+      "name": "火箭隊的操陷蛛",
+      "supertype": "Pokémon",
+      "set": "M2a",
+      "number": "016/193"
+    },
+    {
+      "id": "MC-341",
+      "name": "火箭隊的謎擬Q",
+      "supertype": "Pokémon",
+      "set": "MC",
+      "number": "341/742"
+    },
+    {
+      "id": "M2a-034",
+      "name": "火箭隊的急凍鳥",
+      "supertype": "Pokémon",
+      "set": "M2a",
+      "number": "034/193"
+    },
+    {
+      "id": "MC-689",
+      "name": "猛攻手鐲",
+      "supertype": "Trainer",
+      "set": "MC",
+      "number": "689/742"
+    },
+    {
+      "id": "M1S-051",
+      "name": "超級袋獸ex",
+      "supertype": "Pokémon",
+      "set": "M1S",
+      "number": "051/063"
+    },
+    {
+      "id": "M2a-092",
+      "name": "超級路卡利歐ex",
+      "supertype": "Pokémon",
+      "set": "M2a",
+      "number": "092/193"
+    },
+    {
+      "id": "M-055",
+      "name": "大竺葵",
+      "supertype": "Pokémon",
+      "set": "M",
+      "number": "055/M-P"
+    },
+    {
+      "id": "MC-017",
+      "name": "月桂葉",
+      "supertype": "Pokémon",
+      "set": "MC",
+      "number": "017/742"
+    },
+    {
+      "id": "MC-016",
+      "name": "菊草葉",
+      "supertype": "Pokémon",
+      "set": "MC",
+      "number": "016/742"
+    },
+    {
+      "id": "M-028",
+      "name": "小光",
+      "supertype": "Trainer",
+      "set": "M",
+      "number": "028/M-P"
+    },
+    {
+      "id": "M1S-061",
+      "name": "活力森林",
+      "supertype": "Trainer",
+      "set": "M1S",
+      "number": "061/063"
+    },
+    {
+      "id": "M1L-046",
+      "name": "超級大嘴娃ex",
+      "supertype": "Pokémon",
+      "set": "M1L",
+      "number": "046/063"
+    },
+    {
+      "id": "M4-076",
+      "name": "吉普索",
+      "supertype": "Trainer",
+      "set": "M4",
+      "number": "076/083"
+    },
+    {
+      "id": "M4-080",
+      "name": "稜鏡塔",
+      "supertype": "Trainer",
+      "set": "M4",
+      "number": "080/083"
+    },
+    {
+      "id": "M2a-036",
+      "name": "超級雪妖女ex",
+      "supertype": "Pokémon",
+      "set": "M2a",
+      "number": "036/193"
+    },
+    {
+      "id": "M3-021",
+      "name": "超級寶石海星ex",
+      "supertype": "Pokémon",
+      "set": "M3",
+      "number": "021/080"
+    },
+    {
+      "id": "M-082",
+      "name": "滿充的體貼",
+      "supertype": "Trainer",
+      "set": "M",
+      "number": "082/M-P"
+    },
+    {
+      "id": "M1L-063",
+      "name": "險惡廢墟",
+      "supertype": "Trainer",
+      "set": "M1L",
+      "number": "063/063"
+    },
+    {
+      "id": "MC-736",
+      "name": "燃火能量",
+      "supertype": "Energy",
+      "set": "MC",
+      "number": "736/742"
+    },
+    {
+      "id": "M2a-129",
+      "name": "N的捷克羅姆",
+      "supertype": "Pokémon",
+      "set": "M2a",
+      "number": "129/193"
+    },
+    {
+      "id": "M3-070",
+      "name": "寶可平板",
+      "supertype": "Trainer",
+      "set": "M3",
+      "number": "070/080"
+    },
+    {
+      "id": "MC-704",
+      "name": "空手道王的演練",
+      "supertype": "Trainer",
+      "set": "MC",
+      "number": "704/742"
+    },
+    {
+      "id": "SVM-016",
+      "name": "火焰雞ex",
+      "supertype": "Pokémon",
+      "set": "SVM",
+      "number": "016/175"
+    },
+    {
+      "id": "M2-074",
+      "name": "高溫燃燒器",
+      "supertype": "Trainer",
+      "set": "M2",
+      "number": "074/080"
+    },
+    {
+      "id": "M3-073",
+      "name": "塔拉剛",
+      "supertype": "Trainer",
+      "set": "M3",
+      "number": "073/080"
+    },
+    {
+      "id": "MC-739",
+      "name": "稜鏡能量",
+      "supertype": "Energy",
+      "set": "MC",
+      "number": "739/742"
+    },
+    {
+      "id": "M1L-038",
+      "name": "超級阿勃梭魯ex",
+      "supertype": "Pokémon",
+      "set": "M1L",
+      "number": "038/063"
+    },
+    {
+      "id": "MC-448",
+      "name": "火箭隊的狃拉",
+      "supertype": "Pokémon",
+      "set": "MC",
+      "number": "448/742"
+    },
+    {
+      "id": "SVK-017",
+      "name": "完全體攪拌器",
+      "supertype": "Trainer",
+      "set": "SVK",
+      "number": "017/042"
+    },
+    {
+      "id": "M4-022",
+      "name": "超級甲賀忍蛙ex",
+      "supertype": "Pokémon",
+      "set": "M4",
+      "number": "022/083"
+    },
+    {
+      "id": "M4-075",
+      "name": "AZ的平和",
+      "supertype": "Trainer",
+      "set": "M4",
+      "number": "075/083"
+    },
+    {
+      "id": "SV5K-071",
+      "name": "新衝天能量",
+      "supertype": "Energy",
+      "set": "SV5K",
+      "number": "071/071"
+    },
+    {
+      "id": "MC-658",
+      "name": "貴重手推車",
+      "supertype": "Trainer",
+      "set": "MC",
+      "number": "658/742"
+    },
+    {
+      "id": "M2a-163",
+      "name": "電氣球",
+      "supertype": "Trainer",
+      "set": "M2a",
+      "number": "163/193"
+    },
+    {
+      "id": "M2a-103",
+      "name": "火箭隊的烏鴉頭頭",
+      "supertype": "Pokémon",
+      "set": "M2a",
+      "number": "103/193"
+    },
+    {
+      "id": "MC-447",
+      "name": "火箭隊的黑暗鴉",
+      "supertype": "Pokémon",
+      "set": "MC",
+      "number": "447/742"
+    },
+    {
+      "id": "SVQP-018",
+      "name": "洛拍棒",
+      "supertype": "Trainer",
+      "set": "SVQP",
+      "number": "018/023"
+    },
+    {
+      "id": "M2-072",
+      "name": "超級長耳兔ex",
+      "supertype": "Pokémon",
+      "set": "M2",
+      "number": "072/080"
+    },
+    {
+      "id": "M1S-060",
+      "name": "滿充的體貼",
+      "supertype": "Trainer",
+      "set": "M1S",
+      "number": "060/063"
+    },
+    {
+      "id": "M1S-003",
+      "name": "菊草葉",
+      "supertype": "Pokémon",
+      "set": "M1S",
+      "number": "003/063"
+    },
+    {
+      "id": "M1S-004",
+      "name": "月桂葉",
+      "supertype": "Pokémon",
+      "set": "M1S",
+      "number": "004/063"
+    },
+    {
+      "id": "M1S-005",
+      "name": "大竺葵",
+      "supertype": "Pokémon",
+      "set": "M1S",
+      "number": "005/063"
+    },
+    {
+      "id": "M2a-182",
+      "name": "活力森林",
+      "supertype": "Trainer",
+      "set": "M2a",
+      "number": "182/193"
+    },
+    {
+      "id": "M2a-119",
+      "name": "蓋諾賽克特ex",
+      "supertype": "Pokémon",
+      "set": "M2a",
+      "number": "119/193"
+    },
+    {
+      "id": "SV-226",
+      "name": "火箭隊的袋獸ex",
+      "supertype": "Pokémon",
+      "set": "SV",
+      "number": "226/SV-P"
+    },
+    {
+      "id": "SVM-097",
+      "name": "洛奇亞ex",
+      "supertype": "Pokémon",
+      "set": "SVM",
+      "number": "097/175"
+    },
+    {
+      "id": "M2-073",
+      "name": "超大冰淇淋",
+      "supertype": "Trainer",
+      "set": "M2",
+      "number": "073/080"
+    },
+    {
+      "id": "MC-018",
+      "name": "超級大竺葵ex",
+      "supertype": "Pokémon",
+      "set": "MC",
+      "number": "018/742"
+    },
+    {
+      "id": "M1L-003",
+      "name": "超級妙蛙花ex",
+      "supertype": "Pokémon",
+      "set": "M1L",
+      "number": "003/063"
+    },
+    {
+      "id": "SVOD-006",
+      "name": "大吾的鐵啞鈴",
+      "supertype": "Pokémon",
+      "set": "SVOD",
+      "number": "006/020"
+    },
+    {
+      "id": "SVOD-007",
+      "name": "大吾的金屬怪",
+      "supertype": "Pokémon",
+      "set": "SVOD",
+      "number": "007/020"
+    },
+    {
+      "id": "SVOD-008",
+      "name": "大吾的巨金怪ex",
+      "supertype": "Pokémon",
+      "set": "SVOD",
+      "number": "008/020"
+    },
+    {
+      "id": "M2-058",
+      "name": "帝王拿波ex",
+      "supertype": "Pokémon",
+      "set": "M2",
+      "number": "058/080"
+    },
+    {
+      "id": "M3-054",
+      "name": "超級盔甲鳥ex",
+      "supertype": "Pokémon",
+      "set": "M3",
+      "number": "054/080"
+    },
+    {
+      "id": "M2a-227",
+      "name": "超級蒂安希ex",
+      "supertype": "Pokémon",
+      "set": "M2a",
+      "number": "227/193"
+    },
+    {
+      "id": "M2a-187",
+      "name": "神秘花園",
+      "supertype": "Trainer",
+      "set": "M2a",
+      "number": "187/193"
+    },
+    {
+      "id": "M2-051",
+      "name": "超級巨牙鯊ex",
+      "supertype": "Pokémon",
+      "set": "M2",
+      "number": "051/080"
+    },
+    {
+      "id": "M1S-058",
+      "name": "超級信號",
+      "supertype": "Trainer",
+      "set": "M1S",
+      "number": "058/063"
+    },
+    {
+      "id": "SV-214",
+      "name": "‌寶可夢中心的姐姐",
+      "supertype": "Trainer",
+      "set": "SV",
+      "number": "214/SV-P"
+    },
+    {
+      "id": "M3-078",
+      "name": "增強【草】能量",
+      "supertype": "Energy",
+      "set": "M3",
+      "number": "078/080"
+    },
+    {
+      "id": "M4-068",
+      "name": "探探鼠",
+      "supertype": "Pokémon",
+      "set": "M4",
+      "number": "068/083"
+    },
+    {
+      "id": "M5-063",
+      "name": "超級龍頭地鼠ex",
+      "supertype": "Pokémon",
+      "set": "M5",
+      "number": "063/081"
+    },
+    {
+      "id": "SV11B-069",
+      "name": "蓋諾賽克特ex",
+      "supertype": "Pokémon",
+      "set": "SV11B",
+      "number": "069/086"
+    },
+    {
+      "id": "M1L-062",
+      "name": "莉莉艾的決意",
+      "supertype": "Trainer",
+      "set": "M1L",
+      "number": "062/063"
+    },
+    {
+      "id": "SV11B-165",
+      "name": "N的謀劃",
+      "supertype": "Trainer",
+      "set": "SV11B",
+      "number": "165/086"
+    },
+    {
+      "id": "M2a-192",
+      "name": "稜鏡能量",
+      "supertype": "Energy",
+      "set": "M2a",
+      "number": "192/193"
+    },
+    {
+      "id": "M5-015",
+      "name": "吼鯨王ex",
+      "supertype": "Pokémon",
+      "set": "M5",
+      "number": "015/081"
+    },
+    {
+      "id": "M4-073",
+      "name": "豐收漁網",
+      "supertype": "Trainer",
+      "set": "M4",
+      "number": "073/083"
+    },
+    {
+      "id": "M5-075",
+      "name": "小霞的朝氣",
+      "supertype": "Trainer",
+      "set": "M5",
+      "number": "075/081"
+    },
+    {
+      "id": "M1S-062",
+      "name": "衝浪海灘",
+      "supertype": "Trainer",
+      "set": "M1S",
+      "number": "062/063"
+    },
+    {
+      "id": "M4-082",
+      "name": "泡沫【水】能量",
+      "supertype": "Energy",
+      "set": "M4",
+      "number": "082/083"
+    },
+    {
+      "id": "M5-078",
+      "name": "沐淨",
+      "supertype": "Trainer",
+      "set": "M5",
+      "number": "078/081"
+    },
+    {
+      "id": "M4-113",
+      "name": "稜鏡塔",
+      "supertype": "Trainer",
+      "set": "M4",
+      "number": "113/083"
+    },
+    {
+      "id": "SV11W-027",
+      "name": "凱路迪歐ex",
+      "supertype": "Pokémon",
+      "set": "SV11W",
+      "number": "027/086"
+    },
+    {
+      "id": "M2a-126",
+      "name": "超級快龍ex",
+      "supertype": "Pokémon",
+      "set": "M2a",
+      "number": "126/193"
+    },
+    {
+      "id": "SVM-143",
+      "name": "空手道王的演練",
+      "supertype": "Trainer",
+      "set": "SVM",
+      "number": "143/175"
+    },
+    {
+      "id": "M3-074",
+      "name": "琵魯",
+      "supertype": "Trainer",
+      "set": "M3",
+      "number": "074/080"
+    },
+    {
+      "id": "M2a-172",
+      "name": "鬥子",
+      "supertype": "Trainer",
+      "set": "M2a",
+      "number": "172/193"
+    },
+    {
+      "id": "M2-018",
+      "name": "花舞鳥ex",
+      "supertype": "Pokémon",
+      "set": "M2",
+      "number": "018/080"
+    },
+    {
+      "id": "M2-013",
+      "name": "超級噴火龍Xex",
+      "supertype": "Pokémon",
+      "set": "M2",
+      "number": "013/080"
+    },
+    {
+      "id": "M2-078",
+      "name": "吹火人",
+      "supertype": "Trainer",
+      "set": "M2",
+      "number": "078/080"
+    },
+    {
+      "id": "SV11W-042",
+      "name": "胖嘟嘟ex",
+      "supertype": "Pokémon",
+      "set": "SV11W",
+      "number": "042/086"
+    },
+    {
+      "id": "M1S-042",
+      "name": "超級沙奈朵ex",
+      "supertype": "Pokémon",
+      "set": "M1S",
+      "number": "042/063"
+    }
+  ]
+}

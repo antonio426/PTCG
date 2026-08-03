@@ -1,0 +1,3531 @@
+[
+  {
+    "id": 19551,
+    "name": "基礎 赫拉克羅斯",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019551.png",
+    "hp": 130,
+    "type": "Grass",
+    "attacks": [
+      {
+        "name": "扣殺抽出",
+        "cost": [
+          "Grass",
+          "Grass",
+          "Grass",
+          "Colorless"
+        ],
+        "damage": "20",
+        "effect": "從自己的牌庫抽出2張卡。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Fire",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "001/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "赫拉克羅斯",
+        "name": "赫拉克羅斯"
+      }
+    ],
+    "dexNo": 214,
+    "species": "4",
+    "height": "1.5m",
+    "weight": "54.0kg",
+    "flavor": "會把引以為傲的角強行頂入對手的腹部下方， 然後一口氣舉起來扔出去的大力士。",
+    "illustrator": "Satoshi Ito",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019551.png",
+    "imageBytes": 396546
+  },
+  {
+    "id": 19552,
+    "name": "基礎 溜溜糖球",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019552.png",
+    "hp": 50,
+    "type": "Grass",
+    "attacks": [
+      {
+        "name": "增長",
+        "cost": [
+          "Colorless",
+          "Grass"
+        ],
+        "damage": "10",
+        "effect": "從自己的牌庫選擇最多2張「溜溜糖球」，放置於備戰區。並且重洗牌庫。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Fire",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "002/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "溜溜糖球",
+        "name": "溜溜糖球"
+      },
+      {
+        "keyword": "雨翅蛾",
+        "name": "雨翅蛾"
+      }
+    ],
+    "dexNo": 283,
+    "species": "3",
+    "height": "0.5m",
+    "weight": "1.7kg",
+    "flavor": "從頭頂分泌出的液體有著如同麥芽糖般的甜味。 住在有大量水草的池塘裡。",
+    "illustrator": "Gemi",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019552.png",
+    "imageBytes": 439156
+  },
+  {
+    "id": 19553,
+    "name": "1階進化 雨翅蛾",
+    "category": "1階進化",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019553.png",
+    "hp": 110,
+    "type": "Grass",
+    "attacks": [
+      {
+        "name": "恐怖花紋",
+        "cost": [
+          "Colorless",
+          "Grass"
+        ],
+        "damage": "30",
+        "effect": "在下個對手的回合，受到這個招式的寶可夢無法使用招式。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Fire",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "003/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "溜溜糖球",
+        "name": "溜溜糖球"
+      },
+      {
+        "keyword": "雨翅蛾",
+        "name": "雨翅蛾"
+      }
+    ],
+    "dexNo": 284,
+    "species": "4",
+    "height": "0.8m",
+    "weight": "3.6kg",
+    "flavor": "一旦被雨淋濕，獨特的眼珠花紋觸角就會變重， 使牠連飛都飛不起來。",
+    "illustrator": "Kazumasa Yasukuni",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019553.png",
+    "imageBytes": 417998
+  },
+  {
+    "id": 19554,
+    "name": "基礎 刺球仙人掌",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019554.png",
+    "hp": 70,
+    "type": "Grass",
+    "attacks": [
+      {
+        "name": "擊飛",
+        "cost": [
+          "Colorless"
+        ],
+        "damage": "10+",
+        "effect": "擲1次硬幣若為正面，則增加10點傷害。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Fire",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "004/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "刺球仙人掌",
+        "name": "刺球仙人掌"
+      },
+      {
+        "keyword": "夢歌仙人掌",
+        "name": "夢歌仙人掌"
+      }
+    ],
+    "dexNo": 331,
+    "species": "1",
+    "height": "0.4m",
+    "weight": "51.3kg",
+    "flavor": "棲息在乾燥少雨的地方。 黃色的花朵每年綻放１次。",
+    "illustrator": "Minato",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019554.png",
+    "imageBytes": 322863
+  },
+  {
+    "id": 19555,
+    "name": "1階進化 夢歌仙人掌",
+    "category": "1階進化",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019555.png",
+    "hp": 130,
+    "type": "Grass",
+    "attacks": [
+      {
+        "name": "直擊彈",
+        "cost": [
+          "Colorless",
+          "Grass"
+        ],
+        "damage": "10+",
+        "effect": "對手的1隻寶可夢受到30點傷害。[在備戰區不計算弱點・抵抗力。]"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Fire",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "005/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "刺球仙人掌",
+        "name": "刺球仙人掌"
+      },
+      {
+        "keyword": "夢歌仙人掌",
+        "name": "夢歌仙人掌"
+      }
+    ],
+    "dexNo": 332,
+    "species": "2",
+    "height": "1.3m",
+    "weight": "77.4kg",
+    "flavor": "棲息在沙漠。一到晚上就會開始活動， 去捕捉因受不了沙漠的炎熱而精疲力盡的獵物。",
+    "illustrator": "okayamatakatoshi",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019555.png",
+    "imageBytes": 341564
+  },
+  {
+    "id": 19556,
+    "name": "基礎 三蜜蜂",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019556.png",
+    "hp": 50,
+    "type": "Grass",
+    "attacks": [
+      {
+        "name": "憑空消失",
+        "cost": [
+          "Grass",
+          "Colorless",
+          "Colorless",
+          "Colorless"
+        ],
+        "damage": "10",
+        "effect": "將這隻寶可夢與附加的卡，全部放回手牌。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Fire",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "006/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "三蜜蜂",
+        "name": "三蜜蜂"
+      },
+      {
+        "keyword": "蜂女王",
+        "name": "蜂女王"
+      },
+      {
+        "keyword": "蜂女王ex",
+        "name": "蜂女王ex"
+      }
+    ],
+    "dexNo": 415,
+    "species": "5",
+    "height": "0.3m",
+    "weight": "5.5kg",
+    "flavor": "從出生那時起就是３隻一起。 為了取悅蜂女王，一直都在採集著花蜜。",
+    "illustrator": "nisimono",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019556.png",
+    "imageBytes": 389449
+  },
+  {
+    "id": 19557,
+    "name": "1階進化 蜂女王",
+    "category": "1階進化",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019557.png",
+    "hp": 120,
+    "type": "Grass",
+    "attacks": [
+      {
+        "name": "突刺",
+        "cost": [
+          "Grass",
+          "Colorless",
+          "Colorless",
+          "Colorless"
+        ],
+        "damage": "40",
+        "effect": null
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Fire",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "007/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "三蜜蜂",
+        "name": "三蜜蜂"
+      },
+      {
+        "keyword": "蜂女王",
+        "name": "蜂女王"
+      },
+      {
+        "keyword": "蜂女王ex",
+        "name": "蜂女王ex"
+      }
+    ],
+    "dexNo": 416,
+    "species": "6",
+    "height": "1.2m",
+    "weight": "38.5kg",
+    "flavor": "平時都在身體的洞裡養育孩子。 會分泌出控制三蜜蜂的費洛蒙。",
+    "illustrator": "Masako Tomii",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019557.png",
+    "imageBytes": 364853
+  },
+  {
+    "id": 19558,
+    "name": "基礎 膽小蟲",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019558.png",
+    "hp": 70,
+    "type": "Grass",
+    "attacks": [
+      {
+        "name": "[特性] 懦弱",
+        "cost": [
+          "Grass"
+        ],
+        "damage": "10",
+        "effect": "若對手的場上有「寶可夢【ex】」，則這隻寶可夢【撤退】所需的能量全部消除。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Fire",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "008/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "膽小蟲",
+        "name": "膽小蟲"
+      },
+      {
+        "keyword": "具甲武者",
+        "name": "具甲武者"
+      },
+      {
+        "keyword": "具甲武者GX",
+        "name": "具甲武者GX"
+      },
+      {
+        "keyword": "具甲武者ex",
+        "name": "具甲武者ex"
+      },
+      {
+        "keyword": "超級具甲武者ex",
+        "name": "超級具甲武者ex"
+      }
+    ],
+    "dexNo": 767,
+    "species": "7",
+    "height": "0.5m",
+    "weight": "12.0kg",
+    "flavor": "從沙灘到海底，會棲息在各式各樣的地方。 即使是腐爛的食物也能吃得很開心，是大自然的清潔員。",
+    "illustrator": "Jerky",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019558.png",
+    "imageBytes": 367248
+  },
+  {
+    "id": 19559,
+    "name": "1階進化 超級具甲武者ex",
+    "category": "1階進化",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019559.png",
+    "hp": 340,
+    "type": "Grass",
+    "attacks": [
+      {
+        "name": "致命刺擊",
+        "cost": [
+          "Grass",
+          "Colorless",
+          "Colorless",
+          "Colorless"
+        ],
+        "damage": "60+",
+        "effect": "若對手的戰鬥寶可夢身上放置有傷害指示物，則增加160點傷害。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Fire",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "009/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "膽小蟲",
+        "name": "膽小蟲"
+      },
+      {
+        "keyword": "具甲武者",
+        "name": "具甲武者"
+      },
+      {
+        "keyword": "具甲武者GX",
+        "name": "具甲武者GX"
+      },
+      {
+        "keyword": "具甲武者ex",
+        "name": "具甲武者ex"
+      },
+      {
+        "keyword": "超級具甲武者ex",
+        "name": "超級具甲武者ex"
+      }
+    ],
+    "dexNo": 768,
+    "species": "8",
+    "height": null,
+    "weight": null,
+    "flavor": null,
+    "illustrator": "5ban Graphics",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019559.png",
+    "imageBytes": 482781
+  },
+  {
+    "id": 19560,
+    "name": "基礎 卡蒂狗",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019560.png",
+    "hp": 80,
+    "type": "Fire",
+    "attacks": [
+      {
+        "name": "吼叫",
+        "cost": [
+          "Colorless",
+          "Fire",
+          "Colorless",
+          "Colorless"
+        ],
+        "damage": "50",
+        "effect": "將對手的戰鬥寶可夢與備戰寶可夢互換。[由對手選擇放置於戰鬥場的寶可夢。]"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Water",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "010/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "卡蒂狗",
+        "name": "卡蒂狗"
+      },
+      {
+        "keyword": "風速狗",
+        "name": "風速狗"
+      },
+      {
+        "keyword": "風速狗ex",
+        "name": "風速狗ex"
+      }
+    ],
+    "dexNo": 58,
+    "species": null,
+    "height": "0.7m",
+    "weight": "19.0kg",
+    "flavor": "性格誠實，容易和人親近。 遇到敵人時牠會吼叫追咬，試著把敵人趕走。",
+    "illustrator": "Teeziro",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019560.png",
+    "imageBytes": 389797
+  },
+  {
+    "id": 19561,
+    "name": "1階進化 風速狗",
+    "category": "1階進化",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019561.png",
+    "hp": 150,
+    "type": "Fire",
+    "attacks": [
+      {
+        "name": "活力獠牙",
+        "cost": [
+          "Fire",
+          "Colorless",
+          "Colorless",
+          "Fire",
+          "Fire",
+          "Colorless",
+          "Colorless"
+        ],
+        "damage": "90+",
+        "effect": "若對手剩餘獎賞卡的張數為4張以下，則增加90點傷害。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Water",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "011/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "卡蒂狗",
+        "name": "卡蒂狗"
+      },
+      {
+        "keyword": "風速狗",
+        "name": "風速狗"
+      },
+      {
+        "keyword": "風速狗ex",
+        "name": "風速狗ex"
+      }
+    ],
+    "dexNo": 59,
+    "species": null,
+    "height": "1.9m",
+    "weight": "155.0kg",
+    "flavor": "威風凜凜的叫聲充滿威嚴， 不管是誰聽到後，都會不由自主地跪倒下去。",
+    "illustrator": "Felicia Chen",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019561.png",
+    "imageBytes": 447865
+  },
+  {
+    "id": 19562,
+    "name": "基礎 鴨嘴火獸",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019562.png",
+    "hp": 90,
+    "type": "Fire",
+    "attacks": [
+      {
+        "name": "集力",
+        "cost": [
+          "Colorless",
+          "Fire",
+          "Colorless"
+        ],
+        "damage": "30",
+        "effect": "從自己的牌庫選擇最多2張基本能量卡，在給對手看過後加入手牌。並且重洗牌庫。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Water",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "012/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "鴨嘴火獸",
+        "name": "鴨嘴火獸"
+      },
+      {
+        "keyword": "鴨嘴炎獸",
+        "name": "鴨嘴炎獸"
+      }
+    ],
+    "dexNo": 126,
+    "species": "6",
+    "height": "1.3m",
+    "weight": "44.5kg",
+    "flavor": "身體表面會產生 像太陽一樣的火焰熱浪。",
+    "illustrator": "GOSSAN",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019562.png",
+    "imageBytes": 395714
+  },
+  {
+    "id": 19563,
+    "name": "1階進化 鴨嘴炎獸",
+    "category": "1階進化",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019563.png",
+    "hp": 140,
+    "type": "Fire",
+    "attacks": [
+      {
+        "name": "‌[特性] 拍檔提升",
+        "cost": [
+          "Fire",
+          "Fire",
+          "Colorless"
+        ],
+        "damage": "80",
+        "effect": "在自己的回合時可使用1次。從自己的手牌選擇「基本【火】能量」卡與「基本【雷】能量」卡最多各1張，以任意方式附於自己的「電擊魔獸」或者「鴨嘴炎獸」身上。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Water",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "013/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "鴨嘴火獸",
+        "name": "鴨嘴火獸"
+      },
+      {
+        "keyword": "鴨嘴炎獸",
+        "name": "鴨嘴炎獸"
+      }
+    ],
+    "dexNo": 467,
+    "species": "7",
+    "height": "1.6m",
+    "weight": "68.0kg",
+    "flavor": "棲息在火山口。 據說１座火山只有一對鴨嘴炎獸。",
+    "illustrator": "Ryuta Fuse",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019563.png",
+    "imageBytes": 401794
+  },
+  {
+    "id": 19564,
+    "name": "基礎 煤炭龜",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019564.png",
+    "hp": 130,
+    "type": "Fire",
+    "attacks": [
+      {
+        "name": "灼燒",
+        "cost": [
+          "Fire",
+          "Colorless",
+          "Fire",
+          "Fire",
+          "Colorless"
+        ],
+        "damage": "30",
+        "effect": "將對手的戰鬥寶可夢【灼傷】。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Water",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "014/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "煤炭龜",
+        "name": "煤炭龜"
+      }
+    ],
+    "dexNo": 324,
+    "species": "4",
+    "height": "0.5m",
+    "weight": "80.4kg",
+    "flavor": "煤炭是牠的能量來源。 在煤炭龜棲息著的山裡，沉睡著大量的煤炭。",
+    "illustrator": "Tonji Matsuno",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019564.png",
+    "imageBytes": 396912
+  },
+  {
+    "id": 19565,
+    "name": "基礎 加熱洛托姆ex",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019565.png",
+    "hp": 190,
+    "type": "Fire",
+    "attacks": [
+      {
+        "name": "再次加熱",
+        "cost": [
+          "Colorless",
+          "Colorless",
+          "Fire",
+          "Fire",
+          "Colorless"
+        ],
+        "damage": "30×",
+        "effect": "在給對手看過自己的棄牌區的所有「基本【火】能量」卡後，造成其張數×30點傷害。然後，將給對手看過的能量卡放回牌庫並重洗。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Water",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "015/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "加熱洛托姆ex",
+        "name": "加熱洛托姆ex"
+      }
+    ],
+    "dexNo": 479,
+    "species": "9",
+    "height": null,
+    "weight": null,
+    "flavor": null,
+    "illustrator": "5ban Graphics",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019565.png",
+    "imageBytes": 443527
+  },
+  {
+    "id": 19566,
+    "name": "基礎 熔蟻獸",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019566.png",
+    "hp": 110,
+    "type": "Fire",
+    "attacks": [
+      {
+        "name": "破壞火",
+        "cost": [
+          "Fire"
+        ],
+        "damage": "30",
+        "effect": "擲1次硬幣若為正面，則選擇1個對手的戰鬥寶可夢身上附加的能量，將其丟棄。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Water",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "016/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "熔蟻獸",
+        "name": "熔蟻獸"
+      }
+    ],
+    "dexNo": 631,
+    "species": "1",
+    "height": "1.4m",
+    "weight": "58.0kg",
+    "flavor": "從尾部的孔洞吸入空氣，燃起火焰。 如果孔洞被堵住了，身體就會不舒服。",
+    "illustrator": "Takeshi Nakamura",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019566.png",
+    "imageBytes": 344727
+  },
+  {
+    "id": 19567,
+    "name": "基礎 巨翅飛魚",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019567.png",
+    "hp": 110,
+    "type": "Water",
+    "attacks": [
+      {
+        "name": "掀起波浪",
+        "cost": [
+          "Colorless",
+          "Water",
+          "Colorless"
+        ],
+        "damage": "30",
+        "effect": "雙方玩家各自將手牌全部放回牌庫並重洗。然後，各自從牌庫抽出4張卡。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Lightning",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "017/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "巨翅飛魚",
+        "name": "巨翅飛魚"
+      }
+    ],
+    "dexNo": 226,
+    "species": "6",
+    "height": "2.1m",
+    "weight": "220.0kg",
+    "flavor": "游動時速度上來後，甚至會衝出到波浪上， 然後就這樣滑翔１００公尺。",
+    "illustrator": "kodama",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019567.png",
+    "imageBytes": 359095
+  },
+  {
+    "id": 19568,
+    "name": "基礎 蓋歐卡",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019568.png",
+    "hp": 150,
+    "type": "Water",
+    "attacks": [
+      {
+        "name": "攀瀑",
+        "cost": [
+          "Water",
+          "Colorless",
+          "Water",
+          "Water",
+          "Colorless"
+        ],
+        "damage": "40",
+        "effect": null
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Lightning",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "018/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "蓋歐卡",
+        "name": "蓋歐卡"
+      }
+    ],
+    "dexNo": 382,
+    "species": "2",
+    "height": "4.5m",
+    "weight": "352.0kg",
+    "flavor": "用大雨和大海嘯擴張海洋的神話中的寶可夢。 曾與固拉多激烈交戰。",
+    "illustrator": "Anderson",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019568.png",
+    "imageBytes": 465461
+  },
+  {
+    "id": 19569,
+    "name": "基礎 輕飄飄",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019569.png",
+    "hp": 80,
+    "type": "Water",
+    "attacks": [
+      {
+        "name": "鉤住",
+        "cost": [
+          "Colorless"
+        ],
+        "damage": "10",
+        "effect": null
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Lightning",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "019/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "輕飄飄",
+        "name": "輕飄飄"
+      },
+      {
+        "keyword": "胖嘟嘟",
+        "name": "胖嘟嘟"
+      },
+      {
+        "keyword": "胖嘟嘟ex",
+        "name": "胖嘟嘟ex"
+      }
+    ],
+    "dexNo": 592,
+    "species": "2",
+    "height": "1.2m",
+    "weight": "33.0kg",
+    "flavor": "會用薄紗般的手腳纏住獵物， 將對手拖進８０００公尺深的海中。",
+    "illustrator": "Mousho",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019569.png",
+    "imageBytes": 345508
+  },
+  {
+    "id": 19570,
+    "name": "1階進化 胖嘟嘟",
+    "category": "1階進化",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019570.png",
+    "hp": 120,
+    "type": "Water",
+    "attacks": [
+      {
+        "name": "‌[特性] 深海抽出",
+        "cost": [
+          "Water",
+          "Colorless",
+          "Colorless"
+        ],
+        "damage": "100",
+        "effect": "在自己的回合時可使用1次。從自己的牌庫抽出1張卡。然後，若希望，選擇1張自己的手牌，放回牌庫下方。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Lightning",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "020/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "輕飄飄",
+        "name": "輕飄飄"
+      },
+      {
+        "keyword": "胖嘟嘟",
+        "name": "胖嘟嘟"
+      },
+      {
+        "keyword": "胖嘟嘟ex",
+        "name": "胖嘟嘟ex"
+      }
+    ],
+    "dexNo": 593,
+    "species": "3",
+    "height": "2.2m",
+    "weight": "135.0kg",
+    "flavor": "身體的絕大部分都由與海水相同的成分組成。 會把沉船當成自己的城堡。",
+    "illustrator": "Nurikabe",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019570.png",
+    "imageBytes": 357037
+  },
+  {
+    "id": 19571,
+    "name": "基礎 弱丁魚ex",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019571.png",
+    "hp": 260,
+    "type": "Water",
+    "attacks": [
+      {
+        "name": "[特性] 大洋增輝",
+        "cost": [
+          "Water",
+          "Water",
+          "Water",
+          "Colorless"
+        ],
+        "damage": "220",
+        "effect": "若這隻寶可夢在戰鬥場上，則在自己的回合時可使用1次。將這隻寶可夢恢復「50」HP。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Lightning",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "021/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "弱丁魚ex",
+        "name": "弱丁魚ex"
+      }
+    ],
+    "dexNo": 746,
+    "species": "6",
+    "height": null,
+    "weight": null,
+    "flavor": null,
+    "illustrator": "5ban Graphics",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019571.png",
+    "imageBytes": 414198
+  },
+  {
+    "id": 19572,
+    "name": "基礎 電擊獸",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019572.png",
+    "hp": 90,
+    "type": "Lightning",
+    "attacks": [
+      {
+        "name": "呼朋引伴",
+        "cost": [
+          "Colorless",
+          "Lightning",
+          "Lightning",
+          "Colorless"
+        ],
+        "damage": "60",
+        "effect": "從自己的牌庫選擇最多2張【基礎】寶可夢卡，放置於備戰區。並且重洗牌庫。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Fighting",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "022/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "電擊獸",
+        "name": "電擊獸"
+      },
+      {
+        "keyword": "電擊魔獸",
+        "name": "電擊魔獸"
+      },
+      {
+        "keyword": "電擊魔獸ex",
+        "name": "電擊魔獸ex"
+      }
+    ],
+    "dexNo": 125,
+    "species": "5",
+    "height": "1.1m",
+    "weight": "30.0kg",
+    "flavor": "人們正在研究如何把雷電儲存到電擊獸的體內， 以便隨時使用。",
+    "illustrator": "kurumitsu",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019572.png",
+    "imageBytes": 350954
+  },
+  {
+    "id": 19573,
+    "name": "1階進化 電擊魔獸",
+    "category": "1階進化",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019573.png",
+    "hp": 140,
+    "type": "Lightning",
+    "attacks": [
+      {
+        "name": "泰山壓頂",
+        "cost": [
+          "Colorless",
+          "Colorless",
+          "Lightning",
+          "Lightning",
+          "Colorless",
+          "Colorless"
+        ],
+        "damage": "30",
+        "effect": "擲1次硬幣若為正面，則將對手的戰鬥寶可夢【麻痺】。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Fighting",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "023/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "電擊獸",
+        "name": "電擊獸"
+      },
+      {
+        "keyword": "電擊魔獸",
+        "name": "電擊魔獸"
+      },
+      {
+        "keyword": "電擊魔獸ex",
+        "name": "電擊魔獸ex"
+      }
+    ],
+    "dexNo": 466,
+    "species": "6",
+    "height": "1.8m",
+    "weight": "138.6kg",
+    "flavor": "會用尾巴前端抵住對手， 然後在一瞬間注入超過２萬伏特的電流。",
+    "illustrator": "hncl",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019573.png",
+    "imageBytes": 368195
+  },
+  {
+    "id": 19574,
+    "name": "基礎 雷公ex",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019574.png",
+    "hp": 200,
+    "type": "Lightning",
+    "attacks": [
+      {
+        "name": "雷霆纏身",
+        "cost": [
+          "Lightning",
+          "Lightning",
+          "Lightning",
+          "Colorless"
+        ],
+        "damage": "200",
+        "effect": "這個招式在先攻玩家的最初回合也可使用。從自己的牌庫選擇1張能量卡，附於這隻寶可夢身上。並且重洗牌庫。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Fighting",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": "--",
+    "collectorNumber": "024/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "雷公ex",
+        "name": "雷公ex"
+      }
+    ],
+    "dexNo": 243,
+    "species": "3",
+    "height": null,
+    "weight": null,
+    "flavor": null,
+    "illustrator": "aky CG Works",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019574.png",
+    "imageBytes": 480787
+  },
+  {
+    "id": 19575,
+    "name": "基礎 雷電雲",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019575.png",
+    "hp": 120,
+    "type": "Lightning",
+    "attacks": [
+      {
+        "name": "[特性] 化身團結",
+        "cost": [
+          "Lightning",
+          "Colorless",
+          "Colorless"
+        ],
+        "damage": "90",
+        "effect": "若自己的場上有「龍捲雲」「雷電雲」「土地雲」「眷戀雲」，則這隻寶可夢使用招式所需的【無】能量全部消除。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Fighting",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "025/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "雷電雲",
+        "name": "雷電雲"
+      }
+    ],
+    "dexNo": 642,
+    "species": "2",
+    "height": "1.5m",
+    "weight": "61.0kg",
+    "flavor": "一邊在空中飛來飛去， 一邊四處打雷引發森林大火，因此受到厭惡。",
+    "illustrator": "Takumi Wada",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019575.png",
+    "imageBytes": 366347
+  },
+  {
+    "id": 19576,
+    "name": "基礎 啪嚓海膽",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019576.png",
+    "hp": 80,
+    "type": "Lightning",
+    "attacks": [
+      {
+        "name": "能量粉碎",
+        "cost": [
+          "Colorless",
+          "Colorless"
+        ],
+        "damage": "20×",
+        "effect": "造成對手的所有寶可夢身上附加的能量的數量×20點傷害。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Fighting",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "026/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "啪嚓海膽",
+        "name": "啪嚓海膽"
+      }
+    ],
+    "dexNo": 871,
+    "species": "1",
+    "height": "0.3m",
+    "weight": "1.0kg",
+    "flavor": "生性膽小，光是碰到海藻屑就足以讓牠嚇得放電。 嘴唇不會導電。",
+    "illustrator": "OKUBO",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019576.png",
+    "imageBytes": 279698
+  },
+  {
+    "id": 19577,
+    "name": "基礎 電海燕",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019577.png",
+    "hp": 60,
+    "type": "Lightning",
+    "attacks": [
+      {
+        "name": "高速移動",
+        "cost": [
+          "Lightning"
+        ],
+        "damage": "10",
+        "effect": "擲1次硬幣若為正面，則在下個對手的回合，這隻寶可夢不會受到招式的傷害與效果的影響。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Lightning",
+      "value": "×2"
+    },
+    "resistance": {
+      "type": "Fighting",
+      "value": "-30"
+    },
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "027/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "電海燕",
+        "name": "電海燕"
+      },
+      {
+        "keyword": "大電海燕",
+        "name": "大電海燕"
+      },
+      {
+        "keyword": "大電海燕ex",
+        "name": "大電海燕ex"
+      }
+    ],
+    "dexNo": 940,
+    "species": "0",
+    "height": "0.4m",
+    "weight": "3.6kg",
+    "flavor": "會在海岸的懸崖上築巢。 吃起來劈哩啪啦跳的神奇口感，讓牠的巢成了受歡迎的珍奇美食。",
+    "illustrator": "Yukihiro Tada",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019577.png",
+    "imageBytes": 236138
+  },
+  {
+    "id": 19578,
+    "name": "1階進化 大電海燕",
+    "category": "1階進化",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019578.png",
+    "hp": 120,
+    "type": "Lightning",
+    "attacks": [
+      {
+        "name": "襲擊",
+        "cost": [
+          "Lightning",
+          "Lightning",
+          "Colorless"
+        ],
+        "damage": "30+",
+        "effect": "在這個回合，若這隻寶可夢從「電海燕」進化，則增加90點傷害。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Lightning",
+      "value": "×2"
+    },
+    "resistance": {
+      "type": "Fighting",
+      "value": "-30"
+    },
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "028/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "電海燕",
+        "name": "電海燕"
+      },
+      {
+        "keyword": "大電海燕",
+        "name": "大電海燕"
+      },
+      {
+        "keyword": "大電海燕ex",
+        "name": "大電海燕ex"
+      }
+    ],
+    "dexNo": 941,
+    "species": "1",
+    "height": "1.4m",
+    "weight": "38.6kg",
+    "flavor": "會把翅膀製造的電儲存到喉囊裡。 由於羽毛含的油脂少之又少，導致牠不是很擅長游泳。",
+    "illustrator": "OKACHEKE",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019578.png",
+    "imageBytes": 362254
+  },
+  {
+    "id": 19579,
+    "name": "基礎 催眠貘",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019579.png",
+    "hp": 80,
+    "type": "Psychic",
+    "attacks": [
+      {
+        "name": "拍擊",
+        "cost": [
+          "Psychic"
+        ],
+        "damage": "20",
+        "effect": null
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Darkness",
+      "value": "×2"
+    },
+    "resistance": {
+      "type": "Fighting",
+      "value": "-30"
+    },
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "029/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "催眠貘",
+        "name": "催眠貘"
+      },
+      {
+        "keyword": "引夢貘人",
+        "name": "引夢貘人"
+      }
+    ],
+    "dexNo": 96,
+    "species": null,
+    "height": "1.0m",
+    "weight": "32.4kg",
+    "flavor": "據說當牠抽動凸出的鼻子， 無論是誰在哪裡做著什麼夢，都會被牠知道得一清二楚。",
+    "illustrator": "Hachinana",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019579.png",
+    "imageBytes": 271331
+  },
+  {
+    "id": 19580,
+    "name": "1階進化 引夢貘人",
+    "category": "1階進化",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019580.png",
+    "hp": 120,
+    "type": "Psychic",
+    "attacks": [
+      {
+        "name": "意志統治者",
+        "cost": [
+          "Psychic",
+          "Psychic",
+          "Colorless"
+        ],
+        "damage": "20×",
+        "effect": "造成對手的手牌的張數×20點傷害。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Darkness",
+      "value": "×2"
+    },
+    "resistance": {
+      "type": "Fighting",
+      "value": "-30"
+    },
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "030/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "催眠貘",
+        "name": "催眠貘"
+      },
+      {
+        "keyword": "引夢貘人",
+        "name": "引夢貘人"
+      }
+    ],
+    "dexNo": 97,
+    "species": null,
+    "height": "1.6m",
+    "weight": "75.6kg",
+    "flavor": "會以固定的節奏擺動著形影不離的鐘擺。 一靠近牠就會不由自主地昏昏欲睡。",
+    "illustrator": "Yuta Kawazu",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019580.png",
+    "imageBytes": 383230
+  },
+  {
+    "id": 19581,
+    "name": "基礎 騎拉帝納",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019581.png",
+    "hp": 130,
+    "type": "Psychic",
+    "attacks": [
+      {
+        "name": "渾沌匍匐",
+        "cost": [
+          "Psychic",
+          "Psychic",
+          "Colorless"
+        ],
+        "damage": "120",
+        "effect": "在下個對手的回合，這隻寶可夢不會受到招式的傷害。在上個自己的回合，若自己的寶可夢使用了「渾沌匍匐」，則無法使用這個招式。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Darkness",
+      "value": "×2"
+    },
+    "resistance": {
+      "type": "Fighting",
+      "value": "-30"
+    },
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "031/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "騎拉帝納",
+        "name": "騎拉帝納"
+      }
+    ],
+    "dexNo": 487,
+    "species": "7",
+    "height": "6.9m",
+    "weight": "650.0kg",
+    "flavor": "棲息在據說位於這個世界的背面， 一般常識無法通用的毀壞的世界裡。",
+    "illustrator": "toriyufu",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019581.png",
+    "imageBytes": 445107
+  },
+  {
+    "id": 19582,
+    "name": "基礎 泥偶小人",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019582.png",
+    "hp": 90,
+    "type": "Psychic",
+    "attacks": [
+      {
+        "name": "打擊",
+        "cost": [
+          "Psychic",
+          "Psychic"
+        ],
+        "damage": "50",
+        "effect": null
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Darkness",
+      "value": "×2"
+    },
+    "resistance": {
+      "type": "Fighting",
+      "value": "-30"
+    },
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "032/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "泥偶小人",
+        "name": "泥偶小人"
+      },
+      {
+        "keyword": "泥偶巨人",
+        "name": "泥偶巨人"
+      },
+      {
+        "keyword": "超級泥偶巨人ex",
+        "name": "超級泥偶巨人ex"
+      }
+    ],
+    "dexNo": 622,
+    "species": "2",
+    "height": "1.0m",
+    "weight": "92.0kg",
+    "flavor": "古代人之所以捏黏土製造牠，似乎是為了當成僕人使喚。 能量來源至今不明。",
+    "illustrator": "Hideki Ishikawa",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019582.png",
+    "imageBytes": 395139
+  },
+  {
+    "id": 19583,
+    "name": "1階進化 超級泥偶巨人ex",
+    "category": "1階進化",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019583.png",
+    "hp": 350,
+    "type": "Psychic",
+    "attacks": [
+      {
+        "name": "[特性] 啟動限制",
+        "cost": [
+          "Psychic",
+          "Psychic"
+        ],
+        "damage": "300",
+        "effect": "只有在自己的手牌為10張以上時，這隻寶可夢才可使用招式。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Darkness",
+      "value": "×2"
+    },
+    "resistance": {
+      "type": "Fighting",
+      "value": "-30"
+    },
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "033/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "泥偶小人",
+        "name": "泥偶小人"
+      },
+      {
+        "keyword": "泥偶巨人",
+        "name": "泥偶巨人"
+      },
+      {
+        "keyword": "超級泥偶巨人ex",
+        "name": "超級泥偶巨人ex"
+      }
+    ],
+    "dexNo": 623,
+    "species": "3",
+    "height": null,
+    "weight": null,
+    "flavor": null,
+    "illustrator": "5ban Graphics",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019583.png",
+    "imageBytes": 490180
+  },
+  {
+    "id": 19584,
+    "name": "基礎 眷戀雲",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019584.png",
+    "hp": 120,
+    "type": "Psychic",
+    "attacks": [
+      {
+        "name": "[特性] 化身團結",
+        "cost": [
+          "Psychic",
+          "Psychic",
+          "Colorless",
+          "Colorless"
+        ],
+        "damage": "100+",
+        "effect": "若自己的場上有「龍捲雲」「雷電雲」「土地雲」「眷戀雲」，則這隻寶可夢使用招式所需的【無】能量全部消除。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Metal",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "034/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "眷戀雲",
+        "name": "眷戀雲"
+      }
+    ],
+    "dexNo": 905,
+    "species": "5",
+    "height": "1.6m",
+    "weight": "48.0kg",
+    "flavor": "當牠越過大海飛來，便代表嚴寒的冬季即將終結。 傳說中其慈愛將使新的生命在洗翠大地上萌芽。",
+    "illustrator": "Anesaki Dynamic",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019584.png",
+    "imageBytes": 447035
+  },
+  {
+    "id": 19585,
+    "name": "基礎 穿山鼠",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019585.png",
+    "hp": 60,
+    "type": "Fighting",
+    "attacks": [
+      {
+        "name": "覺醒",
+        "cost": [
+          "Fighting"
+        ],
+        "damage": null,
+        "effect": "從自己的牌庫選擇1張從這隻寶可夢進化而來的卡，放置於這隻寶可夢身上完成進化。並且重洗牌庫。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Grass",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "035/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "穿山鼠",
+        "name": "穿山鼠"
+      },
+      {
+        "keyword": "穿山王",
+        "name": "穿山王"
+      }
+    ],
+    "dexNo": 27,
+    "species": null,
+    "height": "0.6m",
+    "weight": "12.0kg",
+    "flavor": "不管從多高的地方掉下， 只要把身體蜷成一團就可以藉著反彈而得救。",
+    "illustrator": "Izucch",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019585.png",
+    "imageBytes": 371285
+  },
+  {
+    "id": 19586,
+    "name": "1階進化 穿山王",
+    "category": "1階進化",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019586.png",
+    "hp": 110,
+    "type": "Fighting",
+    "attacks": [
+      {
+        "name": "[特性] 反擊針",
+        "cost": [
+          "Fighting"
+        ],
+        "damage": "60",
+        "effect": "這隻寶可夢在戰鬥場受到對手的寶可夢招式的傷害時，在使用招式的寶可夢身上放置3個傷害指示物。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Grass",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "036/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "穿山鼠",
+        "name": "穿山鼠"
+      },
+      {
+        "keyword": "穿山王",
+        "name": "穿山王"
+      }
+    ],
+    "dexNo": 28,
+    "species": null,
+    "height": "1.0m",
+    "weight": "29.5kg",
+    "flavor": "身上的刺是皮膚硬化後形成的。 會將身體蜷成一團，用尖刺刺向對手進行攻擊。",
+    "illustrator": "aoki",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019586.png",
+    "imageBytes": 492528
+  },
+  {
+    "id": 19587,
+    "name": "基礎 大岩蛇",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019587.png",
+    "hp": 120,
+    "type": "Fighting",
+    "attacks": [
+      {
+        "name": "防守壓制",
+        "cost": [
+          "Colorless",
+          "Colorless",
+          "Colorless"
+        ],
+        "damage": "80",
+        "effect": "在下個對手的回合，這隻寶可夢受到招式的傷害「-30」點。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Grass",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "037/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "大岩蛇",
+        "name": "大岩蛇"
+      },
+      {
+        "keyword": "大鋼蛇",
+        "name": "大鋼蛇"
+      }
+    ],
+    "dexNo": 95,
+    "species": null,
+    "height": "8.8m",
+    "weight": "210.0kg",
+    "flavor": "平時住在地底。 會以８０公里的時速在地下一邊挖掘一邊尋找食物。",
+    "illustrator": "Kedamahadaitai Yawarakai",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019587.png",
+    "imageBytes": 521757
+  },
+  {
+    "id": 19588,
+    "name": "1階進化 大鋼蛇",
+    "category": "1階進化",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019588.png",
+    "hp": 190,
+    "type": "Fighting",
+    "attacks": [
+      {
+        "name": "[特性] 高密度盔甲",
+        "cost": [
+          "Fighting",
+          "Fighting",
+          "Colorless",
+          "Colorless"
+        ],
+        "damage": "150",
+        "effect": "若這隻寶可夢的HP是全滿的狀態，則這隻寶可夢受到對手的寶可夢招式的傷害「-60」點。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Grass",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "038/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "大岩蛇",
+        "name": "大岩蛇"
+      },
+      {
+        "keyword": "大鋼蛇",
+        "name": "大鋼蛇"
+      }
+    ],
+    "dexNo": 208,
+    "species": "8",
+    "height": "9.2m",
+    "weight": "400.0kg",
+    "flavor": "會用結實的下顎咬碎岩石前進。 有著即使是在漆黑的地底也能看見東西的眼睛。",
+    "illustrator": "Shin Nagasawa",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019588.png",
+    "imageBytes": 438248
+  },
+  {
+    "id": 19589,
+    "name": "基礎 固拉多",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019589.png",
+    "hp": 150,
+    "type": "Fighting",
+    "attacks": [
+      {
+        "name": "怪力",
+        "cost": [
+          "Fighting",
+          "Colorless",
+          "Fighting",
+          "Fighting",
+          "Colorless"
+        ],
+        "damage": "40",
+        "effect": null
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Grass",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "039/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "固拉多",
+        "name": "固拉多"
+      }
+    ],
+    "dexNo": 383,
+    "species": "3",
+    "height": "3.5m",
+    "weight": "950.0kg",
+    "flavor": "據說能用高溫蒸發水分來擴張大地。 曾與蓋歐卡激烈交戰。",
+    "illustrator": "Nisota Niso",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019589.png",
+    "imageBytes": 486984
+  },
+  {
+    "id": 19590,
+    "name": "基礎 土地雲",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019590.png",
+    "hp": 130,
+    "type": "Fighting",
+    "attacks": [
+      {
+        "name": "[特性] 化身團結",
+        "cost": [
+          "Fighting",
+          "Colorless",
+          "Colorless"
+        ],
+        "damage": "110",
+        "effect": "若自己的場上有「龍捲雲」「雷電雲」「土地雲」「眷戀雲」，則這隻寶可夢使用招式所需的【無】能量全部消除。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Grass",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "040/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "土地雲",
+        "name": "土地雲"
+      }
+    ],
+    "dexNo": 645,
+    "species": "5",
+    "height": "1.5m",
+    "weight": "68.0kg",
+    "flavor": "土地雲造訪的土地上， 作物會結實纍纍，因此被稱為農田之神。",
+    "illustrator": "Oku",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019590.png",
+    "imageBytes": 426242
+  },
+  {
+    "id": 19591,
+    "name": "基礎 尼多蘭",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019591.png",
+    "hp": 60,
+    "type": "Darkness",
+    "attacks": [
+      {
+        "name": "尋找朋友",
+        "cost": [
+          "Colorless",
+          "Darkness"
+        ],
+        "damage": "10",
+        "effect": "從自己的牌庫選擇1張寶可夢卡，在給對手看過後加入手牌。並且重洗牌庫。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Fighting",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "041/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "尼多蘭",
+        "name": "尼多蘭"
+      },
+      {
+        "keyword": "尼多娜",
+        "name": "尼多娜"
+      },
+      {
+        "keyword": "尼多后",
+        "name": "尼多后"
+      }
+    ],
+    "dexNo": 29,
+    "species": null,
+    "height": "0.4m",
+    "weight": "7.0kg",
+    "flavor": "對氣味比雄性還要敏感。 會一邊用鬍鬚確認風向，一邊在下風處尋找食物。",
+    "illustrator": "tayu",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019591.png",
+    "imageBytes": 498306
+  },
+  {
+    "id": 19592,
+    "name": "1階進化 尼多娜",
+    "category": "1階進化",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019592.png",
+    "hp": 90,
+    "type": "Darkness",
+    "attacks": [
+      {
+        "name": "撞擊",
+        "cost": [
+          "Darkness",
+          "Colorless"
+        ],
+        "damage": "60",
+        "effect": null
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Fighting",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "042/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "尼多蘭",
+        "name": "尼多蘭"
+      },
+      {
+        "keyword": "尼多娜",
+        "name": "尼多娜"
+      },
+      {
+        "keyword": "尼多后",
+        "name": "尼多后"
+      }
+    ],
+    "dexNo": 30,
+    "species": null,
+    "height": "0.8m",
+    "weight": "20.0kg",
+    "flavor": "人們認為牠額頭上的角是為了避免 在給孩子餵食時刺到孩子而退化的。",
+    "illustrator": "Jiro Sasumo",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019592.png",
+    "imageBytes": 412364
+  },
+  {
+    "id": 19593,
+    "name": "2階進化 尼多后",
+    "category": "2階進化",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019593.png",
+    "hp": 170,
+    "type": "Darkness",
+    "attacks": [
+      {
+        "name": "[特性] 母親的誘引",
+        "cost": [
+          "Darkness",
+          "Colorless",
+          "Colorless"
+        ],
+        "damage": "150",
+        "effect": "在自己的回合時可使用1次。擲1次硬幣若為正面，則選擇1隻對手的備戰寶可夢，與戰鬥寶可夢互換。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Fighting",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "043/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "尼多蘭",
+        "name": "尼多蘭"
+      },
+      {
+        "keyword": "尼多娜",
+        "name": "尼多娜"
+      },
+      {
+        "keyword": "尼多后",
+        "name": "尼多后"
+      }
+    ],
+    "dexNo": 31,
+    "species": null,
+    "height": "1.3m",
+    "weight": "60.0kg",
+    "flavor": "比起攻擊更擅於防守。 會用像鎧甲般的堅硬鱗片保護孩子不被任何攻擊傷害。",
+    "illustrator": "Aliya Chen",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019593.png",
+    "imageBytes": 389652
+  },
+  {
+    "id": 19594,
+    "name": "基礎 圓絲蛛",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019594.png",
+    "hp": 60,
+    "type": "Darkness",
+    "attacks": [
+      {
+        "name": "毒針",
+        "cost": [
+          "Darkness",
+          "Colorless",
+          "Colorless",
+          "Colorless"
+        ],
+        "damage": "50×",
+        "effect": "將對手的戰鬥寶可夢【中毒】。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Fighting",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "044/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "圓絲蛛",
+        "name": "圓絲蛛"
+      },
+      {
+        "keyword": "阿利多斯",
+        "name": "阿利多斯"
+      }
+    ],
+    "dexNo": 167,
+    "species": "7",
+    "height": "0.5m",
+    "weight": "8.5kg",
+    "flavor": "會用又細又結實的絲線佈下陷阱， 然後靜靜等待獵物落網。",
+    "illustrator": "Apios",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019594.png",
+    "imageBytes": 345678
+  },
+  {
+    "id": 19595,
+    "name": "1階進化 阿利多斯",
+    "category": "1階進化",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019595.png",
+    "hp": 100,
+    "type": "Darkness",
+    "attacks": [
+      {
+        "name": "劇痛毒",
+        "cost": [
+          "Darkness",
+          "Colorless",
+          "Colorless",
+          "Colorless"
+        ],
+        "damage": "80",
+        "effect": "將對手的戰鬥寶可夢【中毒】。因這個【中毒】而放置的傷害指示物的數量改為4個。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Fighting",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "045/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "圓絲蛛",
+        "name": "圓絲蛛"
+      },
+      {
+        "keyword": "阿利多斯",
+        "name": "阿利多斯"
+      }
+    ],
+    "dexNo": 168,
+    "species": "8",
+    "height": "1.1m",
+    "weight": "33.5kg",
+    "flavor": "不僅會從臀部，還會從口中吐出絲線。 所以光用眼睛看無法分辨哪邊才是頭部。",
+    "illustrator": "UKUMO uiti",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019595.png",
+    "imageBytes": 414232
+  },
+  {
+    "id": 19596,
+    "name": "基礎 勾魂眼",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019596.png",
+    "hp": 80,
+    "type": "Darkness",
+    "attacks": [
+      {
+        "name": "引誘出來",
+        "cost": [
+          "Darkness",
+          "Darkness",
+          "Colorless"
+        ],
+        "damage": null,
+        "effect": "將對手的牌庫上方5張卡翻到正面，從其中選擇任意數量的【基礎】寶可夢卡，放置於對手的備戰區。將剩餘卡放回牌庫並重洗。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Grass",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "046/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "勾魂眼",
+        "name": "勾魂眼"
+      }
+    ],
+    "dexNo": 302,
+    "species": "2",
+    "height": "0.5m",
+    "weight": "11.0kg",
+    "flavor": "潛伏在洞窟的陰暗處。 在不斷吃寶石的過程中，自己的眼睛變成了寶石。",
+    "illustrator": "Shinji Kanda",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019596.png",
+    "imageBytes": 502057
+  },
+  {
+    "id": 19597,
+    "name": "基礎 好啦魷",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019597.png",
+    "hp": 60,
+    "type": "Darkness",
+    "attacks": [
+      {
+        "name": "拍落",
+        "cost": [
+          "Darkness"
+        ],
+        "damage": "10",
+        "effect": "在不看正面的情況下，從對手的手牌選擇1張，將其丟棄。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Grass",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "047/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "好啦魷",
+        "name": "好啦魷"
+      },
+      {
+        "keyword": "烏賊王",
+        "name": "烏賊王"
+      },
+      {
+        "keyword": "超級烏賊王ex",
+        "name": "超級烏賊王ex"
+      }
+    ],
+    "dexNo": 686,
+    "species": "6",
+    "height": "0.4m",
+    "weight": "3.5kg",
+    "flavor": "會以光的閃爍讓襲擊自己的對手失去戰意。 並趁機隱藏自己的身影。",
+    "illustrator": "kawayoo",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019597.png",
+    "imageBytes": 401374
+  },
+  {
+    "id": 19598,
+    "name": "1階進化 超級烏賊王ex",
+    "category": "1階進化",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019598.png",
+    "hp": 320,
+    "type": "Darkness",
+    "attacks": [
+      {
+        "name": "精神傀儡",
+        "cost": [
+          "Darkness",
+          "Darkness",
+          "Darkness",
+          "Darkness",
+          "Darkness"
+        ],
+        "damage": "70×",
+        "effect": "造成對手的備戰寶可夢的數量×70點傷害。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Grass",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "048/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "好啦魷",
+        "name": "好啦魷"
+      },
+      {
+        "keyword": "烏賊王",
+        "name": "烏賊王"
+      },
+      {
+        "keyword": "超級烏賊王ex",
+        "name": "超級烏賊王ex"
+      }
+    ],
+    "dexNo": 687,
+    "species": "7",
+    "height": null,
+    "weight": null,
+    "flavor": null,
+    "illustrator": "5ban Graphics",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019598.png",
+    "imageBytes": 468677
+  },
+  {
+    "id": 19599,
+    "name": "基礎 赤面龍",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019599.png",
+    "hp": 120,
+    "type": "Dragon",
+    "attacks": [
+      {
+        "name": "拖出",
+        "cost": [
+          "Fire",
+          "Water",
+          "Colorless",
+          "Colorless",
+          "Colorless"
+        ],
+        "damage": "80",
+        "effect": "選擇對手的1隻備戰寶可夢，與戰鬥寶可夢互換。然後，新上場的寶可夢受到40點傷害。"
+      }
+    ],
+    "effect": null,
+    "weakness": "--",
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "049/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "赤面龍",
+        "name": "赤面龍"
+      }
+    ],
+    "dexNo": 621,
+    "species": "1",
+    "height": "1.6m",
+    "weight": "139.0kg",
+    "flavor": "居住在地洞裡。 如果身體受涼就會無法動彈，因此一定會做日光浴。",
+    "illustrator": "AKIRA EGAWA",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019599.png",
+    "imageBytes": 450166
+  },
+  {
+    "id": 19600,
+    "name": "基礎 心鱗寶",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019600.png",
+    "hp": 70,
+    "type": "Dragon",
+    "attacks": [
+      {
+        "name": "硬頭",
+        "cost": [
+          "Lightning",
+          "Fighting"
+        ],
+        "damage": "30",
+        "effect": "在下個對手的回合，這隻寶可夢受到招式的傷害「-30」點。"
+      }
+    ],
+    "effect": null,
+    "weakness": "--",
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "050/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "心鱗寶",
+        "name": "心鱗寶"
+      },
+      {
+        "keyword": "鱗甲龍",
+        "name": "鱗甲龍"
+      },
+      {
+        "keyword": "杖尾鱗甲龍",
+        "name": "杖尾鱗甲龍"
+      },
+      {
+        "keyword": "杖尾鱗甲龍GX",
+        "name": "杖尾鱗甲龍GX"
+      }
+    ],
+    "dexNo": 782,
+    "species": "2",
+    "height": "0.6m",
+    "weight": "29.7kg",
+    "flavor": "會透過敲擊鱗片的聲音來與夥伴溝通。 成群在一起時非常吵。",
+    "illustrator": "June",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019600.png",
+    "imageBytes": 374100
+  },
+  {
+    "id": 19601,
+    "name": "1階進化 鱗甲龍",
+    "category": "1階進化",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019601.png",
+    "hp": 100,
+    "type": "Dragon",
+    "attacks": [
+      {
+        "name": "雙重粉碎",
+        "cost": [
+          "Lightning",
+          "Fighting"
+        ],
+        "damage": "70×",
+        "effect": "擲2次硬幣，造成正面出現的次數×70點傷害。"
+      }
+    ],
+    "effect": null,
+    "weakness": "--",
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "051/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "心鱗寶",
+        "name": "心鱗寶"
+      },
+      {
+        "keyword": "鱗甲龍",
+        "name": "鱗甲龍"
+      },
+      {
+        "keyword": "杖尾鱗甲龍",
+        "name": "杖尾鱗甲龍"
+      },
+      {
+        "keyword": "杖尾鱗甲龍GX",
+        "name": "杖尾鱗甲龍GX"
+      }
+    ],
+    "dexNo": 783,
+    "species": "3",
+    "height": "1.2m",
+    "weight": "47.0kg",
+    "flavor": "會強而有勁地敲擊鱗片並且跳起舞來激勵自己。 戰吼聲是牠開戰的信號。",
+    "illustrator": "Scav",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019601.png",
+    "imageBytes": 355421
+  },
+  {
+    "id": 19602,
+    "name": "2階進化 杖尾鱗甲龍",
+    "category": "2階進化",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019602.png",
+    "hp": 160,
+    "type": "Dragon",
+    "attacks": [
+      {
+        "name": "[特性] 鱗片律動",
+        "cost": [
+          "Lightning",
+          "Fighting",
+          "Colorless"
+        ],
+        "damage": "170",
+        "effect": "在自己的回合時可使用1次。查看自己的牌庫上方6張卡，從其中選擇任意數量的基本能量卡，以任意方式附於自己的【龍】寶可夢身上。將剩餘卡放回牌庫並重洗。"
+      }
+    ],
+    "effect": null,
+    "weakness": "--",
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "052/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "心鱗寶",
+        "name": "心鱗寶"
+      },
+      {
+        "keyword": "鱗甲龍",
+        "name": "鱗甲龍"
+      },
+      {
+        "keyword": "杖尾鱗甲龍",
+        "name": "杖尾鱗甲龍"
+      },
+      {
+        "keyword": "杖尾鱗甲龍GX",
+        "name": "杖尾鱗甲龍GX"
+      }
+    ],
+    "dexNo": 784,
+    "species": "4",
+    "height": "1.6m",
+    "weight": "78.2kg",
+    "flavor": "會敲響鱗片來測試對手的膽量。 弱小的傢伙聽到那聲音就會嚇得逃之夭夭。",
+    "illustrator": "Mitsuhiro Arita",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019602.png",
+    "imageBytes": 379205
+  },
+  {
+    "id": 19603,
+    "name": "基礎 摩托蜥",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019603.png",
+    "hp": 120,
+    "type": "Dragon",
+    "attacks": [
+      {
+        "name": "咬住",
+        "cost": [
+          "Colorless",
+          "Colorless",
+          "Grass",
+          "Darkness",
+          "Colorless"
+        ],
+        "damage": "30",
+        "effect": null
+      }
+    ],
+    "effect": null,
+    "weakness": "--",
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "053/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "摩托蜥",
+        "name": "摩托蜥"
+      }
+    ],
+    "dexNo": 967,
+    "species": "7",
+    "height": "1.6m",
+    "weight": "63.0kg",
+    "flavor": "在喉部的褶皺中蓄有能量， 因此可以載著人不停地奔跑很長一段距離。",
+    "illustrator": "Saboteri",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019603.png",
+    "imageBytes": 290552
+  },
+  {
+    "id": 19604,
+    "name": "基礎 露力麗",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019604.png",
+    "hp": 30,
+    "type": "Colorless",
+    "attacks": [
+      {
+        "name": "蹦蹦充能",
+        "cost": [],
+        "damage": null,
+        "effect": "從自己的牌庫選擇1張能量卡，附於備戰寶可夢身上。並且重洗牌庫。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Fighting",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": "--",
+    "collectorNumber": "054/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "露力麗",
+        "name": "露力麗"
+      }
+    ],
+    "dexNo": 298,
+    "species": "8",
+    "height": "0.2m",
+    "weight": "2.0kg",
+    "flavor": "圓圓大大的尾巴裡充滿了 牠在成長時所需要的營養。",
+    "illustrator": "TOMATO MARKET",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019604.png",
+    "imageBytes": 302934
+  },
+  {
+    "id": 19605,
+    "name": "基礎 青綿鳥",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019605.png",
+    "hp": 50,
+    "type": "Colorless",
+    "attacks": [
+      {
+        "name": "雀躍",
+        "cost": [
+          "Colorless",
+          "Colorless",
+          "Colorless"
+        ],
+        "damage": "20",
+        "effect": "將這隻寶可夢與備戰寶可夢互換。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Lightning",
+      "value": "×2"
+    },
+    "resistance": {
+      "type": "Fighting",
+      "value": "-30"
+    },
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "055/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "青綿鳥",
+        "name": "青綿鳥"
+      },
+      {
+        "keyword": "七夕青鳥",
+        "name": "七夕青鳥"
+      },
+      {
+        "keyword": "七夕青鳥GX",
+        "name": "七夕青鳥GX"
+      },
+      {
+        "keyword": "七夕青鳥ex",
+        "name": "七夕青鳥ex"
+      }
+    ],
+    "dexNo": 333,
+    "species": "3",
+    "height": "0.4m",
+    "weight": "1.2kg",
+    "flavor": "不知道為什麼， 牠最喜歡輕輕地站在人類頭上並裝成帽子的樣子。",
+    "illustrator": "Shiburingaru",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019605.png",
+    "imageBytes": 341974
+  },
+  {
+    "id": 19606,
+    "name": "1階進化 七夕青鳥",
+    "category": "1階進化",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019606.png",
+    "hp": 110,
+    "type": "Colorless",
+    "attacks": [
+      {
+        "name": "[特性] 棉花搬運",
+        "cost": [
+          "Colorless",
+          "Colorless",
+          "Colorless"
+        ],
+        "damage": "80",
+        "effect": "只要這隻寶可夢在場上，自己的所有【基礎】寶可夢【撤退】所需的能量全部消除。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Lightning",
+      "value": "×2"
+    },
+    "resistance": {
+      "type": "Fighting",
+      "value": "-30"
+    },
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "056/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "青綿鳥",
+        "name": "青綿鳥"
+      },
+      {
+        "keyword": "七夕青鳥",
+        "name": "七夕青鳥"
+      },
+      {
+        "keyword": "七夕青鳥GX",
+        "name": "七夕青鳥GX"
+      },
+      {
+        "keyword": "七夕青鳥ex",
+        "name": "七夕青鳥ex"
+      }
+    ],
+    "dexNo": 334,
+    "species": "4",
+    "height": "1.1m",
+    "weight": "20.6kg",
+    "flavor": "會悠然地飛翔在天空中。 聽見七夕青鳥優美的哼唱，就會心醉神迷，彷彿置身夢境。",
+    "illustrator": "Atsushi Furusawa",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019606.png",
+    "imageBytes": 333973
+  },
+  {
+    "id": 19607,
+    "name": "基礎 變隱龍",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019607.png",
+    "hp": 90,
+    "type": "Colorless",
+    "attacks": [
+      {
+        "name": "鮮豔鞭打",
+        "cost": [
+          "Colorless",
+          "Colorless"
+        ],
+        "damage": "30×",
+        "effect": "從自己的手牌將任意數量的寶可夢卡給對手看過後，造成給對手看過的寶可夢的屬性種類的數量×30點傷害。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Fighting",
+      "value": "×2"
+    },
+    "resistance": "--",
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "057/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "變隱龍",
+        "name": "變隱龍"
+      }
+    ],
+    "dexNo": 352,
+    "species": "2",
+    "height": "1.0m",
+    "weight": "22.0kg",
+    "flavor": "能夠改變體色，融入景色中，悄悄地靠近獵物。 但腹部的花紋是不會消失的。",
+    "illustrator": "Akira Komayama",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019607.png",
+    "imageBytes": 306005
+  },
+  {
+    "id": 19608,
+    "name": "基礎 超級烈空坐ex",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019608.png",
+    "hp": 280,
+    "type": "Colorless",
+    "attacks": [
+      {
+        "name": "[特性] 霸者咆哮",
+        "cost": [
+          "Fire",
+          "Lightning",
+          "Colorless"
+        ],
+        "damage": "50×",
+        "effect": "在自己的回合，從手牌將這張卡放置於備戰區時，可使用1次。查看自己的牌庫上方4張卡，從其中選擇1張基本能量卡，附於這隻寶可夢身上。將剩餘卡翻回反面並重洗，放回牌庫下方。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Lightning",
+      "value": "×2"
+    },
+    "resistance": {
+      "type": "Fighting",
+      "value": "-30"
+    },
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "058/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "超級烈空坐ex",
+        "name": "超級烈空坐ex"
+      }
+    ],
+    "dexNo": 384,
+    "species": "4",
+    "height": null,
+    "weight": null,
+    "flavor": null,
+    "illustrator": "takuyoa",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019608.png",
+    "imageBytes": 498949
+  },
+  {
+    "id": 19609,
+    "name": "基礎 龍捲雲",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019609.png",
+    "hp": 110,
+    "type": "Colorless",
+    "attacks": [
+      {
+        "name": "[特性] 化身團結",
+        "cost": [
+          "Colorless",
+          "Colorless",
+          "Colorless"
+        ],
+        "damage": "70",
+        "effect": "若自己的場上有「龍捲雲」「雷電雲」「土地雲」「眷戀雲」，則這隻寶可夢使用招式所需的【無】能量全部消除。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Lightning",
+      "value": "×2"
+    },
+    "resistance": {
+      "type": "Fighting",
+      "value": "-30"
+    },
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "059/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "龍捲雲",
+        "name": "龍捲雲"
+      }
+    ],
+    "dexNo": 641,
+    "species": "1",
+    "height": "1.5m",
+    "weight": "63.0kg",
+    "flavor": "下半身被雲一般的能量包裹著。 能以時速３００公里的速度在空中飛行。",
+    "illustrator": "Uta",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019609.png",
+    "imageBytes": 370376
+  },
+  {
+    "id": 19610,
+    "name": "基礎 小箭雀",
+    "category": "基礎",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019610.png",
+    "hp": 60,
+    "type": "Colorless",
+    "attacks": [
+      {
+        "name": "偷襲",
+        "cost": [
+          "Colorless"
+        ],
+        "damage": "30",
+        "effect": "擲1次硬幣若為反面，則這個招式失敗。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Lightning",
+      "value": "×2"
+    },
+    "resistance": {
+      "type": "Fighting",
+      "value": "-30"
+    },
+    "retreat": {
+      "type": "Colorless",
+      "value": "×2"
+    },
+    "collectorNumber": "060/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "小箭雀",
+        "name": "小箭雀"
+      },
+      {
+        "keyword": "火箭雀",
+        "name": "火箭雀"
+      },
+      {
+        "keyword": "烈箭鷹",
+        "name": "烈箭鷹"
+      },
+      {
+        "keyword": "烈箭鷹ex",
+        "name": "烈箭鷹ex"
+      }
+    ],
+    "dexNo": 661,
+    "species": "1",
+    "height": "0.3m",
+    "weight": "1.7kg",
+    "flavor": "婉轉的叫聲雖然美麗， 但對於入侵領地的對手會毫不留情地粗暴對待。",
+    "illustrator": "takashi shiraishi",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019610.png",
+    "imageBytes": 482048
+  },
+  {
+    "id": 19611,
+    "name": "1階進化 火箭雀",
+    "category": "1階進化",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019611.png",
+    "hp": 80,
+    "type": "Colorless",
+    "attacks": [
+      {
+        "name": "緊抓",
+        "cost": [
+          "Colorless",
+          "Colorless"
+        ],
+        "damage": "40",
+        "effect": "在下個對手的回合，受到這個招式的寶可夢無法撤退。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Lightning",
+      "value": "×2"
+    },
+    "resistance": {
+      "type": "Fighting",
+      "value": "-30"
+    },
+    "retreat": "--",
+    "collectorNumber": "061/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "小箭雀",
+        "name": "小箭雀"
+      },
+      {
+        "keyword": "火箭雀",
+        "name": "火箭雀"
+      },
+      {
+        "keyword": "烈箭鷹",
+        "name": "烈箭鷹"
+      },
+      {
+        "keyword": "烈箭鷹ex",
+        "name": "烈箭鷹ex"
+      }
+    ],
+    "dexNo": 662,
+    "species": "2",
+    "height": "0.7m",
+    "weight": "16.0kg",
+    "flavor": "腹部火袋的火力越強， 就能飛得越快，但點火需要花點時間。",
+    "illustrator": "Souichirou Gunjima",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019611.png",
+    "imageBytes": 354827
+  },
+  {
+    "id": 19612,
+    "name": "2階進化 烈箭鷹ex",
+    "category": "2階進化",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019612.png",
+    "hp": 280,
+    "type": "Colorless",
+    "attacks": [
+      {
+        "name": "[特性] 激動俯衝",
+        "cost": [
+          "Colorless",
+          "Colorless"
+        ],
+        "damage": "150",
+        "effect": "在自己的回合，若手牌有這張卡，且自己的場上有【無】屬性的「超級進化寶可夢【ex】」，則可使用1次。將這張卡放置於備戰區。"
+      }
+    ],
+    "effect": null,
+    "weakness": {
+      "type": "Lightning",
+      "value": "×2"
+    },
+    "resistance": {
+      "type": "Fighting",
+      "value": "-30"
+    },
+    "retreat": "--",
+    "collectorNumber": "062/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [
+      {
+        "keyword": "小箭雀",
+        "name": "小箭雀"
+      },
+      {
+        "keyword": "火箭雀",
+        "name": "火箭雀"
+      },
+      {
+        "keyword": "烈箭鷹",
+        "name": "烈箭鷹"
+      },
+      {
+        "keyword": "烈箭鷹ex",
+        "name": "烈箭鷹ex"
+      }
+    ],
+    "dexNo": 663,
+    "species": "3",
+    "height": null,
+    "weight": null,
+    "flavor": null,
+    "illustrator": "5ban Graphics",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019612.png",
+    "imageBytes": 446380
+  },
+  {
+    "id": 19613,
+    "name": "美味飯糰",
+    "category": "物品卡",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019613.png",
+    "hp": null,
+    "type": null,
+    "attacks": [],
+    "effect": "將自己的戰鬥寶可夢恢復「30」HP。恢復的HP依自己的棄牌區的「美味飯糰」（這張卡除外）每1張增加「30」。",
+    "weakness": null,
+    "resistance": null,
+    "retreat": null,
+    "collectorNumber": "063/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [],
+    "dexNo": null,
+    "species": null,
+    "height": null,
+    "weight": null,
+    "flavor": null,
+    "illustrator": "AYUMI ODASHIMA",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019613.png",
+    "imageBytes": 207161
+  },
+  {
+    "id": 19614,
+    "name": "冒險提燈",
+    "category": "物品卡",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019614.png",
+    "hp": null,
+    "type": null,
+    "attacks": [],
+    "effect": "從自己的牌庫選擇「基本【火】能量」卡與「基本【雷】能量」卡各1張，在給對手看過後加入手牌。並且重洗牌庫。",
+    "weakness": null,
+    "resistance": null,
+    "retreat": null,
+    "collectorNumber": "064/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [],
+    "dexNo": null,
+    "species": null,
+    "height": null,
+    "weight": null,
+    "flavor": null,
+    "illustrator": "inose yukie",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019614.png",
+    "imageBytes": 196370
+  },
+  {
+    "id": 19615,
+    "name": "訂製背心",
+    "category": "寶可夢道具",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019615.png",
+    "hp": null,
+    "type": null,
+    "attacks": [],
+    "effect": "附有這張卡的寶可夢（「超級進化寶可夢【ex】除外」）受到對手的「超級進化寶可夢【ex】」招式的傷害「-60」點。",
+    "weakness": null,
+    "resistance": null,
+    "retreat": null,
+    "collectorNumber": "065/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [],
+    "dexNo": null,
+    "species": null,
+    "height": null,
+    "weight": null,
+    "flavor": null,
+    "illustrator": "Toyste Beach",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019615.png",
+    "imageBytes": 196127
+  },
+  {
+    "id": 19616,
+    "name": "超級烈空坐帽子",
+    "category": "寶可夢道具",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019616.png",
+    "hp": null,
+    "type": null,
+    "attacks": [
+      {
+        "name": "德爾塔之禮",
+        "cost": [
+          "Colorless"
+        ],
+        "damage": null,
+        "effect": "附有這張卡的寶可夢，可使用這張卡上寫的招式。[需要有足夠使用招式的能量。]"
+      }
+    ],
+    "effect": null,
+    "weakness": null,
+    "resistance": null,
+    "retreat": null,
+    "collectorNumber": "066/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [],
+    "dexNo": null,
+    "species": null,
+    "height": null,
+    "weight": null,
+    "flavor": null,
+    "illustrator": "AYUMI ODASHIMA",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019616.png",
+    "imageBytes": 212834
+  },
+  {
+    "id": 19617,
+    "name": "主持人的帶動",
+    "category": "支援者卡",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019617.png",
+    "hp": null,
+    "type": null,
+    "attacks": [],
+    "effect": "從自己的牌庫抽出2張卡。若對手剩餘獎賞卡的張數為3張以下，則再抽出2張卡。",
+    "weakness": null,
+    "resistance": null,
+    "retreat": null,
+    "collectorNumber": "067/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [],
+    "dexNo": null,
+    "species": null,
+    "height": null,
+    "weight": null,
+    "flavor": null,
+    "illustrator": "DOM",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019617.png",
+    "imageBytes": 215319
+  },
+  {
+    "id": 19618,
+    "name": "基利",
+    "category": "支援者卡",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019618.png",
+    "hp": null,
+    "type": null,
+    "attacks": [],
+    "effect": "從自己的牌庫選擇支援者卡與競技場卡合計最多3張，在給對手看過後加入手牌。並且重洗牌庫。",
+    "weakness": null,
+    "resistance": null,
+    "retreat": null,
+    "collectorNumber": "068/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [],
+    "dexNo": null,
+    "species": null,
+    "height": null,
+    "weight": null,
+    "flavor": null,
+    "illustrator": "Sanosuke Sakuma",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019618.png",
+    "imageBytes": 218250
+  },
+  {
+    "id": 19619,
+    "name": "希嘉娜的信賴",
+    "category": "支援者卡",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019619.png",
+    "hp": null,
+    "type": null,
+    "attacks": [],
+    "effect": "將自己的戰鬥寶可夢與備戰寶可夢互換。然後，選擇1個換入備戰區的寶可夢身上附加的能量，改附於新的戰鬥寶可夢身上。",
+    "weakness": null,
+    "resistance": null,
+    "retreat": null,
+    "collectorNumber": "069/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [],
+    "dexNo": null,
+    "species": null,
+    "height": null,
+    "weight": null,
+    "flavor": null,
+    "illustrator": "GIDORA",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019619.png",
+    "imageBytes": 201224
+  },
+  {
+    "id": 19620,
+    "name": "小楓與小南的修行",
+    "category": "支援者卡",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019620.png",
+    "hp": null,
+    "type": null,
+    "attacks": [],
+    "effect": "從自己的牌庫抽出2張卡。然後，若場上有名稱中有「傳說」的競技場卡，則不丟棄這張「小楓與小南的修行」，而是放回手牌。",
+    "weakness": null,
+    "resistance": null,
+    "retreat": null,
+    "collectorNumber": "070/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [],
+    "dexNo": null,
+    "species": null,
+    "height": null,
+    "weight": null,
+    "flavor": null,
+    "illustrator": "Yuu Nishida",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019620.png",
+    "imageBytes": 200309
+  },
+  {
+    "id": 19621,
+    "name": "傳說的海溝",
+    "category": "競技場卡",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019621.png",
+    "hp": null,
+    "type": null,
+    "attacks": [],
+    "effect": "雙方的所有寶可夢恢復HP時，恢復的HP改為2倍。",
+    "weakness": null,
+    "resistance": null,
+    "retreat": null,
+    "collectorNumber": "071/076, 072/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [],
+    "dexNo": null,
+    "species": null,
+    "height": null,
+    "weight": null,
+    "flavor": null,
+    "illustrator": "danciao",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019621.png",
+    "imageBytes": 881606
+  },
+  {
+    "id": 19622,
+    "name": "傳說的山頂",
+    "category": "競技場卡",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019622.png",
+    "hp": null,
+    "type": null,
+    "attacks": [],
+    "effect": "雙方的【無】寶可夢受到對手的寶可夢招式的傷害而【昏厥】時，被獲得的獎賞卡減少1張。",
+    "weakness": null,
+    "resistance": null,
+    "retreat": null,
+    "collectorNumber": "073/076, 074/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [],
+    "dexNo": null,
+    "species": null,
+    "height": null,
+    "weight": null,
+    "flavor": null,
+    "illustrator": "nagimiso",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019622.png",
+    "imageBytes": 802130
+  },
+  {
+    "id": 19623,
+    "name": "傳說的熔岩洞",
+    "category": "競技場卡",
+    "image": "https://asia.pokemon-card.com/tw/card-img/tw00019623.png",
+    "hp": null,
+    "type": null,
+    "attacks": [],
+    "effect": "雙方場上所有進化寶可夢的特性全部消除。",
+    "weakness": null,
+    "resistance": null,
+    "retreat": null,
+    "collectorNumber": "075/076, 076/076",
+    "setMark": "https://asia.pokemon-card.com/tw/card-img/mark/twhk_m6_f.png",
+    "evolution": [],
+    "dexNo": null,
+    "species": null,
+    "height": null,
+    "weight": null,
+    "flavor": null,
+    "illustrator": "akagi",
+    "product": "擴充包「綠寶石風暴」",
+    "imageFile": "C:\\Users\\antonio\\Desktop\\PTCG\\ptcg-game\\server\\data\\m6-images\\tw00019623.png",
+    "imageBytes": 852752
+  }
+]

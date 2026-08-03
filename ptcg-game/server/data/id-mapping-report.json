@@ -1,0 +1,2275 @@
+{
+  "mapping": {
+    "scr-14129": {
+      "newId": "S10a-021",
+      "name": "鬼斯",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-14130": {
+      "newId": "S10a-022",
+      "name": "鬼斯通",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14151": {
+      "newId": "S10a-022",
+      "name": "鬼斯通",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14132": {
+      "newId": "SLD-002",
+      "name": "黑暗鴉",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-14133": {
+      "newId": "SLD-003",
+      "name": "烏鴉頭頭",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14134": {
+      "newId": "S6K-028",
+      "name": "勾魂眼",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-14135": {
+      "newId": "SJ-004",
+      "name": "阿勃梭魯",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-14136": {
+      "newId": "SV8-080",
+      "name": "無極汰那",
+      "method": "byNameExact"
+    },
+    "scr-14137": {
+      "newId": "SV6a-039",
+      "name": "桃歹郎ex",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14138": {
+      "newId": "SV1S-022",
+      "name": "米立龍",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-14139": {
+      "newId": "SV5K-063",
+      "name": "好友寶芬",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14140": {
+      "newId": "SVB-002",
+      "name": "高級球",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14141": {
+      "newId": "SVB-003",
+      "name": "神奇糖果",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14142": {
+      "newId": "SV5M-062",
+      "name": "頂尖捕捉器",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14143": {
+      "newId": "SVB-005",
+      "name": "寶可夢交替",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14145": {
+      "newId": "SV6a-056",
+      "name": "夜間擔架",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14147": {
+      "newId": "SK-021",
+      "name": "氣球",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14148": {
+      "newId": "SV9-094",
+      "name": "艾莉絲的鬥志",
+      "method": "byNameExact"
+    },
+    "scr-14149": {
+      "newId": "SVEL-019",
+      "name": "老大的指令",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14152": {
+      "newId": "SVB-DAR",
+      "name": "基本【惡】能量",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14105": {
+      "newId": "S8-041",
+      "name": "布魯",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-14106": {
+      "newId": "S8-042",
+      "name": "布魯皇",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14107": {
+      "newId": "SV7a-019",
+      "name": "拉帝亞斯ex",
+      "method": "byNameExact"
+    },
+    "scr-14108": {
+      "newId": "SPD-008",
+      "name": "克雷色利亞",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-14109": {
+      "newId": "S8-048",
+      "name": "美洛耶塔",
+      "method": "byNameExact"
+    },
+    "scr-14127": {
+      "newId": "S8-048",
+      "name": "美洛耶塔",
+      "method": "byNameExact"
+    },
+    "scr-14112": {
+      "newId": "SV7-043",
+      "name": "小仙奶",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-14113": {
+      "newId": "SV7-044",
+      "name": "霜奶仙",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14114": {
+      "newId": "SV1S-022",
+      "name": "米立龍",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-14115": {
+      "newId": "SV5a-053",
+      "name": "不公印章",
+      "method": "byNameExact"
+    },
+    "scr-14116": {
+      "newId": "S5R-062",
+      "name": "能量回收器",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14117": {
+      "newId": "SV5K-063",
+      "name": "好友寶芬",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14118": {
+      "newId": "SVB-002",
+      "name": "高級球",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14120": {
+      "newId": "SV6a-056",
+      "name": "夜間擔架",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14122": {
+      "newId": "SK-021",
+      "name": "氣球",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14123": {
+      "newId": "SV9-094",
+      "name": "艾莉絲的鬥志",
+      "method": "byNameExact"
+    },
+    "scr-14124": {
+      "newId": "SVEL-019",
+      "name": "老大的指令",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14128": {
+      "newId": "SVAW-PSY",
+      "name": "基本【超】能量",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-12702": {
+      "newId": "SV9a-044",
+      "name": "竹蘭的烈咬陸鯊ex",
+      "method": "directSetMatch"
+    },
+    "scr-12663": {
+      "newId": "SV9a-005",
+      "name": "竹蘭的羅絲雷朵",
+      "method": "directSetMatch"
+    },
+    "scr-12708": {
+      "newId": "SV9a-050",
+      "name": "竹蘭的花岩怪",
+      "method": "directSetMatch"
+    },
+    "scr-11526": {
+      "newId": "SV8a-001",
+      "name": "含羞苞",
+      "method": "byNameExact"
+    },
+    "scr-10300": {
+      "newId": "SV5a-053",
+      "name": "不公印章",
+      "method": "byNameExact"
+    },
+    "scr-11672": {
+      "newId": "SV5K-063",
+      "name": "好友寶芬",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-11676": {
+      "newId": "SV6a-056",
+      "name": "夜間擔架",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-12718": {
+      "newId": "SV9a-060",
+      "name": "竹蘭的力量負重",
+      "method": "byNameExact"
+    },
+    "scr-17182": {
+      "newId": "SVAL-018",
+      "name": "裁判",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17195": {
+      "newId": "SVEL-019",
+      "name": "老大的指令",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-12844": {
+      "newId": "SV10-094",
+      "name": "火箭隊的拉姆達",
+      "method": "byNameExact"
+    },
+    "scr-17215": {
+      "newId": "SVB-FIG",
+      "name": "基本【鬥】能量",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-16960": {
+      "newId": "SV6a-038",
+      "name": "吉雉雞ex",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17019": {
+      "newId": "SV6-081",
+      "name": "多龍巴魯托ex",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17018": {
+      "newId": "S8-050",
+      "name": "多龍奇",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17017": {
+      "newId": "S8-049",
+      "name": "多龍梅西亞",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-16780": {
+      "newId": "SV6a-019",
+      "name": "彷徨夜靈",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-16779": {
+      "newId": "SV6a-018",
+      "name": "夜巡靈",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-16781": {
+      "newId": "SV6a-020",
+      "name": "黑夜魔靈",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-16829": {
+      "newId": "SV6-055",
+      "name": "願增猿",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-17104": {
+      "newId": "SV5a-053",
+      "name": "不公印章",
+      "method": "byNameExact"
+    },
+    "scr-17141": {
+      "newId": "SV6a-056",
+      "name": "夜間擔架",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17126": {
+      "newId": "SVB-003",
+      "name": "神奇糖果",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17122": {
+      "newId": "SVB-002",
+      "name": "高級球",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17193": {
+      "newId": "SV7-100",
+      "name": "白蕾雅",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17119": {
+      "newId": "SV5K-063",
+      "name": "好友寶芬",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17167": {
+      "newId": "SV7-097",
+      "name": "赤松",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17188": {
+      "newId": "SV5K-090",
+      "name": "探險家的嚮導",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-11706": {
+      "newId": "SV6-100",
+      "name": "阻礙之塔",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-12846": {
+      "newId": "SV10-096",
+      "name": "火箭隊的監視塔",
+      "method": "byNameExact"
+    },
+    "scr-17216": {
+      "newId": "SVB-FIR",
+      "name": "基本【火】能量",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17214": {
+      "newId": "SVB-DAR",
+      "name": "基本【惡】能量",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17220": {
+      "newId": "SVAW-PSY",
+      "name": "基本【超】能量",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14056": {
+      "newId": "SV6-047",
+      "name": "凱西",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-14057": {
+      "newId": "SV6-048",
+      "name": "勇基拉",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14058": {
+      "newId": "SV6-049",
+      "name": "胡地",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-12540": {
+      "newId": "SV2P-056",
+      "name": "土龍弟弟",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-11655": {
+      "newId": "SV2P-057",
+      "name": "土龍節節",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14692": {
+      "newId": "S6K-009",
+      "name": "可達鴨",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-14672": {
+      "newId": "S10D-004",
+      "name": "謝米",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-14808": {
+      "newId": "SV5a-054",
+      "name": "改造之錘",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17183": {
+      "newId": "SV5a-064",
+      "name": "水蓮的照顧",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-12278": {
+      "newId": "SV5K-091",
+      "name": "枇琶",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17211": {
+      "newId": "SV7a-064",
+      "name": "富裕能量",
+      "method": "byNameExact"
+    },
+    "scr-10445": {
+      "newId": "SK-003",
+      "name": "雪童子",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-10447": {
+      "newId": "SK-004",
+      "name": "雪妖女",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-13997": {
+      "newId": "S8a-013",
+      "name": "伊裴爾塔爾",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-17020": {
+      "newId": "SV1S-022",
+      "name": "米立龍",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-17159": {
+      "newId": "SK-021",
+      "name": "氣球",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17205": {
+      "newId": "SV10-094",
+      "name": "火箭隊的拉姆達",
+      "method": "byNameExact"
+    },
+    "scr-16758": {
+      "newId": "SV9-033",
+      "name": "莉莉艾的皮皮ex",
+      "method": "byNameExact"
+    },
+    "scr-17146": {
+      "newId": "SV10-090",
+      "name": "火箭隊的接收器",
+      "method": "byNameExact"
+    },
+    "scr-17138": {
+      "newId": "SV6-094",
+      "name": "捕蟲組合",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17109": {
+      "newId": "SVC-011",
+      "name": "能量轉移",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17162": {
+      "newId": "SV8a-159",
+      "name": "極限腰帶",
+      "method": "byNameExact"
+    },
+    "scr-17202": {
+      "newId": "SV10-091",
+      "name": "火箭隊的雅典娜",
+      "method": "byNameExact"
+    },
+    "scr-17206": {
+      "newId": "SV10-095",
+      "name": "火箭隊的蘭斯",
+      "method": "byNameExact"
+    },
+    "scr-17204": {
+      "newId": "SV10-093",
+      "name": "火箭隊的坂木",
+      "method": "byNameExact"
+    },
+    "scr-17203": {
+      "newId": "SV10-092",
+      "name": "火箭隊的阿波羅",
+      "method": "byNameExact"
+    },
+    "scr-12847": {
+      "newId": "SV10-097",
+      "name": "火箭隊的工廠",
+      "method": "byNameExact"
+    },
+    "scr-17217": {
+      "newId": "SVB-GRA",
+      "name": "基本【草】能量",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17213": {
+      "newId": "SV10-098",
+      "name": "火箭隊能量",
+      "method": "byNameExact"
+    },
+    "scr-17025": {
+      "newId": "SV-P-081",
+      "name": "猛雷鼓ex",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-16553": {
+      "newId": "SV6-016",
+      "name": "厄鬼椪 碧草面具ex",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17021": {
+      "newId": "SV-P-010",
+      "name": "故勒頓",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-14812": {
+      "newId": "SV8a-145",
+      "name": "太晶珠",
+      "method": "byNameExact"
+    },
+    "scr-17107": {
+      "newId": "SVAW-011",
+      "name": "能量回收",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17131": {
+      "newId": "SVB-004",
+      "name": "寶可裝置3.0",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17136": {
+      "newId": "SDL-016",
+      "name": "寶可夢捕捉器",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17218": {
+      "newId": "SVB-LIG",
+      "name": "基本【雷】能量",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-18072": {
+      "newId": "SV1V-019",
+      "name": "呆呆獸",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-10934": {
+      "newId": "SV7-039",
+      "name": "呆呆王",
+      "method": "byNameExact"
+    },
+    "scr-16783": {
+      "newId": "SV7a-019",
+      "name": "拉帝亞斯ex",
+      "method": "byNameExact"
+    },
+    "scr-10629": {
+      "newId": "S7D-045",
+      "name": "酋雷姆",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-18479": {
+      "newId": "SV9-039",
+      "name": "巨金怪",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14740": {
+      "newId": "SDM-010",
+      "name": "靈幽馬",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-17127": {
+      "newId": "SV5M-062",
+      "name": "頂尖捕捉器",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17134": {
+      "newId": "SVB-005",
+      "name": "寶可夢交替",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-11689": {
+      "newId": "SV6a-059",
+      "name": "阿克羅瑪的執著",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17169": {
+      "newId": "SV5M-067",
+      "name": "暗碼迷的解讀",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-10646": {
+      "newId": "SV6a-064",
+      "name": "夜間學院",
+      "method": "byNameExact"
+    },
+    "scr-17209": {
+      "newId": "SV5a-066",
+      "name": "回力鏢能量",
+      "method": "byNameExact"
+    },
+    "scr-16843": {
+      "newId": "S10b-039",
+      "name": "太陽岩",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-16842": {
+      "newId": "S10b-034",
+      "name": "月石",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-16850": {
+      "newId": "SJ-001",
+      "name": "利歐路",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-17046": {
+      "newId": "SV9-079",
+      "name": "土龍節節ex",
+      "method": "byNameExact"
+    },
+    "scr-11286": {
+      "newId": "SV8-106",
+      "name": "引力山岳",
+      "method": "byNameExact"
+    },
+    "scr-12937": {
+      "newId": "SV6-100",
+      "name": "阻礙之塔",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-16542": {
+      "newId": "SV10-012",
+      "name": "奧利瓦ex",
+      "method": "byNameExact"
+    },
+    "scr-16541": {
+      "newId": "SV1S-007",
+      "name": "奧利紐",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-16540": {
+      "newId": "SV1S-005",
+      "name": "迷你芙",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-14443": {
+      "newId": "SV8a-001",
+      "name": "含羞苞",
+      "method": "byNameExact"
+    },
+    "scr-10967": {
+      "newId": "SJ-015",
+      "name": "鋁鋼龍",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-16997": {
+      "newId": "SV7a-037",
+      "name": "鋁鋼橋龍ex",
+      "method": "byNameExact"
+    },
+    "scr-14381": {
+      "newId": "SV7-073",
+      "name": "鋁鋼橋龍",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14465": {
+      "newId": "SV2P-057",
+      "name": "土龍節節",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14799": {
+      "newId": "SV7-080",
+      "name": "旋轉洛托姆",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-15970": {
+      "newId": "SV6-100",
+      "name": "阻礙之塔",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17219": {
+      "newId": "SVB-MET",
+      "name": "基本【鋼】能量",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-16657": {
+      "newId": "SK-003",
+      "name": "雪童子",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-18062": {
+      "newId": "SPD-001",
+      "name": "海星星",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-17166": {
+      "newId": "SV8a-162",
+      "name": "青木的手法",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17212": {
+      "newId": "SV6-101",
+      "name": "古舊能量",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17221": {
+      "newId": "SVAW-WAT",
+      "name": "基本【水】能量",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-16941": {
+      "newId": "SV9-061",
+      "name": "N的索羅亞克ex",
+      "method": "byNameExact"
+    },
+    "scr-16940": {
+      "newId": "SV9-060",
+      "name": "N的索羅亞",
+      "method": "byNameExact"
+    },
+    "scr-16590": {
+      "newId": "SV9-016",
+      "name": "N的達摩狒狒",
+      "method": "byNameExact"
+    },
+    "scr-16589": {
+      "newId": "SV9-015",
+      "name": "N的火紅不倒翁",
+      "method": "byNameExact"
+    },
+    "scr-17016": {
+      "newId": "SV9-074",
+      "name": "N的萊希拉姆",
+      "method": "byNameExact"
+    },
+    "scr-16928": {
+      "newId": "SV9-059",
+      "name": "N的扒手貓",
+      "method": "byNameExact"
+    },
+    "scr-14671": {
+      "newId": "SV8a-001",
+      "name": "含羞苞",
+      "method": "byNameExact"
+    },
+    "scr-16962": {
+      "newId": "SV6a-039",
+      "name": "桃歹郎ex",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17106": {
+      "newId": "SV9-089",
+      "name": "N的ＰＰ提升劑",
+      "method": "byNameExact"
+    },
+    "scr-17152": {
+      "newId": "SV6a-057",
+      "name": "鎖鏈糬",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-11282": {
+      "newId": "SV8-102",
+      "name": "席藍",
+      "method": "byNameExact"
+    },
+    "scr-17170": {
+      "newId": "SV6a-060",
+      "name": "阿杏的秘招",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14841": {
+      "newId": "SV9-097",
+      "name": "N的城堡",
+      "method": "byNameExact"
+    },
+    "scr-12768": {
+      "newId": "SC2b-007",
+      "name": "火稚雞",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-12769": {
+      "newId": "SC2b-008",
+      "name": "力壯雞",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14849": {
+      "newId": "SV10-096",
+      "name": "火箭隊的監視塔",
+      "method": "byNameExact"
+    },
+    "scr-10478": {
+      "newId": "SV6-064",
+      "name": "夠讚狗",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-10607": {
+      "newId": "SV6a-025",
+      "name": "月月熊 赫月",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-18019": {
+      "newId": "S11-061",
+      "name": "龜足巨鎧",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-18018": {
+      "newId": "S11-060",
+      "name": "龜腳腳",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-14332": {
+      "newId": "S10b-012",
+      "name": "火焰鳥",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-10622": {
+      "newId": "SC2D-013",
+      "name": "蓋諾賽克特",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-17198": {
+      "newId": "SV5K-092",
+      "name": "松葉的信心",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14374": {
+      "newId": "SC1a-020",
+      "name": "毒電嬰",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-14375": {
+      "newId": "SC1a-021",
+      "name": "顫弦蠑螈",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-16961": {
+      "newId": "SV8-075",
+      "name": "桃歹郎",
+      "method": "byNameExact"
+    },
+    "scr-16958": {
+      "newId": "SV4K-053",
+      "name": "猛惡菇",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-18404": {
+      "newId": "S5R-062",
+      "name": "能量回收器",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17176": {
+      "newId": "SV6a-062",
+      "name": "庫瑟洛斯奇的企圖",
+      "method": "byNameExact"
+    },
+    "scr-14691": {
+      "newId": "SV8a-203",
+      "name": "蒼炎刃鬼ex",
+      "method": "byNameExact"
+    },
+    "scr-16616": {
+      "newId": "SV1S-010",
+      "name": "炭小侍",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-9880": {
+      "newId": "SV7a-028",
+      "name": "螺釘地鼠",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-17186": {
+      "newId": "SV6-097",
+      "name": "丹瑜",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-18440": {
+      "newId": "SV5a-023",
+      "name": "呱呱泡蛙",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-18441": {
+      "newId": "SV5a-024",
+      "name": "呱頭蛙",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-10292": {
+      "newId": "SVD-029",
+      "name": "甲賀忍蛙ex",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-10927": {
+      "newId": "SV6a-001",
+      "name": "電電蟲",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-10584": {
+      "newId": "SV6a-002",
+      "name": "電蜘蛛",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-11213": {
+      "newId": "SVC-001",
+      "name": "皮卡丘ex",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-16695": {
+      "newId": "SV6-038",
+      "name": "厄鬼椪 水井面具ex",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-11659": {
+      "newId": "SV8a-134",
+      "name": "月月熊 赫月ex",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-16548": {
+      "newId": "SV8a-016",
+      "name": "鐵斑葉ex",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-16622": {
+      "newId": "SV5K-012",
+      "name": "破空焰ex",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-16693": {
+      "newId": "SV8a-049",
+      "name": "波盪水ex",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14811": {
+      "newId": "SK-014",
+      "name": "道具拆除器",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17110": {
+      "newId": "SVAW-012",
+      "name": "能量輸送",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-12558": {
+      "newId": "SV9-096",
+      "name": "小剛的發掘",
+      "method": "byNameExact"
+    },
+    "scr-14843": {
+      "newId": "SV8-106",
+      "name": "引力山岳",
+      "method": "byNameExact"
+    },
+    "scr-10997": {
+      "newId": "SV7-102",
+      "name": "零之大空洞",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14703": {
+      "newId": "SV4M-021",
+      "name": "古劍豹",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-10286": {
+      "newId": "SV5a-039",
+      "name": "眷戀雲",
+      "method": "byNameExact"
+    },
+    "scr-16878": {
+      "newId": "SV7a-031",
+      "name": "投擲猴",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-10312": {
+      "newId": "SV5a-065",
+      "name": "居民會館",
+      "method": "byNameExact"
+    },
+    "scr-12462": {
+      "newId": "SV5M-071",
+      "name": "薄霧能量",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-12673": {
+      "newId": "SV9a-015",
+      "name": "阿響的火球鼠",
+      "method": "directSetMatch"
+    },
+    "scr-12674": {
+      "newId": "SV9a-016",
+      "name": "阿響的火岩鼠",
+      "method": "directSetMatch"
+    },
+    "scr-12675": {
+      "newId": "SV9a-017",
+      "name": "阿響的火爆獸",
+      "method": "directSetMatch"
+    },
+    "scr-11192": {
+      "newId": "SH-009",
+      "name": "比克提尼",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-9827": {
+      "newId": "SV2P-057",
+      "name": "土龍節節",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-12552": {
+      "newId": "SV9-090",
+      "name": "調換票",
+      "method": "byNameExact"
+    },
+    "scr-10506": {
+      "newId": "SV6-092",
+      "name": "秘密箱",
+      "method": "byNameExact"
+    },
+    "scr-12714": {
+      "newId": "SV9a-056",
+      "name": "聖灰",
+      "method": "byNameExact"
+    },
+    "scr-12721": {
+      "newId": "SV9a-063",
+      "name": "阿響的冒險",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17184": {
+      "newId": "SV6-096",
+      "name": "烏栗",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-12832": {
+      "newId": "SV10-082",
+      "name": "火箭隊的多邊獸Ⅱ",
+      "method": "directSetMatch"
+    },
+    "scr-12831": {
+      "newId": "SV10-081",
+      "name": "火箭隊的多邊獸",
+      "method": "directSetMatch"
+    },
+    "scr-11277": {
+      "newId": "SV8-097",
+      "name": "奇跡耳麥",
+      "method": "byNameExact"
+    },
+    "scr-14389": {
+      "newId": "S11-087",
+      "name": "捲捲耳",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-10975": {
+      "newId": "SV7-080",
+      "name": "旋轉洛托姆",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-9912": {
+      "newId": "SV5M-071",
+      "name": "薄霧能量",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-10905": {
+      "newId": "SV8a-008",
+      "name": "啃果蟲",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-10426": {
+      "newId": "SV8a-009",
+      "name": "裹蜜蟲",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-10907": {
+      "newId": "SV8a-010",
+      "name": "蜜集大蛇ex",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-13963": {
+      "newId": "SCB-008",
+      "name": "時拉比",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-12411": {
+      "newId": "SDP-011",
+      "name": "伊布",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-11651": {
+      "newId": "SV8a-126",
+      "name": "伊布ex",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-11547": {
+      "newId": "SV8a-022",
+      "name": "火伊布ex",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-11594": {
+      "newId": "SV8a-069",
+      "name": "仙子伊布ex",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-11528": {
+      "newId": "SV8a-003",
+      "name": "葉伊布ex",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-10971": {
+      "newId": "S9a-055",
+      "name": "咕咕",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-10972": {
+      "newId": "S9a-056",
+      "name": "貓頭夜鷹",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-10452": {
+      "newId": "SV6-038",
+      "name": "厄鬼椪 水井面具ex",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17151": {
+      "newId": "SV7-094",
+      "name": "璀璨結晶",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14844": {
+      "newId": "SV7-102",
+      "name": "零之大空洞",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17158": {
+      "newId": "SV5M-064",
+      "name": "英雄斗篷",
+      "method": "byNameExact"
+    },
+    "scr-17111": {
+      "newId": "S5R-062",
+      "name": "能量回收器",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-16769": {
+      "newId": "SV8a-063",
+      "name": "太陽伊布ex",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-16832": {
+      "newId": "SV5M-036",
+      "name": "鐵頭殼ex",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-10299": {
+      "newId": "SV5a-052",
+      "name": "月月熊 赫月 ex",
+      "method": "byNameExact"
+    },
+    "scr-11212": {
+      "newId": "SV4M-021",
+      "name": "古劍豹",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-14809": {
+      "newId": "SV7-089",
+      "name": "玻璃喇叭",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-12396": {
+      "newId": "SV9-038",
+      "name": "金屬怪",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-9887": {
+      "newId": "SV9-037",
+      "name": "鐵啞鈴",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-10490": {
+      "newId": "SC2b-010",
+      "name": "席多藍恩",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-10976": {
+      "newId": "S5R-059",
+      "name": "爆炸頭水牛",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-11048": {
+      "newId": "SV7a-018",
+      "name": "迷唇娃",
+      "method": "byNameExact"
+    },
+    "scr-11285": {
+      "newId": "SV8-105",
+      "name": "激動競技場",
+      "method": "byNameExact"
+    },
+    "scr-17163": {
+      "newId": "SV9-093",
+      "name": "莉莉艾的珍珠",
+      "method": "byNameExact"
+    },
+    "scr-13958": {
+      "newId": "SV2a-001",
+      "name": "妙蛙種子",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-13959": {
+      "newId": "SV2a-002",
+      "name": "妙蛙草",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-9799": {
+      "newId": "SK-010",
+      "name": "青銅鐘",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-9798": {
+      "newId": "SK-009",
+      "name": "銅鏡怪",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-12151": {
+      "newId": "SK-009",
+      "name": "銅鏡怪",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-14345": {
+      "newId": "S9-025",
+      "name": "波加曼",
+      "method": "byNameExact"
+    },
+    "scr-14004": {
+      "newId": "S8a-008",
+      "name": "帝牙盧卡",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-18452": {
+      "newId": "SVEM-006",
+      "name": "代歐奇希斯",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-10422": {
+      "newId": "SV8a-006",
+      "name": "敲音猴",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-10423": {
+      "newId": "SV8a-007",
+      "name": "啪咚猴",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-10440": {
+      "newId": "SV6-026",
+      "name": "角金魚",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-12339": {
+      "newId": "SV6-027",
+      "name": "金魚王",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-10513": {
+      "newId": "SV6-099",
+      "name": "祭典會場",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-12520": {
+      "newId": "S10b-043",
+      "name": "班基拉斯",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-12133": {
+      "newId": "SV2D-037",
+      "name": "沙基拉斯",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-12132": {
+      "newId": "SV2D-036",
+      "name": "幼基拉斯",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-10469": {
+      "newId": "SV6-055",
+      "name": "願增猿",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-13398": {
+      "newId": "S5R-027",
+      "name": "輕飄飄",
+      "method": "byNameExact"
+    },
+    "scr-9803": {
+      "newId": "SV8-059",
+      "name": "振翼髮",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-17154": {
+      "newId": "SV6a-058",
+      "name": "力之沙漏",
+      "method": "byNameExact"
+    },
+    "scr-12412": {
+      "newId": "S9a-055",
+      "name": "咕咕",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-10588": {
+      "newId": "SV6a-006",
+      "name": "卡璞・哞哞",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-14368": {
+      "newId": "S5a-014",
+      "name": "利牙魚",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-10496": {
+      "newId": "SV1S-022",
+      "name": "米立龍",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-17997": {
+      "newId": "SPD-001",
+      "name": "海星星",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-14695": {
+      "newId": "SK-003",
+      "name": "雪童子",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-10446": {
+      "newId": "S12-020",
+      "name": "冰鬼護",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-17185": {
+      "newId": "SV5M-068",
+      "name": "賽吉",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-10970": {
+      "newId": "SV7-075",
+      "name": "猛雷鼓",
+      "method": "byNameExact"
+    },
+    "scr-16896": {
+      "newId": "SVHK-010",
+      "name": "故勒頓ex",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-9907": {
+      "newId": "SV5M-066",
+      "name": "沉重接力棒",
+      "method": "byNameExact"
+    },
+    "scr-14673": {
+      "newId": "S6H-003",
+      "name": "石居蟹",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-14674": {
+      "newId": "S6H-004",
+      "name": "岩殿居蟹",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-16899": {
+      "newId": "SV6-065",
+      "name": "厄鬼椪 礎石面具ex",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14850": {
+      "newId": "SV10-097",
+      "name": "火箭隊的工廠",
+      "method": "byNameExact"
+    },
+    "scr-17208": {
+      "newId": "SV9-100",
+      "name": "扣殺能量",
+      "method": "byNameExact"
+    },
+    "scr-14662": {
+      "newId": "S10D-001",
+      "name": "蜻蜻蜓",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-16493": {
+      "newId": "SV9a-003",
+      "name": "遠古巨蜓ex",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-9826": {
+      "newId": "SV2P-056",
+      "name": "土龍弟弟",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-12417": {
+      "newId": "S10D-054",
+      "name": "雷吉奇卡斯",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-11091": {
+      "newId": "SV7a-061",
+      "name": "衝浪手",
+      "method": "byNameExact"
+    },
+    "scr-19188": {
+      "newId": "SV7a-028",
+      "name": "螺釘地鼠",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-9888": {
+      "newId": "SV9-038",
+      "name": "金屬怪",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14820": {
+      "newId": "SV10-090",
+      "name": "火箭隊的接收器",
+      "method": "byNameExact"
+    },
+    "scr-9762": {
+      "newId": "SV5K-063",
+      "name": "好友寶芬",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14825": {
+      "newId": "SK-021",
+      "name": "氣球",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-13948": {
+      "newId": "SVB-004",
+      "name": "寶可裝置3.0",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14839": {
+      "newId": "SV10-094",
+      "name": "火箭隊的拉姆達",
+      "method": "byNameExact"
+    },
+    "scr-10510": {
+      "newId": "SV6-096",
+      "name": "烏栗",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14434": {
+      "newId": "SVB-MET",
+      "name": "基本【鋼】能量",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-10430": {
+      "newId": "SV6-016",
+      "name": "厄鬼椪 碧草面具ex",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-11049": {
+      "newId": "SV7a-019",
+      "name": "拉帝亞斯ex",
+      "method": "byNameExact"
+    },
+    "scr-11255": {
+      "newId": "SV8-075",
+      "name": "桃歹郎",
+      "method": "byNameExact"
+    },
+    "scr-14720": {
+      "newId": "SV9-033",
+      "name": "莉莉艾的皮皮ex",
+      "method": "byNameExact"
+    },
+    "scr-10620": {
+      "newId": "SV6a-038",
+      "name": "吉雉雞ex",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-10265": {
+      "newId": "SV4K-016",
+      "name": "古玉魚",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-10508": {
+      "newId": "SV6-094",
+      "name": "捕蟲組合",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-12427": {
+      "newId": "SV8a-145",
+      "name": "太晶珠",
+      "method": "byNameExact"
+    },
+    "scr-10638": {
+      "newId": "SV6a-056",
+      "name": "夜間擔架",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-9908": {
+      "newId": "SV5M-067",
+      "name": "暗碼迷的解讀",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-18382": {
+      "newId": "SVB-GRA",
+      "name": "基本【草】能量",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-12664": {
+      "newId": "S10D-004",
+      "name": "謝米",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-19158": {
+      "newId": "S4-018",
+      "name": "吼吼鯨",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-18061": {
+      "newId": "S11-020",
+      "name": "小海獅",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-17996": {
+      "newId": "S11-021",
+      "name": "白海獅",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-10641": {
+      "newId": "SV6a-059",
+      "name": "阿克羅瑪的執著",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-11090": {
+      "newId": "SV7a-060",
+      "name": "杜若",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-18519": {
+      "newId": "SVAW-WAT",
+      "name": "基本【水】能量",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-10515": {
+      "newId": "SV6-101",
+      "name": "古舊能量",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-19150": {
+      "newId": "SV6-014",
+      "name": "來悲粗茶",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-19175": {
+      "newId": "SV9-035",
+      "name": "怨影娃娃",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-19181": {
+      "newId": "SV7a-004",
+      "name": "破破舵輪",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-19149": {
+      "newId": "SV5a-008",
+      "name": "斯魔茶",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-19176": {
+      "newId": "SV9-036",
+      "name": "詛咒娃娃",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14785": {
+      "newId": "S12-071",
+      "name": "哈克龍",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14784": {
+      "newId": "S12-070",
+      "name": "迷你龍",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-12698": {
+      "newId": "SN-003",
+      "name": "捷拉奧拉",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-14707": {
+      "newId": "S6a-032",
+      "name": "麻麻小魚",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-14708": {
+      "newId": "S6a-033",
+      "name": "麻麻鰻",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-18450": {
+      "newId": "SN-002",
+      "name": "電飛鼠",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-9765": {
+      "newId": "SV8a-159",
+      "name": "極限腰帶",
+      "method": "byNameExact"
+    },
+    "scr-14828": {
+      "newId": "SV9-094",
+      "name": "艾莉絲的鬥志",
+      "method": "byNameExact"
+    },
+    "scr-18383": {
+      "newId": "SVB-LIG",
+      "name": "基本【雷】能量",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-10621": {
+      "newId": "SV6a-039",
+      "name": "桃歹郎ex",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14370": {
+      "newId": "SLD-006",
+      "name": "飯匙蛇",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-9903": {
+      "newId": "SV5M-062",
+      "name": "頂尖捕捉器",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14329": {
+      "newId": "SV2a-004",
+      "name": "小火龍",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-13879": {
+      "newId": "SH-009",
+      "name": "比克提尼",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-14330": {
+      "newId": "SV2a-005",
+      "name": "火恐龍",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14335": {
+      "newId": "S8a-010",
+      "name": "萊希拉姆",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-16591": {
+      "newId": "SV5K-009",
+      "name": "熔蟻獸",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-13436": {
+      "newId": "SVAW-011",
+      "name": "能量回收",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14807": {
+      "newId": "S5R-062",
+      "name": "能量回收器",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-13185": {
+      "newId": "SVB-FIR",
+      "name": "基本【火】能量",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14061": {
+      "newId": "SVF-007",
+      "name": "奇魯莉安",
+      "method": "byNameSupertype(first)"
+    },
+    "scr-14060": {
+      "newId": "SVF-006",
+      "name": "拉魯拉絲",
+      "method": "byNameSubtype(first)"
+    },
+    "scr-9905": {
+      "newId": "SV5M-064",
+      "name": "英雄斗篷",
+      "method": "byNameExact"
+    }
+  },
+  "unmapped": [
+    {
+      "id": "scr-14131",
+      "name": "超級耿鬼ex",
+      "reason": "no cards named \"超級耿鬼ex\" in server cache"
+    },
+    {
+      "id": "scr-14144",
+      "name": "超級信號",
+      "reason": "no cards named \"超級信號\" in server cache"
+    },
+    {
+      "id": "scr-14146",
+      "name": "龐克頭盔",
+      "reason": "no cards named \"龐克頭盔\" in server cache"
+    },
+    {
+      "id": "scr-14150",
+      "name": "莉莉艾的決意",
+      "reason": "no cards named \"莉莉艾的決意\" in server cache"
+    },
+    {
+      "id": "scr-14110",
+      "name": "超級蒂安希ex",
+      "reason": "no cards named \"超級蒂安希ex\" in server cache"
+    },
+    {
+      "id": "scr-14111",
+      "name": "謎擬Q",
+      "reason": "no cards named \"謎擬Q\" in server cache"
+    },
+    {
+      "id": "scr-14119",
+      "name": "超級信號",
+      "reason": "no cards named \"超級信號\" in server cache"
+    },
+    {
+      "id": "scr-14121",
+      "name": "奇跡修正檔",
+      "reason": "no cards named \"奇跡修正檔\" in server cache"
+    },
+    {
+      "id": "scr-14125",
+      "name": "莉莉艾的決意",
+      "reason": "no cards named \"莉莉艾的決意\" in server cache"
+    },
+    {
+      "id": "scr-14126",
+      "name": "神秘花園",
+      "reason": "no cards named \"神秘花園\" in server cache"
+    },
+    {
+      "id": "scr-14749",
+      "name": "竹蘭的尖牙陸鯊",
+      "reason": "no cards named \"竹蘭的尖牙陸鯊\" in server cache"
+    },
+    {
+      "id": "scr-14748",
+      "name": "竹蘭的圓陸鯊",
+      "reason": "no cards named \"竹蘭的圓陸鯊\" in server cache"
+    },
+    {
+      "id": "scr-16503",
+      "name": "竹蘭的毒薔薇",
+      "reason": "no cards named \"竹蘭的毒薔薇\" in server cache"
+    },
+    {
+      "id": "scr-17123",
+      "name": "力量蛋白飲",
+      "reason": "no cards named \"力量蛋白飲\" in server cache"
+    },
+    {
+      "id": "scr-17125",
+      "name": "戰鬥鑼",
+      "reason": "no cards named \"戰鬥鑼\" in server cache"
+    },
+    {
+      "id": "scr-17133",
+      "name": "寶可平板",
+      "reason": "no cards named \"寶可平板\" in server cache"
+    },
+    {
+      "id": "scr-17200",
+      "name": "莉莉艾的決意",
+      "reason": "no cards named \"莉莉艾的決意\" in server cache"
+    },
+    {
+      "id": "scr-18057",
+      "name": "硬岩【鬥】能量",
+      "reason": "no cards named \"硬岩【鬥】能量\" in server cache"
+    },
+    {
+      "id": "scr-18038",
+      "name": "喵喵ex",
+      "reason": "no cards named \"喵喵ex\" in server cache"
+    },
+    {
+      "id": "scr-18492",
+      "name": "特殊紅牌",
+      "reason": "no cards named \"特殊紅牌\" in server cache"
+    },
+    {
+      "id": "scr-18052",
+      "name": "鳴依的勉勵",
+      "reason": "no cards named \"鳴依的勉勵\" in server cache"
+    },
+    {
+      "id": "scr-18407",
+      "name": "奇跡修正檔",
+      "reason": "no cards named \"奇跡修正檔\" in server cache"
+    },
+    {
+      "id": "scr-14395",
+      "name": "小光",
+      "reason": "no cards named \"小光\" in server cache"
+    },
+    {
+      "id": "scr-17189",
+      "name": "鬥子",
+      "reason": "no cards named \"鬥子\" in server cache"
+    },
+    {
+      "id": "scr-14397",
+      "name": "對戰圓形競技場",
+      "reason": "no cards named \"對戰圓形競技場\" in server cache"
+    },
+    {
+      "id": "scr-18056",
+      "name": "感應【超】能量",
+      "reason": "no cards named \"感應【超】能量\" in server cache"
+    },
+    {
+      "id": "scr-12610",
+      "name": "瑪俐的長毛巨魔ex",
+      "reason": "no cards named \"瑪俐的長毛巨魔ex\" in server cache"
+    },
+    {
+      "id": "scr-12609",
+      "name": "瑪俐的詐唬魔",
+      "reason": "no cards named \"瑪俐的詐唬魔\" in server cache"
+    },
+    {
+      "id": "scr-12608",
+      "name": "瑪俐的搗蛋小妖",
+      "reason": "no cards named \"瑪俐的搗蛋小妖\" in server cache"
+    },
+    {
+      "id": "scr-12624",
+      "name": "尖釘鎮道館",
+      "reason": "no cards named \"尖釘鎮道館\" in server cache"
+    },
+    {
+      "id": "scr-16761",
+      "name": "火箭隊的超夢ex",
+      "reason": "no cards named \"火箭隊的超夢ex\" in server cache"
+    },
+    {
+      "id": "scr-14675",
+      "name": "火箭隊的團珠蛛",
+      "reason": "no cards named \"火箭隊的團珠蛛\" in server cache"
+    },
+    {
+      "id": "scr-14676",
+      "name": "火箭隊的操陷蛛",
+      "reason": "no cards named \"火箭隊的操陷蛛\" in server cache"
+    },
+    {
+      "id": "scr-16812",
+      "name": "火箭隊的謎擬Q",
+      "reason": "no cards named \"火箭隊的謎擬Q\" in server cache"
+    },
+    {
+      "id": "scr-14694",
+      "name": "火箭隊的急凍鳥",
+      "reason": "no cards named \"火箭隊的急凍鳥\" in server cache"
+    },
+    {
+      "id": "scr-17160",
+      "name": "猛攻手鐲",
+      "reason": "no cards named \"猛攻手鐲\" in server cache"
+    },
+    {
+      "id": "scr-14071",
+      "name": "超級袋獸ex",
+      "reason": "no cards named \"超級袋獸ex\" in server cache"
+    },
+    {
+      "id": "scr-14752",
+      "name": "超級路卡利歐ex",
+      "reason": "no cards named \"超級路卡利歐ex\" in server cache"
+    },
+    {
+      "id": "scr-17971",
+      "name": "大竺葵",
+      "reason": "no cards named \"大竺葵\" in server cache"
+    },
+    {
+      "id": "scr-16488",
+      "name": "月桂葉",
+      "reason": "no cards named \"月桂葉\" in server cache"
+    },
+    {
+      "id": "scr-16487",
+      "name": "菊草葉",
+      "reason": "no cards named \"菊草葉\" in server cache"
+    },
+    {
+      "id": "scr-14424",
+      "name": "小光",
+      "reason": "no cards named \"小光\" in server cache"
+    },
+    {
+      "id": "scr-14081",
+      "name": "活力森林",
+      "reason": "no cards named \"活力森林\" in server cache"
+    },
+    {
+      "id": "scr-14003",
+      "name": "超級大嘴娃ex",
+      "reason": "no cards named \"超級大嘴娃ex\" in server cache"
+    },
+    {
+      "id": "scr-18496",
+      "name": "吉普索",
+      "reason": "no cards named \"吉普索\" in server cache"
+    },
+    {
+      "id": "scr-18500",
+      "name": "稜鏡塔",
+      "reason": "no cards named \"稜鏡塔\" in server cache"
+    },
+    {
+      "id": "scr-14696",
+      "name": "超級雪妖女ex",
+      "reason": "no cards named \"超級雪妖女ex\" in server cache"
+    },
+    {
+      "id": "scr-17998",
+      "name": "超級寶石海星ex",
+      "reason": "no cards named \"超級寶石海星ex\" in server cache"
+    },
+    {
+      "id": "scr-18078",
+      "name": "滿充的體貼",
+      "reason": "no cards named \"滿充的體貼\" in server cache"
+    },
+    {
+      "id": "scr-14020",
+      "name": "險惡廢墟",
+      "reason": "no cards named \"險惡廢墟\" in server cache"
+    },
+    {
+      "id": "scr-17207",
+      "name": "燃火能量",
+      "reason": "no cards named \"燃火能量\" in server cache"
+    },
+    {
+      "id": "scr-14789",
+      "name": "N的捷克羅姆",
+      "reason": "no cards named \"N的捷克羅姆\" in server cache"
+    },
+    {
+      "id": "scr-18047",
+      "name": "寶可平板",
+      "reason": "no cards named \"寶可平板\" in server cache"
+    },
+    {
+      "id": "scr-17175",
+      "name": "空手道王的演練",
+      "reason": "no cards named \"空手道王的演練\" in server cache"
+    },
+    {
+      "id": "scr-12086",
+      "name": "火焰雞ex",
+      "reason": "no cards named \"火焰雞ex\" in server cache"
+    },
+    {
+      "id": "scr-14392",
+      "name": "高溫燃燒器",
+      "reason": "no cards named \"高溫燃燒器\" in server cache"
+    },
+    {
+      "id": "scr-18050",
+      "name": "塔拉剛",
+      "reason": "no cards named \"塔拉剛\" in server cache"
+    },
+    {
+      "id": "scr-17210",
+      "name": "稜鏡能量",
+      "reason": "no cards named \"稜鏡能量\" in server cache"
+    },
+    {
+      "id": "scr-13995",
+      "name": "超級阿勃梭魯ex",
+      "reason": "no cards named \"超級阿勃梭魯ex\" in server cache"
+    },
+    {
+      "id": "scr-16919",
+      "name": "火箭隊的狃拉",
+      "reason": "no cards named \"火箭隊的狃拉\" in server cache"
+    },
+    {
+      "id": "scr-11147",
+      "name": "完全體攪拌器",
+      "reason": "no cards named \"完全體攪拌器\" in server cache"
+    },
+    {
+      "id": "scr-18442",
+      "name": "超級甲賀忍蛙ex",
+      "reason": "no cards named \"超級甲賀忍蛙ex\" in server cache"
+    },
+    {
+      "id": "scr-18495",
+      "name": "AZ的平和",
+      "reason": "no cards named \"AZ的平和\" in server cache"
+    },
+    {
+      "id": "scr-9770",
+      "name": "新衝天能量",
+      "reason": "no cards named \"新衝天能量\" in server cache"
+    },
+    {
+      "id": "scr-17129",
+      "name": "貴重手推車",
+      "reason": "no cards named \"貴重手推車\" in server cache"
+    },
+    {
+      "id": "scr-14823",
+      "name": "電氣球",
+      "reason": "no cards named \"電氣球\" in server cache"
+    },
+    {
+      "id": "scr-14763",
+      "name": "火箭隊的烏鴉頭頭",
+      "reason": "no cards named \"火箭隊的烏鴉頭頭\" in server cache"
+    },
+    {
+      "id": "scr-16918",
+      "name": "火箭隊的黑暗鴉",
+      "reason": "no cards named \"火箭隊的黑暗鴉\" in server cache"
+    },
+    {
+      "id": "scr-13154",
+      "name": "洛拍棒",
+      "reason": "no cards named \"洛拍棒\" in server cache"
+    },
+    {
+      "id": "scr-14390",
+      "name": "超級長耳兔ex",
+      "reason": "no cards named \"超級長耳兔ex\" in server cache"
+    },
+    {
+      "id": "scr-14080",
+      "name": "滿充的體貼",
+      "reason": "no cards named \"滿充的體貼\" in server cache"
+    },
+    {
+      "id": "scr-14023",
+      "name": "菊草葉",
+      "reason": "no cards named \"菊草葉\" in server cache"
+    },
+    {
+      "id": "scr-14024",
+      "name": "月桂葉",
+      "reason": "no cards named \"月桂葉\" in server cache"
+    },
+    {
+      "id": "scr-14025",
+      "name": "大竺葵",
+      "reason": "no cards named \"大竺葵\" in server cache"
+    },
+    {
+      "id": "scr-14842",
+      "name": "活力森林",
+      "reason": "no cards named \"活力森林\" in server cache"
+    },
+    {
+      "id": "scr-14779",
+      "name": "蓋諾賽克特ex",
+      "reason": "no cards named \"蓋諾賽克特ex\" in server cache"
+    },
+    {
+      "id": "scr-12855",
+      "name": "火箭隊的袋獸ex",
+      "reason": "no cards named \"火箭隊的袋獸ex\" in server cache"
+    },
+    {
+      "id": "scr-12167",
+      "name": "洛奇亞ex",
+      "reason": "no cards named \"洛奇亞ex\" in server cache"
+    },
+    {
+      "id": "scr-14391",
+      "name": "超大冰淇淋",
+      "reason": "no cards named \"超大冰淇淋\" in server cache"
+    },
+    {
+      "id": "scr-16489",
+      "name": "超級大竺葵ex",
+      "reason": "no cards named \"超級大竺葵ex\" in server cache"
+    },
+    {
+      "id": "scr-13960",
+      "name": "超級妙蛙花ex",
+      "reason": "no cards named \"超級妙蛙花ex\" in server cache"
+    },
+    {
+      "id": "scr-12586",
+      "name": "大吾的鐵啞鈴",
+      "reason": "no cards named \"大吾的鐵啞鈴\" in server cache"
+    },
+    {
+      "id": "scr-12587",
+      "name": "大吾的金屬怪",
+      "reason": "no cards named \"大吾的金屬怪\" in server cache"
+    },
+    {
+      "id": "scr-12588",
+      "name": "大吾的巨金怪ex",
+      "reason": "no cards named \"大吾的巨金怪ex\" in server cache"
+    },
+    {
+      "id": "scr-14376",
+      "name": "帝王拿波ex",
+      "reason": "no cards named \"帝王拿波ex\" in server cache"
+    },
+    {
+      "id": "scr-18031",
+      "name": "超級盔甲鳥ex",
+      "reason": "no cards named \"超級盔甲鳥ex\" in server cache"
+    },
+    {
+      "id": "scr-15975",
+      "name": "超級蒂安希ex",
+      "reason": "no cards named \"超級蒂安希ex\" in server cache"
+    },
+    {
+      "id": "scr-14847",
+      "name": "神秘花園",
+      "reason": "no cards named \"神秘花園\" in server cache"
+    },
+    {
+      "id": "scr-14369",
+      "name": "超級巨牙鯊ex",
+      "reason": "no cards named \"超級巨牙鯊ex\" in server cache"
+    },
+    {
+      "id": "scr-14078",
+      "name": "超級信號",
+      "reason": "no cards named \"超級信號\" in server cache"
+    },
+    {
+      "id": "scr-12573",
+      "name": "‌寶可夢中心的姐姐",
+      "reason": "no cards named \"‌寶可夢中心的姐姐\" in server cache"
+    },
+    {
+      "id": "scr-18055",
+      "name": "增強【草】能量",
+      "reason": "no cards named \"增強【草】能量\" in server cache"
+    },
+    {
+      "id": "scr-18488",
+      "name": "探探鼠",
+      "reason": "no cards named \"探探鼠\" in server cache"
+    },
+    {
+      "id": "scr-19207",
+      "name": "超級龍頭地鼠ex",
+      "reason": "no cards named \"超級龍頭地鼠ex\" in server cache"
+    },
+    {
+      "id": "scr-13011",
+      "name": "蓋諾賽克特ex",
+      "reason": "no cards named \"蓋諾賽克特ex\" in server cache"
+    },
+    {
+      "id": "scr-14019",
+      "name": "莉莉艾的決意",
+      "reason": "no cards named \"莉莉艾的決意\" in server cache"
+    },
+    {
+      "id": "scr-13770",
+      "name": "N的謀劃",
+      "reason": "no cards named \"N的謀劃\" in server cache"
+    },
+    {
+      "id": "scr-14852",
+      "name": "稜鏡能量",
+      "reason": "no cards named \"稜鏡能量\" in server cache"
+    },
+    {
+      "id": "scr-19159",
+      "name": "吼鯨王ex",
+      "reason": "no cards named \"吼鯨王ex\" in server cache"
+    },
+    {
+      "id": "scr-18493",
+      "name": "豐收漁網",
+      "reason": "no cards named \"豐收漁網\" in server cache"
+    },
+    {
+      "id": "scr-19219",
+      "name": "小霞的朝氣",
+      "reason": "no cards named \"小霞的朝氣\" in server cache"
+    },
+    {
+      "id": "scr-14082",
+      "name": "衝浪海灘",
+      "reason": "no cards named \"衝浪海灘\" in server cache"
+    },
+    {
+      "id": "scr-18502",
+      "name": "泡沫【水】能量",
+      "reason": "no cards named \"泡沫【水】能量\" in server cache"
+    },
+    {
+      "id": "scr-19222",
+      "name": "沐淨",
+      "reason": "no cards named \"沐淨\" in server cache"
+    },
+    {
+      "id": "scr-18550",
+      "name": "稜鏡塔",
+      "reason": "no cards named \"稜鏡塔\" in server cache"
+    },
+    {
+      "id": "scr-13055",
+      "name": "凱路迪歐ex",
+      "reason": "no cards named \"凱路迪歐ex\" in server cache"
+    },
+    {
+      "id": "scr-14786",
+      "name": "超級快龍ex",
+      "reason": "no cards named \"超級快龍ex\" in server cache"
+    },
+    {
+      "id": "scr-12213",
+      "name": "空手道王的演練",
+      "reason": "no cards named \"空手道王的演練\" in server cache"
+    },
+    {
+      "id": "scr-18051",
+      "name": "琵魯",
+      "reason": "no cards named \"琵魯\" in server cache"
+    },
+    {
+      "id": "scr-14832",
+      "name": "鬥子",
+      "reason": "no cards named \"鬥子\" in server cache"
+    },
+    {
+      "id": "scr-14336",
+      "name": "花舞鳥ex",
+      "reason": "no cards named \"花舞鳥ex\" in server cache"
+    },
+    {
+      "id": "scr-14331",
+      "name": "超級噴火龍Xex",
+      "reason": "no cards named \"超級噴火龍Xex\" in server cache"
+    },
+    {
+      "id": "scr-14396",
+      "name": "吹火人",
+      "reason": "no cards named \"吹火人\" in server cache"
+    },
+    {
+      "id": "scr-13070",
+      "name": "胖嘟嘟ex",
+      "reason": "no cards named \"胖嘟嘟ex\" in server cache"
+    },
+    {
+      "id": "scr-14062",
+      "name": "超級沙奈朵ex",
+      "reason": "no cards named \"超級沙奈朵ex\" in server cache"
+    }
+  ],
+  "stats": {
+    "directSetMatch": 8,
+    "byNameExact": 78,
+    "byNameSupertype": 0,
+    "byNameRegMark": 0,
+    "byNameSubtype": 0,
+    "byNameBestGuess": 251,
+    "noMatch": 115
+  }
+}

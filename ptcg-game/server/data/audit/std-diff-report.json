@@ -1,0 +1,1326 @@
+{
+  "officialTotal": 5343,
+  "cacheTotal": 7551,
+  "officialUniqueKeys": 4669,
+  "missingKeys": 3958,
+  "missingCards": 4583,
+  "matchedKeys": 711,
+  "matchedCards": 760,
+  "cacheLegalNotInStd": 27,
+  "dupOfficialPairs": 522,
+  "missingSample": [
+    {
+      "key": "綠寶石風暴|003",
+      "officialCount": 1,
+      "name": "1階進化 雨翅蛾",
+      "category": "1階進化",
+      "collectorNumber": "003/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|001",
+      "officialCount": 1,
+      "name": "基礎 赫拉克羅斯",
+      "category": "基礎",
+      "collectorNumber": "001/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|005",
+      "officialCount": 1,
+      "name": "1階進化 夢歌仙人掌",
+      "category": "1階進化",
+      "collectorNumber": "005/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|004",
+      "officialCount": 1,
+      "name": "基礎 刺球仙人掌",
+      "category": "基礎",
+      "collectorNumber": "004/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|002",
+      "officialCount": 1,
+      "name": "基礎 溜溜糖球",
+      "category": "基礎",
+      "collectorNumber": "002/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|008",
+      "officialCount": 1,
+      "name": "基礎 膽小蟲",
+      "category": "基礎",
+      "collectorNumber": "008/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|007",
+      "officialCount": 1,
+      "name": "1階進化 蜂女王",
+      "category": "1階進化",
+      "collectorNumber": "007/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|009",
+      "officialCount": 1,
+      "name": "1階進化 超級具甲武者ex",
+      "category": "1階進化",
+      "collectorNumber": "009/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|006",
+      "officialCount": 1,
+      "name": "基礎 三蜜蜂",
+      "category": "基礎",
+      "collectorNumber": "006/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|012",
+      "officialCount": 1,
+      "name": "基礎 鴨嘴火獸",
+      "category": "基礎",
+      "collectorNumber": "012/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|013",
+      "officialCount": 1,
+      "name": "1階進化 鴨嘴炎獸",
+      "category": "1階進化",
+      "collectorNumber": "013/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|014",
+      "officialCount": 1,
+      "name": "基礎 煤炭龜",
+      "category": "基礎",
+      "collectorNumber": "014/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|015",
+      "officialCount": 1,
+      "name": "基礎 加熱洛托姆ex",
+      "category": "基礎",
+      "collectorNumber": "015/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|016",
+      "officialCount": 1,
+      "name": "基礎 熔蟻獸",
+      "category": "基礎",
+      "collectorNumber": "016/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|010",
+      "officialCount": 1,
+      "name": "基礎 卡蒂狗",
+      "category": "基礎",
+      "collectorNumber": "010/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|017",
+      "officialCount": 1,
+      "name": "基礎 巨翅飛魚",
+      "category": "基礎",
+      "collectorNumber": "017/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|011",
+      "officialCount": 1,
+      "name": "1階進化 風速狗",
+      "category": "1階進化",
+      "collectorNumber": "011/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|019",
+      "officialCount": 1,
+      "name": "基礎 輕飄飄",
+      "category": "基礎",
+      "collectorNumber": "019/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|021",
+      "officialCount": 1,
+      "name": "基礎 弱丁魚ex",
+      "category": "基礎",
+      "collectorNumber": "021/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|022",
+      "officialCount": 1,
+      "name": "基礎 電擊獸",
+      "category": "基礎",
+      "collectorNumber": "022/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|023",
+      "officialCount": 1,
+      "name": "1階進化 電擊魔獸",
+      "category": "1階進化",
+      "collectorNumber": "023/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|018",
+      "officialCount": 1,
+      "name": "基礎 蓋歐卡",
+      "category": "基礎",
+      "collectorNumber": "018/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|020",
+      "officialCount": 1,
+      "name": "1階進化 胖嘟嘟",
+      "category": "1階進化",
+      "collectorNumber": "020/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|025",
+      "officialCount": 1,
+      "name": "基礎 雷電雲",
+      "category": "基礎",
+      "collectorNumber": "025/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|024",
+      "officialCount": 1,
+      "name": "基礎 雷公ex",
+      "category": "基礎",
+      "collectorNumber": "024/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|026",
+      "officialCount": 1,
+      "name": "基礎 啪嚓海膽",
+      "category": "基礎",
+      "collectorNumber": "026/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|027",
+      "officialCount": 1,
+      "name": "基礎 電海燕",
+      "category": "基礎",
+      "collectorNumber": "027/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|028",
+      "officialCount": 1,
+      "name": "1階進化 大電海燕",
+      "category": "1階進化",
+      "collectorNumber": "028/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|029",
+      "officialCount": 1,
+      "name": "基礎 催眠貘",
+      "category": "基礎",
+      "collectorNumber": "029/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|030",
+      "officialCount": 1,
+      "name": "1階進化 引夢貘人",
+      "category": "1階進化",
+      "collectorNumber": "030/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|031",
+      "officialCount": 1,
+      "name": "基礎 騎拉帝納",
+      "category": "基礎",
+      "collectorNumber": "031/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|032",
+      "officialCount": 1,
+      "name": "基礎 泥偶小人",
+      "category": "基礎",
+      "collectorNumber": "032/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|033",
+      "officialCount": 1,
+      "name": "1階進化 超級泥偶巨人ex",
+      "category": "1階進化",
+      "collectorNumber": "033/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|035",
+      "officialCount": 1,
+      "name": "基礎 穿山鼠",
+      "category": "基礎",
+      "collectorNumber": "035/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|036",
+      "officialCount": 1,
+      "name": "1階進化 穿山王",
+      "category": "1階進化",
+      "collectorNumber": "036/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|038",
+      "officialCount": 1,
+      "name": "1階進化 大鋼蛇",
+      "category": "1階進化",
+      "collectorNumber": "038/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|034",
+      "officialCount": 1,
+      "name": "基礎 眷戀雲",
+      "category": "基礎",
+      "collectorNumber": "034/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|039",
+      "officialCount": 1,
+      "name": "基礎 固拉多",
+      "category": "基礎",
+      "collectorNumber": "039/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|037",
+      "officialCount": 1,
+      "name": "基礎 大岩蛇",
+      "category": "基礎",
+      "collectorNumber": "037/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|040",
+      "officialCount": 1,
+      "name": "基礎 土地雲",
+      "category": "基礎",
+      "collectorNumber": "040/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|042",
+      "officialCount": 1,
+      "name": "1階進化 尼多娜",
+      "category": "1階進化",
+      "collectorNumber": "042/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|041",
+      "officialCount": 1,
+      "name": "基礎 尼多蘭",
+      "category": "基礎",
+      "collectorNumber": "041/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|043",
+      "officialCount": 1,
+      "name": "2階進化 尼多后",
+      "category": "2階進化",
+      "collectorNumber": "043/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|044",
+      "officialCount": 1,
+      "name": "基礎 圓絲蛛",
+      "category": "基礎",
+      "collectorNumber": "044/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|046",
+      "officialCount": 1,
+      "name": "基礎 勾魂眼",
+      "category": "基礎",
+      "collectorNumber": "046/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|045",
+      "officialCount": 1,
+      "name": "1階進化 阿利多斯",
+      "category": "1階進化",
+      "collectorNumber": "045/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|047",
+      "officialCount": 1,
+      "name": "基礎 好啦魷",
+      "category": "基礎",
+      "collectorNumber": "047/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|048",
+      "officialCount": 1,
+      "name": "1階進化 超級烏賊王ex",
+      "category": "1階進化",
+      "collectorNumber": "048/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|050",
+      "officialCount": 1,
+      "name": "基礎 心鱗寶",
+      "category": "基礎",
+      "collectorNumber": "050/076",
+      "product": "擴充包「綠寶石風暴」"
+    },
+    {
+      "key": "綠寶石風暴|049",
+      "officialCount": 1,
+      "name": "基礎 赤面龍",
+      "category": "基礎",
+      "collectorNumber": "049/076",
+      "product": "擴充包「綠寶石風暴」"
+    }
+  ],
+  "dupDetail": [
+    {
+      "key": "初階牌組100對戰收藏|016",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 菊草葉"
+      ],
+      "cacheCount": 1,
+      "cacheIds": [
+        "MC-016"
+      ]
+    },
+    {
+      "key": "初階牌組100對戰收藏|017",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 月桂葉"
+      ],
+      "cacheCount": 1,
+      "cacheIds": [
+        "MC-017"
+      ]
+    },
+    {
+      "key": "初階牌組100對戰收藏|018",
+      "officialCount": 2,
+      "officialNames": [
+        "2階進化 超級大竺葵ex"
+      ],
+      "cacheCount": 1,
+      "cacheIds": [
+        "MC-018"
+      ]
+    },
+    {
+      "key": "初階牌組100對戰收藏|030",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 毒薔薇"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|031",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 羅絲雷朵"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|052",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 鐵蟻ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|054",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 畢力吉翁"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|061",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 卡璞・哞哞"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|069",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 迷你芙"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|070",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 奧利紐"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|071",
+      "officialCount": 2,
+      "officialNames": [
+        "2階進化 奧利瓦ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|077",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 鐵斑葉ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|080",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 厄鬼椪 碧草面具"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|083",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 小火龍"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|084",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 火恐龍"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|085",
+      "officialCount": 2,
+      "officialNames": [
+        "2階進化 超級噴火龍Yex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|087",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 小火馬"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|094",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 火伊布ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|101",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 煤炭龜"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|107",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 比克提尼"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|109",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 暖暖豬"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|111",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 炒炒豬"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|113",
+      "officialCount": 2,
+      "officialNames": [
+        "2階進化 超級炎武王ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|114",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 爆香猴"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|115",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 爆香猿"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|126",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 萊希拉姆ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|127",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 小獅獅"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|128",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 火炎獅"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|129",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 波爾凱尼恩ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|145",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 炭小侍"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|146",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 紅蓮鎧騎ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|162",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 冰伊布ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|165",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 小鋸鱷"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|167",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 藍鱷"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|169",
+      "officialCount": 2,
+      "officialNames": [
+        "2階進化 超級大力鱷ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|192",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 雷吉艾斯ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|203",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 酋雷姆ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|204",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 闇黑酋雷姆ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|205",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 凱路迪歐ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|211",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 潤水鴨"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|212",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 湧躍鴨"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|213",
+      "officialCount": 2,
+      "officialNames": [
+        "2階進化 狂歡浪舞鴨"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|225",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 皮卡丘"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|226",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 雷丘"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|227",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 皮卡丘ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|237",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 電擊魔獸ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|253",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 電飛鼠"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|264",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 托戈德瑪爾"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|270",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 莫魯貝可"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|273",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 &lt;奇樹的&gt;光蚪仔",
+        "基礎 奇樹的光蚪仔"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|274",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 &lt;奇樹的&gt;電肚蛙ex",
+        "1階進化 奇樹的電肚蛙ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|278",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 &lt;奇樹的&gt;電海燕",
+        "基礎 奇樹的電海燕"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|279",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 &lt;奇樹的&gt;大電海燕",
+        "1階進化 奇樹的大電海燕"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|284",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 密勒頓ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|287",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 莉莉艾的皮皮ex",
+        "基礎 &lt;莉莉艾的&gt;皮皮ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|297",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 瑪力露麗ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|298",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 太陽伊布ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|312",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 拉帝亞斯ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|313",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 拉帝歐斯"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|349",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 墓仔狗"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|351",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 墓揚犬ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|368",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 瑪沙那"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|369",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 恰雷姆"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|374",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 雷吉洛克ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|394",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 泥巴魚ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|421",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 毛崖蟹"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|425",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 故勒頓ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|427",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 厄鬼椪 礎石面具"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|429",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 鐵磐岩ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|437",
+      "officialCount": 2,
+      "officialNames": [
+        "2階進化 &lt;火箭隊的&gt;尼多王ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|440",
+      "officialCount": 2,
+      "officialNames": [
+        "2階進化 &lt;火箭隊的&gt;叉字蝠ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|446",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 月亮伊布ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|456",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 達克萊伊ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|475",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 禿鷹娜ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|474",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 禿鷹丫頭"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|484",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 &lt;派帕的&gt;獒教父ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|492",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 巨鉗螳螂ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|499",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 雷吉斯奇魯ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|502",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 帝牙盧卡"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|512",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 蓋諾賽克特ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|514",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 托戈德瑪爾ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|521",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 銅象"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|522",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 大王銅象"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|536",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 鐵頭殼"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|551",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 故勒頓ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|564",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 伊布"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|568",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 卡比獸"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|579",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 傲骨燕"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|580",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 大王燕"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|587",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 貓鼬斬"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|588",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 貓鼬斬ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|593",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 捲捲耳"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|595",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 魅力喵"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|594",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 長耳兔"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|596",
+      "officialCount": 2,
+      "officialNames": [
+        "1階進化 東施喵"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|597",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 聒噪鳥"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|605",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 爆炸頭水牛ex"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|621",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 老翁龍"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|626",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 怒鸚哥"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    },
+    {
+      "key": "初階牌組100對戰收藏|627",
+      "officialCount": 2,
+      "officialNames": [
+        "基礎 摩托蜥"
+      ],
+      "cacheCount": 0,
+      "cacheIds": []
+    }
+  ]
+}
