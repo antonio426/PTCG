@@ -6,7 +6,7 @@ import { calculateDamage, effectiveMaxHp, handleKo, prizesForKo } from './damage
 import { getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasPassiveAbilityNamed, isRetreatBlockedByOpponent, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat, shouldDiscardAttackerEnergy } from './effects/passiveAbilities';
 import { isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
-import { applyStatusCondition, drawCards } from './effects/primitives';
+import { applyStatusCondition, drawCards, shuffleDeck } from './effects/primitives';
 import { resolveGenericAttackEffect } from './effects/genericAttacks';
 import {
   EffectContext, EffectStep,
@@ -506,6 +506,87 @@ export const moves = {
         if (damage > 0 && genericOutcome.opponentTimedEffect) {
           const e = genericOutcome.opponentTimedEffect;
           defender.timedEffects = [...(defender.timedEffects || []), { kind: e.kind, amount: e.amount, appliesOnTurn: G.turn + e.turnOffset }];
+        }
+        // Choice-requiring generic effects (deck search, switches) auto-pick randomly among
+        // the valid options — see genericAttacks.ts's file header for why.
+        if (genericOutcome.deckSearchBasicPokemonToBenchCount) {
+          const matches = player.deck.filter(c => c.cardData.supertype === 'Pokémon' && c.cardData.subtypes.includes('Basic'));
+          let remaining = genericOutcome.deckSearchBasicPokemonToBenchCount;
+          while (remaining > 0 && matches.length > 0) {
+            const slot = player.bench.findIndex(s => s === null);
+            if (slot === -1) break;
+            const pick = matches.splice(Math.floor(Math.random() * matches.length), 1)[0];
+            const deckIdx = player.deck.findIndex(c => c.id === pick.id);
+            if (deckIdx >= 0) player.bench[slot] = player.deck.splice(deckIdx, 1)[0];
+            remaining--;
+          }
+          shuffleDeck(player.deck);
+        }
+        if (genericOutcome.deckSearchBasicEnergyToHandCount) {
+          const matches = player.deck.filter(c => c.cardData.subtypes.includes('Basic Energy'));
+          let remaining = genericOutcome.deckSearchBasicEnergyToHandCount;
+          while (remaining > 0 && matches.length > 0) {
+            const pick = matches.splice(Math.floor(Math.random() * matches.length), 1)[0];
+            const deckIdx = player.deck.findIndex(c => c.id === pick.id);
+            if (deckIdx >= 0) player.hand.push(player.deck.splice(deckIdx, 1)[0]);
+            remaining--;
+          }
+          shuffleDeck(player.deck);
+        }
+        if (genericOutcome.deckSearchSupertypeToHand) {
+          const matches = player.deck.filter(c => c.cardData.supertype === genericOutcome!.deckSearchSupertypeToHand);
+          if (matches.length > 0) {
+            const pick = matches[Math.floor(Math.random() * matches.length)];
+            const deckIdx = player.deck.findIndex(c => c.id === pick.id);
+            if (deckIdx >= 0) player.hand.push(player.deck.splice(deckIdx, 1)[0]);
+          }
+          shuffleDeck(player.deck);
+        }
+        if (genericOutcome.millOpponentDeckCount) {
+          for (let i = 0; i < genericOutcome.millOpponentDeckCount && opponent.deck.length > 0; i++) {
+            opponent.discardPile.push(opponent.deck.pop()!);
+          }
+        }
+        if (genericOutcome.discardRandomOpponentHandCount) {
+          for (let i = 0; i < genericOutcome.discardRandomOpponentHandCount && opponent.hand.length > 0; i++) {
+            opponent.discardPile.push(opponent.hand.splice(Math.floor(Math.random() * opponent.hand.length), 1)[0]);
+          }
+        }
+        if (genericOutcome.shuffleRandomOpponentHandCardIntoDeck && opponent.hand.length > 0) {
+          opponent.deck.push(opponent.hand.splice(Math.floor(Math.random() * opponent.hand.length), 1)[0]);
+          shuffleDeck(opponent.deck);
+        }
+        if (genericOutcome.discardActiveStadium && G.activeStadium) {
+          G.players[G.activeStadium.owner].discardPile.push(G.activeStadium);
+          G.activeStadium = null;
+        }
+        if (genericOutcome.selfSwitchToRandomBench) {
+          const benchIdxs = player.bench.map((c, i) => c ? i : -1).filter(i => i >= 0);
+          if (benchIdxs.length > 0 && player.active) {
+            const idx = benchIdxs[Math.floor(Math.random() * benchIdxs.length)];
+            const b = player.bench[idx]!;
+            clearStatusConditionsOnLeaveActive(player.active);
+            player.bench[idx] = player.active;
+            player.active = b;
+          }
+        }
+        if (genericOutcome.forceOpponentSwitchToRandomBench) {
+          const benchIdxs = opponent.bench.map((c, i) => c ? i : -1).filter(i => i >= 0);
+          if (benchIdxs.length > 0 && opponent.active) {
+            const idx = benchIdxs[Math.floor(Math.random() * benchIdxs.length)];
+            const b = opponent.bench[idx]!;
+            clearStatusConditionsOnLeaveActive(opponent.active);
+            opponent.bench[idx] = opponent.active;
+            opponent.active = b;
+          }
+        }
+        if (genericOutcome.moveSelfEnergyToRandomBench && attacker.attachedEnergy.length > 0) {
+          const benchTargets = player.bench.filter((c): c is GameCard => c !== null);
+          if (benchTargets.length > 0) {
+            const target = benchTargets[Math.floor(Math.random() * benchTargets.length)];
+            const i = Math.floor(Math.random() * attacker.attachedEnergy.length);
+            target.attachedEnergy.push(attacker.attachedEnergy.splice(i, 1)[0]);
+          }
         }
       }
     }

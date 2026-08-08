@@ -8,11 +8,18 @@
  * attack time and resolves them — no per-card registration needed, so it automatically covers
  * reprints and any future card sharing the same template.
  *
+ * A second tier of templates below (deck search, mill, switches) DOES involve picking among
+ * multiple valid targets/cards where the printed text leaves it to a player's choice — rather
+ * than opening a PendingChoice (which the single-synchronous-step design here doesn't support),
+ * these auto-pick randomly among the valid options. This is a documented simplification, not a
+ * silent one: it removes the strategic "which one" decision, but the shuffled deck order and
+ * random pick are no worse an approximation than most of the "any distribution" simplifications
+ * already used throughout abilities.ts/trainers.ts this session.
+ *
  * Deliberately NOT handled here (left to the bespoke attacks.ts registry or genuinely
- * unsupported): anything requiring a player CHOICE among multiple valid targets (bench damage
- * distribution, "choose 1 of your opponent's benched Pokémon to also hit", search-and-choose —
- * where WHICH one matters strategically); "ignore the defender's attached-card effects" (this
- * engine has no Tool-based incoming-damage-reduction mechanic yet for that to meaningfully
+ * unsupported): bench damage distribution across several targets in one instance (the total
+ * spread matters, unlike single-target picks); "ignore the defender's attached-card effects"
+ * (this engine has no Tool-based incoming-damage-reduction mechanic yet for that to meaningfully
  * override); and "look at the opponent's hand" (no information-asymmetry state exists to reveal
  * into, so there'd be nothing to actually change).
  */
@@ -49,6 +56,27 @@ export interface GenericAttackOutcome {
   selfTimedEffect?: TimedEffectDescriptor;
   /** Set on the defender (effects inflicted by being hit). */
   opponentTimedEffect?: TimedEffectDescriptor;
+
+  /** Search the deck for up to N Basic Pokémon (random pick among matches), place on Bench, reshuffle. */
+  deckSearchBasicPokemonToBenchCount?: number;
+  /** Search the deck for up to N Basic Energy cards (random pick), add to hand, reshuffle. */
+  deckSearchBasicEnergyToHandCount?: number;
+  /** Search the deck for 1 card of the given supertype (random pick), add to hand, reshuffle. */
+  deckSearchSupertypeToHand?: 'Pokémon' | 'Item' | 'Supporter';
+  /** Discard the top N cards of the opponent's deck. */
+  millOpponentDeckCount?: number;
+  /** Discard this many random cards from the opponent's hand (blind pick). */
+  discardRandomOpponentHandCount?: number;
+  /** Pick 1 random card from the opponent's hand, shuffle it back into their deck. */
+  shuffleRandomOpponentHandCardIntoDeck?: boolean;
+  /** Discard whichever Stadium card is currently in play. */
+  discardActiveStadium?: boolean;
+  /** The attacker switches itself with a random own Benched Pokémon. */
+  selfSwitchToRandomBench?: boolean;
+  /** The opponent's Active is switched with a random one of their own Benched Pokémon. */
+  forceOpponentSwitchToRandomBench?: boolean;
+  /** Move 1 of the attacker's own attached Energy to a random own Benched Pokémon. */
+  moveSelfEnergyToRandomBench?: boolean;
 }
 
 export interface AttackBoardContext {
@@ -145,6 +173,18 @@ const TEMPLATES: RegExp[] = [
   /^若對手的戰鬥寶可夢身上放置有傷害指示物，則增加(\d+)點傷害。$/,
   /^若自己剩餘獎賞卡的張數，比對手剩餘獎賞卡的張數多，則增加(\d+)點傷害。$/,
   /^若對手的戰鬥寶可夢沒有【灼傷】，則這個招式失敗。$/,
+  /^從自己的牌庫選擇最多(\d+)張【基礎】寶可夢卡，放置於備戰區。並且重洗牌庫。$/,
+  /^從自己的牌庫選擇1張【基礎】寶可夢卡，放置於備戰區。並且重洗牌庫。$/,
+  /^從自己的牌庫選擇最多(\d+)張基本能量卡，在給對手看過後加入手牌。並且重洗牌庫。$/,
+  /^從自己的牌庫選擇1張(寶可夢|物品|支援者)卡，在給對手看過後加入手牌。並且重洗牌庫。$/,
+  /^將對手的牌庫上方(\d+)張卡丟棄。$/,
+  /^在不看正面的情況下，從對手的手牌選擇1張，將其丟棄。$/,
+  /^在不看正面的情況下，從對手的手牌選擇1張，查看那張卡的正面後放回對手的牌庫並重洗。$/,
+  /^將場上的競技場卡丟棄。$/,
+  /^將這隻寶可夢與備戰寶可夢互換。$/,
+  /^選擇1隻對手的備戰寶可夢，與戰鬥寶可夢互換。$/,
+  /^將對手的戰鬥寶可夢與備戰寶可夢互換。\[由對手選擇放置於戰鬥場的寶可夢。\]$/,
+  /^選擇1個這隻寶可夢身上附加的能量，改附於備戰寶可夢身上。$/,
 ];
 
 /** Pure classifier (no randomness) — used by coverage-report.ts to count these as covered. */
@@ -355,6 +395,58 @@ export function resolveGenericAttackEffect(text: string, damageField: string, bo
   // 若對手的戰鬥寶可夢沒有【灼傷】，則這個招式失敗。
   if (/^若對手的戰鬥寶可夢沒有【灼傷】，則這個招式失敗。$/.test(t)) {
     return { baseDamage: board.defenderIsBurned ? parseBaseNumber(damageField) : 0 };
+  }
+
+  // 從自己的牌庫選擇最多N/1張【基礎】寶可夢卡，放置於備戰區。並且重洗牌庫。
+  m = t.match(/^從自己的牌庫選擇最多(\d+)張【基礎】寶可夢卡，放置於備戰區。並且重洗牌庫。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), deckSearchBasicPokemonToBenchCount: parseInt(m[1], 10) };
+  if (/^從自己的牌庫選擇1張【基礎】寶可夢卡，放置於備戰區。並且重洗牌庫。$/.test(t)) {
+    return { baseDamage: parseBaseNumber(damageField), deckSearchBasicPokemonToBenchCount: 1 };
+  }
+
+  // 從自己的牌庫選擇最多N張基本能量卡，在給對手看過後加入手牌。並且重洗牌庫。
+  m = t.match(/^從自己的牌庫選擇最多(\d+)張基本能量卡，在給對手看過後加入手牌。並且重洗牌庫。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), deckSearchBasicEnergyToHandCount: parseInt(m[1], 10) };
+
+  // 從自己的牌庫選擇1張(寶可夢/物品/支援者)卡，在給對手看過後加入手牌。並且重洗牌庫。
+  m = t.match(/^從自己的牌庫選擇1張(寶可夢|物品|支援者)卡，在給對手看過後加入手牌。並且重洗牌庫。$/);
+  if (m) {
+    const supertype = m[1] === '寶可夢' ? 'Pokémon' : m[1] === '物品' ? 'Item' : 'Supporter';
+    return { baseDamage: parseBaseNumber(damageField), deckSearchSupertypeToHand: supertype };
+  }
+
+  // 將對手的牌庫上方N張卡丟棄。
+  m = t.match(/^將對手的牌庫上方(\d+)張卡丟棄。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), millOpponentDeckCount: parseInt(m[1], 10) };
+
+  // 在不看正面的情況下，從對手的手牌選擇1張，將其丟棄。(blind discard)
+  if (/^在不看正面的情況下，從對手的手牌選擇1張，將其丟棄。$/.test(t)) {
+    return { baseDamage: parseBaseNumber(damageField), discardRandomOpponentHandCount: 1 };
+  }
+  // 在不看正面的情況下，從對手的手牌選擇1張，查看那張卡的正面後放回對手的牌庫並重洗。
+  if (/^在不看正面的情況下，從對手的手牌選擇1張，查看那張卡的正面後放回對手的牌庫並重洗。$/.test(t)) {
+    return { baseDamage: parseBaseNumber(damageField), shuffleRandomOpponentHandCardIntoDeck: true };
+  }
+
+  // 將場上的競技場卡丟棄。
+  if (/^將場上的競技場卡丟棄。$/.test(t)) {
+    return { baseDamage: parseBaseNumber(damageField), discardActiveStadium: true };
+  }
+
+  // 將這隻寶可夢與備戰寶可夢互換。(self-switch)
+  if (/^將這隻寶可夢與備戰寶可夢互換。$/.test(t)) {
+    return { baseDamage: parseBaseNumber(damageField), selfSwitchToRandomBench: true };
+  }
+
+  // 選擇1隻對手的備戰寶可夢，與戰鬥寶可夢互換。/ 將對手的戰鬥寶可夢與備戰寶可夢互換。[由對手選擇...]
+  if (/^選擇1隻對手的備戰寶可夢，與戰鬥寶可夢互換。$/.test(t)
+    || /^將對手的戰鬥寶可夢與備戰寶可夢互換。\[由對手選擇放置於戰鬥場的寶可夢。\]$/.test(t)) {
+    return { baseDamage: parseBaseNumber(damageField), forceOpponentSwitchToRandomBench: true };
+  }
+
+  // 選擇1個這隻寶可夢身上附加的能量，改附於備戰寶可夢身上。
+  if (/^選擇1個這隻寶可夢身上附加的能量，改附於備戰寶可夢身上。$/.test(t)) {
+    return { baseDamage: parseBaseNumber(damageField), moveSelfEnergyToRandomBench: true };
   }
 
   return undefined;

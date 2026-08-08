@@ -187,5 +187,42 @@ function freshBattle(attackerData: Card, defenderData: Card) {
   check('canRetreat: no longer blocked the turn after', canRetreat(G, 1));
 }
 
+// 13. Deck search Basic Pokémon -> Bench
+{
+  const attacker = mon('atk', 'SearchMon', '100', '從自己的牌庫選擇最多2張【基礎】寶可夢卡，放置於備戰區。並且重洗牌庫。', '20');
+  const defender = mon('def', 'DefMon14', '100', '', '10');
+  const G = freshBattle(attacker, defender);
+  // Reshape the deck to include some Basic Pokémon among the fillers.
+  const basicMon = mon('basicSearch', '搜尋獸', '60', '', '10');
+  for (let i = 0; i < 3; i++) G.players[0].deck.push({ id: `bs${i}`, cardData: basicMon, owner: 0, damage: 0, statusConditions: [], attachedEnergy: [], attachedTool: null });
+  const deckBefore = G.players[0].deck.length;
+  (moves.attack as any)({ G, ctx: { events: {} } }, 0);
+  const benchCount = G.players[0].bench.filter(c => c !== null).length;
+  check('deckSearchBasicPokemonToBench: placed up to 2 onto Bench', benchCount === 2);
+  check('deckSearchBasicPokemonToBench: deck shrank by the placed count and got reshuffled', G.players[0].deck.length === deckBefore - 2);
+}
+
+// 14. Mill opponent deck: "將對手的牌庫上方2張卡丟棄。"
+{
+  const attacker = mon('atk', 'MillMon', '100', '將對手的牌庫上方2張卡丟棄。', '20');
+  const defender = mon('def', 'DefMon15', '100', '', '10');
+  const G = freshBattle(attacker, defender);
+  const deckBefore = G.players[1].deck.length;
+  (moves.attack as any)({ G, ctx: { events: {} } }, 0);
+  check('millOpponentDeckCount: opponent deck shrank by 2', G.players[1].deck.length === deckBefore - 2);
+  check('millOpponentDeckCount: 2 cards landed in opponent discard', G.players[1].discardPile.length === 2);
+}
+
+// 15. Force-switch opponent to a random Bench Pokémon
+{
+  const attacker = mon('atk', 'SwitchMon', '100', '選擇1隻對手的備戰寶可夢，與戰鬥寶可夢互換。', '20');
+  const defender = mon('def', 'DefMon16', '100', '', '10');
+  const G = freshBattle(attacker, defender);
+  const benchMon = mon('bench16', 'BenchMon16', '60', '', '10');
+  G.players[1].bench[0] = { id: 'bench16-1', cardData: benchMon, owner: 1, damage: 0, statusConditions: [], attachedEnergy: [], attachedTool: null };
+  (moves.attack as any)({ G, ctx: { events: {} } }, 0);
+  check('forceOpponentSwitchToRandomBench: opponent Active is now the former Bench Pokémon', G.players[1].active?.id === 'bench16-1');
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed > 0) process.exit(1);
