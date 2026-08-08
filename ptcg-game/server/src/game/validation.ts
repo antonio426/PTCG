@@ -2,7 +2,7 @@ import { GameCard, EnergyType, LegalAction } from '@ptcg/shared';
 import { PtcgGameState, GamePhase, PendingChoice } from './GameState';
 import { hasAbilityEffect, isAbilityUnlimitedUse } from './effects/abilities';
 import { getRetreatCostReduction, getColorlessCostReduction } from './effects/tools';
-import { canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostReduction, getPassiveRetreatWaiver } from './effects/passiveAbilities';
+import { canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver } from './effects/passiveAbilities';
 import { normalizeAbilityName } from './effects/types';
 
 /** All k-sized combinations of `items`, capped so huge hands can't explode the move list. */
@@ -97,7 +97,7 @@ export function effectiveRetreatCost(G: PtcgGameState, card: GameCard): number {
   const base = card.cardData.retreatCost?.length ?? 0;
   const { reduction, waived } = getRetreatCostReduction(G, card);
   if (waived || getPassiveRetreatWaiver(G, card.owner, card)) return 0;
-  return Math.max(0, base - reduction);
+  return Math.max(0, base - reduction + getPassiveRetreatCostIncrease(G, card));
 }
 
 export function canPlayPokemon(G: PtcgGameState, playerIndex: number, cardId: string): boolean {
@@ -139,7 +139,7 @@ export function canEvolve(G: PtcgGameState, playerIndex: number, cardId: string,
     : player.bench.find(c => c?.id === targetId) || null;
   if (!target) return false;
   // 提升進化: this specific Pokémon is exempt from the first-turn / just-played restrictions below.
-  const bypassTiming = canEvolveOnFirstTurnOrJustPlayed(target);
+  const bypassTiming = canEvolveOnFirstTurnOrJustPlayed(G, target);
   if (!bypassTiming && isFirstTurnOfGame(G)) return false;
   if (target.cardData.name !== evolvesFrom && !canEvolveViaPassive(target, card.cardData)) return false;
   if (!bypassTiming && player.pokemonPlayedThisTurn.includes(target.id)) return false;
@@ -186,8 +186,12 @@ export function canAttack(G: PtcgGameState, playerIndex: number, attackIndex: nu
   if (!attack) return false;
   if (!canUsePassiveGatedAttack(G, player.active)) return false;
 
-  const colorlessReduction = getColorlessCostReduction(G, player.active, playerIndex as 0 | 1)
-    + getPassiveAttackCostReduction(G, playerIndex as 0 | 1, player.active, attack.name);
+  // 化身團結 waives only the Colorless portion of the cost — specific-type requirements remain.
+  const colorlessInCost = attack.cost.filter(c => c === 'Colorless').length;
+  const colorlessReduction = hasPassiveColorlessCostWaiver(G, player.active)
+    ? colorlessInCost
+    : getColorlessCostReduction(G, player.active, playerIndex as 0 | 1)
+      + getPassiveAttackCostReduction(G, playerIndex as 0 | 1, player.active, attack.name);
   return canPayEnergyCost(player.active.attachedEnergy, attack.cost, colorlessReduction);
 }
 

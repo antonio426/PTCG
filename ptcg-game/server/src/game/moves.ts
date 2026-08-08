@@ -3,7 +3,7 @@ import { PtcgGameState, PendingChoice } from './GameState';
 import { canPlayPokemon, canEvolve, canAttachEnergy, canRetreat, canAttack, effectiveRetreatCost, FIRST_TURN_SUPPORTER_EXCEPTIONS } from './validation';
 import { clearStatusConditionsOnLeaveActive } from './statusConditions';
 import { calculateDamage, effectiveMaxHp, handleKo, prizesForKo } from './damage';
-import { getBonusPrizesForAttackKo, hasPassiveAbilityNamed, onEnergyAttachedFromHand } from './effects/passiveAbilities';
+import { getBonusPrizesForAttackKo, getGrudgeVortexRetaliation, hasPassiveAbilityNamed, onEnergyAttachedFromHand } from './effects/passiveAbilities';
 import { isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
 import {
@@ -352,7 +352,9 @@ export const moves = {
 
       // 龐克頭盔-style retaliation Tool: damages the attacker back when its holder is hit,
       // regardless of whether the hit also knocked the holder out.
-      const retaliation = getToolRetaliationDamage(G, defender);
+      let retaliation = getToolRetaliationDamage(G, defender);
+      if (damage > 0 && hasPassiveAbilityNamed(defender, '反擊雞冠')) retaliation += 5;
+      retaliation += getGrudgeVortexRetaliation(G, defender);
       if (retaliation > 0) {
         attacker.damage += retaliation * 10;
       }
@@ -364,6 +366,13 @@ export const moves = {
       if (damage > 0 && hasPassiveAbilityNamed(defender, '灼熱之軀')) {
         attacker.statusConditions = attacker.statusConditions.filter(c => c !== 'Burned');
         attacker.statusConditions.push('Burned');
+      }
+      // 堅忍之軀: a coin flip may let a Pokémon that would be KO'd by this attack survive at 10 HP instead.
+      if (hasPassiveAbilityNamed(defender, '堅忍之軀')) {
+        const wouldBeLethal = effectiveMaxHp(G, defender) > 0 && defender.damage >= effectiveMaxHp(G, defender);
+        if (wouldBeLethal && Math.random() < 0.5) {
+          defender.damage = effectiveMaxHp(G, defender) - 10;
+        }
       }
 
       const defenderHp = effectiveMaxHp(G, defender);

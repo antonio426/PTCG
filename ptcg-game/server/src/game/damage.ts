@@ -68,7 +68,7 @@ export function calculateDamage(G: PtcgGameState, attackerIdx: 0 | 1, attacker: 
   const weaknessOverride = getWeaknessTypeOverride(G, (1 - attackerIdx) as 0 | 1, defender);
   const afterWeakness = applyWeaknessResistance(baseDamage, attacker, defender, weaknessOverride);
   const defenderIdx = (1 - attackerIdx) as 0 | 1;
-  let reduction = getPassiveDamageReduction(defender);
+  let reduction = getPassiveDamageReduction(G, defender);
   for (const r of G.players[defenderIdx].incomingDamageReduction) {
     if (r.typeFilter && !(defender.cardData.types || []).includes(r.typeFilter as any)) continue;
     reduction += r.amount;

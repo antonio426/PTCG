@@ -47,6 +47,9 @@ export function getPassiveDamageBonus(G: PtcgGameState, attackerIdx: 0 | 1, atta
       && attacker.attachedEnergy.some(e => e.type === 'Darkness')) bonus += 100;
     if (hasAbility(holder, '皇家聲援')) bonus += 20;
     if (hasAbility(holder, '大方') && attacker.cardData.name.includes('赫普的')) bonus += 30;
+    if (hasAbility(holder, '力之鹽') && (attacker.cardData.types || []).includes('Fighting')) bonus += 30;
+    if (hasAbility(holder, '同步脈衝') && holder.id === attacker.id
+      && G.players[attackerIdx].hand.length === G.players[(1 - attackerIdx) as 0 | 1].hand.length) bonus += 80;
   }
   return bonus;
 }
@@ -66,6 +69,11 @@ export function isDamageBlocked(G: PtcgGameState, attacker: GameCard, defender: 
   if (hasAbility(defender, '神秘石居') && attacker.cardData.subtypes.includes('ex')) return true;
   // 腎上腺費洛蒙: while holding Darkness Energy, a coin flip may negate the hit entirely.
   if (hasAbility(defender, '腎上腺費洛蒙') && defender.attachedEnergy.some(e => e.type === 'Darkness') && Math.random() < 0.5) return true;
+  // 順滑大衣: unconditional coin-flip immunity.
+  if (hasAbility(defender, '順滑大衣') && Math.random() < 0.5) return true;
+  // 太古防壁: while its own holder is Benched, the whole team is immune to attackers holding 2 or fewer Energy.
+  if (attacker.attachedEnergy.length <= 2
+    && teamOf(G, ownerIndexOf(G, defender)).some(c => hasAbility(c, '太古防壁') && isBenchedPokemon(G, c))) return true;
   return false;
 }
 
@@ -77,11 +85,15 @@ function isRuleBoxPokemon(card: GameCard): boolean {
   return card.cardData.name.startsWith('超級');
 }
 
-/** Flat damage reduction (before floor-at-0) applied to hits `defender` takes, from its own ability. */
-export function getPassiveDamageReduction(defender: GameCard): number {
-  if (hasAbility(defender, '爆炸頭防守')) return 20;
-  if (hasAbility(defender, '堅堅之軀')) return 30;
-  return 0;
+/** Flat damage reduction (before floor-at-0) applied to hits `defender` takes, from its own or its team's ability. */
+export function getPassiveDamageReduction(G: PtcgGameState, defender: GameCard): number {
+  let reduction = 0;
+  if (hasAbility(defender, '爆炸頭防守')) reduction += 20;
+  if (hasAbility(defender, '堅堅之軀')) reduction += 30;
+  // 齒輪塗層: any own Pokémon holding Metal Energy takes -20, as long as the ability's holder is in play.
+  if (defender.attachedEnergy.some(e => e.type === 'Metal')
+    && teamOf(G, ownerIndexOf(G, defender)).some(c => hasAbility(c, '齒輪塗層'))) reduction += 20;
+  return reduction;
 }
 
 /** Retreat cost is fully waived for `card` by any of its own team's passive abilities. */
@@ -95,10 +107,25 @@ export function getPassiveRetreatWaiver(G: PtcgGameState, idx: 0 | 1, card: Game
   return false;
 }
 
+/** 咒縛火焰: +1 retreat cost for the OPPONENT's Active Pokémon, as long as the holder is in play. */
+export function getPassiveRetreatCostIncrease(G: PtcgGameState, card: GameCard): number {
+  if (!isActivePokemon(G, card)) return 0;
+  const oppIdx = (1 - ownerIndexOf(G, card)) as 0 | 1;
+  return teamOf(G, oppIdx).some(c => hasAbility(c, '咒縛火焰')) ? 1 : 0;
+}
+
+/** 化身團結: full Colorless-cost waiver, gated by all 4 named Forces of Nature being in play. */
+export function hasPassiveColorlessCostWaiver(G: PtcgGameState, card: GameCard): boolean {
+  if (!hasAbility(card, '化身團結')) return false;
+  const names = new Set(teamOf(G, ownerIndexOf(G, card)).map(c => c.cardData.name));
+  return ['龍捲雲', '雷電雲', '土地雲', '眷戀雲'].every(n => names.has(n));
+}
+
 /** Extra max-HP `card` gains from its own passive ability. */
 export function getPassiveMaxHpBonus(G: PtcgGameState, card: GameCard): number {
   if (hasAbility(card, '腎上腺力量') && card.attachedEnergy.some(e => e.type === 'Darkness')) return 100;
   if (hasAbility(card, '雜草魂')) return G.players[(1 - ownerIndexOf(G, card)) as 0 | 1].takenPrizes * 50;
+  if (hasAbility(card, '大師工藝')) return card.attachedEnergy.filter(e => e.type === 'Fighting').length * 40;
   return 0;
 }
 
@@ -116,9 +143,14 @@ export function canUsePassiveGatedAttack(G: PtcgGameState, card: GameCard): bool
   return true;
 }
 
-/** 提升進化: lets `target` evolve even on the game's first turn, or the turn it was just played. */
-export function canEvolveOnFirstTurnOrJustPlayed(target: GameCard): boolean {
-  return hasAbility(target, '提升進化');
+/** 提升進化: lets `target` evolve even on the game's first turn, or the turn it was just played.
+ * 刺激進化 grants the same exemption, conditional on "小嘴蝸" also being in play. */
+export function canEvolveOnFirstTurnOrJustPlayed(G: PtcgGameState, target: GameCard): boolean {
+  if (hasAbility(target, '提升進化')) return true;
+  if (hasAbility(target, '刺激進化')) {
+    return teamOf(G, ownerIndexOf(G, target)).some(c => c.cardData.name === '小嘴蝸');
+  }
+  return false;
 }
 
 /** 自動治癒 / 侵蝕詛咒: reacts to a hand Energy attach. Heals `target` 90 if its own team holds
@@ -214,6 +246,13 @@ export function isEnergyDiscardProtected(G: PtcgGameState, card: GameCard): bool
   return teamOf(G, ownerIndexOf(G, card)).some(c => hasAbility(c, '崗哨'));
 }
 
+/** 怨恨旋渦: whenever the OWN Active Darkness Pokémon takes attack damage, the attacker gets 1
+ * counter — the ability's holder need not be the one hit, just present on the same team. */
+export function getGrudgeVortexRetaliation(G: PtcgGameState, defender: GameCard): number {
+  if (!isActivePokemon(G, defender) || !(defender.cardData.types || []).includes('Darkness')) return 0;
+  return teamOf(G, ownerIndexOf(G, defender)).some(c => hasAbility(c, '怨恨旋渦')) ? 1 : 0;
+}
+
 export { hasAbility as hasPassiveAbilityNamed };
 
 /** Every ability name this module gives real, non-default behavior to — used by coverage-report.ts. */
@@ -224,4 +263,6 @@ export const PASSIVE_ABILITY_NAMES = new Set([
   '力量抑制者', '貪婪食客', '奇跡之吻', '毒刺',
   '堅堅之軀', '溶化流動', '喧鬧競技', '事先準備', '懶怠個性', '提升進化', '自動治癒',
   '侵蝕詛咒', '冰冷之帳', '大方', '灼熱之軀',
+  '化身團結', '刺激進化', '咒縛火焰', '太古防壁', '同步脈衝', '順滑大衣', '力之鹽',
+  '怨恨旋渦', '齒輪塗層', '堅忍之軀', '反擊雞冠',
 ]);

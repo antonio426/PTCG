@@ -988,6 +988,136 @@ const escapeDraw: EffectHandler = {
   resume() { return 'done'; },
 };
 
+/** 夜間工作: only while Active, once per turn: pick any 1 card from the deck, put it back on top (rest reshuffled). */
+const nightWork: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.active?.id !== ctx.sourceCardId || p.deck.length === 0) return 'done';
+    return { prompt: '夜間工作：從牌庫任意選 1 張卡放回牌庫最上方', choiceType: 'select_from_list', count: 1, options: p.deck.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const i = p.deck.findIndex(c => c.id === selection[0]);
+    if (i === -1) return 'done';
+    const chosen = p.deck.splice(i, 1)[0];
+    shuffleDeck(p.deck);
+    p.deck.push(chosen);
+    return 'done';
+  },
+};
+
+/** 發酵果汁: conditional (self holds Grass Energy), once per turn: heal 30 on a chosen own Pokémon. */
+const fermentedJuice: EffectHandler = {
+  start(ctx) {
+    const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
+    if (!self || !self.attachedEnergy.some(e => e.type === 'Grass')) return 'done';
+    const targets = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.damage > 0);
+    if (targets.length === 0) return 'done';
+    return { prompt: '發酵果汁：選擇要恢復 30 HP 的寶可夢', choiceType: 'select_from_list', count: 1, options: targets.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const target = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === selection[0]);
+    if (target) target.damage = Math.max(0, target.damage - 30);
+    return 'done';
+  },
+};
+
+/** 熱浪鱗粉: discard 1 Basic Fire Energy from hand, Burn the opponent's Active. */
+const heatWaveScales: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const cost = p.hand.filter(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes('Fire'));
+    if (cost.length === 0 || !opponent(ctx.G, ctx.playerIndex).active) return 'done';
+    return { prompt: '熱浪鱗粉：丟棄 1 張基本火能量卡', choiceType: 'select_from_list', count: 1, options: cost.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const i = p.hand.findIndex(c => c.id === selection[0]);
+    if (i >= 0) p.discardPile.push(p.hand.splice(i, 1)[0]);
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    if (opp.active) { opp.active.statusConditions = opp.active.statusConditions.filter(c => c !== 'Burned'); opp.active.statusConditions.push('Burned'); }
+    return 'done';
+  },
+};
+
+/** 曲扭未來: only while Active, once per turn: the opponent shuffles their hand into their deck and draws 3. */
+const twistedFuture: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.active?.id !== ctx.sourceCardId) return 'done';
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    opp.deck.push(...opp.hand);
+    opp.hand = [];
+    shuffleDeck(opp.deck);
+    drawCards(ctx.G, (1 - ctx.playerIndex) as 0 | 1, 3);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 月光循環: conditional (own field has "太陽岩"), discard 1 Basic Fighting Energy from hand, once per turn: draw 3. */
+const moonlightCycle: EffectHandler = {
+  start(ctx) {
+    if (!allPokemon(ctx.G, ctx.playerIndex).some(c => c.cardData.name === '太陽岩')) return 'done';
+    const p = player(ctx.G, ctx.playerIndex);
+    const cost = p.hand.filter(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes('Fighting'));
+    if (cost.length === 0) return 'done';
+    return { prompt: '月光循環：丟棄 1 張基本鬥能量卡', choiceType: 'select_from_list', count: 1, options: cost.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const i = p.hand.findIndex(c => c.id === selection[0]);
+    if (i >= 0) p.discardPile.push(p.hand.splice(i, 1)[0]);
+    drawCards(ctx.G, ctx.playerIndex, 3);
+    return 'done';
+  },
+};
+
+/** 原始之翼: only while Active, once per turn: de-evolve 1 opponent evolved Pokémon by one stage (the removed evolution card returns to their hand). */
+const primalWing: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.active?.id !== ctx.sourceCardId) return 'done';
+    const targets = allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1).filter(c => !!c.cardData.evolvesFrom);
+    if (targets.length === 0) return 'done';
+    return { prompt: '原始之翼：選擇對手 1 隻進化寶可夢使其退化', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const oppIdx = (1 - ctx.playerIndex) as 0 | 1;
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    const target = allPokemon(ctx.G, oppIdx).find(c => c.id === selection[0]);
+    if (!target || !target.cardData.evolvesFrom) return 'done';
+    const priorIdx = opp.discardPile.findIndex(c => c.cardData.name === target.cardData.evolvesFrom);
+    if (priorIdx === -1) return 'done';
+    const priorStage = opp.discardPile.splice(priorIdx, 1)[0];
+    priorStage.attachedEnergy = target.attachedEnergy;
+    priorStage.damage = target.damage;
+    priorStage.attachedTool = target.attachedTool;
+    priorStage.statusConditions = target.statusConditions;
+    const isActive = opp.active?.id === target.id;
+    const benchIdx = isActive ? -1 : opp.bench.findIndex(c => c?.id === target.id);
+    if (isActive) opp.active = priorStage; else if (benchIdx >= 0) opp.bench[benchIdx] = priorStage;
+    opp.hand.push({ ...target, damage: 0, statusConditions: [], attachedEnergy: [], attachedTool: null });
+    return 'done';
+  },
+};
+
+/** 金屬信號: once per turn, search deck for up to 2 Metal-type Evolution Pokémon to hand. */
+const metalSignal: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const options = p.deck.filter(c => c.cardData.supertype === 'Pokémon' && (c.cardData.types || []).includes('Metal') && !!c.cardData.evolvesFrom);
+    if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
+    return { prompt: '金屬信號：從牌庫選最多 2 張鋼屬性進化寶可夢卡加入手牌', choiceType: 'select_from_list', maxCount: Math.min(2, options.length), options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    for (const id of selection) moveDeckCardToHand(ctx.G, ctx.playerIndex, id);
+    shuffleDeck(p.deck);
+    return 'done';
+  },
+};
+
 export const abilityEffects: Record<string, EffectHandler> = {
   '偵查指令': strategicCommand,
   '咒詛炸彈': curseBomb,
@@ -1040,6 +1170,14 @@ export const abilityEffects: Record<string, EffectHandler> = {
   '暗中咬住': stealthBite,
   '幸福切換': happinessSwitch,
   '逃跑抽出': escapeDraw,
+
+  '夜間工作': nightWork,
+  '發酵果汁': fermentedJuice,
+  '熱浪鱗粉': heatWaveScales,
+  '曲扭未來': twistedFuture,
+  '月光循環': moonlightCycle,
+  '原始之翼': primalWing,
+  '金屬信號': metalSignal,
 };
 
 export function hasAbilityEffect(name: string): boolean {
