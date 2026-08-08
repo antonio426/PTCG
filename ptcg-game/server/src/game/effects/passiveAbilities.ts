@@ -50,6 +50,10 @@ export function getPassiveDamageBonus(G: PtcgGameState, attackerIdx: 0 | 1, atta
     if (hasAbility(holder, '力之鹽') && (attacker.cardData.types || []).includes('Fighting')) bonus += 30;
     if (hasAbility(holder, '同步脈衝') && holder.id === attacker.id
       && G.players[attackerIdx].hand.length === G.players[(1 - attackerIdx) as 0 | 1].hand.length) bonus += 80;
+    // 激動力量: gated on own field having a Darkness-type "超級進化...ex" (Mega ex) anywhere,
+    // boosts THIS Pokémon's (the ability holder's) own attacks specifically.
+    if (hasAbility(holder, '激動力量') && holder.id === attacker.id
+      && teamOf(G, attackerIdx).some(c => c.cardData.name.startsWith('超級') && c.cardData.subtypes.includes('ex') && (c.cardData.types || []).includes('Darkness'))) bonus += 120;
   }
   return bonus;
 }
@@ -85,6 +89,8 @@ export function isDamageBlocked(G: PtcgGameState, attacker: GameCard, defender: 
   // 尾甲: immune to damage from an opponent's Basic-stage "ex" Pokémon specifically (a narrower
   // variant of 神秘石居, which is immune to any opponent ex regardless of stage).
   if (hasAbility(defender, '尾甲') && attacker.cardData.subtypes.includes('Basic') && attacker.cardData.subtypes.includes('ex')) return true;
+  // 躲藏高手: unconditional coin-flip immunity (same shape as 順滑大衣, different card).
+  if (hasAbility(defender, '躲藏高手') && Math.random() < 0.5) return true;
   return false;
 }
 
@@ -115,6 +121,9 @@ export function getPassiveDamageReduction(G: PtcgGameState, defender: GameCard):
   // Colorless-type Basic Pokémon defenders. Doesn't stack across multiple holder pairs.
   if (defender.cardData.subtypes.includes('Basic') && (defender.cardData.types || []).includes('Colorless')
     && teamOf(G, ownerIndexOf(G, defender)).filter(c => c.cardData.name === '爆炸頭水牛').length >= 2) reduction += 60;
+  // 威嚇之牙: -30, only while its holder is the one being hit as Active.
+  if (hasAbility(defender, '威嚇之牙') && isActivePokemon(G, defender)) reduction += 30;
+  if (hasAbility(defender, '鑽石膜')) reduction += 30;
   return reduction;
 }
 
@@ -175,6 +184,14 @@ export function getPassiveRetreatWaiver(G: PtcgGameState, idx: 0 | 1, card: Game
     if (teamOf(G, oppIdx).some(c => c.cardData.subtypes.includes('V'))) return true;
   }
   return false;
+}
+
+/** 黏滑失足: while in play, whenever the OPPONENT's Active retreats, a coin flip may cancel the
+ * retreat entirely (Energy not discarded, no swap). Doesn't stack across multiple holders. */
+export function isRetreatBlockedByOpponent(G: PtcgGameState, retreatingIdx: 0 | 1): boolean {
+  const oppIdx = (1 - retreatingIdx) as 0 | 1;
+  if (!teamOf(G, oppIdx).some(c => hasAbility(c, '黏滑失足'))) return false;
+  return Math.random() < 0.5;
 }
 
 /** 咒縛火焰: +1 retreat cost for the OPPONENT's Active Pokémon, as long as the holder is in play. */
@@ -294,6 +311,14 @@ export function getPassiveAttackCostReduction(G: PtcgGameState, ownerIdx: 0 | 1,
   if (hasAbility(card, '事先準備')) {
     return G.players[ownerIdx].discardPile.filter(c => c.cardData.name === '海岱').length;
   }
+  // 調諧迴響: full Colorless-cost waiver for a specific named attack ("恐慌嚎鳴"), gated on own
+  // hand count equaling the opponent's hand count. A large flat number stands in for "full
+  // waiver" the same way 化身團結 zeroes out just the Colorless portion elsewhere.
+  if (hasAbility(card, '調諧迴響') && attackName === '恐慌嚎鳴'
+    && G.players[ownerIdx].hand.length === G.players[(1 - ownerIdx) as 0 | 1].hand.length) return 99;
+  // 狙擊手之眼: full Colorless-cost waiver for ANY of this Pokémon's attacks, gated on the
+  // opponent's hand size being exactly 4.
+  if (hasAbility(card, '狙擊手之眼') && G.players[(1 - ownerIdx) as 0 | 1].hand.length === 4) return 99;
   return 0;
 }
 
@@ -340,4 +365,5 @@ export const PASSIVE_ABILITY_NAMES = new Set([
   '密林之軀', '堅硬甲殼', '炸裂針', '自動用武', '反擊', '球形盾牌', '熔岩波動', '出道演出',
   '生機森巴', '深度下潛', '尾甲', '泥巴膜', '岩石盔甲', '勤奮之心',
   '神秘守護', '堅硬身軀', '柔軟羊毛', '捲牆', '快掃拳返', '海之詛咒', '鬆口氣', '懦弱', '一身輕', '結實', '反擊針',
+  '威嚇之牙', '躲藏高手', '激動力量', '鑽石膜', '調諧迴響', '狙擊手之眼', '不眠', '黏滑失足',
 ]);

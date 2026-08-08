@@ -3,7 +3,7 @@ import { PtcgGameState, PendingChoice } from './GameState';
 import { canPlayPokemon, canEvolve, canAttachEnergy, canRetreat, canAttack, effectiveRetreatCost, FIRST_TURN_SUPPORTER_EXCEPTIONS } from './validation';
 import { clearStatusConditionsOnLeaveActive } from './statusConditions';
 import { calculateDamage, effectiveMaxHp, handleKo, prizesForKo } from './damage';
-import { getBonusPrizesForAttackKo, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getScaledRetaliation, hasPassiveAbilityNamed, onEnergyAttachedFromHand } from './effects/passiveAbilities';
+import { getBonusPrizesForAttackKo, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getScaledRetaliation, hasPassiveAbilityNamed, isRetreatBlockedByOpponent, onEnergyAttachedFromHand } from './effects/passiveAbilities';
 import { isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
 import {
@@ -288,6 +288,11 @@ export const moves = {
 
   retreat: ({ G, ctx }: { G: PtcgGameState; ctx: any }, targetBenchPosition?: number, discardEnergyIds?: string[]) => {
     if (!canRetreat(G, G.currentPlayer)) return;
+    // 黏滑失足: opponent's ability may cancel this retreat outright on a coin flip.
+    if (isRetreatBlockedByOpponent(G, G.currentPlayer as 0 | 1)) {
+      addLog(G, G.currentPlayer, 'retreat', "Retreat was cancelled by the opponent's 黏滑失足");
+      return;
+    }
 
     const player = G.players[G.currentPlayer];
     const activePokemon = player.active;

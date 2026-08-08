@@ -97,6 +97,8 @@ export function flipCoins(n: number): boolean[] {
 }
 
 export function applyStatusCondition(card: GameCard, condition: 'Asleep' | 'Burned' | 'Confused' | 'Paralyzed' | 'Poisoned'): void {
+  // 不眠: this Pokémon can never be made Asleep, from any source.
+  if (condition === 'Asleep' && card.cardData.abilities?.some(a => a.text && a.name.replace(/^[‌​\s]+/, '').replace(/^\[特性\]\s*/, '').trim() === '不眠')) return;
   // Asleep/Paralyzed/Confused are mutually exclusive with each other (but stack with Burned/Poisoned).
   if (['Asleep', 'Paralyzed', 'Confused'].includes(condition)) {
     card.statusConditions = card.statusConditions.filter(c => !['Asleep', 'Paralyzed', 'Confused'].includes(c));
