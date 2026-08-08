@@ -1,6 +1,6 @@
 import { PtcgGameState } from './GameState';
 import { effectiveMaxHp, handleKo } from './damage';
-import { getBurnCounterBonus, getColdCurtainVictims, getPoisonCounterBonus } from './effects/passiveAbilities';
+import { getBurnCounterBonus, getColdCurtainVictims, getPoisonCounterBonus, getSandstormVictims } from './effects/passiveAbilities';
 
 /**
  * "Between Turns" processing (runs once per turn transition, checking BOTH
@@ -36,6 +36,13 @@ export function processBetweenTurns(G: PtcgGameState): void {
   // 冰冷之帳: every ability-holding Pokémon on both sides (except the holder itself) takes
   // 1 damage counter each Between-Turns check, as long as its holder is still in play.
   for (const victim of getColdCurtainVictims(G)) {
+    victim.damage += 10;
+    const victimHp = effectiveMaxHp(G, victim);
+    if (victimHp > 0 && victim.damage >= victimHp) handleKo(G, victim.owner, victim.id);
+  }
+  // 揚沙: every opponent Basic Pokémon takes 1 damage counter each Between-Turns check, gated
+  // on the holder being its own side's Active.
+  for (const victim of getSandstormVictims(G)) {
     victim.damage += 10;
     const victimHp = effectiveMaxHp(G, victim);
     if (victimHp > 0 && victim.damage >= victimHp) handleKo(G, victim.owner, victim.id);

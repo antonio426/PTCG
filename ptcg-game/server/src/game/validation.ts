@@ -2,7 +2,7 @@ import { GameCard, EnergyType, LegalAction } from '@ptcg/shared';
 import { PtcgGameState, GamePhase, PendingChoice } from './GameState';
 import { hasAbilityEffect, isAbilityUnlimitedUse } from './effects/abilities';
 import { getRetreatCostReduction, getColorlessCostReduction } from './effects/tools';
-import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isItemAndToolPlayBlocked } from './effects/passiveAbilities';
+import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, isItemAndToolPlayBlocked, isItemPlayBlocked } from './effects/passiveAbilities';
 import { normalizeAbilityName } from './effects/types';
 
 /** All k-sized combinations of `items`, capped so huge hands can't explode the move list. */
@@ -111,6 +111,9 @@ export function canPlayPokemon(G: PtcgGameState, playerIndex: number, cardId: st
 
   const benchCount = player.bench.filter(s => s !== null).length;
   if (benchCount >= 5) return false;
+
+  // 瞪眼效用: the opponent's Active may block this player from playing ability-holding Pokémon.
+  if (isAbilityPokemonPlayBlocked(G, playerIndex as 0 | 1, card)) return false;
 
   return true;
 }
@@ -270,8 +273,9 @@ export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalActio
         const blockedAlreadyPlayed = isSupporter && player.supporterPlayedThisTurn;
         // 海之詛咒: while the opponent's Active holds this ability, this player can't play
         // Item cards from hand or attach Pokémon Tool cards at all.
-        const blockedByOpponentAbility = (card.cardData.subtypes.includes('Item') || card.cardData.subtypes.includes('Pokémon Tool'))
-          && isItemAndToolPlayBlocked(G, playerIndex as 0 | 1);
+        const isItem = card.cardData.subtypes.includes('Item');
+        const blockedByOpponentAbility = ((isItem || card.cardData.subtypes.includes('Pokémon Tool')) && isItemAndToolPlayBlocked(G, playerIndex as 0 | 1))
+          || (isItem && isItemPlayBlocked(G, playerIndex as 0 | 1));
         if (!blockedFirstTurn && !blockedAlreadyPlayed && !blockedByOpponentAbility) {
           legalMoves.push({
             type: 'play_trainer',

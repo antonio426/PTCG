@@ -54,12 +54,22 @@ export function getPassiveDamageBonus(G: PtcgGameState, attackerIdx: 0 | 1, atta
     // boosts THIS Pokémon's (the ability holder's) own attacks specifically.
     if (hasAbility(holder, '激動力量') && holder.id === attacker.id
       && teamOf(G, attackerIdx).some(c => c.cardData.name.startsWith('超級') && c.cardData.subtypes.includes('ex') && (c.cardData.types || []).includes('Darkness'))) bonus += 120;
+    // 勝利聲援: +10 for own Fire-type evolved-stage Pokémon's attacks specifically.
+    if (hasAbility(holder, '勝利聲援') && (attacker.cardData.types || []).includes('Fire') && !!attacker.cardData.evolvesFrom) bonus += 10;
+    // 憤怒穴: self-only, +120 while holding 2+ damage counters.
+    if (hasAbility(holder, '憤怒穴') && holder.id === attacker.id && attacker.damage >= 20) bonus += 120;
   }
+  // 原始心得: +30 vs an opponent's evolved-stage Active Pokémon specifically.
+  if (teamOf(G, attackerIdx).some(c => hasAbility(c, '原始心得')) && !!defender.cardData.evolvesFrom) bonus += 30;
   return bonus;
 }
 
-/** True if `defender` takes zero damage (and, per real rules for these two, zero attack effects) from `attacker`'s attack. */
-export function isDamageBlocked(G: PtcgGameState, attacker: GameCard, defender: GameCard): boolean {
+/** True if `defender` takes zero damage (and, per real rules for these two, zero attack effects)
+ * from `attacker`'s attack. `attackPrintedDamage` (the attack's raw printed damage number,
+ * before any modifiers) is optional and only needed for damage-threshold abilities like 鐵壁硬殼. */
+export function isDamageBlocked(G: PtcgGameState, attacker: GameCard, defender: GameCard, attackPrintedDamage?: number): boolean {
+  // 鐵壁硬殼: immune to attacks with 200+ printed damage.
+  if (hasAbility(defender, '鐵壁硬殼') && (attackPrintedDamage ?? 0) >= 200) return true;
   // 礎石之勢: immune to damage from any Pokémon that itself has an ability.
   if (hasAbility(defender, '礎石之勢') && attacker.cardData.abilities?.some(a => a.text)) return true;
   // 藏隱: while benched, untouchable by opponent attacks entirely (relevant to bench-hitting attacks).
@@ -151,6 +161,21 @@ export function isItemAndToolPlayBlocked(G: PtcgGameState, playerIndex: 0 | 1): 
   return !!oppActive && hasAbility(oppActive, '海之詛咒');
 }
 
+/** 威迫目光: while its holder is the OPPONENT's Active Pokémon, `playerIndex` can't play Item
+ * cards from hand at all (narrower than 海之詛咒, which also blocks Tool attachment). */
+export function isItemPlayBlocked(G: PtcgGameState, playerIndex: 0 | 1): boolean {
+  const oppActive = G.players[(1 - playerIndex) as 0 | 1].active;
+  return !!oppActive && hasAbility(oppActive, '威迫目光');
+}
+
+/** 瞪眼效用: while its holder is the OPPONENT's Active Pokémon, `playerIndex` can't play any
+ * ability-holding Pokémon from hand onto the field, except ones named with "火箭隊的". */
+export function isAbilityPokemonPlayBlocked(G: PtcgGameState, playerIndex: 0 | 1, card: GameCard): boolean {
+  if (!card.cardData.abilities?.some(a => a.text) || card.cardData.name.includes('火箭隊的')) return false;
+  const oppActive = G.players[(1 - playerIndex) as 0 | 1].active;
+  return !!oppActive && hasAbility(oppActive, '瞪眼效用');
+}
+
 /** 鬆口氣: when this Pokémon is KO'd by an attack, the opposing side's awarded prizes are
  * reduced by 1, gated on this Pokémon's own team also having "桃歹郎 ex" in play. Simplified to
  * apply on any KO cause (not just attack damage specifically) since handleKo doesn't carry a
@@ -225,6 +250,13 @@ export function shouldConfuseOnOpponentRetreat(G: PtcgGameState, retreatingIdx: 
   return !!oppActive && hasAbility(oppActive, '漩渦言靈');
 }
 
+/** 熔岩地域: whenever the OPPONENT retreats (holder just needs to be in play, any position),
+ * the newly promoted Pokémon is Burned instead of Confused (same shape as 漩渦言靈). */
+export function shouldBurnOnOpponentRetreat(G: PtcgGameState, retreatingIdx: 0 | 1): boolean {
+  const oppIdx = (1 - retreatingIdx) as 0 | 1;
+  return teamOf(G, oppIdx).some(c => hasAbility(c, '熔岩地域'));
+}
+
 /** 咒縛火焰: +1 retreat cost for the OPPONENT's Active Pokémon, as long as the holder is in play. */
 export function getPassiveRetreatCostIncrease(G: PtcgGameState, card: GameCard): number {
   if (!isActivePokemon(G, card)) return 0;
@@ -263,6 +295,10 @@ export function canUsePassiveGatedAttack(G: PtcgGameState, card: GameCard): bool
     const oppIdx = (1 - ownerIndexOf(G, card)) as 0 | 1;
     return teamOf(G, oppIdx).some(c => isRuleBoxPokemon(c) && (c.cardData.subtypes.includes('ex') || c.cardData.subtypes.includes('V')));
   }
+  // 啟動限制: can't attack unless own hand size is 10+.
+  if (hasAbility(card, '啟動限制')) {
+    return G.players[ownerIndexOf(G, card)].hand.length >= 10;
+  }
   return true;
 }
 
@@ -298,6 +334,26 @@ export function getColdCurtainVictims(G: PtcgGameState): GameCard[] {
 
 function everyPokemonBothSides(G: PtcgGameState): GameCard[] {
   return [...teamOf(G, 0), ...teamOf(G, 1)];
+}
+
+/** 揚沙: each Between-Turns check, every opponent Basic Pokémon takes 1 damage counter, gated
+ * on the holder being its own side's Active. */
+export function getSandstormVictims(G: PtcgGameState): GameCard[] {
+  const victims: GameCard[] = [];
+  for (const idx of [0, 1] as const) {
+    const holder = G.players[idx].active;
+    if (!holder || !hasAbility(holder, '揚沙')) continue;
+    const oppIdx = (1 - idx) as 0 | 1;
+    victims.push(...teamOf(G, oppIdx).filter(c => c.cardData.subtypes.includes('Basic')));
+  }
+  return victims;
+}
+
+/** 黑暗脈衝: whenever the OPPONENT completes an evolution by playing a card from hand, 4 damage
+ * counters land on the newly evolved Pokémon. Doesn't stack across multiple holders. */
+export function getEvolveCountersFromOpponent(G: PtcgGameState, evolvingIdx: 0 | 1): number {
+  const oppIdx = (1 - evolvingIdx) as 0 | 1;
+  return teamOf(G, oppIdx).some(c => hasAbility(c, '黑暗脈衝')) ? 4 : 0;
 }
 
 /** Extra prizes awarded to `attackerIdx` when their attack KOs `defender` (beyond the normal count). */
@@ -401,4 +457,5 @@ export const PASSIVE_ABILITY_NAMES = new Set([
   '神秘守護', '堅硬身軀', '柔軟羊毛', '捲牆', '快掃拳返', '海之詛咒', '鬆口氣', '懦弱', '一身輕', '結實', '反擊針',
   '威嚇之牙', '躲藏高手', '激動力量', '鑽石膜', '調諧迴響', '狙擊手之眼', '不眠', '黏滑失足',
   '凍原堡壘', '毛皮大衣', '厚脂肪', '大網', '凹洞', '漩渦言靈', '影藏', '脆弱蛻殼',
+  '勝利聲援', '憤怒穴', '原始心得', '鐵壁硬殼', '威迫目光', '瞪眼效用', '熔岩地域', '揚沙', '啟動限制', '黑暗脈衝',
 ]);

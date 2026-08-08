@@ -54,9 +54,9 @@ export function applyWeaknessResistance(baseDamageIn: number, attacker: GameCard
  * (e.g. 妖精領域). Returns 0 if a passive ability blocks the hit outright (e.g. 藏隱, 礎石之勢).
  */
 export function calculateDamage(G: PtcgGameState, attackerIdx: 0 | 1, attacker: GameCard, attack: Attack, defender: GameCard): number {
-  if (isDamageBlocked(G, attacker, defender)) return 0;
   let baseDamage = parseInt(attack.damage) || 0;
   if (isNaN(baseDamage)) baseDamage = 0;
+  if (isDamageBlocked(G, attacker, defender, baseDamage)) return 0;
   baseDamage += getPassiveDamageBonus(G, attackerIdx, attacker, defender);
   baseDamage += getToolDamageBonus(G, attacker, defender);
   for (const boost of G.players[attackerIdx].turnDamageBoosts) {

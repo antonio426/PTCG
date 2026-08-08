@@ -1,7 +1,7 @@
 import { EnergyType, GameCard } from '@ptcg/shared';
 import { EffectContext, EffectHandler, EffectStep, allPokemon, findOwnPokemon, opponent, player } from './types';
 import { handleKo } from '../damage';
-import { applyStatusCondition, discardFromHand, drawCards, drawUpTo, flipCoin, moveDeckCardToBench, moveDeckCardToHand, shuffleDeck } from './primitives';
+import { applyStatusCondition, discardFromHand, drawCards, drawUpTo, flipCoin, flipCoins, moveDeckCardToBench, moveDeckCardToHand, shuffleDeck } from './primitives';
 import { clearStatusConditionsOnLeaveActive } from '../statusConditions';
 
 /** 偵查指令: look at the top 2 cards of your deck, take 1 to hand, put the rest on the bottom. */
@@ -2294,6 +2294,208 @@ const excitedHealing: EffectHandler = {
   },
 };
 
+/** 勸誘亮光: once per turn, both players draw 1 card each. */
+const invitingLight: EffectHandler = {
+  start(ctx) {
+    drawCards(ctx.G, ctx.playerIndex, 1);
+    drawCards(ctx.G, (1 - ctx.playerIndex) as 0 | 1, 1);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 臨場背負: real trigger is "on play from hand onto the Bench" — simplified to a regular
+ * once-per-turn triggered ability. Deck search 1 Pokémon Tool card, attach to self, reshuffle. */
+const clutchCarry: EffectHandler = {
+  start(ctx) {
+    const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
+    const p = player(ctx.G, ctx.playerIndex);
+    const options = p.deck.filter(c => c.cardData.subtypes.includes('Pokémon Tool'));
+    if (!self || self.attachedTool || options.length === 0) { shuffleDeck(p.deck); return 'done'; }
+    return { prompt: '臨場背負：從牌庫選 1 張寶可夢道具卡附於自己身上', choiceType: 'select_from_list', count: 1, options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
+    const i = p.deck.findIndex(c => c.id === selection[0]);
+    if (self && i >= 0) self.attachedTool = p.deck.splice(i, 1)[0];
+    shuffleDeck(p.deck);
+    return 'done';
+  },
+};
+
+/** 使壞之尾: real trigger is "on evolving via this card from hand" — simplified to a regular
+ * once-per-turn triggered ability. Flip 2 coins; that many random cards from the opponent's
+ * hand get shuffled back into their deck (revealed to this player along the way, though the
+ * engine has no separate "reveal" state to model — the cards simply move). */
+const badTail: EffectHandler = {
+  start(ctx) {
+    const heads = flipCoins(2).filter(Boolean).length;
+    if (heads === 0) return 'done';
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    for (let i = 0; i < heads && opp.hand.length > 0; i++) {
+      const idx = Math.floor(Math.random() * opp.hand.length);
+      opp.deck.push(opp.hand.splice(idx, 1)[0]);
+    }
+    shuffleDeck(opp.deck);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 大洋增輝: only while Active, once per turn: heal self 50 HP. */
+const oceanGlow: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.active?.id !== ctx.sourceCardId) return 'done';
+    p.active.damage = Math.max(0, p.active.damage - 50);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 鱗片律動: once per turn, look at the top 6 deck cards, attach any number of the Basic Energy
+ * cards among them to 1 chosen own Dragon-type Pokémon, reshuffle the rest. */
+const scaleRhythm: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const top = p.deck.slice(-6);
+    const energyOptions = top.filter(c => c.cardData.subtypes.includes('Basic Energy'));
+    const targets = allPokemon(ctx.G, ctx.playerIndex).filter(c => (c.cardData.types || []).includes('Dragon'));
+    if (energyOptions.length === 0 || targets.length === 0) return 'done';
+    return {
+      prompt: '鱗片律動：牌庫最上方 6 張中，選任意數量基本能量卡',
+      choiceType: 'select_from_list',
+      maxCount: energyOptions.length,
+      options: energyOptions.map(c => ({ id: c.id, label: c.cardData.name })),
+      context: { step: 'pick_energy', seenIds: top.map(c => c.id) },
+    };
+  },
+  resume(ctx, context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (context.step === 'pick_energy') {
+      const seenIds = context.seenIds as string[];
+      const seen: GameCard[] = [];
+      for (const id of seenIds) {
+        const i = p.deck.findIndex(c => c.id === id);
+        if (i >= 0) seen.push(p.deck.splice(i, 1)[0]);
+      }
+      const notChosen = seen.filter(c => !selection.includes(c.id));
+      p.deck.unshift(...notChosen);
+      shuffleDeck(p.deck);
+      if (selection.length === 0) return 'done';
+      const targets = allPokemon(ctx.G, ctx.playerIndex).filter(c => (c.cardData.types || []).includes('Dragon'));
+      if (targets.length === 0) return 'done';
+      return {
+        prompt: '鱗片律動：選擇要附加能量的龍寶可夢',
+        choiceType: 'select_pokemon',
+        count: 1,
+        options: targets.map(t => ({ id: t.id, label: t.cardData.name })),
+        context: { step: 'pick_target', energyCards: selection.map(id => seen.find(c => c.id === id)).filter((c): c is GameCard => !!c).map(c => ({ id: c.id, type: c.cardData.types?.[0] || 'Colorless' })) },
+      };
+    }
+    const target = allPokemon(ctx.G, ctx.playerIndex).find(t => t.id === selection[0]);
+    const energyCards = context.energyCards as { id: string; type: string }[];
+    if (target) {
+      for (const e of energyCards) target.attachedEnergy.push({ id: e.id, type: e.type as any });
+    }
+    return 'done';
+  },
+};
+
+/** 霸者咆哮: real trigger is "on play from hand onto the Bench" — simplified to a regular
+ * once-per-turn triggered ability. Look at the top 4 deck cards, attach 1 chosen Basic Energy
+ * card among them to self, reshuffle the rest. */
+const overlordRoar: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const top = p.deck.slice(-4);
+    const energyOptions = top.filter(c => c.cardData.subtypes.includes('Basic Energy'));
+    if (energyOptions.length === 0) return 'done';
+    return {
+      prompt: '霸者咆哮：牌庫最上方 4 張中，選 1 張基本能量卡附於自己身上',
+      choiceType: 'select_from_list',
+      count: 1,
+      options: energyOptions.map(c => ({ id: c.id, label: c.cardData.name })),
+      context: { seenIds: top.map(c => c.id) },
+    };
+  },
+  resume(ctx, context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const seenIds = context.seenIds as string[];
+    const seen: GameCard[] = [];
+    for (const id of seenIds) {
+      const i = p.deck.findIndex(c => c.id === id);
+      if (i >= 0) seen.push(p.deck.splice(i, 1)[0]);
+    }
+    const chosen = seen.find(c => c.id === selection[0]);
+    const rest = seen.filter(c => c.id !== selection[0]);
+    p.deck.unshift(...rest);
+    shuffleDeck(p.deck);
+    const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
+    if (self && chosen) self.attachedEnergy.push({ id: chosen.id, type: chosen.cardData.types?.[0] || 'Colorless' });
+    return 'done';
+  },
+};
+
+/** 鈴鈴吵鬧: once per turn, discard 1 random (blind) card from the opponent's hand. */
+const jingleClamor: EffectHandler = {
+  start(ctx) {
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    if (opp.hand.length === 0) return 'done';
+    const i = Math.floor(Math.random() * opp.hand.length);
+    opp.discardPile.push(opp.hand.splice(i, 1)[0]);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 緊急進化: gated on this Pokémon's remaining HP being <=30; once per turn, search the deck for
+ * a named "高傲雉雞" (including its "ex" print) and evolve directly from the deck. */
+const emergencyEvolution: EffectHandler = {
+  start(ctx) {
+    const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
+    if (!self) return 'done';
+    const hp = parseInt(self.cardData.hp || '0', 10);
+    if (hp - self.damage > 30) return 'done';
+    const p = player(ctx.G, ctx.playerIndex);
+    const options = p.deck.filter(c => c.cardData.name === '高傲雉雞' || c.cardData.name === '高傲雉雞ex');
+    if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
+    return { prompt: '緊急進化：從牌庫選 1 張「高傲雉雞」完成進化', choiceType: 'select_from_list', count: 1, options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const deckIdx = p.deck.findIndex(c => c.id === selection[0]);
+    if (deckIdx === -1) { shuffleDeck(p.deck); return 'done'; }
+    const evolution = p.deck.splice(deckIdx, 1)[0];
+    shuffleDeck(p.deck);
+    const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
+    if (!self) { p.discardPile.push(evolution); return 'done'; }
+    const isActive = p.active?.id === self.id;
+    const benchIdx = isActive ? -1 : p.bench.findIndex(c => c?.id === self.id);
+    if (!isActive && benchIdx === -1) { p.discardPile.push(evolution); return 'done'; }
+    p.discardPile.push(self);
+    evolution.attachedEnergy = self.attachedEnergy;
+    evolution.damage = self.damage;
+    evolution.attachedTool = self.attachedTool;
+    if (isActive) p.active = evolution; else p.bench[benchIdx] = evolution;
+    return 'done';
+  },
+};
+
+/** 怨影使者: real gate is "played 阿杏的秘招 from hand THIS turn" — approximated as "阿杏的秘招 is
+ * in the discard pile" (no same-turn-play tracker exists for arbitrary named cards, same
+ * simplification class as 頸傘發電). Once per turn, draw back up to 8 hand size. */
+const grudgeShadeEnvoy: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (!p.discardPile.some(c => c.cardData.name === '阿杏的秘招')) return 'done';
+    drawUpTo(ctx.G, ctx.playerIndex, 8);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
 export const abilityEffects: Record<string, EffectHandler> = {
   '偵查指令': strategicCommand,
   '咒詛炸彈': curseBomb,
@@ -2411,6 +2613,16 @@ export const abilityEffects: Record<string, EffectHandler> = {
   '激流旋渦': torrentVortex,
   '任選黏液': pickAnyMucus,
   '激動治癒': excitedHealing,
+
+  '勸誘亮光': invitingLight,
+  '臨場背負': clutchCarry,
+  '使壞之尾': badTail,
+  '大洋增輝': oceanGlow,
+  '鱗片律動': scaleRhythm,
+  '霸者咆哮': overlordRoar,
+  '鈴鈴吵鬧': jingleClamor,
+  '緊急進化': emergencyEvolution,
+  '怨影使者': grudgeShadeEnvoy,
 };
 
 export function hasAbilityEffect(name: string): boolean {

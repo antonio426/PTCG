@@ -3,7 +3,7 @@ import { PtcgGameState, PendingChoice } from './GameState';
 import { canPlayPokemon, canEvolve, canAttachEnergy, canRetreat, canAttack, effectiveRetreatCost, FIRST_TURN_SUPPORTER_EXCEPTIONS } from './validation';
 import { clearStatusConditionsOnLeaveActive } from './statusConditions';
 import { calculateDamage, effectiveMaxHp, handleKo, prizesForKo } from './damage';
-import { getBonusPrizesForAttackKo, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasPassiveAbilityNamed, isRetreatBlockedByOpponent, onEnergyAttachedFromHand, shouldConfuseOnOpponentRetreat } from './effects/passiveAbilities';
+import { getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasPassiveAbilityNamed, isRetreatBlockedByOpponent, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat } from './effects/passiveAbilities';
 import { isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
 import {
@@ -109,6 +109,14 @@ export const moves = {
     evolution.attachedTool = savedTool;
     player.cardsPlayedThisTurn++;
     addLog(G, G.currentPlayer, 'evolve', `Evolved into ${evolution.cardData.name}`);
+
+    // 黑暗脈衝: the opponent's ability may place 4 damage counters on the newly evolved Pokémon.
+    const evolveCounters = getEvolveCountersFromOpponent(G, G.currentPlayer as 0 | 1);
+    if (evolveCounters > 0) {
+      evolution.damage += evolveCounters * 10;
+      const hp = effectiveMaxHp(G, evolution);
+      if (hp > 0 && evolution.damage >= hp) handleKo(G, G.currentPlayer, evolution.id);
+    }
   },
 
   attachEnergy: ({ G, ctx }: { G: PtcgGameState; ctx: any }, cardId: string, targetId: string) => {
@@ -331,6 +339,11 @@ export const moves = {
     if (shouldConfuseOnOpponentRetreat(G, G.currentPlayer as 0 | 1) && player.active) {
       player.active.statusConditions = player.active.statusConditions.filter(c => !['Asleep', 'Paralyzed', 'Confused'].includes(c));
       player.active.statusConditions.push('Confused');
+    }
+    // 熔岩地域: the newly promoted Pokémon gets Burned.
+    if (shouldBurnOnOpponentRetreat(G, G.currentPlayer as 0 | 1) && player.active) {
+      player.active.statusConditions = player.active.statusConditions.filter(c => c !== 'Burned');
+      player.active.statusConditions.push('Burned');
     }
   },
 
