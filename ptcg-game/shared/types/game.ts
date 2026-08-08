@@ -10,6 +10,18 @@ export interface GameCard {
   /** At most one Pokémon Tool card may be attached per Pokémon under current rules. */
   attachedTool?: GameCard | null;
   turnedFacedown?: boolean;
+  /** Per-card, single-turn effects set by attack text like "在下個對手的回合，這隻寶可夢不會
+   * 受到招式的傷害" (self-protection) or "在下個對手的回合，受到這個招式的寶可夢無法撤退"
+   * (inflicted on the defender). `appliesOnTurn` is an absolute GameState.turn number — the
+   * effect is active only when the current turn exactly matches it, so no active pruning is
+   * needed and no timing edge case can leak into an adjacent turn. */
+  timedEffects?: TimedCardEffect[];
+}
+
+export interface TimedCardEffect {
+  kind: 'cantAttack' | 'cantRetreat' | 'damageImmune' | 'damageReduction';
+  amount?: number;
+  appliesOnTurn: number;
 }
 
 export interface AttachedEnergy {

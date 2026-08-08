@@ -71,12 +71,41 @@ export function getPassiveDamageBonus(G: PtcgGameState, attackerIdx: 0 | 1, atta
   return bonus;
 }
 
+/** 太晶 (Terastallization): every Tera Pokémon in this dataset carries the same fixed rules-text
+ * "只要這隻寶可夢在備戰區，不會受到招式的傷害。" bundled into one of its attacks rather than as a
+ * separate ability — real-rules Tera Pokémon are untouchable while Benched, regardless of which
+ * specific Tera attack variant they have. */
+function hasTeraBenchedImmunity(card: GameCard): boolean {
+  return !!card.cardData.attacks?.some(a => a.text?.trim() === '只要這隻寶可夢在備戰區，不會受到招式的傷害。');
+}
+
+/** True if any of `card`'s active TimedCardEffect entries (set by attack text like "在下個對手
+ * 的回合，這隻寶可夢不會受到招式的傷害") of the given kind currently applies. */
+function hasTimedEffect(G: PtcgGameState, card: GameCard, kind: 'cantAttack' | 'cantRetreat' | 'damageImmune' | 'damageReduction'): boolean {
+  return !!card.timedEffects?.some(e => e.kind === kind && e.appliesOnTurn === G.turn);
+}
+function getTimedEffectAmount(G: PtcgGameState, card: GameCard, kind: 'damageReduction'): number {
+  const e = card.timedEffects?.find(x => x.kind === kind && x.appliesOnTurn === G.turn);
+  return e?.amount ?? 0;
+}
+export function isAttackLockedByTimedEffect(G: PtcgGameState, card: GameCard): boolean {
+  return hasTimedEffect(G, card, 'cantAttack');
+}
+export function isRetreatLockedByTimedEffect(G: PtcgGameState, card: GameCard): boolean {
+  return hasTimedEffect(G, card, 'cantRetreat');
+}
+
 /** True if `defender` takes zero damage (and, per real rules for these two, zero attack effects)
  * from `attacker`'s attack. `attackPrintedDamage` (the attack's raw printed damage number,
  * before any modifiers) is optional and only needed for damage-threshold abilities like 鐵壁硬殼. */
 export function isDamageBlocked(G: PtcgGameState, attacker: GameCard, defender: GameCard, attackPrintedDamage?: number): boolean {
   // 鐵壁硬殼: immune to attacks with 200+ printed damage.
   if (hasAbility(defender, '鐵壁硬殼') && (attackPrintedDamage ?? 0) >= 200) return true;
+  // 太晶: Benched Tera Pokémon are untouchable.
+  if (hasTeraBenchedImmunity(defender) && isBenchedPokemon(G, defender)) return true;
+  // Timed self-protection set by the defender's own earlier attack (e.g. "在下個對手的回合，
+  // 這隻寶可夢不會受到招式的傷害").
+  if (hasTimedEffect(G, defender, 'damageImmune')) return true;
   // 礎石之勢: immune to damage from any Pokémon that itself has an ability.
   if (hasAbility(defender, '礎石之勢') && attacker.cardData.abilities?.some(a => a.text)) return true;
   // 藏隱: while benched, untouchable by opponent attacks entirely (relevant to bench-hitting attacks).
@@ -157,6 +186,9 @@ export function getPassiveDamageReduction(G: PtcgGameState, defender: GameCard, 
   // 威嚇之牙: -30, only while its holder is the one being hit as Active.
   if (hasAbility(defender, '威嚇之牙') && isActivePokemon(G, defender)) reduction += 30;
   if (hasAbility(defender, '鑽石膜')) reduction += 30;
+  // Timed self-protection set by the defender's own earlier attack (e.g. "在下個對手的回合，
+  // 這隻寶可夢受到招式的傷害「-30」點").
+  reduction += getTimedEffectAmount(G, defender, 'damageReduction');
   return reduction;
 }
 

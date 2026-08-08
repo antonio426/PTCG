@@ -378,9 +378,16 @@ export const moves = {
       addLog(G, G.currentPlayer, 'attack', `${attacker.cardData.name} used "${attack.name}"!`);
     } else {
       // Generic attack-text templates (coin-flip-scaled damage, status infliction, self-heal,
-      // draw) — resolved from the printed text/damage string directly, no per-card registration
-      // needed. See genericAttacks.ts for what is and isn't covered by this.
-      const genericOutcome = attack.text ? resolveGenericAttackEffect(attack.text, attack.damage) : undefined;
+      // draw, energy discard, board-scaled damage, timed self-protection/lockout) — resolved
+      // from the printed text/damage string directly, no per-card registration needed. See
+      // genericAttacks.ts for what is and isn't covered by this.
+      const attackBoard = {
+        ownFieldPokemonCount: [player.active, ...player.bench].filter((c): c is GameCard => c !== null).length,
+        ownToolCount: [player.active, ...player.bench].filter((c): c is GameCard => c !== null && !!c.attachedTool).length,
+        selfDamageCounters: attacker.damage / 10,
+        opponentEnergyCount: defender.attachedEnergy.length,
+      };
+      const genericOutcome = attack.text ? resolveGenericAttackEffect(attack.text, attack.damage, attackBoard) : undefined;
       const effectiveAttack = genericOutcome ? { ...attack, damage: String(genericOutcome.baseDamage) } : attack;
       const damage = calculateDamage(G, G.currentPlayer as 0 | 1, attacker, effectiveAttack, defender);
       const defenderWasFullHp = defender.damage === 0;
@@ -447,14 +454,45 @@ export const moves = {
         const attackerHp = effectiveMaxHp(G, attacker);
         if (attacker.damage >= attackerHp && attackerHp > 0) handleKo(G, G.currentPlayer, attacker.id);
       }
-      // Generic attack-text side effects: status infliction is gated on the hit actually
-      // landing (damage > 0), matching real rules for "flip a coin, if heads..."-style effects.
+      // Generic attack-text side effects: status infliction / opponent-targeted effects are
+      // gated on the hit actually landing (damage > 0), matching real rules for "flip a coin, if
+      // heads..."-style effects; self-targeted effects (heal, draw, recoil, self-lockout,
+      // self-protection) apply regardless, matching their printed text having no damage gate.
       if (genericOutcome) {
         if (damage > 0 && genericOutcome.statusToInflict) {
           for (const status of genericOutcome.statusToInflict) applyStatusCondition(defender, status);
         }
         if (genericOutcome.healSelfAmount) attacker.damage = Math.max(0, attacker.damage - genericOutcome.healSelfAmount);
         if (genericOutcome.drawCards) drawCards(G, G.currentPlayer as 0 | 1, genericOutcome.drawCards);
+        if (genericOutcome.selfDamage) {
+          attacker.damage += genericOutcome.selfDamage;
+          const selfHp = effectiveMaxHp(G, attacker);
+          if (selfHp > 0 && attacker.damage >= selfHp) handleKo(G, G.currentPlayer, attacker.id);
+        }
+        if (genericOutcome.discardAllSelfEnergy) {
+          attacker.attachedEnergy = [];
+        } else if (genericOutcome.discardSelfEnergyCount) {
+          for (let i = 0; i < genericOutcome.discardSelfEnergyCount && attacker.attachedEnergy.length > 0; i++) {
+            attacker.attachedEnergy.splice(Math.floor(Math.random() * attacker.attachedEnergy.length), 1);
+          }
+        }
+        if (damage > 0 && genericOutcome.discardOpponentEnergyCount) {
+          for (let i = 0; i < genericOutcome.discardOpponentEnergyCount && defender.attachedEnergy.length > 0; i++) {
+            defender.attachedEnergy.splice(Math.floor(Math.random() * defender.attachedEnergy.length), 1);
+          }
+        }
+        if (genericOutcome.discardOpponentTool && defender.attachedTool) {
+          opponent.discardPile.push(defender.attachedTool);
+          defender.attachedTool = null;
+        }
+        if (genericOutcome.selfTimedEffect) {
+          const e = genericOutcome.selfTimedEffect;
+          attacker.timedEffects = [...(attacker.timedEffects || []), { kind: e.kind, amount: e.amount, appliesOnTurn: G.turn + e.turnOffset }];
+        }
+        if (damage > 0 && genericOutcome.opponentTimedEffect) {
+          const e = genericOutcome.opponentTimedEffect;
+          defender.timedEffects = [...(defender.timedEffects || []), { kind: e.kind, amount: e.amount, appliesOnTurn: G.turn + e.turnOffset }];
+        }
       }
     }
 

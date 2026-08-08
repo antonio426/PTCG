@@ -2,7 +2,7 @@ import { GameCard, EnergyType, LegalAction } from '@ptcg/shared';
 import { PtcgGameState, GamePhase, PendingChoice } from './GameState';
 import { hasAbilityEffect, isAbilityUnlimitedUse } from './effects/abilities';
 import { getRetreatCostReduction, getColorlessCostReduction } from './effects/tools';
-import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatCostReduction, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, isItemAndToolPlayBlocked, isItemPlayBlocked } from './effects/passiveAbilities';
+import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatCostReduction, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, isAttackLockedByTimedEffect, isItemAndToolPlayBlocked, isItemPlayBlocked, isRetreatLockedByTimedEffect } from './effects/passiveAbilities';
 import { normalizeAbilityName } from './effects/types';
 
 /** All k-sized combinations of `items`, capped so huge hands can't explode the move list. */
@@ -171,6 +171,7 @@ export function canRetreat(G: PtcgGameState, playerIndex: number): boolean {
   if (!player.active) return false;
   if (!player.bench.some(s => s !== null)) return false;
   if (player.active.statusConditions.includes('Asleep') || player.active.statusConditions.includes('Paralyzed')) return false;
+  if (isRetreatLockedByTimedEffect(G, player.active)) return false;
 
   const retreatCost = effectiveRetreatCost(G, player.active);
   const attachedEnergyCount = player.active.attachedEnergy.length;
@@ -185,6 +186,7 @@ export function canAttack(G: PtcgGameState, playerIndex: number, attackIndex: nu
   // 出道演出: this specific Pokémon is exempt from the first-turn attack restriction.
   if (isFirstTurnOfGame(G) && !canAttackOnFirstTurn(player.active)) return false;
   if (player.active.statusConditions.includes('Asleep') || player.active.statusConditions.includes('Paralyzed')) return false;
+  if (isAttackLockedByTimedEffect(G, player.active)) return false;
 
   const attack = player.active.cardData.attacks?.[attackIndex];
   if (!attack) return false;

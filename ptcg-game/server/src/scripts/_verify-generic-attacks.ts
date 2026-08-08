@@ -6,6 +6,7 @@
 import type { Card } from '@ptcg/shared';
 import { setup } from '../game/setup';
 import { moves } from '../game/moves';
+import { canAttack, canRetreat } from '../game/validation';
 
 let passed = 0, failed = 0;
 function check(label: string, cond: boolean) {
@@ -91,6 +92,99 @@ function freshBattle(attackerData: Card, defenderData: Card) {
   (moves.attack as any)({ G, ctx: { events: {} } }, 0);
   const dmg = G.players[1].active!.damage;
   check('coin1_missOnTails: damage is either 0 or 50', dmg === 0 || dmg === 50);
+}
+
+// 6. Recoil: "這隻寶可夢也受到10點傷害。"
+{
+  const attacker = mon('atk', 'RecoilMon', '100', '這隻寶可夢也受到10點傷害。', '40');
+  const defender = mon('def', 'DefMon6', '100', '', '10');
+  const G = freshBattle(attacker, defender);
+  (moves.attack as any)({ G, ctx: { events: {} } }, 0);
+  check('selfDamage: attacker took 10 recoil', G.players[0].active!.damage === 10);
+  check('selfDamage: defender took the flat 40', G.players[1].active!.damage === 40);
+}
+
+// 7. Self energy discard: "選擇1個這隻寶可夢身上附加的能量，將其丟棄。"
+{
+  const attacker = mon('atk', 'DiscardMon', '100', '選擇1個這隻寶可夢身上附加的能量，將其丟棄。', '20');
+  const defender = mon('def', 'DefMon7', '100', '', '10');
+  const G = freshBattle(attacker, defender);
+  G.players[0].active!.attachedEnergy = [{ id: 'e1', type: 'Colorless' }, { id: 'e2', type: 'Colorless' }];
+  (moves.attack as any)({ G, ctx: { events: {} } }, 0);
+  check('discardSelfEnergyCount: exactly 1 energy removed', G.players[0].active!.attachedEnergy.length === 1);
+}
+
+// 8. Opponent Tool discard: "在造成傷害前，將對手的戰鬥寶可夢身上附加的「寶可夢道具」卡丟棄。"
+{
+  const attacker = mon('atk', 'ToolStripMon', '100', '在造成傷害前，將對手的戰鬥寶可夢身上附加的「寶可夢道具」卡丟棄。', '20');
+  const defender = mon('def', 'DefMon8', '100', '', '10');
+  const G = freshBattle(attacker, defender);
+  const toolCard = mon('tool', '測試道具', '', '', '');
+  G.players[1].active!.attachedTool = { id: 'tool1', cardData: toolCard, owner: 1, damage: 0, statusConditions: [], attachedEnergy: [] };
+  (moves.attack as any)({ G, ctx: { events: {} } }, 0);
+  check('discardOpponentTool: tool removed from defender', G.players[1].active!.attachedTool === null);
+  check('discardOpponentTool: tool landed in owner discard pile', G.players[1].discardPile.some(c => c.id === 'tool1'));
+}
+
+// 9. Board-scaled damage: "造成自己的場上寶可夢的數量×20點傷害。"
+{
+  const attacker = mon('atk', 'FieldCountMon', '100', '造成自己的場上寶可夢的數量×20點傷害。', '');
+  const defender = mon('def', 'DefMon9', '200', '', '10');
+  const G = freshBattle(attacker, defender);
+  G.players[0].bench[0] = { id: 'b1', cardData: filler(), owner: 0, damage: 0, statusConditions: [], attachedEnergy: [], attachedTool: null };
+  (moves.attack as any)({ G, ctx: { events: {} } }, 0);
+  check('fieldCount-scaled: 2 own Pokémon (active+1 bench) -> 40 damage', G.players[1].active!.damage === 40);
+}
+
+// 10. Self-lockout timed effect: "在下個自己的回合，這隻寶可夢無法使用招式。"
+{
+  const attacker = mon('atk', 'LockoutMon', '100', '在下個自己的回合，這隻寶可夢無法使用招式。', '30');
+  const defender = mon('def', 'DefMon10', '200', '', '10');
+  const G = freshBattle(attacker, defender);
+  (moves.attack as any)({ G, ctx: { events: {} } }, 0);
+  const atk = G.players[0].active!;
+  check('selfTimedEffect: cantAttack recorded for turn+2', !!atk.timedEffects?.some(e => e.kind === 'cantAttack' && e.appliesOnTurn === G.turn + 2));
+}
+
+// 11. Defender lockout: "在下個對手的回合，受到這個招式的寶可夢無法撤退。"
+{
+  const attacker = mon('atk', 'PinDownMon', '100', '在下個對手的回合，受到這個招式的寶可夢無法撤退。', '30');
+  const defender = mon('def', 'DefMon11', '200', '', '10');
+  const G = freshBattle(attacker, defender);
+  (moves.attack as any)({ G, ctx: { events: {} } }, 0);
+  const def = G.players[1].active!;
+  check('opponentTimedEffect: cantRetreat recorded for turn+1', !!def.timedEffects?.some(e => e.kind === 'cantRetreat' && e.appliesOnTurn === G.turn + 1));
+}
+
+// 12. Timed effects actually block the real validation checks once the target turn arrives
+{
+  const attacker = mon('atk', 'LockoutMon2', '100', '在下個自己的回合，這隻寶可夢無法使用招式。', '30');
+  const defender = mon('def', 'DefMon12', '200', '', '10');
+  const G = freshBattle(attacker, defender);
+  (moves.attack as any)({ G, ctx: { events: {} } }, 0);
+  const lockTurn = G.players[0].active!.timedEffects![0].appliesOnTurn;
+  G.phase = 'main';
+  check('canAttack: not blocked on the turn it was set', canAttack(G, 0, 0));
+  G.turn = lockTurn;
+  G.players[0].active!.attachedEnergy = []; // avoid unrelated cost-payment false negatives
+  check('canAttack: blocked exactly on the recorded turn', !canAttack(G, 0, 0));
+  G.turn = lockTurn + 1;
+  check('canAttack: no longer blocked the turn after', canAttack(G, 0, 0));
+}
+{
+  const attacker = mon('atk', 'PinDownMon2', '100', '在下個對手的回合，受到這個招式的寶可夢無法撤退。', '30');
+  const defender = mon('def', 'DefMon13', '200', '', '10');
+  const G = freshBattle(attacker, defender);
+  (moves.attack as any)({ G, ctx: { events: {} } }, 0);
+  const def = G.players[1].active!;
+  const lockTurn = def.timedEffects![0].appliesOnTurn;
+  G.players[1].bench[0] = { id: 'b2', cardData: filler(), owner: 1, damage: 0, statusConditions: [], attachedEnergy: [], attachedTool: null };
+  G.currentPlayer = 1;
+  G.phase = 'main';
+  G.turn = lockTurn;
+  check('canRetreat: blocked exactly on the recorded turn', !canRetreat(G, 1));
+  G.turn = lockTurn + 1;
+  check('canRetreat: no longer blocked the turn after', canRetreat(G, 1));
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);
