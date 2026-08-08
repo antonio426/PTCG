@@ -2,7 +2,7 @@ import { GameCard, EnergyType, LegalAction } from '@ptcg/shared';
 import { PtcgGameState, GamePhase, PendingChoice } from './GameState';
 import { hasAbilityEffect, isAbilityUnlimitedUse } from './effects/abilities';
 import { getRetreatCostReduction, getColorlessCostReduction } from './effects/tools';
-import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, isItemAndToolPlayBlocked, isItemPlayBlocked } from './effects/passiveAbilities';
+import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatCostReduction, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, isItemAndToolPlayBlocked, isItemPlayBlocked } from './effects/passiveAbilities';
 import { normalizeAbilityName } from './effects/types';
 
 /** All k-sized combinations of `items`, capped so huge hands can't explode the move list. */
@@ -97,7 +97,7 @@ export function effectiveRetreatCost(G: PtcgGameState, card: GameCard): number {
   const base = card.cardData.retreatCost?.length ?? 0;
   const { reduction, waived } = getRetreatCostReduction(G, card);
   if (waived || getPassiveRetreatWaiver(G, card.owner, card)) return 0;
-  return Math.max(0, base - reduction + getPassiveRetreatCostIncrease(G, card));
+  return Math.max(0, base - reduction - getPassiveRetreatCostReduction(G, card) + getPassiveRetreatCostIncrease(G, card));
 }
 
 export function canPlayPokemon(G: PtcgGameState, playerIndex: number, cardId: string): boolean {

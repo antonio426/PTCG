@@ -3,9 +3,10 @@ import { PtcgGameState, PendingChoice } from './GameState';
 import { canPlayPokemon, canEvolve, canAttachEnergy, canRetreat, canAttack, effectiveRetreatCost, FIRST_TURN_SUPPORTER_EXCEPTIONS } from './validation';
 import { clearStatusConditionsOnLeaveActive } from './statusConditions';
 import { calculateDamage, effectiveMaxHp, handleKo, prizesForKo } from './damage';
-import { getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasPassiveAbilityNamed, isRetreatBlockedByOpponent, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat } from './effects/passiveAbilities';
+import { getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasPassiveAbilityNamed, isRetreatBlockedByOpponent, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat, shouldDiscardAttackerEnergy } from './effects/passiveAbilities';
 import { isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
+import { applyStatusCondition } from './effects/primitives';
 import {
   EffectContext, EffectStep,
   hasTrainerEffect, startTrainerEffect, resumeTrainerEffect,
@@ -337,13 +338,11 @@ export const moves = {
     }
     // 漩渦言靈: the newly promoted Pokémon gets Confused.
     if (shouldConfuseOnOpponentRetreat(G, G.currentPlayer as 0 | 1) && player.active) {
-      player.active.statusConditions = player.active.statusConditions.filter(c => !['Asleep', 'Paralyzed', 'Confused'].includes(c));
-      player.active.statusConditions.push('Confused');
+      applyStatusCondition(player.active, 'Confused');
     }
     // 熔岩地域: the newly promoted Pokémon gets Burned.
     if (shouldBurnOnOpponentRetreat(G, G.currentPlayer as 0 | 1) && player.active) {
-      player.active.statusConditions = player.active.statusConditions.filter(c => c !== 'Burned');
-      player.active.statusConditions.push('Burned');
+      applyStatusCondition(player.active, 'Burned');
     }
   },
 
@@ -392,6 +391,10 @@ export const moves = {
       if (retaliation > 0) {
         attacker.damage += retaliation * 10;
       }
+      // 甲殼刺: being hit while Active discards 1 Energy attached to the attacker.
+      if (damage > 0 && shouldDiscardAttackerEnergy(defender) && attacker.attachedEnergy.length > 0) {
+        attacker.attachedEnergy.splice(Math.floor(Math.random() * attacker.attachedEnergy.length), 1);
+      }
       // 炸裂針: only fires if this hit is what KOs the holder.
       if (damage > 0) {
         const defenderHpBefore = effectiveMaxHp(G, defender);
@@ -410,7 +413,7 @@ export const moves = {
         attacker.statusConditions.push('Burned');
       }
       // 堅忍之軀: a coin flip may let a Pokémon that would be KO'd by this attack survive at 10 HP instead.
-      if (hasPassiveAbilityNamed(defender, '堅忍之軀')) {
+      if (hasPassiveAbilityNamed(defender, '堅忍之軀') || hasPassiveAbilityNamed(defender, '不朽身軀')) {
         const wouldBeLethal = effectiveMaxHp(G, defender) > 0 && defender.damage >= effectiveMaxHp(G, defender);
         if (wouldBeLethal && Math.random() < 0.5) {
           defender.damage = effectiveMaxHp(G, defender) - 10;

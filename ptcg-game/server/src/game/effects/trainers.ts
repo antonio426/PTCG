@@ -1,6 +1,6 @@
 import { GameCard } from '@ptcg/shared';
 import { EffectContext, EffectHandler, EffectStep, allPokemon, normalizeCardName, opponent, player, shuffleDeck } from './types';
-import { discardFromHand, drawCards, drawUpTo, flipCoin, hasNoRuleBox, healDamage, moveDiscardCardToHand } from './primitives';
+import { applyStatusCondition, discardFromHand, drawCards, drawUpTo, flipCoin, hasNoRuleBox, healDamage, moveDiscardCardToHand } from './primitives';
 import { clearStatusConditionsOnLeaveActive } from '../statusConditions';
 import { isEnergyDiscardProtected } from './passiveAbilities';
 import { handleKo } from '../damage';
@@ -1807,8 +1807,7 @@ const lucasShowcase: EffectHandler = {
       clearStatusConditionsOnLeaveActive(opp.active);
       opp.bench[idx] = opp.active;
       opp.active = chosen;
-      chosen.statusConditions = chosen.statusConditions.filter(c => c !== 'Confused');
-      chosen.statusConditions.push('Confused');
+      applyStatusCondition(chosen, 'Confused');
     } else if (idx >= 0 && !opp.active) {
       opp.active = opp.bench[idx];
       opp.bench[idx] = null;
@@ -2475,8 +2474,7 @@ const darkBell: EffectHandler = {
     for (const idx of [0, 1] as const) {
       const active = ctx.G.players[idx].active;
       if (!active || (active.cardData.types || []).includes('Darkness')) continue;
-      active.statusConditions = active.statusConditions.filter(c => c !== 'Confused');
-      active.statusConditions.push('Confused');
+      applyStatusCondition(active, 'Confused');
     }
     return 'done';
   },

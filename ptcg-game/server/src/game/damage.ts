@@ -1,6 +1,6 @@
 import { Attack, GameCard } from '@ptcg/shared';
 import { PtcgGameState } from './GameState';
-import { getPassiveDamageBonus, getPassiveDamageReduction, getPassiveMaxHpBonus, getPrizeReduction, getWeaknessTypeOverride, isDamageBlocked, rollBonusPrizeOnActiveKo, shouldExilePrizes } from './effects/passiveAbilities';
+import { getPassiveDamageBonus, getPassiveDamageReduction, getPassiveMaxHpBonus, getPrizeReduction, getWeaknessTypeOverride, hasPassiveAbilityNamed, isDamageBlocked, rollBonusPrizeOnActiveKo, shouldExilePrizes } from './effects/passiveAbilities';
 import { getToolDamageBonus } from './effects/tools';
 
 /** Rule-box Pokémon (ex/V/VMAX/VSTAR/GX/Mega/TAG TEAM) — same test as prizesForKo below. */
@@ -101,10 +101,25 @@ export function handleKo(G: PtcgGameState, koPlayerIndex: number, koCardId: stri
   let koCard: GameCard | undefined;
   const wasActive = koPlayer.active?.id === koCardId;
 
+  // 無限之影: when KO'd by an attack specifically, this card returns to hand (reset to a fresh
+  // state) instead of the discard pile — its attachments still go to the discard pile as normal.
+  const returnsToHand = (c: GameCard) => !!attackerCard && hasPassiveAbilityNamed(c, '無限之影');
+  const retireCard = (c: GameCard) => {
+    if (c.attachedTool) koPlayer.discardPile.push(c.attachedTool);
+    if (returnsToHand(c)) {
+      c.attachedEnergy = [];
+      c.attachedTool = null;
+      c.damage = 0;
+      c.statusConditions = [];
+      koPlayer.hand.push(c);
+    } else {
+      koPlayer.discardPile.push(c);
+    }
+  };
+
   if (koPlayer.active?.id === koCardId) {
     koCard = koPlayer.active;
-    if (koCard.attachedTool) koPlayer.discardPile.push(koCard.attachedTool);
-    koPlayer.discardPile.push(koCard);
+    retireCard(koCard);
     koPlayer.active = null;
 
     const promo = koPlayer.bench.find(s => s !== null);
@@ -117,8 +132,7 @@ export function handleKo(G: PtcgGameState, koPlayerIndex: number, koCardId: stri
     const idx = koPlayer.bench.findIndex(c => c?.id === koCardId);
     if (idx >= 0) {
       koCard = koPlayer.bench[idx]!;
-      if (koCard.attachedTool) koPlayer.discardPile.push(koCard.attachedTool);
-      koPlayer.discardPile.push(koCard);
+      retireCard(koCard);
       koPlayer.bench[idx] = null;
     }
   }

@@ -61,6 +61,13 @@ export function getPassiveDamageBonus(G: PtcgGameState, attackerIdx: 0 | 1, atta
   }
   // 原始心得: +30 vs an opponent's evolved-stage Active Pokémon specifically.
   if (teamOf(G, attackerIdx).some(c => hasAbility(c, '原始心得')) && !!defender.cardData.evolvesFrom) bonus += 30;
+  // 複眼: +50 vs an opponent Active that itself holds any ability.
+  if (teamOf(G, attackerIdx).some(c => hasAbility(c, '複眼')) && defender.cardData.abilities?.some(a => a.text)) bonus += 50;
+  // 大晴天: +20 for own Grass or Fire attackers.
+  if (teamOf(G, attackerIdx).some(c => hasAbility(c, '大晴天'))
+    && ((attacker.cardData.types || []).includes('Grass') || (attacker.cardData.types || []).includes('Fire'))) bonus += 20;
+  // 大將: +30 per prize the opponent has already taken.
+  if (teamOf(G, attackerIdx).some(c => hasAbility(c, '大將'))) bonus += G.players[(1 - attackerIdx) as 0 | 1].takenPrizes * 30;
   return bonus;
 }
 
@@ -122,6 +129,15 @@ export function getPassiveDamageReduction(G: PtcgGameState, defender: GameCard, 
   if (hasAbility(defender, '毛皮大衣')) reduction += 20;
   // 厚脂肪: -30, only against Fire or Water attackers specifically.
   if (hasAbility(defender, '厚脂肪') && attacker && ((attacker.cardData.types || []).includes('Fire') || (attacker.cardData.types || []).includes('Water'))) reduction += 30;
+  // 高密度盔甲: -60, only while entering the hit at full HP.
+  if (hasAbility(defender, '高密度盔甲') && defender.damage === 0) reduction += 60;
+  // 垃圾洩氣: -20, only against an attacker that itself holds an attached Pokémon Tool.
+  if (attacker?.attachedTool && teamOf(G, ownerIndexOf(G, defender)).some(c => hasAbility(c, '垃圾洩氣'))) reduction += 20;
+  // 岩石宮殿: -30 for own "大吾的" family Pokémon, gated on its own holder being Benched; non-stacking.
+  if (defender.cardData.name.includes('大吾的')
+    && teamOf(G, ownerIndexOf(G, defender)).some(c => hasAbility(c, '岩石宮殿') && isBenchedPokemon(G, c))) reduction += 30;
+  // 守護之鐘: -10 for the whole team, non-stacking.
+  if (teamOf(G, ownerIndexOf(G, defender)).some(c => hasAbility(c, '守護之鐘'))) reduction += 10;
   if (hasAbility(defender, '爆炸頭防守')) reduction += 20;
   if (hasAbility(defender, '堅堅之軀')) reduction += 30;
   // 齒輪塗層: any own Pokémon holding Metal Energy takes -20, as long as the ability's holder is in play.
@@ -151,7 +167,18 @@ export function getScaledRetaliation(defender: GameCard): number {
   if (hasAbility(defender, '快掃拳返')) {
     return defender.attachedEnergy.filter(e => e.type === 'Metal').length * 2;
   }
+  // 尖刺盔甲: 3 counters per attached Grass Energy.
+  if (hasAbility(defender, '尖刺盔甲')) {
+    return defender.attachedEnergy.filter(e => e.type === 'Grass').length * 3;
+  }
   return 0;
+}
+
+/** 甲殼刺: whenever this Pokémon (while Active) takes attack damage, discard 1 Energy attached
+ * to the attacker. Returns true if a discard should happen (the caller picks which one, since
+ * this module has no PendingChoice access). */
+export function shouldDiscardAttackerEnergy(defender: GameCard): boolean {
+  return hasAbility(defender, '甲殼刺');
 }
 
 /** 海之詛咒: while its holder is the OPPONENT's Active Pokémon, `playerIndex` can't play Item
@@ -214,7 +241,7 @@ export function canAttackOnFirstTurn(card: GameCard): boolean {
 /** Retreat cost is fully waived for `card` by any of its own team's passive abilities. */
 export function getPassiveRetreatWaiver(G: PtcgGameState, idx: 0 | 1, card: GameCard): boolean {
   for (const holder of teamOf(G, idx)) {
-    if (hasAbility(holder, '天空徑線') && card.cardData.subtypes.includes('Basic')) return true;
+    if ((hasAbility(holder, '天空徑線') || hasAbility(holder, '棉花搬運')) && card.cardData.subtypes.includes('Basic')) return true;
     if (hasAbility(holder, '鋼之橋') && card.attachedEnergy.some(e => e.type === 'Metal')) return true;
   }
   // 溶化流動 / 一身輕: self-only, waived while holding no Energy at all (same shape, different cards).
@@ -255,6 +282,12 @@ export function shouldConfuseOnOpponentRetreat(G: PtcgGameState, retreatingIdx: 
 export function shouldBurnOnOpponentRetreat(G: PtcgGameState, retreatingIdx: 0 | 1): boolean {
   const oppIdx = (1 - retreatingIdx) as 0 | 1;
   return teamOf(G, oppIdx).some(c => hasAbility(c, '熔岩地域'));
+}
+
+/** 森林秘道: -2 retreat cost for the OWN Active Pokémon, gated on its holder being Benched. */
+export function getPassiveRetreatCostReduction(G: PtcgGameState, card: GameCard): number {
+  if (!isActivePokemon(G, card)) return 0;
+  return teamOf(G, ownerIndexOf(G, card)).some(c => hasAbility(c, '森林秘道') && isBenchedPokemon(G, c)) ? 2 : 0;
 }
 
 /** 咒縛火焰: +1 retreat cost for the OPPONENT's Active Pokémon, as long as the holder is in play. */
@@ -308,6 +341,11 @@ export function canEvolveOnFirstTurnOrJustPlayed(G: PtcgGameState, target: GameC
   if (hasAbility(target, '提升進化')) return true;
   if (hasAbility(target, '刺激進化')) {
     return teamOf(G, ownerIndexOf(G, target)).some(c => c.cardData.name === '小嘴蝸');
+  }
+  // 鬥志戰吼: bypassed if the opponent's Active is an "ex" Pokémon.
+  if (hasAbility(target, '鬥志戰吼')) {
+    const oppActive = G.players[(1 - ownerIndexOf(G, target)) as 0 | 1].active;
+    return !!oppActive && oppActive.cardData.subtypes.includes('ex');
   }
   return false;
 }
@@ -458,4 +496,6 @@ export const PASSIVE_ABILITY_NAMES = new Set([
   '威嚇之牙', '躲藏高手', '激動力量', '鑽石膜', '調諧迴響', '狙擊手之眼', '不眠', '黏滑失足',
   '凍原堡壘', '毛皮大衣', '厚脂肪', '大網', '凹洞', '漩渦言靈', '影藏', '脆弱蛻殼',
   '勝利聲援', '憤怒穴', '原始心得', '鐵壁硬殼', '威迫目光', '瞪眼效用', '熔岩地域', '揚沙', '啟動限制', '黑暗脈衝',
+  '高密度盔甲', '棉花搬運', '不朽身軀', '尖刺盔甲', '垃圾洩氣', '甲殼刺', '鬥志戰吼', '複眼', '無限之影',
+  '大將', '岩石宮殿', '大晴天', '森林秘道', '守護之鐘', '憨憨臉',
 ]);
