@@ -2,7 +2,7 @@ import { GameCard, EnergyType, LegalAction } from '@ptcg/shared';
 import { PtcgGameState, GamePhase, PendingChoice } from './GameState';
 import { hasAbilityEffect, isAbilityUnlimitedUse } from './effects/abilities';
 import { getRetreatCostReduction, getColorlessCostReduction } from './effects/tools';
-import { canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostReduction, getPassiveRetreatWaiver } from './effects/passiveAbilities';
+import { canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostReduction, getPassiveRetreatWaiver } from './effects/passiveAbilities';
 import { normalizeAbilityName } from './effects/types';
 
 /** All k-sized combinations of `items`, capped so huge hands can't explode the move list. */
@@ -126,7 +126,6 @@ function isFirstTurnOfGame(G: PtcgGameState): boolean {
 export function canEvolve(G: PtcgGameState, playerIndex: number, cardId: string, targetId: string): boolean {
   const player = playerState(G, playerIndex, ['main']);
   if (!player) return false;
-  if (isFirstTurnOfGame(G)) return false;
 
   const card = player.hand.find(c => c.id === cardId);
   if (!card) return false;
@@ -139,8 +138,11 @@ export function canEvolve(G: PtcgGameState, playerIndex: number, cardId: string,
     ? player.active
     : player.bench.find(c => c?.id === targetId) || null;
   if (!target) return false;
+  // 提升進化: this specific Pokémon is exempt from the first-turn / just-played restrictions below.
+  const bypassTiming = canEvolveOnFirstTurnOrJustPlayed(target);
+  if (!bypassTiming && isFirstTurnOfGame(G)) return false;
   if (target.cardData.name !== evolvesFrom && !canEvolveViaPassive(target, card.cardData)) return false;
-  if (player.pokemonPlayedThisTurn.includes(target.id)) return false;
+  if (!bypassTiming && player.pokemonPlayedThisTurn.includes(target.id)) return false;
 
   return true;
 }

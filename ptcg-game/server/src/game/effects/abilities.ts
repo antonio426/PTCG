@@ -808,6 +808,186 @@ const torrentHeart: EffectHandler = {
   resume() { return 'done'; },
 };
 
+/** 火焰蹈舞: once per turn, attach up to 1 Basic Fire + 1 Basic Fighting Energy from hand (combined), to a single chosen own Pokémon. */
+const flameStepDance: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const options = p.hand.filter(c => c.cardData.subtypes.includes('Basic Energy') && ((c.cardData.types || []).includes('Fire') || (c.cardData.types || []).includes('Fighting')));
+    const targets = allPokemon(ctx.G, ctx.playerIndex);
+    if (options.length === 0 || targets.length === 0) return 'done';
+    return { prompt: '火焰蹈舞：選最多各 1 張基本火／鬥能量卡', choiceType: 'select_from_list', maxCount: Math.min(2, options.length), options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: { step: 'pick_energy' } };
+  },
+  resume(ctx, context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (context.step === 'pick_energy') {
+      if (selection.length === 0) return 'done';
+      const targets = allPokemon(ctx.G, ctx.playerIndex);
+      return { prompt: '火焰蹈舞：選擇要附加能量的寶可夢', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: { step: 'pick_target', energyIds: selection } };
+    }
+    const target = p.active?.id === selection[0] ? p.active : p.bench.find(c => c?.id === selection[0]);
+    const energyIds = context.energyIds as string[];
+    if (target) {
+      for (const id of energyIds) {
+        const i = p.hand.findIndex(c => c.id === id);
+        if (i === -1) continue;
+        const energy = p.hand.splice(i, 1)[0];
+        target.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+      }
+    }
+    return 'done';
+  },
+};
+
+/** 毛象搬運: once per turn, search deck for 1 Pokémon to hand. */
+const mammothCarry: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const options = p.deck.filter(c => c.cardData.supertype === 'Pokémon');
+    if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
+    return { prompt: '毛象搬運：從牌庫選 1 張寶可夢卡加入手牌', choiceType: 'select_from_list', count: 1, options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (selection[0]) moveDeckCardToHand(ctx.G, ctx.playerIndex, selection[0]); else shuffleDeck(p.deck);
+    return 'done';
+  },
+};
+
+/** 邀請眨眼: on evolve, look at the opponent's hand and place every Basic Pokémon card found onto their Bench. */
+const invitingWink: EffectHandler = {
+  start(ctx) {
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    const movable = opp.hand.filter(c => c.cardData.supertype === 'Pokémon' && c.cardData.subtypes.includes('Basic'));
+    for (const card of movable) {
+      const slot = opp.bench.findIndex(s => s === null);
+      if (slot === -1) break;
+      const i = opp.hand.findIndex(c => c.id === card.id);
+      if (i === -1) continue;
+      opp.bench[slot] = opp.hand.splice(i, 1)[0];
+    }
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 飽腹時間: on evolve, fully heal every own evolved Pokémon, then discard all Energy attached to each healed Pokémon. */
+const bellyfulTime: EffectHandler = {
+  start(ctx) {
+    for (const c of allPokemon(ctx.G, ctx.playerIndex)) {
+      if (!c.cardData.evolvesFrom) continue;
+      c.damage = 0;
+      c.attachedEnergy = [];
+    }
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 金屬製造者: once per turn, look at top 4 of deck, take any number of Basic Metal Energy, attach to a single chosen own Pokémon, reshuffle the rest. */
+const metalMaker: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const top = p.deck.slice(-4);
+    const options = top.filter(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes('Metal'));
+    if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
+    return { prompt: '金屬製造者：查看牌庫上方 4 張，選任意數量的基本鋼能量卡', choiceType: 'select_from_list', maxCount: options.length, options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: { step: 'pick_energy', seenIds: top.map(c => c.id) } };
+  },
+  resume(ctx, context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (context.step === 'pick_energy') {
+      const seenIds = context.seenIds as string[];
+      if (selection.length === 0) {
+        // Nothing taken — the whole top-4 view goes back to the bottom, reshuffled.
+        shuffleDeck(p.deck);
+        return 'done';
+      }
+      const targets = allPokemon(ctx.G, ctx.playerIndex);
+      return { prompt: '金屬製造者：選擇要附加能量的寶可夢', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: { step: 'pick_target', energyIds: selection, seenIds } };
+    }
+    const target = p.active?.id === selection[0] ? p.active : p.bench.find(c => c?.id === selection[0]);
+    const energyIds = context.energyIds as string[];
+    if (target) {
+      for (const id of energyIds) {
+        const i = p.deck.findIndex(c => c.id === id);
+        if (i === -1) continue;
+        const energy = p.deck.splice(i, 1)[0];
+        target.attachedEnergy.push({ id: energy.id, type: 'Metal' });
+      }
+    }
+    shuffleDeck(p.deck);
+    return 'done';
+  },
+};
+
+/** 暗中咬住: on evolve, place 2 damage counters on 1 opponent Pokémon. */
+const stealthBite: EffectHandler = {
+  start(ctx) {
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    const targets = [opp.active, ...opp.bench].filter((c): c is GameCard => c !== null);
+    if (targets.length === 0) return 'done';
+    return { prompt: '暗中咬住：選擇對手 1 隻寶可夢放置 2 個傷害指示物', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    const target = opp.active?.id === selection[0] ? opp.active : opp.bench.find(c => c?.id === selection[0]);
+    if (target) {
+      target.damage += 20;
+      const hp = parseInt(target.cardData.hp || '0', 10);
+      if (hp > 0 && target.damage >= hp) handleKo(ctx.G, (1 - ctx.playerIndex) as 0 | 1, target.id);
+    }
+    return 'done';
+  },
+};
+
+/** 幸福切換: once per turn, move a Basic Energy from one own Pokémon to another. */
+const happinessSwitch: EffectHandler = {
+  start(ctx) {
+    const sources = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.attachedEnergy.length > 0);
+    if (sources.length === 0) return 'done';
+    const options = sources.flatMap(c => c.attachedEnergy.map(e => ({ id: e.id, label: `${c.cardData.name} 的 ${e.type} 能量` })));
+    return { prompt: '幸福切換：選擇要移動的能量', choiceType: 'select_from_list', count: 1, options, context: { step: 'pick_energy' } };
+  },
+  resume(ctx, context, selection) {
+    if (context.step === 'pick_energy') {
+      const energyId = selection[0];
+      const source = allPokemon(ctx.G, ctx.playerIndex).find(c => c.attachedEnergy.some(e => e.id === energyId));
+      if (!source) return 'done';
+      const targets = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.id !== source.id);
+      if (targets.length === 0) return 'done';
+      return { prompt: '幸福切換：選擇要轉入的寶可夢', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: { step: 'pick_target', energyId } };
+    }
+    const energyId = context.energyId as string;
+    const source = allPokemon(ctx.G, ctx.playerIndex).find(c => c.attachedEnergy.some(e => e.id === energyId));
+    const target = findOwnPokemon(ctx.G, ctx.playerIndex, selection[0]);
+    if (source && target) {
+      const i = source.attachedEnergy.findIndex(e => e.id === energyId);
+      if (i >= 0) target.attachedEnergy.push(source.attachedEnergy.splice(i, 1)[0]);
+    }
+    return 'done';
+  },
+};
+
+/** 逃跑抽出: only while Active, once per turn: draw 3, then shuffle self (with attachments) back into the deck. */
+const escapeDraw: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.active?.id !== ctx.sourceCardId) return 'done';
+    drawCards(ctx.G, ctx.playerIndex, 3);
+    const self = p.active;
+    self.attachedEnergy = [];
+    self.attachedTool = null;
+    self.damage = 0;
+    self.statusConditions = [];
+    p.deck.push(self);
+    const promo = p.bench.find(c => c !== null);
+    p.active = promo || null;
+    if (promo) p.bench[p.bench.indexOf(promo)] = null;
+    shuffleDeck(p.deck);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
 export const abilityEffects: Record<string, EffectHandler> = {
   '偵查指令': strategicCommand,
   '咒詛炸彈': curseBomb,
@@ -851,6 +1031,15 @@ export const abilityEffects: Record<string, EffectHandler> = {
   '支配鎖鏈': dominationChain,
   '精神抽出': mentalExtraction,
   '奔流之心': torrentHeart,
+
+  '火焰蹈舞': flameStepDance,
+  '毛象搬運': mammothCarry,
+  '邀請眨眼': invitingWink,
+  '飽腹時間': bellyfulTime,
+  '金屬製造者': metalMaker,
+  '暗中咬住': stealthBite,
+  '幸福切換': happinessSwitch,
+  '逃跑抽出': escapeDraw,
 };
 
 export function hasAbilityEffect(name: string): boolean {

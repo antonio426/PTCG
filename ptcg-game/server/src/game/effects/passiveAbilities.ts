@@ -46,6 +46,7 @@ export function getPassiveDamageBonus(G: PtcgGameState, attackerIdx: 0 | 1, atta
     if (hasAbility(holder, '腎上腺力量') && holder.id === attacker.id
       && attacker.attachedEnergy.some(e => e.type === 'Darkness')) bonus += 100;
     if (hasAbility(holder, '皇家聲援')) bonus += 20;
+    if (hasAbility(holder, '大方') && attacker.cardData.name.includes('赫普的')) bonus += 30;
   }
   return bonus;
 }
@@ -79,6 +80,7 @@ function isRuleBoxPokemon(card: GameCard): boolean {
 /** Flat damage reduction (before floor-at-0) applied to hits `defender` takes, from its own ability. */
 export function getPassiveDamageReduction(defender: GameCard): number {
   if (hasAbility(defender, '爆炸頭防守')) return 20;
+  if (hasAbility(defender, '堅堅之軀')) return 30;
   return 0;
 }
 
@@ -88,6 +90,8 @@ export function getPassiveRetreatWaiver(G: PtcgGameState, idx: 0 | 1, card: Game
     if (hasAbility(holder, '天空徑線') && card.cardData.subtypes.includes('Basic')) return true;
     if (hasAbility(holder, '鋼之橋') && card.attachedEnergy.some(e => e.type === 'Metal')) return true;
   }
+  // 溶化流動: self-only, waived while holding no Energy at all.
+  if (hasAbility(card, '溶化流動') && card.attachedEnergy.length === 0) return true;
   return false;
 }
 
@@ -104,7 +108,41 @@ export function canUsePassiveGatedAttack(G: PtcgGameState, card: GameCard): bool
     const rocketCount = teamOf(G, ownerIndexOf(G, card)).filter(c => c.cardData.name.includes('火箭隊的')).length;
     return rocketCount >= 4;
   }
+  // 懶怠個性: can't attack unless the opponent has an ex/V Pokémon in play.
+  if (hasAbility(card, '懶怠個性')) {
+    const oppIdx = (1 - ownerIndexOf(G, card)) as 0 | 1;
+    return teamOf(G, oppIdx).some(c => isRuleBoxPokemon(c) && (c.cardData.subtypes.includes('ex') || c.cardData.subtypes.includes('V')));
+  }
   return true;
+}
+
+/** 提升進化: lets `target` evolve even on the game's first turn, or the turn it was just played. */
+export function canEvolveOnFirstTurnOrJustPlayed(target: GameCard): boolean {
+  return hasAbility(target, '提升進化');
+}
+
+/** 自動治癒 / 侵蝕詛咒: reacts to a hand Energy attach. Heals `target` 90 if its own team holds
+ * 自動治癒 (only while `target` is Active); places 2 damage counters on `target` if the
+ * OPPONENT of `attachingIdx` holds 侵蝕詛咒 (unconditional on position, per printed text). */
+export function onEnergyAttachedFromHand(G: PtcgGameState, attachingIdx: 0 | 1, target: GameCard): void {
+  if (isActivePokemon(G, target) && teamOf(G, attachingIdx).some(c => hasAbility(c, '自動治癒'))) {
+    target.damage = Math.max(0, target.damage - 90);
+  }
+  const oppIdx = (1 - attachingIdx) as 0 | 1;
+  if (teamOf(G, oppIdx).some(c => hasAbility(c, '侵蝕詛咒'))) {
+    target.damage += 20;
+  }
+}
+
+/** 冰冷之帳: each Between-Turns check, every ability-holding Pokémon (both sides, except the
+ * 冰冷之帳 holder itself) takes 1 damage counter, as long as its holder is in play. */
+export function getColdCurtainVictims(G: PtcgGameState): GameCard[] {
+  if (!everyPokemonBothSides(G).some(c => hasAbility(c, '冰冷之帳'))) return [];
+  return everyPokemonBothSides(G).filter(c => !hasAbility(c, '冰冷之帳') && c.cardData.abilities?.some(a => a.text));
+}
+
+function everyPokemonBothSides(G: PtcgGameState): GameCard[] {
+  return [...teamOf(G, 0), ...teamOf(G, 1)];
 }
 
 /** Extra prizes awarded to `attackerIdx` when their attack KOs `defender` (beyond the normal count). */
@@ -144,6 +182,14 @@ export function getPassiveAttackCostReduction(G: PtcgGameState, ownerIdx: 0 | 1,
   if (hasAbility(card, '老練招式') && card.cardData.name === '月月熊 赫月 ex' && attackName === '血月') {
     return G.players[(1 - ownerIdx) as 0 | 1].takenPrizes;
   }
+  // 喧鬧競技: Colorless cost reduced by the opponent's Benched Pokémon count.
+  if (hasAbility(card, '喧鬧競技')) {
+    return G.players[(1 - ownerIdx) as 0 | 1].bench.filter(c => c !== null).length;
+  }
+  // 事先準備: Colorless cost reduced by the count of "海岱" in this Pokémon's own discard pile.
+  if (hasAbility(card, '事先準備')) {
+    return G.players[ownerIdx].discardPile.filter(c => c.cardData.name === '海岱').length;
+  }
   return 0;
 }
 
@@ -176,4 +222,6 @@ export const PASSIVE_ABILITY_NAMES = new Set([
   '妖精領域', '劇毒支配', '老練招式', '虹色DNA', '放逐區障礙', '祭典樂舞', '崗哨',
   '皇家聲援', '化隱', '花之帷幔', '神秘石居', '腎上腺費洛蒙', '爆炸頭防守', '雜草魂',
   '力量抑制者', '貪婪食客', '奇跡之吻', '毒刺',
+  '堅堅之軀', '溶化流動', '喧鬧競技', '事先準備', '懶怠個性', '提升進化', '自動治癒',
+  '侵蝕詛咒', '冰冷之帳', '大方', '灼熱之軀',
 ]);

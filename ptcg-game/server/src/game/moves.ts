@@ -3,7 +3,7 @@ import { PtcgGameState, PendingChoice } from './GameState';
 import { canPlayPokemon, canEvolve, canAttachEnergy, canRetreat, canAttack, effectiveRetreatCost, FIRST_TURN_SUPPORTER_EXCEPTIONS } from './validation';
 import { clearStatusConditionsOnLeaveActive } from './statusConditions';
 import { calculateDamage, effectiveMaxHp, handleKo, prizesForKo } from './damage';
-import { getBonusPrizesForAttackKo, hasPassiveAbilityNamed } from './effects/passiveAbilities';
+import { getBonusPrizesForAttackKo, hasPassiveAbilityNamed, onEnergyAttachedFromHand } from './effects/passiveAbilities';
 import { isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
 import {
@@ -133,6 +133,7 @@ export const moves = {
       id: energyCard.id,
       type: energyType,
     });
+    onEnergyAttachedFromHand(G, G.currentPlayer as 0 | 1, target);
 
     player.energyAttachedThisTurn++;
     player.cardsPlayedThisTurn++;
@@ -355,10 +356,14 @@ export const moves = {
       if (retaliation > 0) {
         attacker.damage += retaliation * 10;
       }
-      // 毒刺-style retaliation: being hit while Active poisons the attacker.
+      // 毒刺 / 灼熱之軀-style retaliation: being hit while Active poisons/burns the attacker.
       if (damage > 0 && hasPassiveAbilityNamed(defender, '毒刺')) {
         attacker.statusConditions = attacker.statusConditions.filter(c => c !== 'Poisoned');
         attacker.statusConditions.push('Poisoned');
+      }
+      if (damage > 0 && hasPassiveAbilityNamed(defender, '灼熱之軀')) {
+        attacker.statusConditions = attacker.statusConditions.filter(c => c !== 'Burned');
+        attacker.statusConditions.push('Burned');
       }
 
       const defenderHp = effectiveMaxHp(G, defender);
