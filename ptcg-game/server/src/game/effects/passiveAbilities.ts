@@ -67,6 +67,8 @@ export function isDamageBlocked(G: PtcgGameState, attacker: GameCard, defender: 
     && teamOf(G, ownerIndexOf(G, defender)).some(c => hasAbility(c, '花之帷幔'))) return true;
   // 神秘石居: immune to damage specifically from an opponent's "ex" Pokémon.
   if (hasAbility(defender, '神秘石居') && attacker.cardData.subtypes.includes('ex')) return true;
+  // 神秘守護: immune to damage from an opponent's "ex" OR "V" Pokémon (a broader variant of 神秘石居/尾甲).
+  if (hasAbility(defender, '神秘守護') && (attacker.cardData.subtypes.includes('ex') || attacker.cardData.subtypes.includes('V'))) return true;
   // 腎上腺費洛蒙: while holding Darkness Energy, a coin flip may negate the hit entirely.
   if (hasAbility(defender, '腎上腺費洛蒙') && defender.attachedEnergy.some(e => e.type === 'Darkness') && Math.random() < 0.5) return true;
   // 順滑大衣: unconditional coin-flip immunity.
@@ -107,7 +109,39 @@ export function getPassiveDamageReduction(G: PtcgGameState, defender: GameCard):
   if (hasAbility(defender, '泥巴膜')) reduction += 30;
   // 岩石盔甲: -30 only while holding at least 1 attached Energy card.
   if (hasAbility(defender, '岩石盔甲') && defender.attachedEnergy.length > 0) reduction += 30;
+  if (hasAbility(defender, '堅硬身軀')) reduction += 20;
+  if (hasAbility(defender, '柔軟羊毛')) reduction += 30;
+  // 捲牆: gated on 2+ copies of its own named holder ("爆炸頭水牛") in play; -60 for own
+  // Colorless-type Basic Pokémon defenders. Doesn't stack across multiple holder pairs.
+  if (defender.cardData.subtypes.includes('Basic') && (defender.cardData.types || []).includes('Colorless')
+    && teamOf(G, ownerIndexOf(G, defender)).filter(c => c.cardData.name === '爆炸頭水牛').length >= 2) reduction += 60;
   return reduction;
+}
+
+/** Retaliation counters placed on the attacker, scaled by the defender's own attached Energy
+ * (as opposed to the flat-amount retaliation abilities handled via hasPassiveAbilityNamed). */
+export function getScaledRetaliation(defender: GameCard): number {
+  // 快掃拳返: 2 counters per attached Metal Energy.
+  if (hasAbility(defender, '快掃拳返')) {
+    return defender.attachedEnergy.filter(e => e.type === 'Metal').length * 2;
+  }
+  return 0;
+}
+
+/** 海之詛咒: while its holder is the OPPONENT's Active Pokémon, `playerIndex` can't play Item
+ * cards from hand or attach Pokémon Tool cards at all. */
+export function isItemAndToolPlayBlocked(G: PtcgGameState, playerIndex: 0 | 1): boolean {
+  const oppActive = G.players[(1 - playerIndex) as 0 | 1].active;
+  return !!oppActive && hasAbility(oppActive, '海之詛咒');
+}
+
+/** 鬆口氣: when this Pokémon is KO'd by an attack, the opposing side's awarded prizes are
+ * reduced by 1, gated on this Pokémon's own team also having "桃歹郎 ex" in play. Simplified to
+ * apply on any KO cause (not just attack damage specifically) since handleKo doesn't carry a
+ * KO-cause flag — a documented over-application rather than a silent no-op. */
+export function getPrizeReduction(G: PtcgGameState, koPlayerIndex: 0 | 1, koCard: GameCard): number {
+  if (!hasAbility(koCard, '鬆口氣')) return 0;
+  return teamOf(G, koPlayerIndex).some(c => c.cardData.name === '桃歹郎ex') ? 1 : 0;
 }
 
 /** 炸裂針: when a lethal hit KOs its holder, place 6 damage counters on the attacker (checked by the caller only once the hit is confirmed lethal). */
@@ -133,8 +167,13 @@ export function getPassiveRetreatWaiver(G: PtcgGameState, idx: 0 | 1, card: Game
     if (hasAbility(holder, '天空徑線') && card.cardData.subtypes.includes('Basic')) return true;
     if (hasAbility(holder, '鋼之橋') && card.attachedEnergy.some(e => e.type === 'Metal')) return true;
   }
-  // 溶化流動: self-only, waived while holding no Energy at all.
-  if (hasAbility(card, '溶化流動') && card.attachedEnergy.length === 0) return true;
+  // 溶化流動 / 一身輕: self-only, waived while holding no Energy at all (same shape, different cards).
+  if ((hasAbility(card, '溶化流動') || hasAbility(card, '一身輕')) && card.attachedEnergy.length === 0) return true;
+  // 懦弱: self-only, waived whenever the opponent has a "V" Pokémon in play.
+  if (hasAbility(card, '懦弱')) {
+    const oppIdx = (1 - idx) as 0 | 1;
+    if (teamOf(G, oppIdx).some(c => c.cardData.subtypes.includes('V'))) return true;
+  }
   return false;
 }
 
@@ -300,4 +339,5 @@ export const PASSIVE_ABILITY_NAMES = new Set([
   '怨恨旋渦', '齒輪塗層', '堅忍之軀', '反擊雞冠', '大師工藝',
   '密林之軀', '堅硬甲殼', '炸裂針', '自動用武', '反擊', '球形盾牌', '熔岩波動', '出道演出',
   '生機森巴', '深度下潛', '尾甲', '泥巴膜', '岩石盔甲', '勤奮之心',
+  '神秘守護', '堅硬身軀', '柔軟羊毛', '捲牆', '快掃拳返', '海之詛咒', '鬆口氣', '懦弱', '一身輕', '結實', '反擊針',
 ]);

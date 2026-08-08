@@ -1,6 +1,6 @@
 import { Attack, GameCard } from '@ptcg/shared';
 import { PtcgGameState } from './GameState';
-import { getPassiveDamageBonus, getPassiveDamageReduction, getPassiveMaxHpBonus, getWeaknessTypeOverride, isDamageBlocked, rollBonusPrizeOnActiveKo, shouldExilePrizes } from './effects/passiveAbilities';
+import { getPassiveDamageBonus, getPassiveDamageReduction, getPassiveMaxHpBonus, getPrizeReduction, getWeaknessTypeOverride, isDamageBlocked, rollBonusPrizeOnActiveKo, shouldExilePrizes } from './effects/passiveAbilities';
 import { getToolDamageBonus } from './effects/tools';
 
 /** Rule-box Pokémon (ex/V/VMAX/VSTAR/GX/Mega/TAG TEAM) — same test as prizesForKo below. */
@@ -126,6 +126,8 @@ export function handleKo(G: PtcgGameState, koPlayerIndex: number, koCardId: stri
   let prizeCount = koCard ? prizesForKo(koCard) : 1;
   // 白蕾雅 / 巴貝娜與荷蓮娜-style "next KO this turn gives N extra prizes" — consumed on the first KO after being set.
   if (attackingPlayer.bonusPrizeNextKo > 0) { prizeCount += attackingPlayer.bonusPrizeNextKo; attackingPlayer.bonusPrizeNextKo = 0; }
+  // 鬆口氣: the side that just lost this Pokémon may reduce the opponent's awarded prizes by 1.
+  if (koCard) prizeCount = Math.max(0, prizeCount - getPrizeReduction(G, koPlayerIndex as 0 | 1, koCard));
   // 奇跡之吻: whenever the koPlayer's Active specifically faints (any cause), a coin flip may
   // grant the opposing side (whichever holds the ability) 1 extra prize.
   if (wasActive) prizeCount += rollBonusPrizeOnActiveKo(G, koPlayerIndex as 0 | 1);

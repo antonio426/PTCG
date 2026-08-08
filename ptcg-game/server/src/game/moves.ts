@@ -3,7 +3,7 @@ import { PtcgGameState, PendingChoice } from './GameState';
 import { canPlayPokemon, canEvolve, canAttachEnergy, canRetreat, canAttack, effectiveRetreatCost, FIRST_TURN_SUPPORTER_EXCEPTIONS } from './validation';
 import { clearStatusConditionsOnLeaveActive } from './statusConditions';
 import { calculateDamage, effectiveMaxHp, handleKo, prizesForKo } from './damage';
-import { getBonusPrizesForAttackKo, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, hasPassiveAbilityNamed, onEnergyAttachedFromHand } from './effects/passiveAbilities';
+import { getBonusPrizesForAttackKo, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getScaledRetaliation, hasPassiveAbilityNamed, onEnergyAttachedFromHand } from './effects/passiveAbilities';
 import { isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
 import {
@@ -355,7 +355,8 @@ export const moves = {
       // regardless of whether the hit also knocked the holder out.
       let retaliation = getToolRetaliationDamage(G, defender);
       if (damage > 0 && hasPassiveAbilityNamed(defender, '反擊雞冠')) retaliation += 5;
-      if (damage > 0 && (hasPassiveAbilityNamed(defender, '自動用武') || hasPassiveAbilityNamed(defender, '反擊'))) retaliation += 3;
+      if (damage > 0 && (hasPassiveAbilityNamed(defender, '自動用武') || hasPassiveAbilityNamed(defender, '反擊') || hasPassiveAbilityNamed(defender, '反擊針'))) retaliation += 3;
+      if (damage > 0) retaliation += getScaledRetaliation(defender);
       retaliation += getGrudgeVortexRetaliation(G, defender);
       if (retaliation > 0) {
         attacker.damage += retaliation * 10;
@@ -384,9 +385,9 @@ export const moves = {
           defender.damage = effectiveMaxHp(G, defender) - 10;
         }
       }
-      // 勤奮之心: unconditionally (no coin flip) survives a would-be-lethal hit at 10 HP,
-      // but only if it entered this hit at full HP.
-      if (hasPassiveAbilityNamed(defender, '勤奮之心') && defenderWasFullHp) {
+      // 勤奮之心 / 結實: unconditionally (no coin flip) survives a would-be-lethal hit at 10 HP,
+      // but only if it entered this hit at full HP (same text, different cards).
+      if ((hasPassiveAbilityNamed(defender, '勤奮之心') || hasPassiveAbilityNamed(defender, '結實')) && defenderWasFullHp) {
         const wouldBeLethal = effectiveMaxHp(G, defender) > 0 && defender.damage >= effectiveMaxHp(G, defender);
         if (wouldBeLethal) defender.damage = effectiveMaxHp(G, defender) - 10;
       }

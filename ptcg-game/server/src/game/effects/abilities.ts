@@ -1,7 +1,7 @@
 import { EnergyType, GameCard } from '@ptcg/shared';
 import { EffectContext, EffectHandler, EffectStep, allPokemon, findOwnPokemon, opponent, player } from './types';
 import { handleKo } from '../damage';
-import { discardFromHand, drawCards, drawUpTo, flipCoin, moveDeckCardToHand, shuffleDeck } from './primitives';
+import { discardFromHand, drawCards, drawUpTo, flipCoin, moveDeckCardToBench, moveDeckCardToHand, shuffleDeck } from './primitives';
 import { clearStatusConditionsOnLeaveActive } from '../statusConditions';
 
 /** 偵查指令: look at the top 2 cards of your deck, take 1 to hand, put the rest on the bottom. */
@@ -1557,6 +1557,156 @@ const greedyOrder: EffectHandler = {
   },
 };
 
+/** 再構築: once per turn, discard 2 hand cards as cost, then draw 1. */
+const reconstruction: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.hand.length < 2) return 'done';
+    return {
+      prompt: '再構築：丟棄 2 張手牌',
+      choiceType: 'select_from_list',
+      count: 2,
+      options: p.hand.map(c => ({ id: c.id, label: c.cardData.name })),
+      context: {},
+    };
+  },
+  resume(ctx, _context, selection) {
+    if (selection.length < 2) return 'done';
+    discardFromHand(ctx.G, ctx.playerIndex, selection);
+    drawCards(ctx.G, ctx.playerIndex, 1);
+    return 'done';
+  },
+};
+
+/** 殺手鐧捕捉: real trigger is "on play from hand onto the Bench" — simplified to a regular
+ * once-per-turn triggered ability (same simplification as 狂挖/尖刺纏身/貪慾點餐). Search the deck
+ * for 1 Supporter card, add to hand, reshuffle. The printed same-turn exclusivity with other
+ * "殺手鐧"-prefixed abilities on other cards isn't modeled — only this exact ability name's own
+ * once-per-turn use is enforced (via the normal abilitiesUsedThisTurn tracking). */
+const killerMoveCapture: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const options = p.deck.filter(c => c.cardData.subtypes.includes('Supporter'));
+    if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
+    return { prompt: '殺手鐧捕捉：從牌庫選 1 張支援者卡加入手牌', choiceType: 'select_from_list', count: 1, options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (selection[0]) moveDeckCardToHand(ctx.G, ctx.playerIndex, selection[0]); else shuffleDeck(p.deck);
+    return 'done';
+  },
+};
+
+/** 脫殼: real trigger is "on evolving via this card from hand" — simplified to a regular
+ * once-per-turn triggered ability (same simplification pattern used elsewhere in this file).
+ * Search the deck for 1 named "脫殼忍者", place it directly onto the Bench, reshuffle. */
+const shedShell: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.bench.every(s => s !== null)) return 'done';
+    const match = p.deck.find(c => c.cardData.name === '脫殼忍者');
+    if (!match) { shuffleDeck(p.deck); return 'done'; }
+    moveDeckCardToBench(ctx.G, ctx.playerIndex, match.id);
+    shuffleDeck(p.deck);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 沉雪: real trigger is "on play from hand onto the Bench" — simplified to a regular
+ * once-per-turn triggered ability. Discard whichever Stadium card is currently in play. */
+const snowSink: EffectHandler = {
+  start(ctx) {
+    const G = ctx.G;
+    if (G.activeStadium) {
+      player(G, G.activeStadium.owner).discardPile.push(G.activeStadium);
+      G.activeStadium = null;
+    }
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 使者衝刺: once per turn, only while this Pokémon is Active: draw 2 cards. The printed
+ * same-turn exclusivity with other "使者衝刺" copies is naturally covered by the normal
+ * once-per-turn-by-name tracking. */
+const messengerDash: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.active?.id !== ctx.sourceCardId) return 'done';
+    drawCards(ctx.G, ctx.playerIndex, 2);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 激動渦輪: unlimited use per turn, gated on own field having a Fire-type "超級進化...ex"
+ * (Mega Evolution ex) Pokémon in play. Attach 1 Basic Fire Energy from hand to a Benched Fire
+ * Pokémon. */
+const excitedTurbine: EffectHandler = {
+  unlimitedUse: true,
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const hasGate = allPokemon(ctx.G, ctx.playerIndex).some(c => c.cardData.name.startsWith('超級')
+      && c.cardData.subtypes.includes('ex') && (c.cardData.types || []).includes('Fire'));
+    if (!hasGate) return 'done';
+    const options = p.hand.filter(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes('Fire'));
+    const targets = p.bench.filter((c): c is GameCard => c !== null && (c.cardData.types || []).includes('Fire'));
+    if (options.length === 0 || targets.length === 0) return 'done';
+    return {
+      prompt: '激動渦輪：選 1 張基本火能量卡',
+      choiceType: 'select_from_list',
+      count: 1,
+      options: options.map(c => ({ id: c.id, label: c.cardData.name })),
+      context: { step: 'pick_energy' },
+    };
+  },
+  resume(ctx, context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (context.step === 'pick_energy') {
+      const targets = p.bench.filter((c): c is GameCard => c !== null && (c.cardData.types || []).includes('Fire'));
+      if (targets.length === 0) return 'done';
+      return {
+        prompt: '激動渦輪：選擇要附加能量的備戰火寶可夢',
+        choiceType: 'select_pokemon',
+        count: 1,
+        options: targets.map(t => ({ id: t.id, label: t.cardData.name })),
+        context: { step: 'pick_target', energyId: selection[0] },
+      };
+    }
+    const target = p.bench.find(c => c?.id === selection[0]);
+    const energyId = context.energyId as string;
+    const i = p.hand.findIndex(c => c.id === energyId);
+    if (target && i >= 0) {
+      const energy = p.hand.splice(i, 1)[0];
+      target.attachedEnergy.push({ id: energy.id, type: 'Fire' });
+    }
+    return 'done';
+  },
+};
+
+/** 快節奏: once per turn, put 1 hand card on the bottom of the deck as a cost, then draw back up to 5. */
+const quickTempo: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.hand.length === 0) return 'done';
+    return {
+      prompt: '快節奏：選 1 張手牌放回牌庫下方',
+      choiceType: 'select_from_list',
+      count: 1,
+      options: p.hand.map(c => ({ id: c.id, label: c.cardData.name })),
+      context: {},
+    };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const i = p.hand.findIndex(c => c.id === selection[0]);
+    if (i >= 0) p.deck.unshift(p.hand.splice(i, 1)[0]);
+    drawUpTo(ctx.G, ctx.playerIndex, 5);
+    return 'done';
+  },
+};
+
 export const abilityEffects: Record<string, EffectHandler> = {
   '偵查指令': strategicCommand,
   '咒詛炸彈': curseBomb,
@@ -1637,6 +1787,14 @@ export const abilityEffects: Record<string, EffectHandler> = {
   '尖刺纏身': spikeCling,
   '誘導之尾': luringTail,
   '貪慾點餐': greedyOrder,
+
+  '再構築': reconstruction,
+  '殺手鐧捕捉': killerMoveCapture,
+  '脫殼': shedShell,
+  '沉雪': snowSink,
+  '使者衝刺': messengerDash,
+  '激動渦輪': excitedTurbine,
+  '快節奏': quickTempo,
 };
 
 export function hasAbilityEffect(name: string): boolean {
