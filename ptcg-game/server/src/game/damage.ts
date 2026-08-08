@@ -68,7 +68,7 @@ export function calculateDamage(G: PtcgGameState, attackerIdx: 0 | 1, attacker: 
   const weaknessOverride = getWeaknessTypeOverride(G, (1 - attackerIdx) as 0 | 1, defender);
   const afterWeakness = applyWeaknessResistance(baseDamage, attacker, defender, weaknessOverride);
   const defenderIdx = (1 - attackerIdx) as 0 | 1;
-  let reduction = getPassiveDamageReduction(G, defender);
+  let reduction = getPassiveDamageReduction(G, defender, attacker);
   for (const r of G.players[defenderIdx].incomingDamageReduction) {
     if (r.typeFilter && !(defender.cardData.types || []).includes(r.typeFilter as any)) continue;
     reduction += r.amount;
@@ -95,7 +95,7 @@ export function prizesForKo(card: GameCard): number {
   return 1;
 }
 
-export function handleKo(G: PtcgGameState, koPlayerIndex: number, koCardId: string): void {
+export function handleKo(G: PtcgGameState, koPlayerIndex: number, koCardId: string, attackerCard?: GameCard): void {
   const koPlayer = G.players[koPlayerIndex as 0 | 1];
   const attackingPlayer = G.players[(1 - koPlayerIndex) as 0 | 1];
   let koCard: GameCard | undefined;
@@ -127,7 +127,7 @@ export function handleKo(G: PtcgGameState, koPlayerIndex: number, koCardId: stri
   // 白蕾雅 / 巴貝娜與荷蓮娜-style "next KO this turn gives N extra prizes" — consumed on the first KO after being set.
   if (attackingPlayer.bonusPrizeNextKo > 0) { prizeCount += attackingPlayer.bonusPrizeNextKo; attackingPlayer.bonusPrizeNextKo = 0; }
   // 鬆口氣: the side that just lost this Pokémon may reduce the opponent's awarded prizes by 1.
-  if (koCard) prizeCount = Math.max(0, prizeCount - getPrizeReduction(G, koPlayerIndex as 0 | 1, koCard));
+  if (koCard) prizeCount = Math.max(0, prizeCount - getPrizeReduction(G, koPlayerIndex as 0 | 1, koCard, attackerCard));
   // 奇跡之吻: whenever the koPlayer's Active specifically faints (any cause), a coin flip may
   // grant the opposing side (whichever holds the ability) 1 extra prize.
   if (wasActive) prizeCount += rollBonusPrizeOnActiveKo(G, koPlayerIndex as 0 | 1);

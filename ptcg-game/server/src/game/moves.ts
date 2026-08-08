@@ -3,7 +3,7 @@ import { PtcgGameState, PendingChoice } from './GameState';
 import { canPlayPokemon, canEvolve, canAttachEnergy, canRetreat, canAttack, effectiveRetreatCost, FIRST_TURN_SUPPORTER_EXCEPTIONS } from './validation';
 import { clearStatusConditionsOnLeaveActive } from './statusConditions';
 import { calculateDamage, effectiveMaxHp, handleKo, prizesForKo } from './damage';
-import { getBonusPrizesForAttackKo, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getScaledRetaliation, hasPassiveAbilityNamed, isRetreatBlockedByOpponent, onEnergyAttachedFromHand } from './effects/passiveAbilities';
+import { getBonusPrizesForAttackKo, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasPassiveAbilityNamed, isRetreatBlockedByOpponent, onEnergyAttachedFromHand, shouldConfuseOnOpponentRetreat } from './effects/passiveAbilities';
 import { isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
 import {
@@ -319,6 +319,19 @@ export const moves = {
     player.bench[benchIdx] = player.active;
     player.active = benchPokemon;
     addLog(G, G.currentPlayer, 'retreat', `Retreated to ${benchPokemon!.cardData.name}`);
+
+    // 凹洞: 2 damage counters land on the Pokémon that just retreated (now benched).
+    const punishCounters = getRetreatPunishmentCounters(G, G.currentPlayer as 0 | 1);
+    if (punishCounters > 0) {
+      activePokemon.damage += punishCounters * 10;
+      const hp = effectiveMaxHp(G, activePokemon);
+      if (hp > 0 && activePokemon.damage >= hp) handleKo(G, G.currentPlayer, activePokemon.id);
+    }
+    // 漩渦言靈: the newly promoted Pokémon gets Confused.
+    if (shouldConfuseOnOpponentRetreat(G, G.currentPlayer as 0 | 1) && player.active) {
+      player.active.statusConditions = player.active.statusConditions.filter(c => !['Asleep', 'Paralyzed', 'Confused'].includes(c));
+      player.active.statusConditions.push('Confused');
+    }
   },
 
   attack: ({ G, ctx }: { G: PtcgGameState; ctx: any }, attackIndex: number) => {
@@ -399,7 +412,7 @@ export const moves = {
 
       const defenderHp = effectiveMaxHp(G, defender);
       if (defender.damage >= defenderHp && defenderHp > 0) {
-        handleKo(G, 1 - G.currentPlayer, defender.id);
+        handleKo(G, 1 - G.currentPlayer, defender.id, attacker);
         addLog(G, G.currentPlayer, 'ko', `Knocked out ${defender.cardData.name}`);
         // 貪婪食客: this Pokémon's own attack KOing an opponent's Basic Pokémon awards 1 extra prize.
         const bonus = getBonusPrizesForAttackKo(G, G.currentPlayer as 0 | 1, attacker, defender);

@@ -1951,6 +1951,349 @@ const skyburstHunt: EffectHandler = {
   resume() { return 'done'; },
 };
 
+/** 岩石武裝: once per turn, from hand, 1 Basic Fighting Energy, attach to an own Fighting Pokémon. */
+const rockArmament = attachEnergyFromHandAbility('岩石武裝', 'Fighting', 1, false);
+
+/** 百花齊放: once per turn, search the deck for 1 "莉佳的" family Pokémon, add to hand, reshuffle. */
+const flowerBloom: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const options = p.deck.filter(c => c.cardData.supertype === 'Pokémon' && c.cardData.name.includes('莉佳的'));
+    if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
+    return { prompt: '百花齊放：從牌庫選 1 張「莉佳的寶可夢」加入手牌', choiceType: 'select_from_list', count: 1, options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (selection[0]) moveDeckCardToHand(ctx.G, ctx.playerIndex, selection[0]); else shuffleDeck(p.deck);
+    return 'done';
+  },
+};
+
+/** 能量舞步: real trigger is "on evolving via this card from hand" — simplified to a regular
+ * once-per-turn triggered ability. Look at the top 4 deck cards, attach any number of the Basic
+ * Energy cards among them to 1 chosen own Pokémon (simplified to a single target rather than
+ * per-card distribution), shuffle the rest back. */
+const energyDance: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const top = p.deck.slice(-4);
+    const energyOptions = top.filter(c => c.cardData.subtypes.includes('Basic Energy'));
+    if (energyOptions.length === 0) { return 'done'; }
+    return {
+      prompt: '能量舞步：牌庫最上方 4 張中，選任意數量基本能量卡',
+      choiceType: 'select_from_list',
+      maxCount: energyOptions.length,
+      options: energyOptions.map(c => ({ id: c.id, label: c.cardData.name })),
+      context: { step: 'pick_energy', seenIds: top.map(c => c.id) },
+    };
+  },
+  resume(ctx, context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (context.step === 'pick_energy') {
+      const seenIds = context.seenIds as string[];
+      // Pull the 4 seen cards off the deck now; non-selected ones go back at the bottom, reshuffled.
+      const seen: GameCard[] = [];
+      for (const id of seenIds) {
+        const i = p.deck.findIndex(c => c.id === id);
+        if (i >= 0) seen.push(p.deck.splice(i, 1)[0]);
+      }
+      const notChosen = seen.filter(c => !selection.includes(c.id));
+      p.deck.unshift(...notChosen);
+      shuffleDeck(p.deck);
+      if (selection.length === 0) return 'done';
+      const targets = allPokemon(ctx.G, ctx.playerIndex);
+      if (targets.length === 0) return 'done';
+      return {
+        prompt: '能量舞步：選擇要附加能量的寶可夢',
+        choiceType: 'select_pokemon',
+        count: 1,
+        options: targets.map(t => ({ id: t.id, label: t.cardData.name })),
+        context: { step: 'pick_target', energyCards: selection.map(id => seen.find(c => c.id === id)).filter((c): c is GameCard => !!c).map(c => ({ id: c.id, type: c.cardData.types?.[0] || 'Colorless' })) },
+      };
+    }
+    const target = allPokemon(ctx.G, ctx.playerIndex).find(t => t.id === selection[0]);
+    const energyCards = context.energyCards as { id: string; type: string }[];
+    if (target) {
+      for (const e of energyCards) target.attachedEnergy.push({ id: e.id, type: e.type as any });
+    }
+    return 'done';
+  },
+};
+
+/** 臨場之錘: real trigger is "on evolving via this card from hand" — simplified to a regular
+ * once-per-turn triggered ability. Coin flip; on heads, discard 1 Energy attached to the
+ * opponent's Active. */
+const timelyHammer: EffectHandler = {
+  start(ctx) {
+    if (!flipCoin()) return 'done';
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    if (!opp.active || opp.active.attachedEnergy.length === 0) return 'done';
+    return { prompt: '臨場之錘：擲硬幣結果為正面，選 1 張對手戰鬥寶可夢身上的能量丟棄', choiceType: 'select_from_list', count: 1, options: opp.active.attachedEnergy.map(e => ({ id: e.id, label: e.type })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    if (opp.active) {
+      const i = opp.active.attachedEnergy.findIndex(e => e.id === selection[0]);
+      if (i >= 0) opp.active.attachedEnergy.splice(i, 1);
+    }
+    return 'done';
+  },
+};
+
+/** 頸傘發電: real gate is "played 卡娜莉 from hand THIS turn" — simplified to "卡娜莉 is in play"
+ * (no same-turn-play tracker exists for arbitrary named cards). Once per turn, deck search up to
+ * 2 Basic Lightning Energy, attach to self, reshuffle. */
+const napeUmbrellaGenerator: EffectHandler = {
+  start(ctx) {
+    const hasGate = allPokemon(ctx.G, ctx.playerIndex).some(c => c.cardData.name === '卡娜莉');
+    if (!hasGate) return 'done';
+    const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
+    const p = player(ctx.G, ctx.playerIndex);
+    const options = p.deck.filter(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes('Lightning'));
+    if (!self || options.length === 0) { shuffleDeck(p.deck); return 'done'; }
+    return {
+      prompt: '頸傘發電：從牌庫選最多 2 張基本雷能量卡附於自己身上',
+      choiceType: 'select_from_list',
+      maxCount: Math.min(2, options.length),
+      options: options.map(c => ({ id: c.id, label: c.cardData.name })),
+      context: {},
+    };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
+    if (self) {
+      for (const id of selection) {
+        const i = p.deck.findIndex(c => c.id === id);
+        if (i === -1) continue;
+        const energy = p.deck.splice(i, 1)[0];
+        self.attachedEnergy.push({ id: energy.id, type: 'Lightning' });
+      }
+    }
+    shuffleDeck(p.deck);
+    return 'done';
+  },
+};
+
+/** 微風吹拂: once per turn, coin flip; on heads, remove 1 Energy attached to the opponent's
+ * Active. Printed text returns it to their hand, but attachedEnergy only tracks {id,type}, not
+ * a full Card object, so there's nothing to reconstruct into a hand card — simplified to
+ * discard instead (same documented simplification as 悠哉尾草棒 elsewhere in this codebase). */
+const gentleBreeze: EffectHandler = {
+  start(ctx) {
+    if (!flipCoin()) return 'done';
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    if (!opp.active || opp.active.attachedEnergy.length === 0) return 'done';
+    return { prompt: '微風吹拂：擲硬幣結果為正面，選 1 張對手戰鬥寶可夢身上的能量丟棄', choiceType: 'select_from_list', count: 1, options: opp.active.attachedEnergy.map(e => ({ id: e.id, label: e.type })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    if (opp.active) {
+      const i = opp.active.attachedEnergy.findIndex(e => e.id === selection[0]);
+      if (i >= 0) opp.active.attachedEnergy.splice(i, 1);
+    }
+    return 'done';
+  },
+};
+
+/** 蒐證: once per turn, choose 1 hand card and swap it with the top card of the deck. */
+const evidenceGathering: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.hand.length === 0 || p.deck.length === 0) return 'done';
+    return { prompt: '蒐證：選 1 張手牌與牌庫最上方交換', choiceType: 'select_from_list', count: 1, options: p.hand.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const handIdx = p.hand.findIndex(c => c.id === selection[0]);
+    if (handIdx === -1 || p.deck.length === 0) return 'done';
+    const top = p.deck.pop()!;
+    const handCard = p.hand.splice(handIdx, 1)[0];
+    p.deck.push(handCard);
+    p.hand.push(top);
+    return 'done';
+  },
+};
+
+/** 日光轉移: unlimited use per turn — move 1 attached Basic Grass Energy from one own Pokémon to another. */
+const sunlightTransfer: EffectHandler = {
+  unlimitedUse: true,
+  start(ctx) {
+    const sources = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.attachedEnergy.some(e => e.type === 'Grass'));
+    if (sources.length === 0) return 'done';
+    return { prompt: '日光轉移：選 1 隻己方寶可夢身上的基本草能量', choiceType: 'select_from_list', count: 1, options: sources.flatMap(c => c.attachedEnergy.filter(e => e.type === 'Grass').map(e => ({ id: e.id, label: `${c.cardData.name}：${e.type}` }))), context: { step: 'pick_energy' } };
+  },
+  resume(ctx, context, selection) {
+    if (context.step === 'pick_energy') {
+      const targets = allPokemon(ctx.G, ctx.playerIndex);
+      if (targets.length === 0) return 'done';
+      return {
+        prompt: '日光轉移：選擇要移入能量的寶可夢',
+        choiceType: 'select_pokemon',
+        count: 1,
+        options: targets.map(t => ({ id: t.id, label: t.cardData.name })),
+        context: { step: 'pick_target', energyId: selection[0] },
+      };
+    }
+    const energyId = context.energyId as string;
+    const source = allPokemon(ctx.G, ctx.playerIndex).find(c => c.attachedEnergy.some(e => e.id === energyId));
+    const target = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === selection[0]);
+    if (source && target && source.id !== target.id) {
+      const i = source.attachedEnergy.findIndex(e => e.id === energyId);
+      if (i >= 0) target.attachedEnergy.push(source.attachedEnergy.splice(i, 1)[0]);
+    }
+    return 'done';
+  },
+};
+
+/** 返回重載: real trigger is "on retreating from Active to Bench" — simplified to a regular
+ * once-per-turn triggered ability usable while Benched (no same-turn-retreat tracker exists).
+ * From hand, up to 2 Basic Water Energy, attach to self. */
+const returnReload: EffectHandler = {
+  start(ctx) {
+    const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
+    const p = player(ctx.G, ctx.playerIndex);
+    const options = p.hand.filter(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes('Water'));
+    if (!self || options.length === 0) return 'done';
+    return {
+      prompt: '返回重載：從手牌選最多 2 張基本水能量卡附於自己身上',
+      choiceType: 'select_from_list',
+      maxCount: Math.min(2, options.length),
+      options: options.map(c => ({ id: c.id, label: c.cardData.name })),
+      context: {},
+    };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
+    if (self) {
+      for (const id of selection) {
+        const i = p.hand.findIndex(c => c.id === id);
+        if (i === -1) continue;
+        const energy = p.hand.splice(i, 1)[0];
+        self.attachedEnergy.push({ id: energy.id, type: 'Water' });
+      }
+    }
+    return 'done';
+  },
+};
+
+/** 溫柔鰭: only while Active, once per turn: from the discard pile, choose 1 Basic Pokémon with
+ * printed HP <= 70, place it directly onto the Bench. */
+const gentleFin: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.active?.id !== ctx.sourceCardId) return 'done';
+    if (p.bench.every(s => s !== null)) return 'done';
+    const options = p.discardPile.filter(c => c.cardData.supertype === 'Pokémon' && c.cardData.subtypes.includes('Basic') && parseInt(c.cardData.hp || '999', 10) <= 70);
+    if (options.length === 0) return 'done';
+    return { prompt: '溫柔鰭：從棄牌區選 1 張 HP70 以下的基礎寶可夢放置於備戰區', choiceType: 'select_from_list', count: 1, options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const slot = p.bench.findIndex(s => s === null);
+    const i = p.discardPile.findIndex(c => c.id === selection[0]);
+    if (slot >= 0 && i >= 0) p.bench[slot] = p.discardPile.splice(i, 1)[0];
+    return 'done';
+  },
+};
+
+/** 瞄準獵物: once per turn, look at the opponent's hand and choose 1 Basic Pokémon with printed
+ * HP <= 70, placing it directly onto the OPPONENT's Bench. */
+const targetPrey: EffectHandler = {
+  start(ctx) {
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    if (opp.bench.every(s => s !== null)) return 'done';
+    const options = opp.hand.filter(c => c.cardData.supertype === 'Pokémon' && c.cardData.subtypes.includes('Basic') && parseInt(c.cardData.hp || '999', 10) <= 70);
+    if (options.length === 0) return 'done';
+    return { prompt: '瞄準獵物：查看對手手牌，選 1 張 HP70 以下的基礎寶可夢放置於對手備戰區', choiceType: 'select_from_list', count: 1, options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    const slot = opp.bench.findIndex(s => s === null);
+    const i = opp.hand.findIndex(c => c.id === selection[0]);
+    if (slot >= 0 && i >= 0) opp.bench[slot] = opp.hand.splice(i, 1)[0];
+    return 'done';
+  },
+};
+
+/** 飛葉治癒: once per turn, heal your own Active 20 HP. */
+const leafHealing: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.active) p.active.damage = Math.max(0, p.active.damage - 20);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 激流旋渦: once per turn, swap your own Active <-> a chosen Bench Pokémon, then also
+ * force-swap the opponent's Active <-> a chosen Benched Pokémon (the ability's controller picks
+ * the opponent's replacement too — the same simplification used by every other force-switch
+ * ability in this file, since the opponent side isn't independently interactive here). */
+const torrentVortex: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (!p.active || !p.bench.some(s => s !== null)) return 'done';
+    return { prompt: '激流旋渦：選擇己方要換上場的備戰寶可夢', choiceType: 'select_pokemon', count: 1, options: p.bench.filter((s): s is GameCard => s !== null).map(c => ({ id: c.id, label: c.cardData.name })), context: { step: 'own_switch' } };
+  },
+  resume(ctx, context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (context.step === 'own_switch') {
+      const idx = p.bench.findIndex(c => c?.id === selection[0]);
+      if (idx >= 0 && p.active) { const b = p.bench[idx]!; clearStatusConditionsOnLeaveActive(p.active); p.bench[idx] = p.active; p.active = b; }
+      const opp = opponent(ctx.G, ctx.playerIndex);
+      const oppBenched = opp.bench.filter((c): c is GameCard => c !== null);
+      if (!opp.active || oppBenched.length === 0) return 'done';
+      return { prompt: '激流旋渦：選擇對手要換上場的備戰寶可夢', choiceType: 'select_from_list', count: 1, options: oppBenched.map(c => ({ id: c.id, label: c.cardData.name })), context: { step: 'opp_switch' } };
+    }
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    const idx = opp.bench.findIndex(c => c?.id === selection[0]);
+    if (idx >= 0 && opp.active) { const b = opp.bench[idx]!; clearStatusConditionsOnLeaveActive(opp.active); opp.bench[idx] = opp.active; opp.active = b; }
+    return 'done';
+  },
+};
+
+/** 任選黏液: once per turn, coin flip; on heads, choose Poison/Burn/Confused and inflict it on the opponent's Active. */
+const pickAnyMucus: EffectHandler = {
+  start(ctx) {
+    if (!flipCoin()) return 'done';
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    if (!opp.active) return 'done';
+    return {
+      prompt: '任選黏液：擲硬幣結果為正面，選擇要施加的特殊狀態',
+      choiceType: 'select_from_list',
+      count: 1,
+      options: [{ id: 'Poisoned', label: '中毒' }, { id: 'Burned', label: '灼傷' }, { id: 'Confused', label: '混亂' }],
+      context: {},
+    };
+  },
+  resume(ctx, _context, selection) {
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    const condition = selection[0] as 'Poisoned' | 'Burned' | 'Confused';
+    if (opp.active) applyStatusCondition(opp.active, condition);
+    return 'done';
+  },
+};
+
+/** 激動治癒: once per turn, gated on own field having a Grass "超級進化...ex" (Mega ex) anywhere;
+ * fully heal — actually heals 60 HP off — 1 chosen own Pokémon. */
+const excitedHealing: EffectHandler = {
+  start(ctx) {
+    const hasGate = allPokemon(ctx.G, ctx.playerIndex).some(c => c.cardData.name.startsWith('超級')
+      && c.cardData.subtypes.includes('ex') && (c.cardData.types || []).includes('Grass'));
+    if (!hasGate) return 'done';
+    const targets = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.damage > 0);
+    if (targets.length === 0) return 'done';
+    return { prompt: '激動治癒：選 1 隻己方寶可夢回復 60 HP', choiceType: 'select_from_list', count: 1, options: targets.map(c => ({ id: c.id, label: `${c.cardData.name}（${c.damage} 傷害）` })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const target = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === selection[0]);
+    if (target) target.damage = Math.max(0, target.damage - 60);
+    return 'done';
+  },
+};
+
 export const abilityEffects: Record<string, EffectHandler> = {
   '偵查指令': strategicCommand,
   '咒詛炸彈': curseBomb,
@@ -2052,6 +2395,22 @@ export const abilityEffects: Record<string, EffectHandler> = {
   '怨恨進化': grudgeEvolution,
   '金屬之路': metalRoad,
   '穹天狩獵': skyburstHunt,
+
+  '岩石武裝': rockArmament,
+  '百花齊放': flowerBloom,
+  '能量舞步': energyDance,
+  '臨場之錘': timelyHammer,
+  '頸傘發電': napeUmbrellaGenerator,
+  '微風吹拂': gentleBreeze,
+  '蒐證': evidenceGathering,
+  '日光轉移': sunlightTransfer,
+  '返回重載': returnReload,
+  '溫柔鰭': gentleFin,
+  '瞄準獵物': targetPrey,
+  '飛葉治癒': leafHealing,
+  '激流旋渦': torrentVortex,
+  '任選黏液': pickAnyMucus,
+  '激動治癒': excitedHealing,
 };
 
 export function hasAbilityEffect(name: string): boolean {
