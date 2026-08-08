@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Card, LegalAction, TurnAction } from '@ptcg/shared';
+import type { Card, LegalAction, TurnAction, PendingChoice } from '@ptcg/shared';
 
 /* ------------------------------------------------------- */
 /*  Types mirroring server response                        */
@@ -41,6 +41,7 @@ export interface BattleState {
   turnLog: TurnAction[];
   winner: number | null;
   winReason: string | null;
+  pendingChoice: PendingChoice | null;
 }
 
 export type BattlePhase = 'select' | 'playing' | 'ended';

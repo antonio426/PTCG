@@ -1,10 +1,11 @@
 import Router from '@koa/router';
 import { randomUUID } from 'crypto';
 import { Card, LegalAction, TurnAction, GameActionType } from '@ptcg/shared';
-import type { PtcgGameState } from '../game/GameState';
+import type { PtcgGameState, PendingChoice } from '../game/GameState';
 import { setup } from '../game/setup';
 import { getLegalMoves } from '../game/validation';
 import { moves } from '../game/moves';
+import { processBetweenTurns, processWakeUpCheck } from '../game/statusConditions';
 import { fetchCardsByIds } from '../card-api/tcgdex';
 import { MockAI, IAIPlayer } from '../ai/aiPlayer';
 
@@ -46,6 +47,8 @@ interface BattleStateResponse {
   turnLog: TurnAction[];
   winner: number | null;
   winReason: string | null;
+  /** Set while a multi-step trainer/ability effect (e.g. Ultra Ball) is awaiting the player's answer. */
+  pendingChoice: PendingChoice | null;
 }
 
 interface BattleSession {
@@ -81,7 +84,10 @@ function buildResponse(session: BattleSession): BattleStateResponse {
 
   return {
     player: {
-      hand: player.hand.map(c => c.cardData),
+      // Override the catalog id with the game-instance id (e.g. "SV6-016_2") — legalMoves'
+      // payload.cardId always refers to the instance, so the client's hand-to-move matching
+      // (groupMovesByHandCard) needs the same id here, not the shared catalog id.
+      hand: player.hand.map(c => ({ ...c.cardData, id: c.id })),
       active: sanitizeCard(player.active),
       bench: player.bench.map(c => sanitizeCard(c)),
       prizes: player.prizes.length,
@@ -103,6 +109,7 @@ function buildResponse(session: BattleSession): BattleStateResponse {
     turnLog: G.turnLog,
     winner: G.winner,
     winReason: G.winReason,
+    pendingChoice: G.pendingChoice && G.pendingChoice.player === 0 ? G.pendingChoice : null,
   };
 }
 
@@ -132,7 +139,9 @@ function checkAndApplyWin(G: PtcgGameState): boolean {
 }
 
 function applyTurnBegin(G: PtcgGameState): void {
+  if (G.turn > 1) processBetweenTurns(G);
   G.phase = G.turn === 1 ? 'main' : 'draw';
+  processWakeUpCheck(G, G.currentPlayer as 0 | 1);
   const player = G.players[G.currentPlayer];
   player.energyAttachedThisTurn = 0;
   player.basicPokemonPlayedThisTurn = 0;
@@ -155,7 +164,8 @@ function executeGameAction(G: PtcgGameState, action: { type: string; payload?: R
     case 'attach_energy': moves.attachEnergy({ G, ctx }, p.cardId as string, p.targetId as string); break;
     case 'play_trainer': moves.playTrainer({ G, ctx }, p.cardId as string); break;
     case 'use_ability': moves.useAbility({ G, ctx }, p.cardId as string); break;
-    case 'retreat': moves.retreat({ G, ctx }, p.targetBenchPosition as number); break;
+    case 'resolve_choice': moves.resolveChoice({ G, ctx }, p.selection as string[]); break;
+    case 'retreat': moves.retreat({ G, ctx }, p.targetBenchPosition as number, p.discardEnergyIds as string[]); break;
     case 'attack': moves.attack({ G, ctx }, p.attackIndex as number); break;
     case 'end_turn': moves.endTurn({ G, ctx }); break;
     case 'forfeit': moves.forfeit({ G, ctx }); break;

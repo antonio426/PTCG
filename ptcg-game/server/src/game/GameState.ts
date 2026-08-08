@@ -1,4 +1,6 @@
-import { GameCard, TurnAction } from '@ptcg/shared';
+import { GameCard, TurnAction, PendingChoice } from '@ptcg/shared';
+
+export type { PendingChoice };
 
 export interface PtcgPlayerState {
   deck: GameCard[];
@@ -23,6 +25,9 @@ export interface PtcgGameState {
   winner: number | null;
   winReason: string | null;
   turnLog: TurnAction[];
+  pendingChoice: PendingChoice | null;
+  /** Only one Stadium card may be in play at a time; playing a new one discards the old (to its owner's pile). */
+  activeStadium: GameCard | null;
 }
 
 export type GamePhase = PtcgGameState['phase'];

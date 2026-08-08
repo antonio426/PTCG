@@ -5,6 +5,15 @@ import { MAX_DECK_SIZE } from '@ptcg/shared';
 import type { Card, Supertype, EnergyType, Subtype } from '@ptcg/shared';
 import type { SortOrder } from '../stores/cardStore';
 
+/** 29 ACE SPEC card names (zh-tw) — matched by name like the MEGA prefix tag */
+const ACE_SPEC_NAMES = [
+  '危險光線', '中立中心', '寶可生機劑A', '釣竿MAX', '極限腰帶', '頂尖捕捉器',
+  '寶可夢旋風回收機', '璀璨結晶', '珍寶配件', '奢華炸彈', '壯偉碩木', '覺醒戰鼓',
+  '英雄斗篷', '高級香氛', '大師球', '重新啟動箱', '倖存鍛鍊器', '不公印章',
+  '古舊能量', '能量輸送PRO', '百萬噸吹風機', '奇跡耳麥', '貴重手推車', '急進開關',
+  '富裕能量', '完全體攪拌器', '希望護身符', '秘密箱', '新衝天能量',
+] as const;
+
 // ---- Card type filter defs (same as CardBrowser) ----
 const CARD_TYPE_DEFS = [
   { label: '寶可夢', supertype: 'Pokémon' as Supertype },
@@ -13,7 +22,7 @@ const CARD_TYPE_DEFS = [
   { label: '寶可夢道具', subtype: 'Pokémon Tool' as Subtype },
   { label: '競技場', subtype: 'Stadium' as Subtype },
   { label: '物品', subtype: 'Item' as Subtype },
-  { label: 'ACE SPEC', rarity: 'ACE SPEC Rare' },
+  { label: 'ACE SPEC', names: ACE_SPEC_NAMES },
 ] as const;
 
 // ---- Evolution stage filter defs ----
@@ -84,20 +93,8 @@ const RARITY_OPTIONS: { label: string; value: string }[] = [
   { label: 'Common', value: 'Common' },
   { label: 'Uncommon', value: 'Uncommon' },
   { label: 'Rare', value: 'Rare' },
-  { label: 'Rare Holo', value: 'Rare Holo' },
-  { label: 'Rare Holo V', value: 'Rare Holo V' },
-  { label: 'Rare Holo VMAX', value: 'Rare Holo VMAX' },
-  { label: 'Rare Holo VSTAR', value: 'Rare Holo VSTAR' },
-  { label: 'Rare Ultra', value: 'Rare Ultra' },
-  { label: 'Rare Rainbow', value: 'Rare Rainbow' },
-  { label: 'Rare Secret', value: 'Rare Secret' },
-  { label: 'Rare Shiny', value: 'Rare Shiny' },
-  { label: 'Rare Shiny Holo', value: 'Rare Shiny Holo' },
-  { label: 'Rare Shiny Ultra', value: 'Rare Shiny Ultra' },
-  { label: 'Rare ACE SPEC', value: 'Rare ACE SPEC' },
-  { label: 'Rare BREAK', value: 'Rare BREAK' },
-  { label: 'Amazing', value: 'Amazing' },
-  { label: 'Promo', value: 'Promo' },
+  { label: 'Double Rare', value: 'Double rare' },
+  { label: 'None', value: 'None' },
 ];
 
 const PAGE_SIZE = 24;
@@ -255,6 +252,7 @@ export default function DeckBuilder() {
         if ('supertype' in def) typeMatch = c.supertype === def.supertype;
         if ('subtype' in def) typeMatch = c.subtypes?.includes(def.subtype);
         if ('rarity' in def) typeMatch = c.rarity === def.rarity;
+        if ('names' in def) typeMatch = def.names.includes(c.name);
         if ('excludeSubtypes' in def && def.excludeSubtypes) {
           typeMatch = typeMatch && !def.excludeSubtypes.some(s => c.subtypes?.includes(s));
         }

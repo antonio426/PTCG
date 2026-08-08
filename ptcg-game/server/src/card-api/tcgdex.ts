@@ -69,6 +69,11 @@ const SUFFIX_MAP: Record<string, Subtype | undefined> = {
   'MEGA': 'Mega',
 };
 
+// A Basic Energy card's name unambiguously encodes it (e.g. "基本【草】能量") — used to
+// override TCGdex's own energyType/legal.standard fields, which are unreliable for some
+// promo/box-exclusive reprints (e.g. SVB/SI/SVC sets).
+const BASIC_ENERGY_NAME_RE = /^基本[【\[]([^】\]]+)[】\]]能量$/;
+
 function buildSubtypes(detail: TcgdexCardDetail): Subtype[] {
   const result: Subtype[] = [];
   if (detail.category === 'Pokemon' || detail.category === 'Pokémon') {
@@ -77,8 +82,9 @@ function buildSubtypes(detail: TcgdexCardDetail): Subtype[] {
   } else if (detail.category === 'Trainer' && detail.trainerType) {
     result.push(TRAINER_TYPE_MAP[detail.trainerType] ?? detail.trainerType as Subtype);
   } else if (detail.category === 'Energy') {
-    // TCGdex energyType: "Normal" = Basic Energy, "Special" = Special Energy
-    result.push(detail.energyType === 'Normal' ? 'Basic Energy' : 'Special Energy');
+    // TCGdex energyType: "Normal" = Basic Energy, "Special" = Special Energy.
+    const isBasicByName = BASIC_ENERGY_NAME_RE.test(detail.name || '');
+    result.push(detail.energyType === 'Normal' || isBasicByName ? 'Basic Energy' : 'Special Energy');
   }
   return result;
 }
@@ -138,12 +144,52 @@ function buildRetreatCost(retreat: number | undefined): { cost: EnergyType[]; co
   return { cost, converted: r };
 }
 
+// Official Standard-format regulation marks (asia.pokemon-card.com/tw/rules/regulation/):
+// 「卡面左下方的『賽制標記』標示為H、I、J者」— cards with no regulation mark are NOT
+// standard-legal even when TCGdex's own `legal.standard` flag says so (TCGdex's flag is
+// unreliable for old/no-mark reprints, e.g. Mega Evolution tactical-deck exclusives).
+// NOTE: the official rules also carve out ~25 specific G-marked reprints (basic energy,
+// Energy Retrieval, etc.) as a named exception — that allowlist is NOT "every G card",
+// so it is deliberately left OUT of this generic regulation-mark check. Those specific
+// cards are instead confirmed via a direct match against the scraped official Standard
+// card list (see server/src/scripts/reconcile-official-data.ts), which is ground truth.
+const STANDARD_REGULATION_MARKS = new Set(['H', 'I', 'J']);
+
+// Real-rules exception: Basic Energy cards are Standard-legal in any print, regardless of
+// regulation mark — TCGdex's own `legal.standard`/`regulationMark` are unreliable for these
+// promo/box-exclusive reprints (see BASIC_ENERGY_NAME_RE above).
+function isStandardLegal(detail: TcgdexCardDetail): boolean {
+  if (detail.category === 'Energy' && BASIC_ENERGY_NAME_RE.test(detail.name || '')) return true;
+  if (!detail.legal?.standard) return false;
+  return !!detail.regulationMark && STANDARD_REGULATION_MARKS.has(detail.regulationMark);
+}
+
+// TCGdex never populates `detail.types` for Energy-supertype cards (that field is a Pokémon
+// concept there) — but a Basic Energy card's own name always encodes its element in brackets
+// (e.g. "基本【草】能量"), so that's used as a fallback. Without this, every basic energy
+// attachment in the game silently defaults to 'Colorless' (see moves.attachEnergy), which
+// breaks any attack cost that requires a specific energy type.
+const ZH_ENERGY_LABEL: Record<string, EnergyType> = {
+  草: 'Grass', 火: 'Fire', 水: 'Water', 雷: 'Lightning', 超: 'Psychic',
+  鬥: 'Fighting', 惡: 'Darkness', 鋼: 'Metal', 妖: 'Fairy', 龍: 'Dragon', 無: 'Colorless',
+};
+
+function inferEnergyTypeFromName(name: string): EnergyType | undefined {
+  const m = name.match(/[【\[]([^】\]]+)[】\]]/);
+  if (!m) return undefined;
+  return ZH_ENERGY_LABEL[m[1]];
+}
+
 function detailToMapCard(detail: TcgdexCardDetail, lang: string, serie = ''): MapCard {
   const setId = detail.set?.id || '';
   const localId = detail.localId;
   const retreat = buildRetreatCost(detail.retreat);
-  const types = detail.types?.map(t => toEnergyType(t)).filter((t): t is EnergyType => t !== undefined);
+  let types = detail.types?.map(t => toEnergyType(t)).filter((t): t is EnergyType => t !== undefined);
   const category = CATEGORY_MAP[detail.category || ''] || 'Pokémon';
+  if ((!types || types.length === 0) && category === 'Energy') {
+    const inferred = inferEnergyTypeFromName(detail.name);
+    if (inferred) types = [inferred];
+  }
   // Use local API path for images (route proxies to local cache or CDN fallback)
   const images = {
     small: buildImageUrl(lang, setId, localId, serie, 'low'),
@@ -175,11 +221,11 @@ function detailToMapCard(detail: TcgdexCardDetail, lang: string, serie = ''): Ma
     },
     number: detail.id.split('-')[1] || localId,
     artist: detail.illustrator,
-    rarity: detail.rarity,
+    rarity: detail.rarity === 'ACE SPEC Rare' ? 'None' : detail.rarity,
     flavorText: detail.description,
     nationalPokedexNumbers: detail.dexId,
     legalities: {
-      standard: detail.legal?.standard ? 'Legal' : undefined,
+      standard: isStandardLegal(detail) ? 'Legal' : undefined,
       expanded: detail.legal?.expanded ? 'Legal' : undefined,
     },
     regulationMark: detail.regulationMark,

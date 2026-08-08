@@ -3,6 +3,15 @@ import { useCardStore } from '../stores/cardStore';
 import type { SortOrder } from '../stores/cardStore';
 import type { Card, Supertype, EnergyType, Subtype } from '@ptcg/shared';
 
+/** 29 ACE SPEC card names (zh-tw) — matched by name like the MEGA prefix tag */
+const ACE_SPEC_NAMES = [
+  '危險光線', '中立中心', '寶可生機劑A', '釣竿MAX', '極限腰帶', '頂尖捕捉器',
+  '寶可夢旋風回收機', '璀璨結晶', '珍寶配件', '奢華炸彈', '壯偉碩木', '覺醒戰鼓',
+  '英雄斗篷', '高級香氛', '大師球', '重新啟動箱', '倖存鍛鍊器', '不公印章',
+  '古舊能量', '能量輸送PRO', '百萬噸吹風機', '奇跡耳麥', '貴重手推車', '急進開關',
+  '富裕能量', '完全體攪拌器', '希望護身符', '秘密箱', '新衝天能量',
+] as const;
+
 /** Card type filter defs (single-select) */
 const CARD_TYPE_DEFS = [
   { label: '寶可夢', supertype: 'Pokémon' as Supertype },
@@ -11,7 +20,7 @@ const CARD_TYPE_DEFS = [
   { label: '寶可夢道具', subtype: 'Pokémon Tool' as Subtype },
   { label: '競技場', subtype: 'Stadium' as Subtype },
   { label: '物品', subtype: 'Item' as Subtype },
-  { label: 'ACE SPEC', rarity: 'ACE SPEC Rare' },
+  { label: 'ACE SPEC', names: ACE_SPEC_NAMES },
 ] as const;
 
 /** Evolution stage filter defs (independent multi-toggle) */
@@ -73,25 +82,36 @@ const SORT_OPTIONS: { label: string; value: SortOrder }[] = [
   { label: 'HP ↑', value: 'hp-asc' },
 ];
 
+// Official asia.pokemon-card.com rarity codes (from the card-search filter panel),
+// in the same order the official site lists them.
 const RARITY_OPTIONS: { label: string; value: string }[] = [
-  { label: 'Common', value: 'Common' },
-  { label: 'Uncommon', value: 'Uncommon' },
-  { label: 'Rare', value: 'Rare' },
-  { label: 'Rare Holo', value: 'Rare Holo' },
-  { label: 'Rare Holo V', value: 'Rare Holo V' },
-  { label: 'Rare Holo VMAX', value: 'Rare Holo VMAX' },
-  { label: 'Rare Holo VSTAR', value: 'Rare Holo VSTAR' },
-  { label: 'Rare Ultra', value: 'Rare Ultra' },
-  { label: 'Rare Rainbow', value: 'Rare Rainbow' },
-  { label: 'Rare Secret', value: 'Rare Secret' },
-  { label: 'Rare Shiny', value: 'Rare Shiny' },
-  { label: 'Rare Shiny Holo', value: 'Rare Shiny Holo' },
-  { label: 'Rare Shiny Ultra', value: 'Rare Shiny Ultra' },
-  { label: 'Rare ACE SPEC', value: 'Rare ACE SPEC' },
-  { label: 'Rare BREAK', value: 'Rare BREAK' },
-  { label: 'Amazing', value: 'Amazing' },
-  { label: 'Promo', value: 'Promo' },
+  { label: 'C', value: 'C' },
+  { label: 'U', value: 'U' },
+  { label: 'R', value: 'R' },
+  { label: 'RR', value: 'RR' },
+  { label: 'RRR', value: 'RRR' },
+  { label: 'PR', value: 'PR' },
+  { label: 'TR', value: 'TR' },
+  { label: 'SR', value: 'SR' },
+  { label: 'HR', value: 'HR' },
+  { label: 'UR', value: 'UR' },
+  { label: 'K', value: 'K' },
+  { label: 'A', value: 'A' },
+  { label: 'AR', value: 'AR' },
+  { label: 'SAR', value: 'SAR' },
+  { label: 'S', value: 'S' },
+  { label: 'SSR', value: 'SSR' },
+  { label: 'ACE', value: 'ACE' },
+  { label: 'BWR', value: 'BWR' },
+  { label: 'MUR', value: 'MUR' },
+  { label: 'MA', value: 'MA' },
+  { label: '無標記', value: '無標記' },
 ];
+
+const TYPE_LABELS: Record<string, string> = {
+  Grass: '草', Fire: '火', Water: '水', Lightning: '雷', Psychic: '超',
+  Fighting: '鬥', Darkness: '惡', Metal: '鋼', Fairy: '妖', Dragon: '龍', Colorless: '無',
+};
 
 function EnergyIcon({ type, size = 'sm' }: { type: string; size?: 'sm' | 'md' | 'lg' }) {
   const colorClass = TYPE_COLORS[type] || 'bg-gray-400';
@@ -101,7 +121,7 @@ function EnergyIcon({ type, size = 'sm' }: { type: string; size?: 'sm' | 'md' | 
       className={`inline-flex items-center justify-center rounded-full ${colorClass} ${sizeClass} font-bold text-white shadow-sm`}
       title={type}
     >
-      {type === 'Colorless' ? '無' : type === 'Psychic' ? '超' : type === 'Fighting' ? '鬥' : type === 'Darkness' ? '惡' : type === 'Lightning' ? '雷' : type === 'Metal' ? '鋼' : type === 'Dragon' ? '龍' : type.charAt(0)}
+      {TYPE_LABELS[type] || type.charAt(0)}
     </span>
   );
 }
@@ -487,9 +507,12 @@ export default function CardBrowser() {
   }
 
   const hpFiltered = rawFiltered.filter((c) => {
+    if (!hpMin && !hpMax) return true;
     const hp = c.hp ? parseInt(c.hp, 10) : NaN;
-    if (hpMin && !isNaN(hp) && hp < parseInt(hpMin, 10)) return false;
-    if (hpMax && !isNaN(hp) && hp > parseInt(hpMax, 10)) return false;
+    // Cards with no HP (Trainer/Energy) can't match an HP range at all.
+    if (isNaN(hp)) return false;
+    if (hpMin && hp < parseInt(hpMin, 10)) return false;
+    if (hpMax && hp > parseInt(hpMax, 10)) return false;
     return true;
   });
 
@@ -503,6 +526,7 @@ export default function CardBrowser() {
         if ('supertype' in def) typeMatch = c.supertype === def.supertype;
         if ('subtype' in def) typeMatch = c.subtypes?.includes(def.subtype);
         if ('rarity' in def) typeMatch = c.rarity === def.rarity;
+        if ('names' in def) typeMatch = def.names.includes(c.name);
         if ('excludeSubtypes' in def && def.excludeSubtypes) {
           typeMatch = typeMatch && !def.excludeSubtypes.some(s => c.subtypes?.includes(s));
         }

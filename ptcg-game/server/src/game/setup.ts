@@ -163,5 +163,7 @@ export function setup(setupData?: PtcgSetupData): PtcgGameState {
     winner: null,
     winReason: null,
     turnLog: [],
+    pendingChoice: null,
+    activeStadium: null,
   };
 }

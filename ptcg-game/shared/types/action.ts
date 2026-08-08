@@ -7,6 +7,7 @@ export type GameActionType =
   | 'use_ability'
   | 'retreat'
   | 'attack'
+  | 'resolve_choice'
   | 'end_turn'
   | 'forfeit';
 
@@ -42,6 +43,13 @@ export interface AttackPayload {
 
 export interface RetreatPayload {
   targetBenchPosition?: number;
+  /** ids of attached-energy instances to discard as the retreat cost (player's choice) */
+  discardEnergyIds?: string[];
+}
+
+export interface ResolveChoicePayload {
+  /** ids selected in response to the current PendingChoice (card ids, pokemon ids, or option ids) */
+  selection: string[];
 }
 
 export type LegalAction = {

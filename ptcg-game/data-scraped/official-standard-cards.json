@@ -1,1025 +1,10 @@
 {
   "totalSearchPages": 258,
-  "totalCardIds": 5146,
-  "collected": 5146,
+  "totalCardIds": 5160,
+  "collected": 5160,
   "failed": 0,
   "emptyPages": 0,
   "cards": [
-    {
-      "id": 263,
-      "name": "道具拆除器",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "163/190"
-    },
-    {
-      "id": 271,
-      "name": "氣球",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "171/190"
-    },
-    {
-      "id": 275,
-      "name": "阿球",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "175/190"
-    },
-    {
-      "id": 593,
-      "name": "能量回收器",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "062/070"
-    },
-    {
-      "id": 936,
-      "name": "寶可夢交替",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "059/067"
-    },
-    {
-      "id": 1366,
-      "name": "能量回收",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "133/157"
-    },
-    {
-      "id": 1367,
-      "name": "能量轉移",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "134/157"
-    },
-    {
-      "id": 1368,
-      "name": "能量輸送",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "135/157"
-    },
-    {
-      "id": 1369,
-      "name": "傷藥",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "136/157"
-    },
-    {
-      "id": 1371,
-      "name": "粉碎之錘",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "138/157"
-    },
-    {
-      "id": 1376,
-      "name": "神奇糖果",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "143/157"
-    },
-    {
-      "id": 1377,
-      "name": "寶可齒輪3.0",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "144/157"
-    },
-    {
-      "id": 1378,
-      "name": "寶可夢交替",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "145/157"
-    },
-    {
-      "id": 1379,
-      "name": "寶可夢捕捉器",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "146/157"
-    },
-    {
-      "id": 1381,
-      "name": "精靈球",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "148/157"
-    },
-    {
-      "id": 1385,
-      "name": "寶可夢中心的姐姐",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "152/157"
-    },
-    {
-      "id": 1387,
-      "name": "老大的指令（坂木）",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "154/157"
-    },
-    {
-      "id": 1482,
-      "name": "能量轉移",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "092/135"
-    },
-    {
-      "id": 1489,
-      "name": "神奇糖果",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "099/135"
-    },
-    {
-      "id": 1491,
-      "name": "寶可齒輪3.0",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "101/135"
-    },
-    {
-      "id": 1492,
-      "name": "寶可夢交替",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "102/135"
-    },
-    {
-      "id": 1493,
-      "name": "寶可夢捕捉器",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "103/135"
-    },
-    {
-      "id": 1508,
-      "name": "老大的指令（坂木）",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "118/135"
-    },
-    {
-      "id": 1649,
-      "name": "神奇糖果",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "124/156"
-    },
-    {
-      "id": 1651,
-      "name": "寶可齒輪3.0",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "126/156"
-    },
-    {
-      "id": 1652,
-      "name": "寶可夢交替",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "127/156"
-    },
-    {
-      "id": 1653,
-      "name": "寶可夢捕捉器",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "128/156"
-    },
-    {
-      "id": 1665,
-      "name": "老大的指令（坂木）",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "140/156"
-    },
-    {
-      "id": 1806,
-      "name": "粉碎之錘",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "125/172"
-    },
-    {
-      "id": 1814,
-      "name": "寶可齒輪3.0",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "133/172"
-    },
-    {
-      "id": 1815,
-      "name": "寶可夢交替",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "134/172"
-    },
-    {
-      "id": 1816,
-      "name": "寶可夢捕捉器",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "135/172"
-    },
-    {
-      "id": 2053,
-      "name": "傷藥",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "040/053"
-    },
-    {
-      "id": 2054,
-      "name": "粉碎之錘",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "041/053"
-    },
-    {
-      "id": 2056,
-      "name": "寶可夢交替",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "043/053"
-    },
-    {
-      "id": 2057,
-      "name": "寶可夢捕捉器",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "044/053"
-    },
-    {
-      "id": 2059,
-      "name": "西餐廚師",
-      "regulation": "H",
-      "expansionCode": "",
-      "cardNumber": "046/053"
-    },
-    {
-      "id": 2061,
-      "name": "裁判",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "048/053"
-    },
-    {
-      "id": 2064,
-      "name": "老大的指令（坂木）",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "051/053"
-    },
-    {
-      "id": 2096,
-      "name": "基本草能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "GRA"
-    },
-    {
-      "id": 2097,
-      "name": "基本火能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "FIR"
-    },
-    {
-      "id": 2098,
-      "name": "基本水能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "WAT"
-    },
-    {
-      "id": 2099,
-      "name": "基本雷能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "LIG"
-    },
-    {
-      "id": 2100,
-      "name": "基本超能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "PSY"
-    },
-    {
-      "id": 2101,
-      "name": "基本鬥能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "FIG"
-    },
-    {
-      "id": 2102,
-      "name": "基本惡能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "DAR"
-    },
-    {
-      "id": 2103,
-      "name": "基本鋼能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "MET"
-    },
-    {
-      "id": 2104,
-      "name": "基本草能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "GRA"
-    },
-    {
-      "id": 2105,
-      "name": "基本火能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "FIR"
-    },
-    {
-      "id": 2106,
-      "name": "基本鬥能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "FIG"
-    },
-    {
-      "id": 2107,
-      "name": "基本惡能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "DAR"
-    },
-    {
-      "id": 2108,
-      "name": "基本水能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "WAT"
-    },
-    {
-      "id": 2109,
-      "name": "基本雷能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "LIG"
-    },
-    {
-      "id": 2230,
-      "name": "能量回收",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "121/159"
-    },
-    {
-      "id": 2231,
-      "name": "能量輸送",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "122/159"
-    },
-    {
-      "id": 2238,
-      "name": "寶可齒輪3.0",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "129/159"
-    },
-    {
-      "id": 2239,
-      "name": "寶可夢交替",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "130/159"
-    },
-    {
-      "id": 2240,
-      "name": "寶可夢捕捉器",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "131/159"
-    },
-    {
-      "id": 2406,
-      "name": "道具拆除器",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "138/154"
-    },
-    {
-      "id": 2561,
-      "name": "神奇糖果",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "139/153"
-    },
-    {
-      "id": 2564,
-      "name": "氣球",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "142/153"
-    },
-    {
-      "id": 2570,
-      "name": "老大的指令（坂木）",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "148/153"
-    },
-    {
-      "id": 2720,
-      "name": "能量回收",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "145/164"
-    },
-    {
-      "id": 2721,
-      "name": "能量轉移",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "146/164"
-    },
-    {
-      "id": 2722,
-      "name": "能量輸送",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "147/164"
-    },
-    {
-      "id": 2723,
-      "name": "傷藥",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "148/164"
-    },
-    {
-      "id": 2725,
-      "name": "粉碎之錘",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "150/164"
-    },
-    {
-      "id": 2728,
-      "name": "神奇糖果",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "153/164"
-    },
-    {
-      "id": 2730,
-      "name": "寶可夢交替",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "155/164"
-    },
-    {
-      "id": 2731,
-      "name": "寶可夢捕捉器",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "156/164"
-    },
-    {
-      "id": 2732,
-      "name": "精靈球",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "157/164"
-    },
-    {
-      "id": 2735,
-      "name": "寶可夢中心的姐姐",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "160/164"
-    },
-    {
-      "id": 2736,
-      "name": "老大的指令（坂木）",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "161/164"
-    },
-    {
-      "id": 2892,
-      "name": "寶可齒輪3.0",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "153/184"
-    },
-    {
-      "id": 2916,
-      "name": "改造之錘",
-      "regulation": "H",
-      "expansionCode": "",
-      "cardNumber": "177/184"
-    },
-    {
-      "id": 3092,
-      "name": "寶可夢中心的姐姐",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "169/186"
-    },
-    {
-      "id": 3101,
-      "name": "高級球",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "178/186"
-    },
-    {
-      "id": 3431,
-      "name": "寶可齒輪3.0",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "190/194"
-    },
-    {
-      "id": 3574,
-      "name": "能量回收",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "139/169"
-    },
-    {
-      "id": 3575,
-      "name": "能量轉移",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "140/169"
-    },
-    {
-      "id": 3576,
-      "name": "傷藥",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "141/169"
-    },
-    {
-      "id": 3577,
-      "name": "粉碎之錘",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "142/169"
-    },
-    {
-      "id": 3580,
-      "name": "高級球",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "145/169"
-    },
-    {
-      "id": 3583,
-      "name": "神奇糖果",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "148/169"
-    },
-    {
-      "id": 3584,
-      "name": "寶可齒輪3.0",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "149/169"
-    },
-    {
-      "id": 3585,
-      "name": "寶可夢交替",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "150/169"
-    },
-    {
-      "id": 3586,
-      "name": "寶可夢捕捉器",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "151/169"
-    },
-    {
-      "id": 3597,
-      "name": "觀光客",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "162/169"
-    },
-    {
-      "id": 3743,
-      "name": "能量回收",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "141/168"
-    },
-    {
-      "id": 3744,
-      "name": "能量轉移",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "142/168"
-    },
-    {
-      "id": 3745,
-      "name": "傷藥",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "143/168"
-    },
-    {
-      "id": 3749,
-      "name": "高級球",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "147/168"
-    },
-    {
-      "id": 3751,
-      "name": "神奇糖果",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "149/168"
-    },
-    {
-      "id": 3752,
-      "name": "寶可齒輪3.0",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "150/168"
-    },
-    {
-      "id": 3753,
-      "name": "寶可夢交替",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "151/168"
-    },
-    {
-      "id": 3754,
-      "name": "寶可夢捕捉器",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "152/168"
-    },
-    {
-      "id": 3760,
-      "name": "觀光客",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "158/168"
-    },
-    {
-      "id": 4096,
-      "name": "能量再利用",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "128/158"
-    },
-    {
-      "id": 4097,
-      "name": "改造之錘",
-      "regulation": "H",
-      "expansionCode": "",
-      "cardNumber": "129/158"
-    },
-    {
-      "id": 4100,
-      "name": "高級球",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "132/158"
-    },
-    {
-      "id": 4257,
-      "name": "能量轉移",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "131/158"
-    },
-    {
-      "id": 4258,
-      "name": "粉碎之錘",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "132/158"
-    },
-    {
-      "id": 4264,
-      "name": "神奇糖果",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "138/158"
-    },
-    {
-      "id": 4415,
-      "name": "能量回收",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "131/157"
-    },
-    {
-      "id": 4416,
-      "name": "能量轉移",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "132/157"
-    },
-    {
-      "id": 4418,
-      "name": "傷藥",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "134/157"
-    },
-    {
-      "id": 4419,
-      "name": "粉碎之錘",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "135/157"
-    },
-    {
-      "id": 4423,
-      "name": "高級球",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "139/157"
-    },
-    {
-      "id": 4424,
-      "name": "神奇糖果",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "140/157"
-    },
-    {
-      "id": 4425,
-      "name": "寶可夢交替",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "141/157"
-    },
-    {
-      "id": 4426,
-      "name": "寶可夢捕捉器",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "142/157"
-    },
-    {
-      "id": 4427,
-      "name": "除蟲噴霧",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "143/157"
-    },
-    {
-      "id": 4428,
-      "name": "精靈球",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "144/157"
-    },
-    {
-      "id": 4611,
-      "name": "反擊增幅器",
-      "regulation": "H",
-      "expansionCode": "",
-      "cardNumber": "170/200"
-    },
-    {
-      "id": 4821,
-      "name": "裁判",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "180/200"
-    },
-    {
-      "id": 5154,
-      "name": "能量轉移",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "139/176"
-    },
-    {
-      "id": 5157,
-      "name": "粉碎之錘",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "142/176"
-    },
-    {
-      "id": 5162,
-      "name": "高級球",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "147/176"
-    },
-    {
-      "id": 5164,
-      "name": "神奇糖果",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "149/176"
-    },
-    {
-      "id": 5167,
-      "name": "寶可夢交替",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "152/176"
-    },
-    {
-      "id": 5168,
-      "name": "寶可夢捕捉器",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "153/176"
-    },
-    {
-      "id": 5169,
-      "name": "除蟲噴霧",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "154/176"
-    },
-    {
-      "id": 5177,
-      "name": "裁判",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "162/176"
-    },
-    {
-      "id": 5326,
-      "name": "道具拆除器",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "138/184"
-    },
-    {
-      "id": 5333,
-      "name": "氣球",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "145/184"
-    },
-    {
-      "id": 5346,
-      "name": "老大的指令（弗拉達利）",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "158/184"
-    },
-    {
-      "id": 5373,
-      "name": "基本草能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "GRA"
-    },
-    {
-      "id": 5374,
-      "name": "基本火能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "FIR"
-    },
-    {
-      "id": 5375,
-      "name": "基本水能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "WAT"
-    },
-    {
-      "id": 5376,
-      "name": "基本雷能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "LIG"
-    },
-    {
-      "id": 5377,
-      "name": "基本超能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "PSY"
-    },
-    {
-      "id": 5378,
-      "name": "基本鬥能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "FIG"
-    },
-    {
-      "id": 5379,
-      "name": "基本惡能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "DAR"
-    },
-    {
-      "id": 5380,
-      "name": "基本鋼能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "MET"
-    },
-    {
-      "id": 5402,
-      "name": "寶可齒輪3.0",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "021/028"
-    },
-    {
-      "id": 5403,
-      "name": "寶可夢交替",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "022/028"
-    },
-    {
-      "id": 5407,
-      "name": "老大的指令（坂木）",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "026/028"
-    },
-    {
-      "id": 5500,
-      "name": "高級球",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "089/100"
-    },
-    {
-      "id": 5508,
-      "name": "老大的指令（赤日）",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "097/100"
-    },
-    {
-      "id": 5525,
-      "name": "道具拆除器",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "014/030"
-    },
-    {
-      "id": 5526,
-      "name": "高級球",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "015/030"
-    },
-    {
-      "id": 5527,
-      "name": "神奇糖果",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "016/030"
-    },
-    {
-      "id": 5529,
-      "name": "寶可夢交替",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "018/030"
-    },
-    {
-      "id": 5532,
-      "name": "氣球",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "021/030"
-    },
-    {
-      "id": 5536,
-      "name": "老大的指令（赤日）",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "025/030"
-    },
     {
       "id": 5621,
       "name": "高級球",
@@ -1035,223 +20,6 @@
       "cardNumber": "149/S-P"
     },
     {
-      "id": 5991,
-      "name": "能量回收",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "365/414"
-    },
-    {
-      "id": 5992,
-      "name": "能量轉移",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "366/414"
-    },
-    {
-      "id": 5993,
-      "name": "能量輸送",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "367/414"
-    },
-    {
-      "id": 5994,
-      "name": "能量回收器",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "368/414"
-    },
-    {
-      "id": 5996,
-      "name": "傷藥",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "370/414"
-    },
-    {
-      "id": 5998,
-      "name": "粉碎之錘",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "372/414"
-    },
-    {
-      "id": 6001,
-      "name": "高級球",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "375/414"
-    },
-    {
-      "id": 6002,
-      "name": "神奇糖果",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "376/414"
-    },
-    {
-      "id": 6003,
-      "name": "寶可夢交替",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "377/414"
-    },
-    {
-      "id": 6004,
-      "name": "寶可夢捕捉器",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "378/414"
-    },
-    {
-      "id": 6005,
-      "name": "精靈球",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "379/414"
-    },
-    {
-      "id": 6019,
-      "name": "西餐廚師",
-      "regulation": "H",
-      "expansionCode": "",
-      "cardNumber": "393/414"
-    },
-    {
-      "id": 6024,
-      "name": "裁判",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "398/414"
-    },
-    {
-      "id": 6032,
-      "name": "老大的指令（赤日）",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "406/414"
-    },
-    {
-      "id": 6041,
-      "name": "基本【草】能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "GRA"
-    },
-    {
-      "id": 6042,
-      "name": "基本【炎】能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "FIR"
-    },
-    {
-      "id": 6043,
-      "name": "基本【水】能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "WAT"
-    },
-    {
-      "id": 6044,
-      "name": "基本【雷】能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "LIG"
-    },
-    {
-      "id": 6045,
-      "name": "基本【超】能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "PSY"
-    },
-    {
-      "id": 6046,
-      "name": "基本【鬥】能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "FIG"
-    },
-    {
-      "id": 6047,
-      "name": "基本【惡】能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "DAR"
-    },
-    {
-      "id": 6048,
-      "name": "基本【鋼】能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "MET"
-    },
-    {
-      "id": 6198,
-      "name": "高級球",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "013/021"
-    },
-    {
-      "id": 6199,
-      "name": "寶可夢交替",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "014/021"
-    },
-    {
-      "id": 6205,
-      "name": "老大的指令（赤日）",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "020/021"
-    },
-    {
-      "id": 6207,
-      "name": "基本鬥能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "FIG"
-    },
-    {
-      "id": 6220,
-      "name": "高級球",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "013/020"
-    },
-    {
-      "id": 6221,
-      "name": "寶可齒輪3.0",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "014/020"
-    },
-    {
-      "id": 6222,
-      "name": "寶可夢交替",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "015/020"
-    },
-    {
-      "id": 6227,
-      "name": "老大的指令（赤日）",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "020/020"
-    },
-    {
-      "id": 6228,
-      "name": "基本惡能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "DAR"
-    },
-    {
       "id": 6599,
       "name": "神奇糖果",
       "regulation": "I",
@@ -1259,39 +27,11 @@
       "cardNumber": "066/071"
     },
     {
-      "id": 6605,
-      "name": "基本草能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "GRA"
-    },
-    {
       "id": 6606,
       "name": "基本火能量",
       "regulation": "J",
       "expansionCode": "",
       "cardNumber": "FIR"
-    },
-    {
-      "id": 6607,
-      "name": "基本水能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "WAT"
-    },
-    {
-      "id": 6608,
-      "name": "基本雷能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "LIG"
-    },
-    {
-      "id": 6609,
-      "name": "基本超能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "PSY"
     },
     {
       "id": 6610,
@@ -1306,13 +46,6 @@
       "regulation": "J",
       "expansionCode": "",
       "cardNumber": "DAR"
-    },
-    {
-      "id": 6612,
-      "name": "基本鋼能量",
-      "regulation": "J",
-      "expansionCode": "",
-      "cardNumber": "MET"
     },
     {
       "id": 6862,
@@ -1579,20 +312,6 @@
       "regulation": "I",
       "expansionCode": "",
       "cardNumber": "161/172"
-    },
-    {
-      "id": 7413,
-      "name": "寶可夢中心的姐姐",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "170/154"
-    },
-    {
-      "id": 7431,
-      "name": "老大的指令（坂木）",
-      "regulation": "I",
-      "expansionCode": "",
-      "cardNumber": "170/153"
     },
     {
       "id": 7449,
@@ -36026,6 +34745,1385 @@
       "regulation": "J",
       "expansionCode": "M5",
       "cardNumber": "118/081"
+    },
+    {
+      "id": 19284,
+      "name": "小火龍",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "001/023"
+    },
+    {
+      "id": 19285,
+      "name": "火恐龍",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "002/023"
+    },
+    {
+      "id": 19286,
+      "name": "超級噴火龍Xex",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "003/023"
+    },
+    {
+      "id": 19287,
+      "name": "比克提尼",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "004/023"
+    },
+    {
+      "id": 19288,
+      "name": "熔蟻獸",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "005/023"
+    },
+    {
+      "id": 19289,
+      "name": "萊希拉姆",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "006/023"
+    },
+    {
+      "id": 19290,
+      "name": "花舞鳥ex",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "007/023"
+    },
+    {
+      "id": 19291,
+      "name": "吉雉雞ex",
+      "regulation": "H",
+      "expansionCode": "",
+      "cardNumber": "008/023"
+    },
+    {
+      "id": 19292,
+      "name": "能量回收",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "009/023"
+    },
+    {
+      "id": 19293,
+      "name": "能量回收器",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "010/023"
+    },
+    {
+      "id": 19294,
+      "name": "特殊紅牌",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "011/023"
+    },
+    {
+      "id": 19295,
+      "name": "高級球",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "012/023"
+    },
+    {
+      "id": 19296,
+      "name": "神奇糖果",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "013/023"
+    },
+    {
+      "id": 19297,
+      "name": "貴重手推車",
+      "regulation": "H",
+      "expansionCode": "",
+      "cardNumber": "014/023"
+    },
+    {
+      "id": 19298,
+      "name": "寶可平板",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "015/023"
+    },
+    {
+      "id": 19299,
+      "name": "寶可夢交替",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "016/023"
+    },
+    {
+      "id": 19300,
+      "name": "夜間擔架",
+      "regulation": "H",
+      "expansionCode": "",
+      "cardNumber": "017/023"
+    },
+    {
+      "id": 19301,
+      "name": "氣球",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "018/023"
+    },
+    {
+      "id": 19302,
+      "name": "艾莉絲的鬥志",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "019/023"
+    },
+    {
+      "id": 19303,
+      "name": "小光",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "020/023"
+    },
+    {
+      "id": 19304,
+      "name": "吹火人",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "021/023"
+    },
+    {
+      "id": 19305,
+      "name": "老大的指令（烏羽）",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "022/023"
+    },
+    {
+      "id": 19306,
+      "name": "莉莉艾的決意",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "023/023"
+    },
+    {
+      "id": 19307,
+      "name": "基本【火】能量",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "FIR"
+    },
+    {
+      "id": 19308,
+      "name": "願增猿",
+      "regulation": "H",
+      "expansionCode": "",
+      "cardNumber": "001/020"
+    },
+    {
+      "id": 19309,
+      "name": "利牙魚",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "002/020"
+    },
+    {
+      "id": 19310,
+      "name": "超級巨牙鯊ex",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "003/020"
+    },
+    {
+      "id": 19311,
+      "name": "飯匙蛇",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "004/020"
+    },
+    {
+      "id": 19312,
+      "name": "毒電嬰",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "005/020"
+    },
+    {
+      "id": 19313,
+      "name": "顫弦蠑螈",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "006/020"
+    },
+    {
+      "id": 19314,
+      "name": "吉雉雞ex",
+      "regulation": "H",
+      "expansionCode": "",
+      "cardNumber": "007/020"
+    },
+    {
+      "id": 19315,
+      "name": "桃歹郎ex",
+      "regulation": "H",
+      "expansionCode": "",
+      "cardNumber": "008/020"
+    },
+    {
+      "id": 19316,
+      "name": "特殊紅牌",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "009/020"
+    },
+    {
+      "id": 19317,
+      "name": "好友寶芬",
+      "regulation": "H",
+      "expansionCode": "",
+      "cardNumber": "010/020"
+    },
+    {
+      "id": 19318,
+      "name": "高級球",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "011/020"
+    },
+    {
+      "id": 19319,
+      "name": "頂尖捕捉器",
+      "regulation": "H",
+      "expansionCode": "",
+      "cardNumber": "012/020"
+    },
+    {
+      "id": 19320,
+      "name": "寶可平板",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "013/020"
+    },
+    {
+      "id": 19321,
+      "name": "夜間擔架",
+      "regulation": "H",
+      "expansionCode": "",
+      "cardNumber": "014/020"
+    },
+    {
+      "id": 19322,
+      "name": "龐克頭盔",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "015/020"
+    },
+    {
+      "id": 19323,
+      "name": "氣球",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "016/020"
+    },
+    {
+      "id": 19324,
+      "name": "艾莉絲的鬥志",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "017/020"
+    },
+    {
+      "id": 19325,
+      "name": "鬥子",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "018/020"
+    },
+    {
+      "id": 19326,
+      "name": "老大的指令（烏羽）",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "019/020"
+    },
+    {
+      "id": 19327,
+      "name": "莉莉艾的決意",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "020/020"
+    },
+    {
+      "id": 19328,
+      "name": "基本【惡】能量",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "DAR"
+    },
+    {
+      "id": 19329,
+      "name": "莉莉艾的皮皮ex",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "001/023"
+    },
+    {
+      "id": 19330,
+      "name": "拉魯拉絲",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "002/023"
+    },
+    {
+      "id": 19331,
+      "name": "奇魯莉安",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "003/023"
+    },
+    {
+      "id": 19332,
+      "name": "超級沙奈朵ex",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "004/023"
+    },
+    {
+      "id": 19333,
+      "name": "拉帝亞斯ex",
+      "regulation": "H",
+      "expansionCode": "",
+      "cardNumber": "005/023"
+    },
+    {
+      "id": 19334,
+      "name": "輕飄飄",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "006/023"
+    },
+    {
+      "id": 19335,
+      "name": "胖嘟嘟ex",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "007/023"
+    },
+    {
+      "id": 19336,
+      "name": "超級蒂安希ex",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "008/023"
+    },
+    {
+      "id": 19337,
+      "name": "米立龍",
+      "regulation": "H",
+      "expansionCode": "",
+      "cardNumber": "009/023"
+    },
+    {
+      "id": 19338,
+      "name": "喵喵ex",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "010/023"
+    },
+    {
+      "id": 19339,
+      "name": "特殊紅牌",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "011/023"
+    },
+    {
+      "id": 19340,
+      "name": "高級球",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "012/023"
+    },
+    {
+      "id": 19341,
+      "name": "神奇糖果",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "013/023"
+    },
+    {
+      "id": 19342,
+      "name": "寶可平板",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "014/023"
+    },
+    {
+      "id": 19343,
+      "name": "夜間擔架",
+      "regulation": "H",
+      "expansionCode": "",
+      "cardNumber": "015/023"
+    },
+    {
+      "id": 19344,
+      "name": "奇跡修正檔",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "016/023"
+    },
+    {
+      "id": 19345,
+      "name": "英雄斗篷",
+      "regulation": "H",
+      "expansionCode": "",
+      "cardNumber": "017/023"
+    },
+    {
+      "id": 19346,
+      "name": "氣球",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "018/023"
+    },
+    {
+      "id": 19347,
+      "name": "艾莉絲的鬥志",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "019/023"
+    },
+    {
+      "id": 19348,
+      "name": "鬥子",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "020/023"
+    },
+    {
+      "id": 19349,
+      "name": "老大的指令（烏羽）",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "021/023"
+    },
+    {
+      "id": 19350,
+      "name": "莉莉艾的決意",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "022/023"
+    },
+    {
+      "id": 19351,
+      "name": "感應【超】能量",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "023/023"
+    },
+    {
+      "id": 19352,
+      "name": "基本【超】能量",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "PSY"
+    },
+    {
+      "id": 19353,
+      "name": "凱路迪歐ex",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "001/023"
+    },
+    {
+      "id": 19354,
+      "name": "電飛鼠",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "002/023"
+    },
+    {
+      "id": 19355,
+      "name": "麻麻小魚",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "003/023"
+    },
+    {
+      "id": 19356,
+      "name": "麻麻鰻",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "004/023"
+    },
+    {
+      "id": 19357,
+      "name": "捷拉奧拉",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "005/023"
+    },
+    {
+      "id": 19358,
+      "name": "迷你龍",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "006/023"
+    },
+    {
+      "id": 19359,
+      "name": "哈克龍",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "007/023"
+    },
+    {
+      "id": 19360,
+      "name": "超級快龍ex",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "008/023"
+    },
+    {
+      "id": 19361,
+      "name": "米立龍",
+      "regulation": "H",
+      "expansionCode": "",
+      "cardNumber": "009/023"
+    },
+    {
+      "id": 19362,
+      "name": "喵喵ex",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "010/023"
+    },
+    {
+      "id": 19363,
+      "name": "超級袋獸ex",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "011/023"
+    },
+    {
+      "id": 19364,
+      "name": "特殊紅牌",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "012/023"
+    },
+    {
+      "id": 19365,
+      "name": "好友寶芬",
+      "regulation": "H",
+      "expansionCode": "",
+      "cardNumber": "013/023"
+    },
+    {
+      "id": 19366,
+      "name": "高級球",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "014/023"
+    },
+    {
+      "id": 19367,
+      "name": "神奇糖果",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "015/023"
+    },
+    {
+      "id": 19368,
+      "name": "寶可平板",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "016/023"
+    },
+    {
+      "id": 19369,
+      "name": "氣球",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "017/023"
+    },
+    {
+      "id": 19370,
+      "name": "極限腰帶",
+      "regulation": "H",
+      "expansionCode": "",
+      "cardNumber": "018/023"
+    },
+    {
+      "id": 19371,
+      "name": "艾莉絲的鬥志",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "019/023"
+    },
+    {
+      "id": 19372,
+      "name": "空手道王的演練",
+      "regulation": "H",
+      "expansionCode": "",
+      "cardNumber": "020/023"
+    },
+    {
+      "id": 19373,
+      "name": "琵魯",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "021/023"
+    },
+    {
+      "id": 19374,
+      "name": "老大的指令（烏羽）",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "022/023"
+    },
+    {
+      "id": 19375,
+      "name": "莉莉艾的決意",
+      "regulation": "I",
+      "expansionCode": "",
+      "cardNumber": "023/023"
+    },
+    {
+      "id": 19376,
+      "name": "基本【水】能量",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "WAT"
+    },
+    {
+      "id": 19377,
+      "name": "基本【雷】能量",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "LIG"
+    },
+    {
+      "id": 19378,
+      "name": "新葉喵",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "167/M-P"
+    },
+    {
+      "id": 19379,
+      "name": "蒂蕾喵",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "168/M-P"
+    },
+    {
+      "id": 19380,
+      "name": "魔幻假面喵ex",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "169/M-P"
+    },
+    {
+      "id": 19381,
+      "name": "索羅亞",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "170/M-P"
+    },
+    {
+      "id": 19382,
+      "name": "索羅亞克ex",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "171/M-P"
+    },
+    {
+      "id": 19383,
+      "name": "伊布ex",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "172/M-P"
+    },
+    {
+      "id": 19527,
+      "name": "溜溜糖球",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "146/M-P"
+    },
+    {
+      "id": 19528,
+      "name": "雨翅蛾",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "147/M-P"
+    },
+    {
+      "id": 19529,
+      "name": "膽小蟲",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "148/M-P"
+    },
+    {
+      "id": 19530,
+      "name": "卡蒂狗",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "149/M-P"
+    },
+    {
+      "id": 19531,
+      "name": "鴨嘴火獸",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "150/M-P"
+    },
+    {
+      "id": 19532,
+      "name": "鴨嘴炎獸",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "151/M-P"
+    },
+    {
+      "id": 19533,
+      "name": "電擊獸",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "152/M-P"
+    },
+    {
+      "id": 19534,
+      "name": "電擊魔獸",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "153/M-P"
+    },
+    {
+      "id": 19535,
+      "name": "啪嚓海膽",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "154/M-P"
+    },
+    {
+      "id": 19536,
+      "name": "菊草葉",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "155/M-P"
+    },
+    {
+      "id": 19537,
+      "name": "月桂葉",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "156/M-P"
+    },
+    {
+      "id": 19538,
+      "name": "超級大竺葵ex",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "157/M-P"
+    },
+    {
+      "id": 19539,
+      "name": "暖暖豬",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "158/M-P"
+    },
+    {
+      "id": 19540,
+      "name": "炒炒豬",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "159/M-P"
+    },
+    {
+      "id": 19541,
+      "name": "超級炎武王ex",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "160/M-P"
+    },
+    {
+      "id": 19542,
+      "name": "小鋸鱷",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "161/M-P"
+    },
+    {
+      "id": 19543,
+      "name": "藍鱷",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "162/M-P"
+    },
+    {
+      "id": 19544,
+      "name": "超級大力鱷ex",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "163/M-P"
+    },
+    {
+      "id": 19545,
+      "name": "基本【草】能量",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "164/M-P"
+    },
+    {
+      "id": 19546,
+      "name": "基本【火】能量",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "165/M-P"
+    },
+    {
+      "id": 19547,
+      "name": "基本【水】能量",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "166/M-P"
+    },
+    {
+      "id": 19548,
+      "name": "寶可平板",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "206/M-P"
+    },
+    {
+      "id": 19549,
+      "name": "蓋伊",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "207/M-P"
+    },
+    {
+      "id": 19550,
+      "name": "超級艾路雷朵ex",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "208/M-P"
+    },
+    {
+      "id": 19551,
+      "name": "赫拉克羅斯",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "001/076"
+    },
+    {
+      "id": 19552,
+      "name": "溜溜糖球",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "002/076"
+    },
+    {
+      "id": 19553,
+      "name": "雨翅蛾",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "003/076"
+    },
+    {
+      "id": 19554,
+      "name": "刺球仙人掌",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "004/076"
+    },
+    {
+      "id": 19555,
+      "name": "夢歌仙人掌",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "005/076"
+    },
+    {
+      "id": 19556,
+      "name": "三蜜蜂",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "006/076"
+    },
+    {
+      "id": 19557,
+      "name": "蜂女王",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "007/076"
+    },
+    {
+      "id": 19558,
+      "name": "膽小蟲",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "008/076"
+    },
+    {
+      "id": 19559,
+      "name": "超級具甲武者ex",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "009/076"
+    },
+    {
+      "id": 19560,
+      "name": "卡蒂狗",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "010/076"
+    },
+    {
+      "id": 19561,
+      "name": "風速狗",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "011/076"
+    },
+    {
+      "id": 19562,
+      "name": "鴨嘴火獸",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "012/076"
+    },
+    {
+      "id": 19563,
+      "name": "鴨嘴炎獸",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "013/076"
+    },
+    {
+      "id": 19564,
+      "name": "煤炭龜",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "014/076"
+    },
+    {
+      "id": 19565,
+      "name": "加熱洛托姆ex",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "015/076"
+    },
+    {
+      "id": 19566,
+      "name": "熔蟻獸",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "016/076"
+    },
+    {
+      "id": 19567,
+      "name": "巨翅飛魚",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "017/076"
+    },
+    {
+      "id": 19568,
+      "name": "蓋歐卡",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "018/076"
+    },
+    {
+      "id": 19569,
+      "name": "輕飄飄",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "019/076"
+    },
+    {
+      "id": 19570,
+      "name": "胖嘟嘟",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "020/076"
+    },
+    {
+      "id": 19571,
+      "name": "弱丁魚ex",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "021/076"
+    },
+    {
+      "id": 19572,
+      "name": "電擊獸",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "022/076"
+    },
+    {
+      "id": 19573,
+      "name": "電擊魔獸",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "023/076"
+    },
+    {
+      "id": 19574,
+      "name": "雷公ex",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "024/076"
+    },
+    {
+      "id": 19575,
+      "name": "雷電雲",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "025/076"
+    },
+    {
+      "id": 19576,
+      "name": "啪嚓海膽",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "026/076"
+    },
+    {
+      "id": 19577,
+      "name": "電海燕",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "027/076"
+    },
+    {
+      "id": 19578,
+      "name": "大電海燕",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "028/076"
+    },
+    {
+      "id": 19579,
+      "name": "催眠貘",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "029/076"
+    },
+    {
+      "id": 19580,
+      "name": "引夢貘人",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "030/076"
+    },
+    {
+      "id": 19581,
+      "name": "騎拉帝納",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "031/076"
+    },
+    {
+      "id": 19582,
+      "name": "泥偶小人",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "032/076"
+    },
+    {
+      "id": 19583,
+      "name": "超級泥偶巨人ex",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "033/076"
+    },
+    {
+      "id": 19584,
+      "name": "眷戀雲",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "034/076"
+    },
+    {
+      "id": 19585,
+      "name": "穿山鼠",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "035/076"
+    },
+    {
+      "id": 19586,
+      "name": "穿山王",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "036/076"
+    },
+    {
+      "id": 19587,
+      "name": "大岩蛇",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "037/076"
+    },
+    {
+      "id": 19588,
+      "name": "大鋼蛇",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "038/076"
+    },
+    {
+      "id": 19589,
+      "name": "固拉多",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "039/076"
+    },
+    {
+      "id": 19590,
+      "name": "土地雲",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "040/076"
+    },
+    {
+      "id": 19591,
+      "name": "尼多蘭",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "041/076"
+    },
+    {
+      "id": 19592,
+      "name": "尼多娜",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "042/076"
+    },
+    {
+      "id": 19593,
+      "name": "尼多后",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "043/076"
+    },
+    {
+      "id": 19594,
+      "name": "圓絲蛛",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "044/076"
+    },
+    {
+      "id": 19595,
+      "name": "阿利多斯",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "045/076"
+    },
+    {
+      "id": 19596,
+      "name": "勾魂眼",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "046/076"
+    },
+    {
+      "id": 19597,
+      "name": "好啦魷",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "047/076"
+    },
+    {
+      "id": 19598,
+      "name": "超級烏賊王ex",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "048/076"
+    },
+    {
+      "id": 19599,
+      "name": "赤面龍",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "049/076"
+    },
+    {
+      "id": 19600,
+      "name": "心鱗寶",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "050/076"
+    },
+    {
+      "id": 19601,
+      "name": "鱗甲龍",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "051/076"
+    },
+    {
+      "id": 19602,
+      "name": "杖尾鱗甲龍",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "052/076"
+    },
+    {
+      "id": 19603,
+      "name": "摩托蜥",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "053/076"
+    },
+    {
+      "id": 19604,
+      "name": "露力麗",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "054/076"
+    },
+    {
+      "id": 19605,
+      "name": "青綿鳥",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "055/076"
+    },
+    {
+      "id": 19606,
+      "name": "七夕青鳥",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "056/076"
+    },
+    {
+      "id": 19607,
+      "name": "變隱龍",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "057/076"
+    },
+    {
+      "id": 19608,
+      "name": "超級烈空坐ex",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "058/076"
+    },
+    {
+      "id": 19609,
+      "name": "龍捲雲",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "059/076"
+    },
+    {
+      "id": 19610,
+      "name": "小箭雀",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "060/076"
+    },
+    {
+      "id": 19611,
+      "name": "火箭雀",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "061/076"
+    },
+    {
+      "id": 19612,
+      "name": "烈箭鷹ex",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "062/076"
+    },
+    {
+      "id": 19613,
+      "name": "美味飯糰",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "063/076"
+    },
+    {
+      "id": 19614,
+      "name": "冒險提燈",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "064/076"
+    },
+    {
+      "id": 19615,
+      "name": "訂製背心",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "065/076"
+    },
+    {
+      "id": 19616,
+      "name": "超級烈空坐帽子",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "066/076"
+    },
+    {
+      "id": 19617,
+      "name": "主持人的帶動",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "067/076"
+    },
+    {
+      "id": 19618,
+      "name": "基利",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "068/076"
+    },
+    {
+      "id": 19619,
+      "name": "希嘉娜的信賴",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "069/076"
+    },
+    {
+      "id": 19620,
+      "name": "小楓與小南的修行",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "070/076"
+    },
+    {
+      "id": 19621,
+      "name": "傳說的海溝",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "071/076 , 072/076"
+    },
+    {
+      "id": 19622,
+      "name": "傳說的山頂",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "073/076 , 074/076"
+    },
+    {
+      "id": 19623,
+      "name": "傳說的熔岩洞",
+      "regulation": "J",
+      "expansionCode": "",
+      "cardNumber": "075/076 , 076/076"
     }
   ]
 }

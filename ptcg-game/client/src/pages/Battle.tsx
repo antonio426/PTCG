@@ -111,6 +111,13 @@ export default function Battle() {
     return battleState.legalMoves.filter(m => m.type === 'play_trainer');
   }, [battleState]);
 
+  // Use-ability actions (shown separately) — payload.cardId refers to a Pokémon in play,
+  // not a hand card, so groupMovesByHandCard can never surface these.
+  const abilityActions = useMemo(() => {
+    if (!battleState) return [];
+    return battleState.legalMoves.filter(m => m.type === 'use_ability');
+  }, [battleState]);
+
   const handleStartBattle = useCallback(async () => {
     if (!selectedDeckId) return;
     const deck = decks.find(d => d.id === selectedDeckId);
@@ -274,8 +281,39 @@ export default function Battle() {
 
   const isOver = bs.winner !== null;
 
+  // A multi-step trainer/ability/attack effect (e.g. Ultra Ball) is awaiting a response —
+  // every option is already a fully-validated resolve_choice move from the server, so the
+  // modal just needs to list them; there's no separate client-side selection logic to get wrong.
+  const pendingChoiceMoves = bs.legalMoves.filter(m => m.type === 'resolve_choice');
+
   return (
     <div className="flex gap-3 h-[calc(100vh-7rem)] min-h-0">
+
+      {/* Pending choice modal: a card effect is mid-resolution and needs an answer before anything else */}
+      {!isOver && bs.pendingChoice && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70">
+          <div className="bg-slate-800 border border-blue-500/50 rounded-2xl p-6 max-w-lg w-full mx-4 max-h-[80vh] flex flex-col">
+            <h3 className="text-white font-semibold mb-1">卡牌效果</h3>
+            <p className="text-slate-300 text-sm mb-4">{bs.pendingChoice.prompt}</p>
+            <div className="flex-1 overflow-y-auto space-y-1.5">
+              {pendingChoiceMoves.length === 0 ? (
+                <p className="text-slate-500 text-sm">沒有可行的選項……</p>
+              ) : (
+                pendingChoiceMoves.map((m, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleSubmitMove(m)}
+                    disabled={loading}
+                    className="w-full text-left px-3 py-2 bg-slate-700 hover:bg-blue-700 disabled:opacity-40 text-slate-100 rounded-lg text-sm transition-colors"
+                  >
+                    {m.description}
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Left column: battlefield */}
       <div className="flex-1 flex flex-col min-h-0 gap-2">
@@ -489,6 +527,24 @@ export default function Battle() {
                             key={i}
                             onClick={() => handleSubmitMove(m)}
                             className="px-2 py-1 bg-indigo-700 text-white rounded text-[10px] hover:bg-indigo-600 transition-colors"
+                          >
+                            {m.description}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Ability actions (separate row) */}
+                  {abilityActions.length > 0 && (
+                    <div>
+                      <p className="text-xs text-slate-500 mb-1">特性（點擊使用）：</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {abilityActions.map((m, i) => (
+                          <button
+                            key={i}
+                            onClick={() => handleSubmitMove(m)}
+                            className="px-2 py-1 bg-emerald-700 text-white rounded text-[10px] hover:bg-emerald-600 transition-colors"
                           >
                             {m.description}
                           </button>

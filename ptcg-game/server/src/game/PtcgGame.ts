@@ -3,6 +3,7 @@ import { GameCard } from '@ptcg/shared';
 import { PtcgGameState } from './GameState';
 import { setup } from './setup';
 import { moves } from './moves';
+import { processBetweenTurns, processWakeUpCheck } from './statusConditions';
 
 export const PtcgGame: Game<PtcgGameState> = {
   name: 'ptcg',
@@ -18,9 +19,11 @@ export const PtcgGame: Game<PtcgGameState> = {
 
   turn: {
     onBegin: ({ G, ctx }: { G: PtcgGameState; ctx: Ctx }) => {
+      if (ctx.turn > 1) processBetweenTurns(G);
       G.turn = ctx.turn;
       G.currentPlayer = parseInt(ctx.currentPlayer) as 0 | 1;
       G.phase = ctx.turn === 1 ? 'main' : 'draw';
+      processWakeUpCheck(G, G.currentPlayer as 0 | 1);
       const player = G.players[G.currentPlayer];
       player.energyAttachedThisTurn = 0;
       player.basicPokemonPlayedThisTurn = 0;

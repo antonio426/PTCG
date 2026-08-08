@@ -152,7 +152,8 @@ function parseCardHtml(id: number, html: string, baseOfficial: OfficialCard): Pa
     card.subtypes = ['Stadium'];
   } else if (headerText.includes('能量')) {
     card.supertype = 'Energy';
-    card.subtypes = ['Special Energy'];
+    const isBasic = /^基本[【\[]([^】\]]+)[】\]]能量$/.test(baseOfficial.name);
+    card.subtypes = [isBasic ? 'Basic Energy' : 'Special Energy'];
   } else {
     card.supertype = 'Pokémon';
     card.subtypes = [];

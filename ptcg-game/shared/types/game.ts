@@ -7,6 +7,8 @@ export interface GameCard {
   damage: number;
   statusConditions: StatusCondition[];
   attachedEnergy: AttachedEnergy[];
+  /** At most one Pokémon Tool card may be attached per Pokémon under current rules. */
+  attachedTool?: GameCard | null;
   turnedFacedown?: boolean;
 }
 
@@ -60,4 +62,26 @@ export interface DeckValidation {
   valid: boolean;
   errors: string[];
   cardCount: number;
+}
+
+/**
+ * Multi-step trainer/ability/attack effects (e.g. Ultra Ball: discard 2, then
+ * search 1) can't resolve in a single move. When one is mid-resolution,
+ * `pendingChoice` describes what response is needed next; the client must
+ * answer it with a `resolve_choice` move (`{ selection: string[] }`) before
+ * any other move becomes legal again.
+ */
+export interface PendingChoice {
+  player: 0 | 1;
+  /** Effect registry key that owns this choice, e.g. 'trainer:高級球' */
+  effectKey: string;
+  prompt: string;
+  choiceType: 'select_hand_cards' | 'select_pokemon' | 'select_bench_pokemon' | 'select_from_list' | 'select_energy_type' | 'confirm';
+  /** Exact required selection count, if fixed. */
+  count?: number;
+  minCount?: number;
+  maxCount?: number;
+  /** For select_from_list: the concrete options being chosen from. */
+  options?: { id: string; label: string }[];
+  context: Record<string, unknown>;
 }

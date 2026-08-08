@@ -2,6 +2,7 @@ import type { PtcgGameState } from '../game/GameState';
 import { setup } from '../game/setup';
 import { moves } from '../game/moves';
 import { getLegalMoves } from '../game/validation';
+import { processBetweenTurns, processWakeUpCheck } from '../game/statusConditions';
 import { IAIPlayer } from './aiPlayer';
 import { AIThought, AIPlayerResult } from './types';
 
@@ -51,7 +52,9 @@ function checkEndCondition(G: PtcgGameState): void {
 }
 
 function applyTurnBegin(G: PtcgGameState): void {
+  if (G.turn > 1) processBetweenTurns(G);
   G.phase = G.turn === 1 ? 'main' : 'draw';
+  processWakeUpCheck(G, G.currentPlayer as 0 | 1);
   const player = G.players[G.currentPlayer];
   player.energyAttachedThisTurn = 0;
   player.basicPokemonPlayedThisTurn = 0;
@@ -97,8 +100,11 @@ function executeMove(G: PtcgGameState, action: { type: string; payload?: Record<
     case 'use_ability':
       moves.useAbility({ G, ctx }, payload.cardId);
       break;
+    case 'resolve_choice':
+      moves.resolveChoice({ G, ctx }, payload.selection);
+      break;
     case 'retreat':
-      moves.retreat({ G, ctx }, payload.targetBenchPosition);
+      moves.retreat({ G, ctx }, payload.targetBenchPosition, payload.discardEnergyIds);
       break;
     case 'attack':
       moves.attack({ G, ctx }, payload.attackIndex);
