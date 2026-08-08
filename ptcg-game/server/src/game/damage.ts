@@ -62,11 +62,18 @@ export function calculateDamage(G: PtcgGameState, attackerIdx: 0 | 1, attacker: 
   for (const boost of G.players[attackerIdx].turnDamageBoosts) {
     if (boost.typeFilter && !(attacker.cardData.types || []).includes(boost.typeFilter as any)) continue;
     if (boost.vsBigOnly && !isBigPokemon(defender)) continue;
+    if (boost.excludeRuleBoxAttacker && isBigPokemon(attacker)) continue;
     baseDamage += boost.amount;
   }
   const weaknessOverride = getWeaknessTypeOverride(G, (1 - attackerIdx) as 0 | 1, defender);
   const afterWeakness = applyWeaknessResistance(baseDamage, attacker, defender, weaknessOverride);
-  return Math.max(0, afterWeakness - getPassiveDamageReduction(defender));
+  const defenderIdx = (1 - attackerIdx) as 0 | 1;
+  let reduction = getPassiveDamageReduction(defender);
+  for (const r of G.players[defenderIdx].incomingDamageReduction) {
+    if (r.typeFilter && !(defender.cardData.types || []).includes(r.typeFilter as any)) continue;
+    reduction += r.amount;
+  }
+  return Math.max(0, afterWeakness - reduction);
 }
 
 export function applyDamage(G: PtcgGameState, playerIndex: number, targetId: string, damage: number): void {

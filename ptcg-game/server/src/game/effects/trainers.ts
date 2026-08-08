@@ -3,6 +3,7 @@ import { EffectContext, EffectHandler, EffectStep, allPokemon, opponent, player,
 import { discardFromHand, drawCards, drawUpTo, flipCoin, hasNoRuleBox, healDamage, moveDiscardCardToHand } from './primitives';
 import { clearStatusConditionsOnLeaveActive } from '../statusConditions';
 import { isEnergyDiscardProtected } from './passiveAbilities';
+import { handleKo } from '../damage';
 
 function deckOptions(deck: GameCard[], filter: (c: GameCard) => boolean): { id: string; label: string }[] {
   return deck.filter(filter).map(c => ({ id: c.id, label: c.cardData.name }));
@@ -1647,6 +1648,596 @@ const fireBreather: EffectHandler = {
   resume: hibikisAdventure.resume,
 };
 
+/* ============================================================ */
+/*  Batch 3: next tier of real, frequently-reprinted Item/       */
+/*  Supporter cards by usage across the full card pool (not      */
+/*  just preset decks) — see coverage-report.ts's top-uncovered  */
+/*  list. A few needing genuinely new scheduling infrastructure   */
+/*  ("during the opponent's NEXT turn only", guess-a-number       */
+/*  minigames, fossil-as-Pokémon placement) are deliberately      */
+/*  left unimplemented rather than faked — see the final report. */
+/* ============================================================ */
+
+/** 精靈球: flip a coin; if heads, search deck for 1 Pokémon to hand. */
+const pokeBall: EffectHandler = {
+  start(ctx) {
+    if (!flipCoin()) return 'done';
+    const p = player(ctx.G, ctx.playerIndex);
+    const options = deckOptions(p.deck, c => c.cardData.supertype === 'Pokémon');
+    if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
+    return { prompt: '精靈球：擲硬幣正面，從牌庫選 1 張寶可夢卡加入手牌', choiceType: 'select_from_list', count: 1, options, context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (selection[0]) moveFromDeckToHand(ctx.G, ctx.playerIndex, selection[0], false); else shuffleDeck(p.deck);
+    shuffleDeck(p.deck);
+    return 'done';
+  },
+};
+
+/** 大師球: search deck for 1 Pokémon to hand (guaranteed). */
+const masterBall: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const options = deckOptions(p.deck, c => c.cardData.supertype === 'Pokémon');
+    if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
+    return { prompt: '大師球：從牌庫選 1 張寶可夢卡加入手牌', choiceType: 'select_from_list', count: 1, options, context: {} };
+  },
+  resume: pokeBall.resume,
+};
+
+/** 危險光線: the opponent's Active is Burned and Confused. */
+const dangerRay: EffectHandler = {
+  start(ctx) {
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    if (opp.active) {
+      opp.active.statusConditions = opp.active.statusConditions.filter(c => c !== 'Burned' && c !== 'Confused');
+      opp.active.statusConditions.push('Burned', 'Confused');
+    }
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 高級香氛: search deck for up to 3 Stage 1 Pokémon to hand. */
+const premiumIncense: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const options = deckOptions(p.deck, c => c.cardData.supertype === 'Pokémon' && c.cardData.subtypes.includes('Stage 1'));
+    if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
+    return { prompt: '高級香氛：從牌庫選最多 3 張 1 階進化寶可夢卡加入手牌', choiceType: 'select_from_list', maxCount: Math.min(3, options.length), options, context: {} };
+  },
+  resume: hibikisAdventure.resume,
+};
+
+/** 寶可生機劑A: heal 150 on a chosen own Pokémon. (The "can never leave the discard pile once there" clause isn't enforced.) */
+const pokeVitalA: EffectHandler = {
+  start(ctx) {
+    const targets = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.damage > 0);
+    if (targets.length === 0) return 'done';
+    return { prompt: '寶可生機劑A：選擇要恢復 150 HP 的寶可夢', choiceType: 'select_from_list', count: 1, options: targets.map(c => ({ id: c.id, label: `${c.cardData.name}（${c.damage} 傷害）` })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const target = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === selection[0]);
+    if (target) healDamage(target, 150);
+    return 'done';
+  },
+};
+
+/** 派帕的三明治: heal own Active 30, or 100 if it's a "派帕的" family Pokémon. */
+const paipasSandwich: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.active) healDamage(p.active, p.active.cardData.name.includes('派帕的') ? 100 : 30);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 龍之秘藥: heal own Active 60, only if it's a Dragon-type Pokémon. */
+const dragonElixir: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.active && (p.active.cardData.types || []).includes('Dragon')) healDamage(p.active, 60);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 管理員: draw 2. (The "if 居民會館 is active, return to deck instead of discard" clause isn't enforced.) */
+const caretaker: EffectHandler = {
+  start(ctx) {
+    drawCards(ctx.G, ctx.playerIndex, 2);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 主持人的帶動: draw 2, plus 2 more if the opponent has 3 or fewer prizes remaining. */
+const hostsEncouragement: EffectHandler = {
+  start(ctx) {
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    drawCards(ctx.G, ctx.playerIndex, opp.prizes.length <= 3 ? 4 : 2);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 仙后: only usable when it was the player's only hand card; search deck for up to 2 cards (any) to hand. */
+const queenCard: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.hand.length !== 0) return 'done';
+    if (p.deck.length === 0) return 'done';
+    return { prompt: '仙后：從牌庫任意選最多 2 張卡加入手牌', choiceType: 'select_from_list', maxCount: Math.min(2, p.deck.length), options: p.deck.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    for (const id of selection) moveFromDeckToHand(ctx.G, ctx.playerIndex, id, false);
+    shuffleDeck(p.deck);
+    return 'done';
+  },
+};
+
+/** 手部修剪器: both players discard hand down to 5 (opponent conceptually goes first, order doesn't matter mechanically). */
+const handTrimmer: EffectHandler = {
+  start(ctx) {
+    for (const idx of [(1 - ctx.playerIndex) as 0 | 1, ctx.playerIndex] as const) {
+      const p = player(ctx.G, idx);
+      while (p.hand.length > 5) p.discardPile.push(p.hand.pop()!);
+    }
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 琉琪亞的展示: force-switch 1 opponent Benched Basic Pokémon into Active, then Confuse it. */
+const lucasShowcase: EffectHandler = {
+  start(ctx) {
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    const targets = opp.bench.filter((c): c is GameCard => c !== null && c.cardData.subtypes.includes('Basic'));
+    if (targets.length === 0) return 'done';
+    return { prompt: '琉琪亞的展示：選擇對手備戰區的 1 隻基礎寶可夢換上場', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    const idx = opp.bench.findIndex(c => c?.id === selection[0]);
+    if (idx >= 0 && opp.active) {
+      const chosen = opp.bench[idx]!;
+      clearStatusConditionsOnLeaveActive(opp.active);
+      opp.bench[idx] = opp.active;
+      opp.active = chosen;
+      chosen.statusConditions = chosen.statusConditions.filter(c => c !== 'Confused');
+      chosen.statusConditions.push('Confused');
+    } else if (idx >= 0 && !opp.active) {
+      opp.active = opp.bench[idx];
+      opp.bench[idx] = null;
+    }
+    return 'done';
+  },
+};
+
+/** 重新啟動箱: from discard, attach 1 Basic Energy each to every own "Future"-subtype Pokémon (auto-resolved, no choice). */
+const restartBox: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const futures = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.cardData.subtypes.includes('Future'));
+    for (const target of futures) {
+      const i = p.discardPile.findIndex(c => c.cardData.subtypes.includes('Basic Energy'));
+      if (i === -1) break;
+      const energy = p.discardPile.splice(i, 1)[0];
+      target.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+    }
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 白露的真心: fully heal 1 own Pokémon whose remaining HP is 30 or less. */
+const shiroroNoKokoro: EffectHandler = {
+  start(ctx) {
+    const targets = allPokemon(ctx.G, ctx.playerIndex).filter(c => {
+      const hp = parseInt(c.cardData.hp || '0', 10);
+      return hp > 0 && hp - c.damage <= 30 && c.damage > 0;
+    });
+    if (targets.length === 0) return 'done';
+    return { prompt: '白露的真心：選擇要完全恢復 HP 的寶可夢', choiceType: 'select_from_list', count: 1, options: targets.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const target = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === selection[0]);
+    if (target) target.damage = 0;
+    return 'done';
+  },
+};
+
+/** 火箭隊的超級球: flip a coin; search deck for 1 "火箭隊的" Pokémon — evolved if heads, Basic if tails — to hand. */
+const rocketSuperBall: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const heads = flipCoin();
+    const options = deckOptions(p.deck, c => c.cardData.supertype === 'Pokémon' && c.cardData.name.includes('火箭隊的')
+      && (heads ? !!c.cardData.evolvesFrom : c.cardData.subtypes.includes('Basic')));
+    if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
+    return { prompt: `火箭隊的超級球：擲硬幣${heads ? '正面' : '反面'}，選 1 張${heads ? '進化' : '基礎'}的「火箭隊的寶可夢」加入手牌`, choiceType: 'select_from_list', count: 1, options, context: {} };
+  },
+  resume: pokeBall.resume,
+};
+
+/** 好傷藥: heal 60 on a chosen own Pokémon, then discard 1 Energy attached to it. */
+const goodPotion: EffectHandler = {
+  start(ctx) {
+    const targets = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.damage > 0);
+    if (targets.length === 0) return 'done';
+    return { prompt: '好傷藥：選擇要恢復 60 HP 的寶可夢', choiceType: 'select_from_list', count: 1, options: targets.map(c => ({ id: c.id, label: `${c.cardData.name}（${c.damage} 傷害）` })), context: { step: 'pick_target' } };
+  },
+  resume(ctx, context, selection) {
+    if (context.step === 'pick_target') {
+      const target = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === selection[0]);
+      if (!target) return 'done';
+      healDamage(target, 60);
+      if (target.attachedEnergy.length === 0) return 'done';
+      return { prompt: '好傷藥：選擇要丟棄的能量', choiceType: 'select_from_list', count: 1, options: target.attachedEnergy.map(e => ({ id: e.id, label: e.type })), context: { step: 'discard_energy', targetId: target.id } };
+    }
+    const target = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === context.targetId);
+    if (target) {
+      const i = target.attachedEnergy.findIndex(e => e.id === selection[0]);
+      if (i >= 0) target.attachedEnergy.splice(i, 1);
+    }
+    return 'done';
+  },
+};
+
+/** 火箭隊的驚嚇炸彈: flip a coin; heads places 2 counters on an opponent Pokémon, tails places 2 on your own Active. */
+const rocketScareBomb: EffectHandler = {
+  start(ctx) {
+    if (flipCoin()) {
+      const opp = opponent(ctx.G, ctx.playerIndex);
+      const targets = [opp.active, ...opp.bench].filter((c): c is GameCard => c !== null);
+      if (targets.length === 0) return 'done';
+      return { prompt: '火箭隊的驚嚇炸彈：擲硬幣正面，選擇對手 1 隻寶可夢放置 2 個傷害指示物', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: { side: 'opponent' } };
+    }
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.active) {
+      p.active.damage += 20;
+      const hp = parseInt(p.active.cardData.hp || '0', 10);
+      if (hp > 0 && p.active.damage >= hp) handleKo(ctx.G, ctx.playerIndex, p.active.id);
+    }
+    return 'done';
+  },
+  resume(ctx, context, selection) {
+    if (context.side === 'opponent') {
+      const opp = opponent(ctx.G, ctx.playerIndex);
+      const target = opp.active?.id === selection[0] ? opp.active : opp.bench.find(c => c?.id === selection[0]);
+      if (target) {
+        target.damage += 20;
+        const hp = parseInt(target.cardData.hp || '0', 10);
+        if (hp > 0 && target.damage >= hp) handleKo(ctx.G, (1 - ctx.playerIndex) as 0 | 1, target.id);
+      }
+    }
+    return 'done';
+  },
+};
+
+/** 鬼之假面: from discard, search 1 "厄鬼椪" ex Pokémon, swap it in for an own field "厄鬼椪" ex Pokémon (energy/damage/status carried over), discard the old one. */
+const oniMask: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const discardOptions = deckOptions(p.discardPile, c => c.cardData.name.includes('厄鬼椪') && c.cardData.subtypes.includes('ex'));
+    const fieldTargets = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.cardData.name.includes('厄鬼椪') && c.cardData.subtypes.includes('ex'));
+    if (discardOptions.length === 0 || fieldTargets.length === 0) return 'done';
+    return { prompt: '鬼之假面：從棄牌區選 1 張「厄鬼椪」寶可夢【ex】卡', choiceType: 'select_from_list', count: 1, options: discardOptions, context: { step: 'pick_card' } };
+  },
+  resume(ctx, context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (context.step === 'pick_card') {
+      const fieldTargets = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.cardData.name.includes('厄鬼椪') && c.cardData.subtypes.includes('ex'));
+      return { prompt: '鬼之假面：選擇要替換的場上寶可夢', choiceType: 'select_from_list', count: 1, options: fieldTargets.map(t => ({ id: t.id, label: t.cardData.name })), context: { step: 'pick_target', cardId: selection[0] } };
+    }
+    const cardId = context.cardId as string;
+    const targetId = selection[0];
+    const discardIdx = p.discardPile.findIndex(c => c.id === cardId);
+    if (discardIdx === -1) return 'done';
+    const replacement = p.discardPile.splice(discardIdx, 1)[0];
+    const isActive = p.active?.id === targetId;
+    const benchIdx = isActive ? -1 : p.bench.findIndex(c => c?.id === targetId);
+    const old = isActive ? p.active : (benchIdx >= 0 ? p.bench[benchIdx] : null);
+    if (!old) { p.discardPile.push(replacement); return 'done'; }
+    p.discardPile.push(old);
+    replacement.attachedEnergy = old.attachedEnergy;
+    replacement.damage = old.damage;
+    replacement.attachedTool = old.attachedTool;
+    replacement.statusConditions = old.statusConditions;
+    if (isActive) p.active = replacement; else p.bench[benchIdx] = replacement;
+    return 'done';
+  },
+};
+
+/** 赫普的包包: search deck for up to 2 Basic "赫普的" family Pokémon, place them on the Bench. */
+const heapsBag: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const emptySlots = p.bench.filter(s => s === null).length;
+    const options = deckOptions(p.deck, c => c.cardData.supertype === 'Pokémon' && c.cardData.subtypes.includes('Basic') && c.cardData.name.includes('赫普的'));
+    if (emptySlots === 0 || options.length === 0) { shuffleDeck(p.deck); return 'done'; }
+    return { prompt: '赫普的包包：從牌庫選最多 2 張基礎「赫普的」寶可夢卡放置於備戰區', choiceType: 'select_from_list', maxCount: Math.min(2, emptySlots, options.length), options, context: {} };
+  },
+  resume: preciousCart.resume,
+};
+
+/** 泰姆: no real guess-a-number minigame (no opponent interactivity to guess against) — resolves in the player's favor: draw 4, card returns to hand. */
+const tim: EffectHandler = {
+  start(ctx) {
+    drawCards(ctx.G, ctx.playerIndex, 4);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 寶可夢旋風回收機: return 1 own field Pokémon (and its attached cards) to hand. */
+const pokemonCyclone: EffectHandler = {
+  start(ctx) {
+    const targets = allPokemon(ctx.G, ctx.playerIndex);
+    if (targets.length === 0) return 'done';
+    return { prompt: '寶可夢旋風回收機：選擇要收回手牌的寶可夢', choiceType: 'select_from_list', count: 1, options: targets.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const targetId = selection[0];
+    const isActive = p.active?.id === targetId;
+    const benchIdx = isActive ? -1 : p.bench.findIndex(c => c?.id === targetId);
+    const target = isActive ? p.active : (benchIdx >= 0 ? p.bench[benchIdx] : null);
+    if (!target) return 'done';
+    if (target.attachedTool) p.hand.push(target.attachedTool);
+    // Attached Energy is represented on the Pokémon as {id,type} only, not a full Card object,
+    // so it can't be reconstructed back into hand — discarded instead (documented simplification).
+    p.hand.push({ ...target, damage: 0, statusConditions: [], attachedEnergy: [], attachedTool: null });
+    if (isActive) p.active = null; else p.bench[benchIdx] = null;
+    return 'done';
+  },
+};
+
+/** 推理組合: look at top 3, either reorder them on top, or shuffle them back into the deck. */
+const deductionSet: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const top = p.deck.slice(-3);
+    if (top.length === 0) return 'done';
+    return { prompt: '推理組合：查看牌庫上方 3 張，選擇順序放回上方（不選則洗回牌庫）', choiceType: 'select_from_list', maxCount: top.length, options: top.map(c => ({ id: c.id, label: c.cardData.name })), context: { seenIds: top.map(c => c.id) } };
+  },
+  resume(ctx, context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const seenIds = context.seenIds as string[];
+    const seen: GameCard[] = [];
+    for (const id of seenIds) {
+      const i = p.deck.findIndex(c => c.id === id);
+      if (i >= 0) seen.push(p.deck.splice(i, 1)[0]);
+    }
+    if (selection.length === 0) {
+      p.deck.push(...seen);
+      shuffleDeck(p.deck);
+      return 'done';
+    }
+    for (const id of [...selection].reverse()) {
+      const c = seen.find(s => s.id === id);
+      if (c) p.deck.push(c);
+    }
+    return 'done';
+  },
+};
+
+/** 可怕的哥哥: choose 1 opponent Pokémon, discard 1 attached Tool and 1 attached Energy from it. */
+const scaryBrother: EffectHandler = {
+  start(ctx) {
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    const targets = [opp.active, ...opp.bench].filter((c): c is GameCard => c !== null && (!!c.attachedTool || c.attachedEnergy.length > 0));
+    if (targets.length === 0) return 'done';
+    return { prompt: '可怕的哥哥：選擇對手 1 隻寶可夢，丟棄其道具與 1 張能量', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    const target = opp.active?.id === selection[0] ? opp.active : opp.bench.find(c => c?.id === selection[0]);
+    if (target) {
+      if (target.attachedTool) { opp.discardPile.push(target.attachedTool); target.attachedTool = null; }
+      if (target.attachedEnergy.length > 0) target.attachedEnergy.splice(0, 1);
+    }
+    return 'done';
+  },
+};
+
+/** 急進開關: switch Active↔Bench, then optionally move any attached energy from the newly-Benched Pokémon onto the new Active. */
+const rapidSwitch: EffectHandler = {
+  start(ctx) {
+    const step = pokemonExchange.start(ctx);
+    return step === 'done' ? 'done' : { ...step, context: { ...step.context, step: 'switch' } };
+  },
+  resume(ctx, context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (context.step === 'switch') {
+      const oldActiveId = p.active?.id;
+      pokemonExchange.resume(ctx, {}, selection);
+      const movedOut = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === oldActiveId);
+      if (!movedOut || movedOut.attachedEnergy.length === 0 || !p.active) return 'done';
+      return { prompt: '急進開關：選擇要移動到新戰鬥寶可夢身上的能量（可不選）', choiceType: 'select_from_list', maxCount: movedOut.attachedEnergy.length, options: movedOut.attachedEnergy.map(e => ({ id: e.id, label: e.type })), context: { step: 'move_energy', sourceId: oldActiveId } };
+    }
+    const source = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === context.sourceId);
+    if (source && p.active) {
+      source.attachedEnergy = source.attachedEnergy.filter(e => {
+        if (selection.includes(e.id)) { p.active!.attachedEnergy.push(e); return false; }
+        return true;
+      });
+    }
+    return 'done';
+  },
+};
+
+/** 八朔: look at top 8, take up to 3 to hand, reshuffle the rest. (The printed "own Pokémon fainted last opponent-turn" gate can't be checked — same documented simplification used elsewhere.) */
+const hazaku: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const top = p.deck.slice(-8);
+    if (top.length === 0) return 'done';
+    return { prompt: '八朔：查看牌庫上方 8 張，選最多 3 張加入手牌', choiceType: 'select_from_list', maxCount: Math.min(3, top.length), options: top.map(c => ({ id: c.id, label: c.cardData.name })), context: { seenIds: top.map(c => c.id) } };
+  },
+  resume(ctx, context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    for (const id of selection) moveFromDeckToHand(ctx.G, ctx.playerIndex, id, false);
+    shuffleDeck(p.deck);
+    return 'done';
+  },
+};
+
+/** 海岱: return 2 hand cards to the bottom of the deck, then draw 4. */
+const haidai: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.hand.length < 2) return 'done';
+    return { prompt: '海岱：選 2 張手牌放回牌庫下方', choiceType: 'select_from_list', count: 2, options: p.hand.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    for (const id of selection) {
+      const i = p.hand.findIndex(c => c.id === id);
+      if (i >= 0) p.deck.unshift(p.hand.splice(i, 1)[0]);
+    }
+    drawCards(ctx.G, ctx.playerIndex, 4);
+    return 'done';
+  },
+};
+
+/** 阿蜜的目光: during the opponent's next turn, all your Pokémon take -30 damage from their attacks. */
+const amisGaze: EffectHandler = {
+  start(ctx) {
+    player(ctx.G, ctx.playerIndex).incomingDamageReduction.push({ amount: 30 });
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 納莉: draw 4. (The "discard your whole hand if you still have 5+ cards at end of this turn" clause isn't enforced — no end-of-turn hook exists yet.) */
+const nari: EffectHandler = {
+  start(ctx) {
+    drawCards(ctx.G, ctx.playerIndex, 4);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 格拉吉歐的決戰: only usable when it was the player's only hand card; this turn, non-rule-box own Pokémon's attacks deal +80. */
+const gladionsShowdown: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.hand.length !== 0) return 'done';
+    p.turnDamageBoosts.push({ amount: 80, excludeRuleBoxAttacker: true });
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 鐵之防禦強化: during the opponent's next turn, your Metal Pokémon take -30 damage from their attacks. */
+const ironDefenseBoost: EffectHandler = {
+  start(ctx) {
+    player(ctx.G, ctx.playerIndex).incomingDamageReduction.push({ typeFilter: 'Metal', amount: 30 });
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 由紫: heal 150 on 1 own Psychic Pokémon. */
+const yuzi: EffectHandler = {
+  start(ctx) {
+    const targets = allPokemon(ctx.G, ctx.playerIndex).filter(c => (c.cardData.types || []).includes('Psychic') && c.damage > 0);
+    if (targets.length === 0) return 'done';
+    return { prompt: '由紫：選擇要恢復 150 HP 的超系寶可夢', choiceType: 'select_from_list', count: 1, options: targets.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const target = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === selection[0]);
+    if (target) healDamage(target, 150);
+    return 'done';
+  },
+};
+
+/** 馬志士的交易: since there's no opponent interactivity, always resolves as if the opponent declined: draw 4. */
+const majisisTrade: EffectHandler = {
+  start(ctx) {
+    drawCards(ctx.G, ctx.playerIndex, 4);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 真菰: heal 40 on every own Pokémon. */
+const makomo: EffectHandler = {
+  start(ctx) {
+    for (const c of allPokemon(ctx.G, ctx.playerIndex)) healDamage(c, 40);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 卡娜莉: discard 1 hand card, search deck for up to 4 Lightning Pokémon to hand. */
+const canary: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.hand.length === 0) return 'done';
+    return { prompt: '卡娜莉：選 1 張手牌丟棄', choiceType: 'select_hand_cards', count: 1, context: { step: 'discard' } };
+  },
+  resume(ctx, context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (context.step === 'discard') {
+      discardFromHand(ctx.G, ctx.playerIndex, selection);
+      const options = deckOptions(p.deck, c => c.cardData.supertype === 'Pokémon' && (c.cardData.types || []).includes('Lightning'));
+      if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
+      return { prompt: '卡娜莉：從牌庫選最多 4 張雷寶可夢卡加入手牌', choiceType: 'select_from_list', maxCount: Math.min(4, options.length), options, context: { step: 'search' } };
+    }
+    for (const id of selection) moveFromDeckToHand(ctx.G, ctx.playerIndex, id, false);
+    shuffleDeck(p.deck);
+    return 'done';
+  },
+};
+
+/** 滑稽演員: both players reshuffle hand into deck, then a coin flip decides the draw split (5/3 or 3/5). */
+const jester: EffectHandler = {
+  start(ctx) {
+    for (const idx of [0, 1] as const) {
+      const p = player(ctx.G, idx);
+      p.deck.push(...p.hand);
+      p.hand = [];
+      shuffleDeck(p.deck);
+    }
+    const heads = flipCoin();
+    drawCards(ctx.G, ctx.playerIndex, heads ? 5 : 3);
+    drawCards(ctx.G, (1 - ctx.playerIndex) as 0 | 1, heads ? 3 : 5);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 悠哉尾草棒: only usable by the player going second, on their very first turn (game turn 2).
+ * Real text returns the chosen Energy to the OPPONENT's hand; attachedEnergy only tracks
+ * {id,type} rather than a full Card, so it can't be reconstructed into a hand card — it's
+ * discarded instead (same documented simplification as 寶可夢旋風回收機 above). Still a real
+ * tempo swing (opponent loses the attached Energy either way), just not identical wording. */
+const laidBackTailGrass: EffectHandler = {
+  start(ctx) {
+    if (ctx.G.turn !== 2) return 'done';
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    const targets = [opp.active, ...opp.bench].filter((c): c is GameCard => c !== null && c.attachedEnergy.length > 0);
+    if (targets.length === 0) return 'done';
+    const options: { id: string; label: string }[] = [];
+    for (const c of targets) for (const e of c.attachedEnergy) options.push({ id: e.id, label: `${c.cardData.name} 的 ${e.type} 能量` });
+    return { prompt: '悠哉尾草棒：選擇要丟棄的對手能量', choiceType: 'select_from_list', count: 1, options, context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    for (const c of [opp.active, ...opp.bench]) {
+      if (!c) continue;
+      const i = c.attachedEnergy.findIndex(e => e.id === selection[0]);
+      if (i >= 0) { c.attachedEnergy.splice(i, 1); break; }
+    }
+    return 'done';
+  },
+};
+
 export const trainerEffects: Record<string, EffectHandler> = {
   '高級球': ultraBall,
   '老大的指令': bosssOrders,
@@ -1735,6 +2326,44 @@ export const trainerEffects: Record<string, EffectHandler> = {
   '沐淨': mujing,
   '琵魯': piru,
   '吹火人': fireBreather,
+
+  '精靈球': pokeBall,
+  '大師球': masterBall,
+  '危險光線': dangerRay,
+  '高級香氛': premiumIncense,
+  '寶可生機劑A': pokeVitalA,
+  '派帕的三明治': paipasSandwich,
+  '龍之秘藥': dragonElixir,
+  '管理員': caretaker,
+  '主持人的帶動': hostsEncouragement,
+  '仙后': queenCard,
+  '手部修剪器': handTrimmer,
+  '琉琪亞的展示': lucasShowcase,
+  '重新啟動箱': restartBox,
+  '白露的真心': shiroroNoKokoro,
+  '火箭隊的超級球': rocketSuperBall,
+  '好傷藥': goodPotion,
+  '火箭隊的驚嚇炸彈': rocketScareBomb,
+  '鬼之假面': oniMask,
+  '赫普的包包': heapsBag,
+  '泰姆': tim,
+  '寶可夢旋風回收機': pokemonCyclone,
+  '推理組合': deductionSet,
+  '可怕的哥哥': scaryBrother,
+  '急進開關': rapidSwitch,
+  '悠哉尾草棒': laidBackTailGrass,
+  '八朔': hazaku,
+  '海岱': haidai,
+  '阿蜜的目光': amisGaze,
+  '老大的指令（魁奇思）': bosssOrders,
+  '納莉': nari,
+  '格拉吉歐的決戰': gladionsShowdown,
+  '鐵之防禦強化': ironDefenseBoost,
+  '由紫': yuzi,
+  '馬志士的交易': majisisTrade,
+  '真菰': makomo,
+  '卡娜莉': canary,
+  '滑稽演員': jester,
 };
 
 export function hasTrainerEffect(name: string): boolean {

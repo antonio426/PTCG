@@ -22,9 +22,14 @@ export interface PtcgPlayerState {
   /** 祭典樂舞-style "attack twice" abilities: whether the bonus second attack has been used this turn. */
   usedBonusAttackThisTurn: boolean;
   /** "This turn, your X Pokémon's attacks deal +N to the opponent's active" Item/Supporter effects (e.g. 力量蛋白飲). */
-  turnDamageBoosts: { typeFilter?: string; vsBigOnly?: boolean; amount: number }[];
+  turnDamageBoosts: { typeFilter?: string; vsBigOnly?: boolean; excludeRuleBoxAttacker?: boolean; amount: number }[];
   /** 白蕾雅-style "your next KO this turn gives 1 extra prize" flag. */
   bonusPrizeNextKo: boolean;
+  /** 阿蜜的目光 / 鐵之防禦強化-style "damage you take next opponent-turn is reduced" — set on the
+   * PROTECTED side, consumed naturally since it's cleared at that side's own next turn-begin
+   * (the same reset pass that clears turnDamageBoosts etc.), which lands right after the one
+   * opponent turn it's meant to cover. */
+  incomingDamageReduction: { typeFilter?: string; amount: number }[];
 }
 
 export interface PtcgGameState {

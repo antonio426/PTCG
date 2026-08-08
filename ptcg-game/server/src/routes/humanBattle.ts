@@ -152,6 +152,7 @@ function applyTurnBegin(G: PtcgGameState): void {
   player.usedBonusAttackThisTurn = false;
   player.turnDamageBoosts = [];
   player.bonusPrizeNextKo = false;
+  player.incomingDamageReduction = [];
 }
 
 function executeGameAction(G: PtcgGameState, action: { type: string; payload?: Record<string, any> }): void {

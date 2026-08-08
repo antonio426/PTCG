@@ -52,6 +52,7 @@ function runTurnBegin(G: PtcgGameState): void {
     player.usedBonusAttackThisTurn = false;
     player.turnDamageBoosts = [];
     player.bonusPrizeNextKo = false;
+    player.incomingDamageReduction = [];
   }
 }
 
