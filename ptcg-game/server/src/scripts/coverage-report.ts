@@ -11,6 +11,7 @@ import type { MapCard } from '../card-api/types';
 import { trainerEffects } from '../game/effects/trainers';
 import { abilityEffects } from '../game/effects/abilities';
 import { attackEffects } from '../game/effects/attacks';
+import { matchesGenericAttackTemplate } from '../game/effects/genericAttacks';
 import { hasToolEffect } from '../game/effects/tools';
 import { PASSIVE_ABILITY_NAMES } from '../game/effects/passiveAbilities';
 import { normalizeAbilityName, normalizeCardName } from '../game/effects/types';
@@ -54,14 +55,16 @@ function main() {
   // ── Attacks with special text (the rest use the default flat-damage path, which is correct for them) ──
   const attackKeys = new Set<string>();
   const attackKeysWithText: string[] = [];
+  const attackTextByKey: Record<string, string> = {};
   for (const p of pokemon) {
     for (const a of p.attacks || []) {
       if (!a.text?.trim()) continue; // plain flat-damage attacks don't need a handler
       const key = `${p.name}::${a.name}`;
-      if (!attackKeys.has(key)) { attackKeys.add(key); attackKeysWithText.push(key); }
+      if (!attackKeys.has(key)) { attackKeys.add(key); attackKeysWithText.push(key); attackTextByKey[key] = a.text; }
     }
   }
-  const coveredAttacks = attackKeysWithText.filter(k => k in attackEffects);
+  const isAttackCovered = (k: string) => k in attackEffects || matchesGenericAttackTemplate(attackTextByKey[k]);
+  const coveredAttacks = attackKeysWithText.filter(isAttackCovered);
 
   console.log('\n=== Attacks with special effect text ===');
   console.log(`  Unique Pokémon+attack combos: ${attackKeysWithText.length}, covered: ${coveredAttacks.length} (${(coveredAttacks.length / attackKeysWithText.length * 100).toFixed(1)}%)`);
@@ -92,7 +95,7 @@ function main() {
   const outDir = path.resolve(__dirname, '../../../data-scraped');
   fs.writeFileSync(path.join(outDir, 'coverage-uncovered-trainers.json'), JSON.stringify(uncoveredTrainers, null, 2), 'utf-8');
   fs.writeFileSync(path.join(outDir, 'coverage-uncovered-abilities.json'), JSON.stringify(abilityNames.filter(n => !isAbilityCovered(n)), null, 2), 'utf-8');
-  fs.writeFileSync(path.join(outDir, 'coverage-uncovered-attacks.json'), JSON.stringify(attackKeysWithText.filter(k => !(k in attackEffects)), null, 2), 'utf-8');
+  fs.writeFileSync(path.join(outDir, 'coverage-uncovered-attacks.json'), JSON.stringify(attackKeysWithText.filter(k => !isAttackCovered(k)), null, 2), 'utf-8');
   console.log('\nFull uncovered lists saved to data-scraped/coverage-uncovered-*.json');
 }
 

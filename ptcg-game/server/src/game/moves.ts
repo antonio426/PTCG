@@ -6,7 +6,8 @@ import { calculateDamage, effectiveMaxHp, handleKo, prizesForKo } from './damage
 import { getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasPassiveAbilityNamed, isRetreatBlockedByOpponent, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat, shouldDiscardAttackerEnergy } from './effects/passiveAbilities';
 import { isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
-import { applyStatusCondition } from './effects/primitives';
+import { applyStatusCondition, drawCards } from './effects/primitives';
+import { resolveGenericAttackEffect } from './effects/genericAttacks';
 import {
   EffectContext, EffectStep,
   hasTrainerEffect, startTrainerEffect, resumeTrainerEffect,
@@ -376,7 +377,12 @@ export const moves = {
       applyEffectStep(G, G.currentPlayer as 0 | 1, `attack:${attacker.cardData.name}::${attack.name}`, step, attacker.id);
       addLog(G, G.currentPlayer, 'attack', `${attacker.cardData.name} used "${attack.name}"!`);
     } else {
-      const damage = calculateDamage(G, G.currentPlayer as 0 | 1, attacker, attack, defender);
+      // Generic attack-text templates (coin-flip-scaled damage, status infliction, self-heal,
+      // draw) — resolved from the printed text/damage string directly, no per-card registration
+      // needed. See genericAttacks.ts for what is and isn't covered by this.
+      const genericOutcome = attack.text ? resolveGenericAttackEffect(attack.text, attack.damage) : undefined;
+      const effectiveAttack = genericOutcome ? { ...attack, damage: String(genericOutcome.baseDamage) } : attack;
+      const damage = calculateDamage(G, G.currentPlayer as 0 | 1, attacker, effectiveAttack, defender);
       const defenderWasFullHp = defender.damage === 0;
       defender.damage += damage;
       addLog(G, G.currentPlayer, 'attack', `${attacker.cardData.name} used ${attack.name} for ${damage} damage to ${defender.cardData.name}`);
@@ -440,6 +446,15 @@ export const moves = {
       if (retaliation > 0) {
         const attackerHp = effectiveMaxHp(G, attacker);
         if (attacker.damage >= attackerHp && attackerHp > 0) handleKo(G, G.currentPlayer, attacker.id);
+      }
+      // Generic attack-text side effects: status infliction is gated on the hit actually
+      // landing (damage > 0), matching real rules for "flip a coin, if heads..."-style effects.
+      if (genericOutcome) {
+        if (damage > 0 && genericOutcome.statusToInflict) {
+          for (const status of genericOutcome.statusToInflict) applyStatusCondition(defender, status);
+        }
+        if (genericOutcome.healSelfAmount) attacker.damage = Math.max(0, attacker.damage - genericOutcome.healSelfAmount);
+        if (genericOutcome.drawCards) drawCards(G, G.currentPlayer as 0 | 1, genericOutcome.drawCards);
       }
     }
 
