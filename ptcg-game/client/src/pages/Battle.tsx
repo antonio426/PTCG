@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 import { useDeckStore } from '../stores/deckStore';
 import { useCardStore } from '../stores/cardStore';
 import { useGameStore, type SanitizedGameCard } from '../stores/gameStore';
@@ -27,6 +27,115 @@ function EnergyIcon({ type, size = 'sm' }: { type: string; size?: 'sm' | 'md' })
     <span className={`inline-flex items-center justify-center rounded-full ${ENERGY_COLORS[type] || 'bg-gray-500'} text-white font-bold ${cls}`}>
       {ENERGY_LABELS[type] || '?'}
     </span>
+  );
+}
+
+/* ====================================================== */
+/*  Card effect preview (hover popover)                    */
+/* ====================================================== */
+
+const ABILITY_TYPE_LABELS: Record<string, string> = {
+  Ability: '特性', 'Pokémon-Power': '寶可夢力量', 'Poké-Body': '寶可夢身體', 'Poké-Power': '寶可夢力量',
+};
+
+function CardDetail({ card }: { card: Card }) {
+  const hasWRR = (card.weaknesses?.length || card.resistances?.length || (card.retreatCost?.length ?? 0) > 0);
+  return (
+    <div className="p-3 w-72">
+      <div className="flex gap-3 mb-2">
+        <img
+          src={card.images.large || card.images.small}
+          alt={card.name}
+          className="w-20 h-auto rounded-lg object-contain bg-slate-800 flex-shrink-0 border border-slate-700"
+        />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold text-white leading-tight">{card.name}</p>
+          <p className="text-[10px] text-slate-400 mt-0.5">
+            {card.supertype}{card.subtypes?.length ? ` · ${card.subtypes.join(' / ')}` : ''}
+          </p>
+          {card.hp && (
+            <div className="flex items-center gap-1 mt-1.5">
+              <span className="text-xs text-slate-300 font-medium">HP {card.hp}</span>
+              {card.types?.map((t, i) => <EnergyIcon key={i} type={t} />)}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {card.rules?.map((r, i) => (
+        <p key={i} className="text-[11px] text-slate-200 leading-snug mb-1.5">{r}</p>
+      ))}
+
+      {card.abilities?.filter(a => a.text).map((a, i) => (
+        <div key={i} className="mb-1.5 bg-emerald-950/40 border border-emerald-800/50 rounded-lg px-2 py-1.5">
+          <p className="text-[11px] font-semibold text-emerald-400">{ABILITY_TYPE_LABELS[a.type] || a.type}：{a.name}</p>
+          <p className="text-[11px] text-slate-300 leading-snug mt-0.5">{a.text}</p>
+        </div>
+      ))}
+
+      {card.attacks?.map((atk, i) => (
+        <div key={i} className="mb-1.5">
+          <div className="flex items-center gap-1 flex-wrap">
+            {atk.cost.map((c, ci) => <EnergyIcon key={ci} type={c} />)}
+            <span className="text-xs font-semibold text-white ml-1">{atk.name}</span>
+            {atk.damage && <span className="text-xs text-red-400 ml-auto font-bold">{atk.damage}</span>}
+          </div>
+          {atk.text && <p className="text-[11px] text-slate-400 leading-snug mt-0.5">{atk.text}</p>}
+        </div>
+      ))}
+
+      {hasWRR && (
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-400 mt-2 pt-2 border-t border-slate-700">
+          {card.weaknesses?.map((w, i) => (
+            <span key={i}>弱點 <EnergyIcon type={w.type} />{w.value}</span>
+          ))}
+          {card.resistances?.map((r, i) => (
+            <span key={i}>抵抗 <EnergyIcon type={r.type} />{r.value}</span>
+          ))}
+          {(card.retreatCost?.length ?? 0) > 0 && (
+            <span className="flex items-center gap-1">撤退 {card.retreatCost!.map((_, i) => <EnergyIcon key={i} type="Colorless" />)}</span>
+          )}
+        </div>
+      )}
+
+      {card.flavorText && (
+        <p className="text-[10px] text-slate-500 italic leading-snug mt-2 pt-2 border-t border-slate-700">{card.flavorText}</p>
+      )}
+    </div>
+  );
+}
+
+function HoverPreview({ card, children, placement = 'above' }: { card: Card; children: ReactNode; placement?: 'above' | 'below' }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      {children}
+      {show && (
+        <div
+          className={`absolute z-[70] left-1/2 -translate-x-1/2 ${placement === 'above' ? 'bottom-full mb-2' : 'top-full mt-2'}
+            bg-slate-900 border border-slate-600 rounded-xl shadow-2xl pointer-events-none`}
+        >
+          <CardDetail card={card} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ====================================================== */
+/*  Section header (main-phase action panel)                */
+/* ====================================================== */
+
+function SectionHeader({ icon, label }: { icon: string; label: string }) {
+  return (
+    <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 mb-1.5 pb-1 border-b border-slate-700/60">
+      <span>{icon}</span>
+      <span>{label}</span>
+    </div>
   );
 }
 
@@ -206,7 +315,7 @@ export default function Battle() {
   /* ======================== */
 
   function PokemonCardView({
-    card, size = 'normal', showHp = true, onClick, highlight, selected,
+    card, size = 'normal', showHp = true, onClick, highlight, selected, previewPlacement = 'above',
   }: {
     card: SanitizedGameCard;
     size?: 'normal' | 'small';
@@ -214,6 +323,7 @@ export default function Battle() {
     onClick?: () => void;
     highlight?: boolean;
     selected?: boolean;
+    previewPlacement?: 'above' | 'below';
   }) {
     const cd = card.cardData;
     const hp = cd.hp ? parseInt(cd.hp) : 0;
@@ -230,9 +340,11 @@ export default function Battle() {
           ${onClick ? 'hover:-translate-y-1' : ''}`}
         onClick={onClick}
       >
-        <div className={`${wCls} ${imgH} bg-slate-700 border-2 border-slate-600 rounded-lg overflow-hidden`}>
-          <img src={cd.images.small} alt={cd.name} className="w-full h-full object-contain" />
-        </div>
+        <HoverPreview card={cd} placement={previewPlacement}>
+          <div className={`${wCls} ${imgH} bg-slate-700 border-2 border-slate-600 rounded-lg overflow-hidden hover:border-blue-400 transition-colors`}>
+            <img src={cd.images.small} alt={cd.name} className="w-full h-full object-contain" />
+          </div>
+        </HoverPreview>
         {showHp && hp > 0 && (
           <div className="w-full px-0.5">
             <div className="flex justify-between text-[10px] text-slate-300 mb-0.5">
@@ -342,7 +454,7 @@ export default function Battle() {
 
           <div className="flex justify-center mb-1">
             {bs.opponent.active ? (
-              <PokemonCardView card={bs.opponent.active} size="normal" showHp={true} />
+              <PokemonCardView card={bs.opponent.active} size="normal" showHp={true} previewPlacement="below" />
             ) : (
               <div className="w-32 h-[6.5rem] bg-slate-700/50 border-2 border-dashed border-slate-600 rounded-lg flex items-center justify-center">
                 <span className="text-slate-600 text-xs">無寶可夢</span>
@@ -354,7 +466,7 @@ export default function Battle() {
             {Array.from({ length: 5 }, (_, i) => {
               const c = bs.opponent.bench[i];
               return c ? (
-                <PokemonCardView key={c.id} card={c} size="small" showHp={false} />
+                <PokemonCardView key={c.id} card={c} size="small" showHp={false} previewPlacement="below" />
               ) : (
                 <div key={i} className="w-24 h-[4.25rem] bg-slate-700/30 border border-dashed border-slate-600 rounded-md flex items-center justify-center">
                   <span className="text-slate-600 text-xs">?</span>
@@ -368,20 +480,18 @@ export default function Battle() {
         <div className="bg-slate-800/80 border border-slate-700 rounded-xl p-3 flex-1 min-h-0 flex flex-col">
 
           {/* Turn info bar */}
-          <div className="flex items-center justify-between mb-2 text-xs">
-            <span className="text-slate-400">
-              回合 {bs.turn}
-              {bs.phase !== 'draw' && (
-                <span className="ml-2 text-slate-500">| {phaseLabels[bs.phase] || bs.phase}</span>
-              )}
-              {bs.isPlayerTurn ? (
-                <span className="text-green-400 ml-2">你的回合</span>
-              ) : (
-                <span className="text-red-400 ml-2">對手回合</span>
-              )}
-            </span>
-            <span className="text-slate-500">
-              牌庫 {bs.player.deckCount} | 棄牌 {bs.player.discardPile.length}
+          <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-700/60">
+            <div className="flex items-center gap-2">
+              <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${bs.isPlayerTurn ? 'bg-green-900/60 text-green-300 border border-green-700/60' : 'bg-red-900/60 text-red-300 border border-red-700/60'}`}>
+                {bs.isPlayerTurn ? '你的回合' : '對手回合'}
+              </span>
+              <span className="text-xs text-slate-400">回合 {bs.turn}</span>
+              <span className="px-1.5 py-0.5 rounded bg-slate-700 text-[11px] text-slate-300 font-medium">
+                {phaseLabels[bs.phase] || bs.phase}
+              </span>
+            </div>
+            <span className="text-[11px] text-slate-500">
+              牌庫 {bs.player.deckCount} · 棄牌 {bs.player.discardPile.length}
             </span>
           </div>
 
@@ -437,120 +547,147 @@ export default function Battle() {
 
               {/* Main / Attack phase */}
               {(bs.phase === 'main' || bs.phase === 'attack') && (
-                <div className="space-y-2">
+                <div className="space-y-3">
 
-                  {/* End turn button */}
-                  <div className="flex flex-wrap gap-1.5">
-                    {quickActions.filter(m => m.type === 'end_turn').map((m, i) => (
-                      <button
-                        key={i}
-                        onClick={() => handleSubmitMove(m)}
-                        className="px-3 py-1.5 bg-slate-600 text-white rounded-lg text-xs hover:bg-slate-500 transition-colors"
-                      >
-                        {m.description}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Retreat button */}
-                  {quickActions.filter(m => m.type === 'retreat').map((m, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleSubmitMove(m)}
-                      className="px-3 py-1.5 bg-orange-600 text-white rounded-lg text-xs hover:bg-orange-500 transition-colors"
-                    >
-                      {m.description}
-                    </button>
-                  ))}
-
-                  {/* Attack buttons */}
-                  {quickActions.filter(m => m.type === 'attack').map((m, i) => {
-                    const atkIdx = m.payload?.attackIndex as number;
-                    const atk = bs.player.active?.cardData.attacks?.[atkIdx];
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => handleSubmitMove(m)}
-                        className="px-3 py-1.5 bg-red-700 text-white rounded-lg text-xs hover:bg-red-600 transition-colors mr-1.5 mb-1"
-                      >
-                        ⚔ {atk?.name || m.description} {atk?.damage ? `(${atk.damage})` : ''}
-                      </button>
-                    );
-                  })}
+                  {/* Quick actions section */}
+                  <section>
+                    <SectionHeader icon="⚡" label="快捷行動" />
+                    <div className="flex flex-wrap gap-1.5">
+                      {quickActions.filter(m => m.type === 'attack').map((m, i) => {
+                        const atkIdx = m.payload?.attackIndex as number;
+                        const atk = bs.player.active?.cardData.attacks?.[atkIdx];
+                        const btn = (
+                          <button
+                            key={i}
+                            onClick={() => handleSubmitMove(m)}
+                            className="px-3 py-1.5 bg-red-700 text-white rounded-lg text-xs font-medium hover:bg-red-600 transition-colors flex items-center gap-1"
+                          >
+                            <span>⚔</span>
+                            {atk?.cost.map((c, ci) => <EnergyIcon key={ci} type={c} />)}
+                            <span>{atk?.name || m.description}</span>
+                            {atk?.damage && <span className="text-red-200 font-bold">{atk.damage}</span>}
+                          </button>
+                        );
+                        return atk && bs.player.active ? (
+                          <HoverPreview key={i} card={bs.player.active.cardData} placement="above">{btn}</HoverPreview>
+                        ) : btn;
+                      })}
+                      {quickActions.filter(m => m.type === 'retreat').map((m, i) => (
+                        <button
+                          key={i}
+                          onClick={() => handleSubmitMove(m)}
+                          className="px-3 py-1.5 bg-orange-600 text-white rounded-lg text-xs font-medium hover:bg-orange-500 transition-colors"
+                        >
+                          ↩ {m.description}
+                        </button>
+                      ))}
+                      {quickActions.filter(m => m.type === 'end_turn').map((m, i) => (
+                        <button
+                          key={i}
+                          onClick={() => handleSubmitMove(m)}
+                          className="px-3 py-1.5 bg-slate-600 text-white rounded-lg text-xs font-medium hover:bg-slate-500 transition-colors ml-auto"
+                        >
+                          結束回合 →
+                        </button>
+                      ))}
+                    </div>
+                  </section>
 
                   {/* Hand card actions */}
                   {handCardActions.length > 0 && (
-                    <div>
-                      <p className="text-xs text-slate-500 mb-1">手牌卡牌（點擊選擇動作）：</p>
-                      <div className="flex flex-wrap gap-2">
-                        {handCardActions.map((hca, idx) => {
-                          const isSelected = selectedCardInHand === hca.cardData.id;
+                    <section>
+                      <SectionHeader icon="🎴" label="手牌（點擊卡片選擇動作，滑鼠移入可預覽效果）" />
+                      <div className="flex flex-wrap gap-3">
+                        <div className="flex flex-wrap gap-2 flex-1 min-w-[140px]">
+                          {handCardActions.map((hca, idx) => {
+                            const isSelected = selectedCardInHand === hca.cardData.id;
+                            return (
+                              <div key={idx} className="flex flex-col items-center">
+                                <HoverPreview card={hca.cardData} placement="above">
+                                  <img
+                                    src={hca.cardData.images.small}
+                                    alt={hca.cardData.name}
+                                    className={`w-14 h-[4.5rem] rounded-lg cursor-pointer transition-all object-contain border-2
+                                      ${isSelected ? 'border-blue-400 -translate-y-1 shadow-lg shadow-blue-500/30' : 'border-slate-600 hover:border-slate-400'}`}
+                                    onClick={() => handleCardClick(hca.cardData.id)}
+                                  />
+                                </HoverPreview>
+                                <span className="text-[10px] text-slate-400 mt-0.5 truncate max-w-16 text-center">
+                                  {hca.cardData.name}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Selected-card detail + action panel */}
+                        {selectedCardInHand && (() => {
+                          const hca = handCardActions.find(h => h.cardData.id === selectedCardInHand);
+                          if (!hca) return null;
                           return (
-                            <div key={idx} className="flex flex-col items-center">
-                              <img
-                                src={hca.cardData.images.small}
-                                alt={hca.cardData.name}
-                                className={`w-14 h-[4.5rem] rounded-lg cursor-pointer transition-all object-contain border-2
-                                  ${isSelected ? 'border-blue-400 -translate-y-1' : 'border-slate-600 hover:border-slate-400'}`}
-                                onClick={() => handleCardClick(hca.cardData.id)}
-                              />
-                              <span className="text-[10px] text-slate-400 mt-0.5 truncate max-w-16 text-center">
-                                {hca.cardData.name}
-                              </span>
-                              {isSelected && (
-                                <div className="flex flex-col gap-0.5 mt-0.5 w-full">
-                                  {hca.moves.map((m, mi) => (
-                                    <button
-                                      key={mi}
-                                      onClick={() => handleSubmitMove(m)}
-                                      className="px-1.5 py-0.5 bg-blue-600 text-white rounded text-[10px] hover:bg-blue-500 transition-colors"
-                                    >
-                                      {m.description.replace(/^(Play|Attach|Evolve) /, '')}
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
+                            <div className="w-full max-w-[18rem] bg-slate-900/80 border border-blue-500/40 rounded-xl overflow-hidden">
+                              <CardDetail card={hca.cardData} />
+                              <div className="flex flex-col gap-1 p-2 pt-0">
+                                {hca.moves.map((m, mi) => (
+                                  <button
+                                    key={mi}
+                                    onClick={() => handleSubmitMove(m)}
+                                    className="w-full px-2 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-500 transition-colors"
+                                  >
+                                    {m.description.replace(/^(Play|Attach|Evolve) /, '')}
+                                  </button>
+                                ))}
+                              </div>
                             </div>
                           );
-                        })}
+                        })()}
                       </div>
-                    </div>
+                    </section>
                   )}
 
                   {/* Trainer card actions (separate row) */}
                   {trainerActions.length > 0 && handCardActions.length === 0 && (
-                    <div>
-                      <p className="text-xs text-slate-500 mb-1">訓練家卡（點擊使用）：</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {trainerActions.map((m, i) => (
-                          <button
-                            key={i}
-                            onClick={() => handleSubmitMove(m)}
-                            className="px-2 py-1 bg-indigo-700 text-white rounded text-[10px] hover:bg-indigo-600 transition-colors"
-                          >
-                            {m.description}
-                          </button>
-                        ))}
+                    <section>
+                      <SectionHeader icon="🧰" label="訓練家卡（點擊使用）" />
+                      <div className="flex flex-wrap gap-2">
+                        {trainerActions.map((m, i) => {
+                          const cardData = bs.player.hand.find(c => c.id === m.payload?.cardId);
+                          const btn = (
+                            <button
+                              onClick={() => handleSubmitMove(m)}
+                              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-700 text-white rounded-lg text-xs font-medium hover:bg-indigo-600 transition-colors"
+                            >
+                              {cardData && <img src={cardData.images.small} alt="" className="w-5 h-7 object-contain rounded-sm" />}
+                              {m.description}
+                            </button>
+                          );
+                          return cardData ? <HoverPreview key={i} card={cardData} placement="above">{btn}</HoverPreview> : <div key={i}>{btn}</div>;
+                        })}
                       </div>
-                    </div>
+                    </section>
                   )}
 
                   {/* Ability actions (separate row) */}
                   {abilityActions.length > 0 && (
-                    <div>
-                      <p className="text-xs text-slate-500 mb-1">特性（點擊使用）：</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {abilityActions.map((m, i) => (
-                          <button
-                            key={i}
-                            onClick={() => handleSubmitMove(m)}
-                            className="px-2 py-1 bg-emerald-700 text-white rounded text-[10px] hover:bg-emerald-600 transition-colors"
-                          >
-                            {m.description}
-                          </button>
-                        ))}
+                    <section>
+                      <SectionHeader icon="✨" label="特性（點擊使用）" />
+                      <div className="flex flex-wrap gap-2">
+                        {abilityActions.map((m, i) => {
+                          const cardId = m.payload?.cardId as string | undefined;
+                          const cardData = [bs.player.active, ...bs.player.bench].find(c => c?.id === cardId)?.cardData;
+                          const btn = (
+                            <button
+                              onClick={() => handleSubmitMove(m)}
+                              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-700 text-white rounded-lg text-xs font-medium hover:bg-emerald-600 transition-colors"
+                            >
+                              {cardData && <img src={cardData.images.small} alt="" className="w-5 h-7 object-contain rounded-sm" />}
+                              {m.description}
+                            </button>
+                          );
+                          return cardData ? <HoverPreview key={i} card={cardData} placement="above">{btn}</HoverPreview> : <div key={i}>{btn}</div>;
+                        })}
                       </div>
-                    </div>
+                    </section>
                   )}
 
                   {/* No legal moves indicator */}
@@ -611,15 +748,16 @@ export default function Battle() {
               bs.player.hand.map((card, i) => {
                 const isSelected = selectedCardInHand === card.id;
                 return (
-                  <div
-                    key={i}
-                    className={`flex-shrink-0 w-14 h-20 bg-slate-700 border-2 rounded-md overflow-hidden
-                      ${isSelected ? 'border-blue-400 -translate-y-2' : 'border-slate-600 hover:border-slate-400'}
-                      transition-all cursor-pointer shadow-lg`}
-                    onClick={() => handleCardClick(card.id)}
-                  >
-                    <img src={card.images.small} alt={card.name} className="w-full h-full object-contain" />
-                  </div>
+                  <HoverPreview key={i} card={card} placement="above">
+                    <div
+                      className={`flex-shrink-0 w-14 h-20 bg-slate-700 border-2 rounded-md overflow-hidden
+                        ${isSelected ? 'border-blue-400 -translate-y-2' : 'border-slate-600 hover:border-slate-400'}
+                        transition-all cursor-pointer shadow-lg`}
+                      onClick={() => handleCardClick(card.id)}
+                    >
+                      <img src={card.images.small} alt={card.name} className="w-full h-full object-contain" />
+                    </div>
+                  </HoverPreview>
                 );
               })
             )}
@@ -668,8 +806,10 @@ export default function Battle() {
             ) : (
               <div className="flex flex-wrap gap-2">
                 {bs.player.discardPile.map((c, i) => (
-                  <img key={i} src={c.cardData.images.small} alt={c.cardData.name}
-                    className="w-16 h-[4.5rem] rounded object-contain bg-slate-700" />
+                  <HoverPreview key={i} card={c.cardData} placement="above">
+                    <img src={c.cardData.images.small} alt={c.cardData.name}
+                      className="w-16 h-[4.5rem] rounded object-contain bg-slate-700 hover:ring-2 hover:ring-blue-400 transition-all" />
+                  </HoverPreview>
                 ))}
               </div>
             )}
