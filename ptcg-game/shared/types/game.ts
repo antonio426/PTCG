@@ -84,4 +84,6 @@ export interface PendingChoice {
   /** For select_from_list: the concrete options being chosen from. */
   options?: { id: string; label: string }[];
   context: Record<string, unknown>;
+  /** The trainer/pokemon/tool instance id that started this effect — restored into EffectContext on resume. */
+  sourceCardId?: string;
 }

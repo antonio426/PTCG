@@ -61,6 +61,10 @@ function applyTurnBegin(G: PtcgGameState): void {
   player.supporterPlayedThisTurn = false;
   player.pokemonPlayedThisTurn = [];
   player.cardsPlayedThisTurn = 0;
+  player.abilitiesUsedThisTurn = [];
+  player.usedBonusAttackThisTurn = false;
+  player.turnDamageBoosts = [];
+  player.bonusPrizeNextKo = false;
 }
 
 function advanceTurn(G: PtcgGameState): void {

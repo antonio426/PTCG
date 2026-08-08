@@ -1,20 +1,24 @@
 import { GameCard } from '@ptcg/shared';
 import { PtcgGameState, PendingChoice } from './GameState';
-import { canPlayPokemon, canEvolve, canAttachEnergy, canRetreat, canAttack, effectiveRetreatCost } from './validation';
+import { canPlayPokemon, canEvolve, canAttachEnergy, canRetreat, canAttack, effectiveRetreatCost, FIRST_TURN_SUPPORTER_EXCEPTIONS } from './validation';
 import { clearStatusConditionsOnLeaveActive } from './statusConditions';
-import { calculateDamage, handleKo, prizesForKo } from './damage';
+import { calculateDamage, effectiveMaxHp, handleKo, prizesForKo } from './damage';
+import { hasPassiveAbilityNamed } from './effects/passiveAbilities';
+import { isStadiumActive } from './effects/stadiums';
+import { getToolRetaliationDamage } from './effects/tools';
 import {
   EffectContext, EffectStep,
   hasTrainerEffect, startTrainerEffect, resumeTrainerEffect,
-  hasAbilityEffect, startAbilityEffect, resumeAbilityEffect,
+  hasAbilityEffect, startAbilityEffect, resumeAbilityEffect, isAbilityUnlimitedUse,
   hasAttackEffect, startAttackEffect, resumeAttackEffect,
+  normalizeAbilityName,
 } from './effects';
 
-function applyEffectStep(G: PtcgGameState, player: 0 | 1, effectKey: string, step: EffectStep): void {
+function applyEffectStep(G: PtcgGameState, player: 0 | 1, effectKey: string, step: EffectStep, sourceCardId?: string): void {
   if (step === 'done') {
     G.pendingChoice = null;
   } else {
-    G.pendingChoice = { player, effectKey, ...step };
+    G.pendingChoice = { player, effectKey, sourceCardId, ...step };
   }
 }
 
@@ -150,7 +154,8 @@ export const moves = {
     }
 
     const isSupporter = trainerCard.cardData.subtypes.includes('Supporter');
-    if (isSupporter && (player.supporterPlayedThisTurn || G.turn === 1)) {
+    const firstTurnBlocked = G.turn === 1 && !FIRST_TURN_SUPPORTER_EXCEPTIONS.has(trainerCard.cardData.name);
+    if (isSupporter && (player.supporterPlayedThisTurn || firstTurnBlocked)) {
       player.hand.push(trainerCard);
       return;
     }
@@ -195,7 +200,7 @@ export const moves = {
 
     if (hasTrainerEffect(cardName)) {
       const step = startTrainerEffect(cardName, ctxInfo);
-      applyEffectStep(G, G.currentPlayer as 0 | 1, `trainer:${cardName}`, step);
+      applyEffectStep(G, G.currentPlayer as 0 | 1, `trainer:${cardName}`, step, trainerCard.id);
     } else if (cardName.includes('Professor') && cardName.includes('Research')) {
       player.discardPile.push(...player.hand);
       player.hand = [];
@@ -226,12 +231,15 @@ export const moves = {
     const player = G.players[G.currentPlayer];
     const source = player.active?.id === cardId ? player.active : player.bench.find(c => c?.id === cardId);
     if (!source) return;
-    const ability = source.cardData.abilities?.find(a => hasAbilityEffect(a.name));
+    const ability = source.cardData.abilities?.find(a => hasAbilityEffect(normalizeAbilityName(a.name)));
     if (!ability) return;
+    const name = normalizeAbilityName(ability.name);
+    if (player.abilitiesUsedThisTurn.includes(source.id) && !isAbilityUnlimitedUse(name)) return;
 
     const ctxInfo: EffectContext = { G, playerIndex: G.currentPlayer as 0 | 1, sourceCardId: source.id };
-    const step = startAbilityEffect(ability.name, ctxInfo);
-    applyEffectStep(G, G.currentPlayer as 0 | 1, `ability:${ability.name}`, step);
+    const step = startAbilityEffect(name, ctxInfo);
+    applyEffectStep(G, G.currentPlayer as 0 | 1, `ability:${name}`, step, source.id);
+    if (!isAbilityUnlimitedUse(name)) player.abilitiesUsedThisTurn.push(source.id);
     addLog(G, G.currentPlayer, 'use_ability', `Used ability "${ability.name}" on ${source.cardData.name}`);
   },
 
@@ -255,7 +263,9 @@ export const moves = {
     const colonIdx = effectKey.indexOf(':');
     const kind = effectKey.slice(0, colonIdx);
     const name = effectKey.slice(colonIdx + 1);
-    const ctxInfo: EffectContext = { G, playerIndex: G.currentPlayer as 0 | 1, sourceCardId: '' };
+    // Restore the same sourceCardId the effect started with — several handlers' resume()
+    // need it (e.g. to re-find the Pokémon that triggered the effect).
+    const ctxInfo: EffectContext = { G, playerIndex: G.currentPlayer as 0 | 1, sourceCardId: G.pendingChoice.sourceCardId || '' };
 
     let step: EffectStep;
     if (kind === 'trainer') step = resumeTrainerEffect(name, ctxInfo, context, selection);
@@ -264,7 +274,7 @@ export const moves = {
       const [pokemonName, attackName] = name.split('::');
       step = resumeAttackEffect(pokemonName, attackName, ctxInfo, context, selection);
     }
-    applyEffectStep(G, G.currentPlayer as 0 | 1, effectKey, step);
+    applyEffectStep(G, G.currentPlayer as 0 | 1, effectKey, step, ctxInfo.sourceCardId);
     addLog(G, G.currentPlayer, 'resolve_choice', `Resolved ${effectKey}: ${selection.join(', ') || '(none)'}`);
 
     // An attack's pending choices (e.g. distributing damage counters) block the rest of the
@@ -322,7 +332,7 @@ export const moves = {
     if (attacker.statusConditions.includes('Confused') && Math.random() < 0.5) {
       attacker.damage += 30;
       addLog(G, G.currentPlayer, 'attack', `${attacker.cardData.name} is Confused and hurt itself for 30 damage!`);
-      const selfHp = parseInt(attacker.cardData.hp || '0', 10);
+      const selfHp = effectiveMaxHp(attacker);
       if (selfHp > 0 && attacker.damage >= selfHp) handleKo(G, G.currentPlayer, attacker.id);
       G.phase = 'end';
       ctx.events?.endTurn?.();
@@ -332,18 +342,39 @@ export const moves = {
     if (hasAttackEffect(attacker.cardData.name, attack.name)) {
       const ctxInfo: EffectContext = { G, playerIndex: G.currentPlayer as 0 | 1, sourceCardId: attacker.id };
       const step = startAttackEffect(attacker.cardData.name, attack.name, ctxInfo);
-      applyEffectStep(G, G.currentPlayer as 0 | 1, `attack:${attacker.cardData.name}::${attack.name}`, step);
+      applyEffectStep(G, G.currentPlayer as 0 | 1, `attack:${attacker.cardData.name}::${attack.name}`, step, attacker.id);
       addLog(G, G.currentPlayer, 'attack', `${attacker.cardData.name} used "${attack.name}"!`);
     } else {
-      const damage = calculateDamage(attacker, attack, defender);
+      const damage = calculateDamage(G, G.currentPlayer as 0 | 1, attacker, attack, defender);
       defender.damage += damage;
       addLog(G, G.currentPlayer, 'attack', `${attacker.cardData.name} used ${attack.name} for ${damage} damage to ${defender.cardData.name}`);
 
-      const defenderHp = parseInt(defender.cardData.hp || '0');
+      // 龐克頭盔-style retaliation Tool: damages the attacker back when its holder is hit,
+      // regardless of whether the hit also knocked the holder out.
+      const retaliation = getToolRetaliationDamage(G, defender);
+      if (retaliation > 0) {
+        attacker.damage += retaliation * 10;
+      }
+
+      const defenderHp = effectiveMaxHp(defender);
       if (defender.damage >= defenderHp && defenderHp > 0) {
         handleKo(G, 1 - G.currentPlayer, defender.id);
         addLog(G, G.currentPlayer, 'ko', `Knocked out ${defender.cardData.name}`);
       }
+      if (retaliation > 0) {
+        const attackerHp = effectiveMaxHp(attacker);
+        if (attacker.damage >= attackerHp && attackerHp > 0) handleKo(G, G.currentPlayer, attacker.id);
+      }
+    }
+
+    // 祭典樂舞: while 祭典會場 is active, this Pokémon may attack a second time this turn.
+    // Simplified vs. the printed text's KO/promote timing nuance — just allows one bonus
+    // attack this turn rather than modeling the exact "opponent must first promote" sequencing.
+    if (!G.pendingChoice && !player.usedBonusAttackThisTurn
+      && hasPassiveAbilityNamed(attacker, '祭典樂舞') && isStadiumActive(G, '祭典會場')) {
+      player.usedBonusAttackThisTurn = true;
+      addLog(G, G.currentPlayer, 'ability', `${attacker.cardData.name}'s 祭典樂舞 grants a second attack this turn`);
+      return;
     }
 
     if (!G.pendingChoice) {

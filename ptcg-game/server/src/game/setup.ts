@@ -57,11 +57,16 @@ function createPlayerState(deckCardIds: string[], cardData: Record<string, Card>
     discardPile: [],
     prizes: [],
     takenPrizes: 0,
+    exileZone: [],
     energyAttachedThisTurn: 0,
     basicPokemonPlayedThisTurn: 0,
     supporterPlayedThisTurn: false,
     pokemonPlayedThisTurn: [],
     cardsPlayedThisTurn: 0,
+    abilitiesUsedThisTurn: [],
+    usedBonusAttackThisTurn: false,
+    turnDamageBoosts: [],
+    bonusPrizeNextKo: false,
   };
 }
 

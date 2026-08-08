@@ -19,6 +19,12 @@ export interface EffectHandler {
    * `context` is whatever this handler previously stashed on the PendingChoice.
    */
   resume(ctx: EffectContext, context: Record<string, unknown>, selection: string[]): EffectStep;
+  /**
+   * Abilities only: most real abilities are "once per turn" (the default, false/undefined).
+   * A handful (e.g. 金屬轉移) are explicitly unlimited-use — set true to skip the
+   * once-per-turn tracking in abilitiesUsedThisTurn.
+   */
+  unlimitedUse?: boolean;
 }
 
 export function player(G: PtcgGameState, idx: 0 | 1) {
@@ -40,6 +46,16 @@ export function findOwnPokemon(G: PtcgGameState, idx: 0 | 1, id: string): GameCa
 export function allPokemon(G: PtcgGameState, idx: 0 | 1): GameCard[] {
   const p = player(G, idx);
   return [p.active, ...p.bench].filter((c): c is GameCard => c !== null);
+}
+
+/**
+ * Some scraped ability names carry a stray leading zero-width char and/or a literal "[特性]"
+ * baked into the text (e.g. "‌[特性]天空徑線" instead of "天空徑線"). Every place that matches
+ * an ability name against a registry key must normalize through this first, or lookups for
+ * those specific cards silently fail.
+ */
+export function normalizeAbilityName(name: string): string {
+  return name.replace(/^[‌​]+/, '').replace(/^\[特性\]/, '');
 }
 
 export function shuffleDeck(deck: GameCard[]): void {

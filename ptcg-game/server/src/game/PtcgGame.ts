@@ -30,6 +30,10 @@ export const PtcgGame: Game<PtcgGameState> = {
       player.supporterPlayedThisTurn = false;
       player.pokemonPlayedThisTurn = [];
       player.cardsPlayedThisTurn = 0;
+      player.abilitiesUsedThisTurn = [];
+      player.usedBonusAttackThisTurn = false;
+      player.turnDamageBoosts = [];
+      player.bonusPrizeNextKo = false;
     },
   },
 

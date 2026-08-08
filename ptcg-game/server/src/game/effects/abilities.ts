@@ -1,4 +1,4 @@
-import { GameCard } from '@ptcg/shared';
+import { EnergyType, GameCard } from '@ptcg/shared';
 import { EffectContext, EffectHandler, EffectStep, allPokemon, findOwnPokemon, opponent, player } from './types';
 import { handleKo } from '../damage';
 import { discardFromHand, drawCards, drawUpTo, moveDeckCardToHand, shuffleDeck } from './primitives';
@@ -290,6 +290,336 @@ const flashDraw: EffectHandler = {
   },
 };
 
+/** Generic "discard up to N energy cards (optionally type-filtered) from the discard pile, attach to a chosen own Pokémon". */
+function attachEnergyFromDiscardAbility(opts: {
+  promptLabel: string;
+  maxCount: number;
+  energyType?: EnergyType;
+  targetFilter?: (target: GameCard) => boolean;
+  gate?: (ctx: EffectContext) => boolean;
+}): EffectHandler {
+  return {
+    start(ctx) {
+      if (opts.gate && !opts.gate(ctx)) return 'done';
+      const p = player(ctx.G, ctx.playerIndex);
+      const options = p.discardPile.filter(c => c.cardData.supertype === 'Energy'
+        && (!opts.energyType || (c.cardData.types || []).includes(opts.energyType)));
+      if (options.length === 0) return 'done';
+      const targets = allPokemon(ctx.G, ctx.playerIndex).filter(t => !opts.targetFilter || opts.targetFilter(t));
+      if (targets.length === 0) return 'done';
+      return {
+        prompt: `${opts.promptLabel}：從棄牌區選最多 ${opts.maxCount} 張能量卡`,
+        choiceType: 'select_from_list',
+        maxCount: Math.min(opts.maxCount, options.length),
+        options: options.map(c => ({ id: c.id, label: c.cardData.name })),
+        context: { step: 'pick_energy' },
+      };
+    },
+    resume(ctx, context, selection) {
+      const p = player(ctx.G, ctx.playerIndex);
+      if (context.step === 'pick_energy') {
+        if (selection.length === 0) return 'done';
+        const targets = allPokemon(ctx.G, ctx.playerIndex).filter(t => !opts.targetFilter || opts.targetFilter(t));
+        return {
+          prompt: `${opts.promptLabel}：選擇要附加能量的寶可夢`,
+          choiceType: 'select_pokemon',
+          count: 1,
+          options: targets.map(t => ({ id: t.id, label: t.cardData.name })),
+          context: { step: 'pick_target', energyIds: selection },
+        };
+      }
+      const target = p.active?.id === selection[0] ? p.active : p.bench.find(c => c?.id === selection[0]);
+      const energyIds = context.energyIds as string[];
+      if (target) {
+        for (const id of energyIds) {
+          const i = p.discardPile.findIndex(c => c.id === id);
+          if (i === -1) continue;
+          const energy = p.discardPile.splice(i, 1)[0];
+          target.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+        }
+      }
+      return 'done';
+    },
+  };
+}
+
+/** 降霜: discard 1 Water Energy from discard pile, attach to any own Pokémon. */
+const frostDown = attachEnergyFromDiscardAbility({ promptLabel: '降霜', maxCount: 1, energyType: 'Water' });
+
+/** 合金建造: discard up to 2 Metal Energy from discard pile, attach to an own Metal-type Pokémon. */
+const alloyBuild = attachEnergyFromDiscardAbility({
+  promptLabel: '合金建造', maxCount: 2, energyType: 'Metal',
+  targetFilter: (t) => (t.cardData.types || []).includes('Metal'),
+});
+
+/** 太陽能量: discard 1 Psychic Energy from discard pile, attach to own "月石" if in play. */
+const solarEnergy = attachEnergyFromDiscardAbility({
+  promptLabel: '太陽能量', maxCount: 1, energyType: 'Psychic',
+  targetFilter: (t) => t.cardData.name === '月石',
+});
+
+/** 古代睿智: gated by all 5 named Legendary Titans in play; discard up to 3 energy (any type), attach to 1 own Pokémon. */
+const ancientWisdom = attachEnergyFromDiscardAbility({
+  promptLabel: '古代睿智', maxCount: 3,
+  gate: (ctx) => {
+    const names = new Set(allPokemon(ctx.G, ctx.playerIndex).map(c => c.cardData.name));
+    return ['雷吉洛克', '雷吉艾斯', '雷吉斯奇魯', '雷吉艾勒奇', '雷吉鐸拉戈'].every(n => names.has(n));
+  },
+});
+
+/** 抓取: discard up to 2 Pokémon Tool cards from the discard pile back to hand. */
+const grab: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const options = p.discardPile.filter(c => c.cardData.subtypes.includes('Pokémon Tool'));
+    if (options.length === 0) return 'done';
+    return { prompt: '抓取：從棄牌區選最多 2 張寶可夢道具卡加入手牌', choiceType: 'select_from_list', maxCount: Math.min(2, options.length), options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    for (const id of selection) {
+      const i = p.discardPile.findIndex(c => c.id === id);
+      if (i >= 0) p.hand.push(p.discardPile.splice(i, 1)[0]);
+    }
+    return 'done';
+  },
+};
+
+/** 旅途牽絆: search the deck for a specific named Supporter card, add to hand, reshuffle. */
+function searchNamedCardAbility(promptLabel: string, cardName: string): EffectHandler {
+  return {
+    start(ctx) {
+      const p = player(ctx.G, ctx.playerIndex);
+      const match = p.deck.find(c => c.cardData.name === cardName);
+      if (!match) { shuffleDeck(p.deck); return 'done'; }
+      moveDeckCardToHand(ctx.G, ctx.playerIndex, match.id);
+      return 'done';
+    },
+    resume() { return 'done'; },
+  };
+}
+const travelBond = searchNamedCardAbility('旅途牽絆', '阿響的冒險');
+
+/** 衝衝鼓: gated by own Active having ability 祭典樂舞; search any 1 card from deck to hand, reshuffle. */
+const festivalDrum: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const active = p.active;
+    const hasFestivalDance = active?.cardData.abilities?.some(a => a.text && a.name.replace(/^[‌​]+/, '').replace(/^\[特性\]/, '') === '祭典樂舞');
+    if (!hasFestivalDance || p.deck.length === 0) return 'done';
+    return { prompt: '衝衝鼓：從牌庫任意選 1 張卡加入手牌', choiceType: 'select_from_list', count: 1, options: p.deck.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (selection[0]) moveDeckCardToHand(ctx.G, ctx.playerIndex, selection[0]); else shuffleDeck(p.deck);
+    return 'done';
+  },
+};
+
+/** 迅速游標: swap this (benched) Pokémon into Active, then optionally move any attached energy from any own Pokémon onto it. */
+const rapidCursor: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
+    if (!self || !p.active || p.active.id === self.id) return 'done';
+    const benchIdx = p.bench.findIndex(c => c?.id === self.id);
+    if (benchIdx === -1) return 'done';
+    const oldActive = p.active;
+    p.bench[benchIdx] = oldActive;
+    p.active = self;
+    const movable = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.id !== self.id && c.attachedEnergy.length > 0);
+    if (movable.length === 0) return 'done';
+    const options = movable.flatMap(c => c.attachedEnergy.map(e => ({ id: e.id, label: `${c.cardData.name} 的${e.type}能量` })));
+    return { prompt: '迅速游標：選擇要移動到這隻寶可夢身上的能量（可不選）', choiceType: 'select_from_list', maxCount: options.length, options, context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
+    if (!self) return 'done';
+    for (const c of allPokemon(ctx.G, ctx.playerIndex)) {
+      if (c.id === self.id) continue;
+      // Move every selected energy id found on this Pokémon onto self.
+      c.attachedEnergy = c.attachedEnergy.filter(e => {
+        if (selection.includes(e.id)) { self.attachedEnergy.push(e); return false; }
+        return true;
+      });
+    }
+    return 'done';
+  },
+};
+
+/** 瞬間移動者: must be Active; shuffle self (with attached cards) back into the deck, promote from bench if possible. */
+const teleporter: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.active?.id !== ctx.sourceCardId) return 'done';
+    const self = p.active;
+    self.attachedEnergy = [];
+    self.attachedTool = null;
+    self.damage = 0;
+    self.statusConditions = [];
+    p.deck.push(self);
+    const promo = p.bench.find(c => c !== null);
+    p.active = promo || null;
+    if (promo) p.bench[p.bench.indexOf(promo)] = null;
+    shuffleDeck(p.deck);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 金屬轉移: move a Metal Energy from one own Pokémon to another. Unlimited uses per turn. */
+const metalTransfer: EffectHandler = {
+  unlimitedUse: true,
+  start(ctx) {
+    const sources = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.attachedEnergy.some(e => e.type === 'Metal'));
+    if (sources.length === 0) return 'done';
+    const options = sources.flatMap(c => c.attachedEnergy.filter(e => e.type === 'Metal').map(e => ({ id: e.id, label: `${c.cardData.name} 的鋼能量` })));
+    return { prompt: '金屬轉移：選擇要轉移的鋼能量', choiceType: 'select_from_list', count: 1, options, context: { step: 'pick_energy' } };
+  },
+  resume(ctx, context, selection) {
+    if (context.step === 'pick_energy') {
+      const energyId = selection[0];
+      const source = allPokemon(ctx.G, ctx.playerIndex).find(c => c.attachedEnergy.some(e => e.id === energyId));
+      if (!source) return 'done';
+      const targets = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.id !== source.id);
+      if (targets.length === 0) return 'done';
+      return {
+        prompt: '金屬轉移：選擇要轉入的寶可夢',
+        choiceType: 'select_pokemon',
+        count: 1,
+        options: targets.map(t => ({ id: t.id, label: t.cardData.name })),
+        context: { step: 'pick_target', energyId },
+      };
+    }
+    const energyId = context.energyId as string;
+    const source = allPokemon(ctx.G, ctx.playerIndex).find(c => c.attachedEnergy.some(e => e.id === energyId));
+    const target = findOwnPokemon(ctx.G, ctx.playerIndex, selection[0]);
+    if (source && target) {
+      const i = source.attachedEnergy.findIndex(e => e.id === energyId);
+      if (i >= 0) target.attachedEnergy.push(source.attachedEnergy.splice(i, 1)[0]);
+    }
+    return 'done';
+  },
+};
+
+/** 熟成充能: attach 1 Basic Grass Energy from hand to a chosen own Pokémon, then heal that Pokémon 30. */
+const ripenCharge: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const options = p.hand.filter(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes('Grass'));
+    if (options.length === 0) return 'done';
+    const targets = allPokemon(ctx.G, ctx.playerIndex);
+    if (targets.length === 0) return 'done';
+    return { prompt: '熟成充能：選 1 張基本草能量卡', choiceType: 'select_from_list', count: 1, options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: { step: 'pick_energy' } };
+  },
+  resume(ctx, context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (context.step === 'pick_energy') {
+      const targets = allPokemon(ctx.G, ctx.playerIndex);
+      return {
+        prompt: '熟成充能：選擇要附加能量並恢復 30 的寶可夢',
+        choiceType: 'select_pokemon',
+        count: 1,
+        options: targets.map(t => ({ id: t.id, label: t.cardData.name })),
+        context: { step: 'pick_target', energyId: selection[0] },
+      };
+    }
+    const target = p.active?.id === selection[0] ? p.active : p.bench.find(c => c?.id === selection[0]);
+    const energyId = context.energyId as string;
+    const i = p.hand.findIndex(c => c.id === energyId);
+    if (target && i >= 0) {
+      const energy = p.hand.splice(i, 1)[0];
+      target.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+      target.damage = Math.max(0, target.damage - 30);
+    }
+    return 'done';
+  },
+};
+
+/** 經驗法則: attach up to 2 Basic Fighting Energy from hand to THIS Pokémon (self only, no target choice). */
+const ruleOfExperience: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const options = p.hand.filter(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes('Fighting'));
+    if (options.length === 0) return 'done';
+    return { prompt: '經驗法則：選最多 2 張基本鬥能量卡附於自己身上', choiceType: 'select_from_list', maxCount: Math.min(2, options.length), options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
+    if (self) {
+      for (const id of selection) {
+        const i = p.hand.findIndex(c => c.id === id);
+        if (i === -1) continue;
+        const energy = p.hand.splice(i, 1)[0];
+        self.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+      }
+    }
+    return 'done';
+  },
+};
+
+/** 劇毒粉塵: poison both Active Pokémon. (Simplified: the printed "must have 驅勁能量 古代 attached"
+ * condition can't be checked — attachedEnergy only stores {id,type}, not the original card's
+ * name — so this is available whenever the ability's own Pokémon is in play instead.) */
+const poisonDust: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    if (p.active) { p.active.statusConditions = p.active.statusConditions.filter(c => c !== 'Poisoned'); p.active.statusConditions.push('Poisoned'); }
+    if (opp.active) { opp.active.statusConditions = opp.active.statusConditions.filter(c => c !== 'Poisoned'); opp.active.statusConditions.push('Poisoned'); }
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 風扇呼喚: game's first turn only; search up to 3 Colorless Pokémon with HP<=100 from deck to hand, reshuffle. */
+const fanCall: EffectHandler = {
+  start(ctx) {
+    if (ctx.G.turn !== 1) return 'done';
+    const p = player(ctx.G, ctx.playerIndex);
+    const options = p.deck.filter(c => c.cardData.supertype === 'Pokémon'
+      && (c.cardData.types || []).includes('Colorless')
+      && parseInt(c.cardData.hp || '999', 10) <= 100);
+    if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
+    return { prompt: '風扇呼喚：從牌庫選最多 3 張 HP100 以下的無屬性寶可夢卡加入手牌', choiceType: 'select_from_list', maxCount: Math.min(3, options.length), options: options.map(c => ({ id: c.id, label: `${c.cardData.name}（HP${c.cardData.hp}）` })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    for (const id of selection) moveDeckCardToHand(ctx.G, ctx.playerIndex, id, false);
+    shuffleDeck(p.deck);
+    return 'done';
+  },
+};
+
+/** 森林漫步: only while Active; look at top 6 of deck, take 1 Energy card to hand, rest reshuffled. */
+const forestWalk: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.active?.id !== ctx.sourceCardId) return 'done';
+    const top = p.deck.slice(-6);
+    const energyCards = top.filter(c => c.cardData.supertype === 'Energy');
+    if (energyCards.length === 0) return 'done';
+    return { prompt: '森林漫步：查看牌庫上方 6 張，選 1 張能量卡加入手牌', choiceType: 'select_from_list', count: 1, options: energyCards.map(c => ({ id: c.id, label: c.cardData.name })), context: { seenIds: top.map(c => c.id) } };
+  },
+  resume(ctx, context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const seenIds = context.seenIds as string[];
+    const chosenId = selection[0];
+    const seen: GameCard[] = [];
+    for (const id of seenIds) {
+      const i = p.deck.findIndex(c => c.id === id);
+      if (i >= 0) seen.push(p.deck.splice(i, 1)[0]);
+    }
+    for (const c of seen) {
+      if (c.id === chosenId) p.hand.push(c);
+      else p.deck.unshift(c);
+    }
+    shuffleDeck(p.deck);
+    return 'done';
+  },
+};
+
 export const abilityEffects: Record<string, EffectHandler> = {
   '偵查指令': strategicCommand,
   '咒詛炸彈': curseBomb,
@@ -303,10 +633,32 @@ export const abilityEffects: Record<string, EffectHandler> = {
   '金色火焰': attachEnergyFromHandAbility('金色火焰', 'Fire', 2, false),
   '振翅高飛': wingbeat,
   '閃光抽出': flashDraw,
+  // Added for goal: "修正所有寶可夢的特性" coverage expansion (see also passiveAbilities.ts
+  // for the field-wide/passive abilities that don't fit this triggered-effect shape).
+  '降霜': frostDown,
+  '合金建造': alloyBuild,
+  '太陽能量': solarEnergy,
+  '古代睿智': ancientWisdom,
+  '抓取': grab,
+  '旅途牽絆': travelBond,
+  '衝衝鼓': festivalDrum,
+  '洗鍊': trade,
+  '迅速游標': rapidCursor,
+  '瞬間移動者': teleporter,
+  '金屬轉移': metalTransfer,
+  '熟成充能': ripenCharge,
+  '經驗法則': ruleOfExperience,
+  '劇毒粉塵': poisonDust,
+  '風扇呼喚': fanCall,
+  '森林漫步': forestWalk,
 };
 
 export function hasAbilityEffect(name: string): boolean {
   return name in abilityEffects;
+}
+
+export function isAbilityUnlimitedUse(name: string): boolean {
+  return !!abilityEffects[name]?.unlimitedUse;
 }
 
 export function startAbilityEffect(name: string, ctx: EffectContext): EffectStep {

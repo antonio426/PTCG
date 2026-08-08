@@ -1,13 +1,34 @@
 import { Attack, GameCard } from '@ptcg/shared';
 import { PtcgGameState } from './GameState';
+import { getPassiveDamageBonus, getPassiveMaxHpBonus, getWeaknessTypeOverride, isDamageBlocked, shouldExilePrizes } from './effects/passiveAbilities';
+import { getToolDamageBonus } from './effects/tools';
 
-/** Apply weakness (×2) / resistance (flat reduction) for `attacker`'s types onto a given base damage number. */
-export function applyWeaknessResistance(baseDamageIn: number, attacker: GameCard, defender: GameCard): number {
+/** Rule-box Pokémon (ex/V/VMAX/VSTAR/GX/Mega/TAG TEAM) — same test as prizesForKo below. */
+function isBigPokemon(card: GameCard): boolean {
+  if (card.cardData.name.startsWith('超級') && card.cardData.subtypes.includes('ex')) return true;
+  const bigSubtypes = ['ex', 'EX', 'V', 'VMAX', 'VSTAR', 'GX', 'TAG TEAM'];
+  return card.cardData.subtypes.some(s => bigSubtypes.includes(s));
+}
+
+/** `card`'s max HP including any passive-ability bonus (e.g. 腎上腺力量's +100 while holding Darkness energy). */
+export function effectiveMaxHp(card: GameCard): number {
+  const base = parseInt(card.cardData.hp || '0', 10);
+  return base > 0 ? base + getPassiveMaxHpBonus(card) : 0;
+}
+
+/**
+ * Apply weakness (×2) / resistance (flat reduction) for `attacker`'s types onto a given base
+ * damage number. `weaknessOverride`, when given, replaces `defender`'s printed weakness type
+ * (e.g. 妖精領域 turning every opposing Dragon's weakness into Psychic).
+ */
+export function applyWeaknessResistance(baseDamageIn: number, attacker: GameCard, defender: GameCard, weaknessOverride?: string): number {
   let baseDamage = baseDamageIn;
   const attackerTypes = attacker.cardData.types || [];
 
   for (const attackerType of attackerTypes) {
-    const weaknesses = defender.cardData.weaknesses || [];
+    const weaknesses = weaknessOverride
+      ? [{ type: weaknessOverride, value: '×2' }]
+      : (defender.cardData.weaknesses || []);
     for (const weakness of weaknesses) {
       if (weakness.type === attackerType) {
         if (weakness.value === '×2') baseDamage *= 2;
@@ -26,10 +47,25 @@ export function applyWeaknessResistance(baseDamageIn: number, attacker: GameCard
   return baseDamage;
 }
 
-export function calculateDamage(attacker: GameCard, attack: Attack, defender: GameCard): number {
+/**
+ * `G`/`attackerIdx` are needed (beyond the two cards involved) because several real abilities
+ * are field-wide passives — a damage bonus can come from a *different* Pokémon on the attacker's
+ * bench (e.g. 輝煌聲援), and a weakness override can come from the attacker's whole team
+ * (e.g. 妖精領域). Returns 0 if a passive ability blocks the hit outright (e.g. 藏隱, 礎石之勢).
+ */
+export function calculateDamage(G: PtcgGameState, attackerIdx: 0 | 1, attacker: GameCard, attack: Attack, defender: GameCard): number {
+  if (isDamageBlocked(G, attacker, defender)) return 0;
   let baseDamage = parseInt(attack.damage) || 0;
   if (isNaN(baseDamage)) baseDamage = 0;
-  return applyWeaknessResistance(baseDamage, attacker, defender);
+  baseDamage += getPassiveDamageBonus(G, attackerIdx, attacker, defender);
+  baseDamage += getToolDamageBonus(G, attacker, defender);
+  for (const boost of G.players[attackerIdx].turnDamageBoosts) {
+    if (boost.typeFilter && !(attacker.cardData.types || []).includes(boost.typeFilter as any)) continue;
+    if (boost.vsBigOnly && !isBigPokemon(defender)) continue;
+    baseDamage += boost.amount;
+  }
+  const weaknessOverride = getWeaknessTypeOverride(G, (1 - attackerIdx) as 0 | 1, defender);
+  return applyWeaknessResistance(baseDamage, attacker, defender, weaknessOverride);
 }
 
 export function applyDamage(G: PtcgGameState, playerIndex: number, targetId: string, damage: number): void {
@@ -78,9 +114,18 @@ export function handleKo(G: PtcgGameState, koPlayerIndex: number, koCardId: stri
     }
   }
 
-  const prizeCount = koCard ? prizesForKo(koCard) : 1;
+  let prizeCount = koCard ? prizesForKo(koCard) : 1;
+  // 白蕾雅-style "next KO this turn gives 1 extra prize" — consumed on the first KO after being set.
+  if (attackingPlayer.bonusPrizeNextKo) { prizeCount += 1; attackingPlayer.bonusPrizeNextKo = false; }
+  // 放逐區障礙: if the side that just lost a Pokémon still has this ability in play, the
+  // attacking side's prizes go to their exile zone instead of hand — permanently unusable.
+  const exile = shouldExilePrizes(G, koPlayerIndex as 0 | 1);
   for (let i = 0; i < prizeCount; i++) {
     const prize = attackingPlayer.prizes.pop();
-    if (prize) { attackingPlayer.hand.push(prize); attackingPlayer.takenPrizes++; }
+    if (prize) {
+      if (exile) attackingPlayer.exileZone.push(prize);
+      else attackingPlayer.hand.push(prize);
+      attackingPlayer.takenPrizes++;
+    }
   }
 }

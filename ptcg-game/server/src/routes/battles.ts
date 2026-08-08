@@ -48,6 +48,10 @@ function runTurnBegin(G: PtcgGameState): void {
   if (player) {
     player.energyAttachedThisTurn = 0; player.basicPokemonPlayedThisTurn = 0;
     player.supporterPlayedThisTurn = false; player.pokemonPlayedThisTurn = []; player.cardsPlayedThisTurn = 0;
+    player.abilitiesUsedThisTurn = [];
+    player.usedBonusAttackThisTurn = false;
+    player.turnDamageBoosts = [];
+    player.bonusPrizeNextKo = false;
   }
 }
 

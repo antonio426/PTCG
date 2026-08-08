@@ -1,5 +1,6 @@
 import { PtcgGameState } from './GameState';
-import { handleKo } from './damage';
+import { effectiveMaxHp, handleKo } from './damage';
+import { getPoisonCounterBonus } from './effects/passiveAbilities';
 
 /**
  * "Between Turns" processing (runs once per turn transition, checking BOTH
@@ -15,7 +16,8 @@ export function processBetweenTurns(G: PtcgGameState): void {
     if (!active) continue;
 
     if (active.statusConditions.includes('Poisoned')) {
-      active.damage += 10;
+      // Normally 1 counter (10 HP); some opposing abilities (e.g. 劇毒支配) add more.
+      active.damage += 10 + getPoisonCounterBonus(G, idx) * 10;
     }
     if (active.statusConditions.includes('Burned')) {
       active.damage += 20;
@@ -24,7 +26,7 @@ export function processBetweenTurns(G: PtcgGameState): void {
       }
     }
 
-    const hp = parseInt(active.cardData.hp || '0', 10);
+    const hp = effectiveMaxHp(active);
     if (hp > 0 && active.damage >= hp) {
       handleKo(G, idx, active.id);
     }

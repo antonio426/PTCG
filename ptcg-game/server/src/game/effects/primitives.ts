@@ -111,4 +111,18 @@ export function everyPokemonInPlay(G: PtcgGameState): GameCard[] {
   return [...allPokemon(G, 0), ...allPokemon(G, 1)];
 }
 
+/** Non-rule-box Pokémon: no ex/V/VMAX/VSTAR/GX/Radiant/Mega subtype or name prefix. */
+export function hasNoRuleBox(card: GameCard): boolean {
+  const subs = card.cardData.subtypes || [];
+  const ruleBoxSubtypes = ['ex', 'EX', 'V', 'VMAX', 'VSTAR', 'GX', 'Radiant', 'TAG TEAM'];
+  if (subs.some(s => ruleBoxSubtypes.includes(s))) return false;
+  if (card.cardData.name.startsWith('超級')) return false;
+  return true;
+}
+
+/** True if `card` is a "big" Pokémon that awards extra prizes when KO'd (ex/V/VMAX/VSTAR/GX/Mega/TAG TEAM). */
+export function isBigPokemon(card: GameCard): boolean {
+  return !hasNoRuleBox(card);
+}
+
 export { player, opponent, allPokemon, shuffleDeck } from './types';

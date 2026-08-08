@@ -1,7 +1,9 @@
 import { GameCard, EnergyType, LegalAction } from '@ptcg/shared';
 import { PtcgGameState, GamePhase, PendingChoice } from './GameState';
-import { hasAbilityEffect } from './effects/abilities';
+import { hasAbilityEffect, isAbilityUnlimitedUse } from './effects/abilities';
 import { getRetreatCostReduction, getColorlessCostReduction } from './effects/tools';
+import { canEvolveViaPassive, getPassiveAttackCostReduction, getPassiveRetreatWaiver } from './effects/passiveAbilities';
+import { normalizeAbilityName } from './effects/types';
 
 /** All k-sized combinations of `items`, capped so huge hands can't explode the move list. */
 function combinations<T>(items: T[], k: number, cap = 40): T[][] {
@@ -94,7 +96,7 @@ function canPayEnergyCost(attachedEnergy: { type: string }[], cost: EnergyType[]
 export function effectiveRetreatCost(G: PtcgGameState, card: GameCard): number {
   const base = card.cardData.retreatCost?.length ?? 0;
   const { reduction, waived } = getRetreatCostReduction(G, card);
-  if (waived) return 0;
+  if (waived || getPassiveRetreatWaiver(G, card.owner, card)) return 0;
   return Math.max(0, base - reduction);
 }
 
@@ -112,6 +114,9 @@ export function canPlayPokemon(G: PtcgGameState, playerIndex: number, cardId: st
 
   return true;
 }
+
+/** A small number of real Supporter cards explicitly say they CAN be played on the first player's first turn, overriding the general restriction below. */
+export const FIRST_TURN_SUPPORTER_EXCEPTIONS = new Set(['丹瑜', '火箭隊的蘭斯']);
 
 /** Real-rules restriction: the player taking the game's first turn can't attack, evolve, or play a Supporter. */
 function isFirstTurnOfGame(G: PtcgGameState): boolean {
@@ -134,7 +139,7 @@ export function canEvolve(G: PtcgGameState, playerIndex: number, cardId: string,
     ? player.active
     : player.bench.find(c => c?.id === targetId) || null;
   if (!target) return false;
-  if (target.cardData.name !== evolvesFrom) return false;
+  if (target.cardData.name !== evolvesFrom && !canEvolveViaPassive(target, card.cardData)) return false;
   if (player.pokemonPlayedThisTurn.includes(target.id)) return false;
 
   return true;
@@ -178,7 +183,8 @@ export function canAttack(G: PtcgGameState, playerIndex: number, attackIndex: nu
   const attack = player.active.cardData.attacks?.[attackIndex];
   if (!attack) return false;
 
-  const colorlessReduction = getColorlessCostReduction(G, player.active, playerIndex as 0 | 1);
+  const colorlessReduction = getColorlessCostReduction(G, player.active, playerIndex as 0 | 1)
+    + getPassiveAttackCostReduction(G, playerIndex as 0 | 1, player.active, attack.name);
   return canPayEnergyCost(player.active.attachedEnergy, attack.cost, colorlessReduction);
 }
 
@@ -195,13 +201,17 @@ export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalActio
 
   if (G.phase === 'main') {
     for (const pokemon of [player.active, ...player.bench].filter((c): c is GameCard => c !== null)) {
-      const ability = pokemon.cardData.abilities?.find(a => hasAbilityEffect(a.name));
+      const ability = pokemon.cardData.abilities?.find(a => hasAbilityEffect(normalizeAbilityName(a.name)));
       if (ability) {
-        legalMoves.push({
-          type: 'use_ability',
-          description: `Use ${pokemon.cardData.name}'s ability "${ability.name}"`,
-          payload: { cardId: pokemon.id },
-        });
+        const name = normalizeAbilityName(ability.name);
+        const alreadyUsed = player.abilitiesUsedThisTurn.includes(pokemon.id) && !isAbilityUnlimitedUse(name);
+        if (!alreadyUsed) {
+          legalMoves.push({
+            type: 'use_ability',
+            description: `Use ${pokemon.cardData.name}'s ability "${ability.name}"`,
+            payload: { cardId: pokemon.id },
+          });
+        }
       }
     }
   }
@@ -248,7 +258,7 @@ export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalActio
 
       if (card.cardData.supertype === 'Trainer') {
         const isSupporter = card.cardData.subtypes.includes('Supporter');
-        const blockedFirstTurn = isSupporter && isFirstTurnOfGame(G);
+        const blockedFirstTurn = isSupporter && isFirstTurnOfGame(G) && !FIRST_TURN_SUPPORTER_EXCEPTIONS.has(card.cardData.name);
         const blockedAlreadyPlayed = isSupporter && player.supporterPlayedThisTurn;
         if (!blockedFirstTurn && !blockedAlreadyPlayed) {
           legalMoves.push({
