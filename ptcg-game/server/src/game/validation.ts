@@ -2,7 +2,7 @@ import { GameCard, EnergyType, LegalAction } from '@ptcg/shared';
 import { PtcgGameState, GamePhase, PendingChoice } from './GameState';
 import { hasAbilityEffect, isAbilityUnlimitedUse } from './effects/abilities';
 import { getRetreatCostReduction, getColorlessCostReduction } from './effects/tools';
-import { canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver } from './effects/passiveAbilities';
+import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver } from './effects/passiveAbilities';
 import { normalizeAbilityName } from './effects/types';
 
 /** All k-sized combinations of `items`, capped so huge hands can't explode the move list. */
@@ -178,8 +178,9 @@ export function canRetreat(G: PtcgGameState, playerIndex: number): boolean {
 export function canAttack(G: PtcgGameState, playerIndex: number, attackIndex: number): boolean {
   const player = playerState(G, playerIndex, ['main', 'attack']);
   if (!player) return false;
-  if (isFirstTurnOfGame(G)) return false;
   if (!player.active) return false;
+  // 出道演出: this specific Pokémon is exempt from the first-turn attack restriction.
+  if (isFirstTurnOfGame(G) && !canAttackOnFirstTurn(player.active)) return false;
   if (player.active.statusConditions.includes('Asleep') || player.active.statusConditions.includes('Paralyzed')) return false;
 
   const attack = player.active.cardData.attacks?.[attackIndex];

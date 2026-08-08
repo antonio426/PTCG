@@ -1,6 +1,6 @@
 import { PtcgGameState } from './GameState';
 import { effectiveMaxHp, handleKo } from './damage';
-import { getColdCurtainVictims, getPoisonCounterBonus } from './effects/passiveAbilities';
+import { getBurnCounterBonus, getColdCurtainVictims, getPoisonCounterBonus } from './effects/passiveAbilities';
 
 /**
  * "Between Turns" processing (runs once per turn transition, checking BOTH
@@ -20,7 +20,8 @@ export function processBetweenTurns(G: PtcgGameState): void {
       active.damage += 10 + getPoisonCounterBonus(G, idx) * 10;
     }
     if (active.statusConditions.includes('Burned')) {
-      active.damage += 20;
+      // Normally 2 counters (20 HP); some opposing abilities (e.g. 熔岩波動) add more.
+      active.damage += 20 + getBurnCounterBonus(G, idx) * 10;
       if (Math.random() < 0.5) {
         active.statusConditions = active.statusConditions.filter(c => c !== 'Burned');
       }

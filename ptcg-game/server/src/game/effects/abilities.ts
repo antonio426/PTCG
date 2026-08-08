@@ -2,6 +2,7 @@ import { EnergyType, GameCard } from '@ptcg/shared';
 import { EffectContext, EffectHandler, EffectStep, allPokemon, findOwnPokemon, opponent, player } from './types';
 import { handleKo } from '../damage';
 import { discardFromHand, drawCards, drawUpTo, moveDeckCardToHand, shuffleDeck } from './primitives';
+import { clearStatusConditionsOnLeaveActive } from '../statusConditions';
 
 /** 偵查指令: look at the top 2 cards of your deck, take 1 to hand, put the rest on the bottom. */
 const strategicCommand: EffectHandler = {
@@ -1118,6 +1119,172 @@ const metalSignal: EffectHandler = {
   },
 };
 
+/** 繁星花紋: on evolve, force-switch 1 opponent Benched Pokémon with 90 or less remaining HP into Active. */
+const starryPattern: EffectHandler = {
+  start(ctx) {
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    const targets = opp.bench.filter((c): c is GameCard => {
+      if (!c) return false;
+      const hp = parseInt(c.cardData.hp || '0', 10);
+      return hp > 0 && hp - c.damage <= 90;
+    });
+    if (targets.length === 0) return 'done';
+    return { prompt: '繁星花紋：選擇對手備戰區剩餘 HP 90 以下的寶可夢換上場', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    const idx = opp.bench.findIndex(c => c?.id === selection[0]);
+    if (idx >= 0 && opp.active) {
+      const chosen = opp.bench[idx]!;
+      clearStatusConditionsOnLeaveActive(opp.active);
+      opp.bench[idx] = opp.active;
+      opp.active = chosen;
+    }
+    return 'done';
+  },
+};
+
+/** 柔柔治癒: on evolve, fully heal the own Active Grass Pokémon, then discard all Energy attached to it. */
+const gentleHealing: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.active && (p.active.cardData.types || []).includes('Grass')) {
+      p.active.damage = 0;
+      p.active.attachedEnergy = [];
+    }
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 充能: once per turn, from discard, 1 Basic Energy, attach to SELF only. */
+const charge: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const options = p.discardPile.filter(c => c.cardData.subtypes.includes('Basic Energy'));
+    if (options.length === 0) return 'done';
+    return { prompt: '充能：從棄牌區選 1 張基本能量卡附於自己身上', choiceType: 'select_from_list', count: 1, options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
+    const i = p.discardPile.findIndex(c => c.id === selection[0]);
+    if (self && i >= 0) {
+      const energy = p.discardPile.splice(i, 1)[0];
+      self.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+    }
+    return 'done';
+  },
+};
+
+/** 四季變換: once per turn, search deck for 1 Stadium card to hand. */
+const seasonChange: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const options = p.deck.filter(c => c.cardData.subtypes.includes('Stadium'));
+    if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
+    return { prompt: '四季變換：從牌庫選 1 張競技場卡加入手牌', choiceType: 'select_from_list', count: 1, options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (selection[0]) moveDeckCardToHand(ctx.G, ctx.playerIndex, selection[0]); else shuffleDeck(p.deck);
+    return 'done';
+  },
+};
+
+/** 表演時間: only while Benched, once per turn: swap self into Active. */
+const showTime: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
+    if (!self || !p.active || p.active.id === self.id) return 'done';
+    const benchIdx = p.bench.findIndex(c => c?.id === self.id);
+    if (benchIdx === -1) return 'done';
+    const oldActive = p.active;
+    clearStatusConditionsOnLeaveActive(oldActive);
+    p.bench[benchIdx] = oldActive;
+    p.active = self;
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 重步跳躍: only while Benched, once per turn: discard the bottom card of your deck, then discard this Pokémon's attachments and shuffle it back onto the TOP of the deck. */
+const heavyStepJump: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
+    if (!self) return 'done';
+    const benchIdx = p.bench.findIndex(c => c?.id === self.id);
+    if (benchIdx === -1) return 'done';
+    if (p.deck.length > 0) p.discardPile.push(p.deck.shift()!);
+    p.bench[benchIdx] = null;
+    if (self.attachedTool) p.discardPile.push(self.attachedTool);
+    self.attachedEnergy = [];
+    self.attachedTool = null;
+    self.damage = 0;
+    self.statusConditions = [];
+    p.deck.push(self);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 惡棍衝天: once per turn, from discard, 1 Basic Darkness Energy, attach to a Benched Darkness Pokémon, then place 2 damage counters on it. */
+const villainRise: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const targets = p.bench.filter((c): c is GameCard => c !== null && (c.cardData.types || []).includes('Darkness'));
+    const options = p.discardPile.filter(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes('Darkness'));
+    if (targets.length === 0 || options.length === 0) return 'done';
+    return { prompt: '惡棍衝天：從棄牌區選 1 張基本惡能量卡', choiceType: 'select_from_list', count: 1, options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: { step: 'pick_energy' } };
+  },
+  resume(ctx, context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (context.step === 'pick_energy') {
+      const targets = p.bench.filter((c): c is GameCard => c !== null && (c.cardData.types || []).includes('Darkness'));
+      return { prompt: '惡棍衝天：選擇要附加能量的惡寶可夢', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: { step: 'pick_target', energyId: selection[0] } };
+    }
+    const target = p.bench.find(c => c?.id === selection[0]);
+    const energyId = context.energyId as string;
+    const i = p.discardPile.findIndex(c => c.id === energyId);
+    if (target && i >= 0) {
+      const energy = p.discardPile.splice(i, 1)[0];
+      target.attachedEnergy.push({ id: energy.id, type: 'Darkness' });
+      target.damage += 20;
+    }
+    return 'done';
+  },
+};
+
+/** 天空搬運: once per turn, switch Active ↔ Bench. */
+const skyCarry: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (!p.active || !p.bench.some(s => s !== null)) return 'done';
+    return { prompt: '天空搬運：選擇要換上場的備戰寶可夢', choiceType: 'select_pokemon', count: 1, options: p.bench.filter((s): s is GameCard => s !== null).map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const idx = p.bench.findIndex(c => c?.id === selection[0]);
+    if (idx >= 0 && p.active) { const b = p.bench[idx]!; clearStatusConditionsOnLeaveActive(p.active); p.bench[idx] = p.active; p.active = b; }
+    return 'done';
+  },
+};
+
+/** 沙之羽擊: real text triggers both on evolve AND when KO'd by an attack — only the evolve
+ * trigger is implemented (the on-KO trigger would need a hook into the attack-KO branch of
+ * moves.ts for an ability that's about to leave play, which the current EffectContext shape
+ * doesn't cleanly support). On evolve: discard the opponent's top 2 deck cards. */
+const sandWingbeat: EffectHandler = {
+  start(ctx) {
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    for (let i = 0; i < 2 && opp.deck.length > 0; i++) opp.discardPile.push(opp.deck.pop()!);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
 export const abilityEffects: Record<string, EffectHandler> = {
   '偵查指令': strategicCommand,
   '咒詛炸彈': curseBomb,
@@ -1178,6 +1345,16 @@ export const abilityEffects: Record<string, EffectHandler> = {
   '月光循環': moonlightCycle,
   '原始之翼': primalWing,
   '金屬信號': metalSignal,
+
+  '繁星花紋': starryPattern,
+  '柔柔治癒': gentleHealing,
+  '充能': charge,
+  '四季變換': seasonChange,
+  '表演時間': showTime,
+  '重步跳躍': heavyStepJump,
+  '惡棍衝天': villainRise,
+  '天空搬運': skyCarry,
+  '沙之羽擊': sandWingbeat,
 };
 
 export function hasAbilityEffect(name: string): boolean {

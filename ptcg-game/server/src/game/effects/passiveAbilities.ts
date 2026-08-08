@@ -74,6 +74,8 @@ export function isDamageBlocked(G: PtcgGameState, attacker: GameCard, defender: 
   // 太古防壁: while its own holder is Benched, the whole team is immune to attackers holding 2 or fewer Energy.
   if (attacker.attachedEnergy.length <= 2
     && teamOf(G, ownerIndexOf(G, defender)).some(c => hasAbility(c, '太古防壁') && isBenchedPokemon(G, c))) return true;
+  // 球形盾牌: own Benched Pokémon are immune to opponent attack damage, unconditionally.
+  if (isBenchedPokemon(G, defender) && teamOf(G, ownerIndexOf(G, defender)).some(c => hasAbility(c, '球形盾牌'))) return true;
   return false;
 }
 
@@ -93,7 +95,26 @@ export function getPassiveDamageReduction(G: PtcgGameState, defender: GameCard):
   // 齒輪塗層: any own Pokémon holding Metal Energy takes -20, as long as the ability's holder is in play.
   if (defender.attachedEnergy.some(e => e.type === 'Metal')
     && teamOf(G, ownerIndexOf(G, defender)).some(c => hasAbility(c, '齒輪塗層'))) reduction += 20;
+  if (hasAbility(defender, '密林之軀')) reduction += 30;
+  if (hasAbility(defender, '堅硬甲殼')) reduction += 20;
   return reduction;
+}
+
+/** 炸裂針: when a lethal hit KOs its holder, place 6 damage counters on the attacker (checked by the caller only once the hit is confirmed lethal). */
+export function getLethalOnlyRetaliation(defender: GameCard): number {
+  return hasAbility(defender, '炸裂針') ? 6 : 0;
+}
+
+/** 熔岩波動: opponent's Burned Pokémon take +3 counters (30 damage) instead of the normal 2 (20), as long as the holder is in play. */
+export function getBurnCounterBonus(G: PtcgGameState, burnedIdx: 0 | 1): number {
+  const opponentActive = G.players[(1 - burnedIdx) as 0 | 1].active;
+  if (opponentActive && hasAbility(opponentActive, '熔岩波動')) return 3;
+  return 0;
+}
+
+/** 出道演出: lets its holder attack even on the game's first turn. */
+export function canAttackOnFirstTurn(card: GameCard): boolean {
+  return hasAbility(card, '出道演出');
 }
 
 /** Retreat cost is fully waived for `card` by any of its own team's passive abilities. */
@@ -264,5 +285,6 @@ export const PASSIVE_ABILITY_NAMES = new Set([
   '堅堅之軀', '溶化流動', '喧鬧競技', '事先準備', '懶怠個性', '提升進化', '自動治癒',
   '侵蝕詛咒', '冰冷之帳', '大方', '灼熱之軀',
   '化身團結', '刺激進化', '咒縛火焰', '太古防壁', '同步脈衝', '順滑大衣', '力之鹽',
-  '怨恨旋渦', '齒輪塗層', '堅忍之軀', '反擊雞冠',
+  '怨恨旋渦', '齒輪塗層', '堅忍之軀', '反擊雞冠', '大師工藝',
+  '密林之軀', '堅硬甲殼', '炸裂針', '自動用武', '反擊', '球形盾牌', '熔岩波動', '出道演出',
 ]);

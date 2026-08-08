@@ -3,7 +3,7 @@ import { PtcgGameState, PendingChoice } from './GameState';
 import { canPlayPokemon, canEvolve, canAttachEnergy, canRetreat, canAttack, effectiveRetreatCost, FIRST_TURN_SUPPORTER_EXCEPTIONS } from './validation';
 import { clearStatusConditionsOnLeaveActive } from './statusConditions';
 import { calculateDamage, effectiveMaxHp, handleKo, prizesForKo } from './damage';
-import { getBonusPrizesForAttackKo, getGrudgeVortexRetaliation, hasPassiveAbilityNamed, onEnergyAttachedFromHand } from './effects/passiveAbilities';
+import { getBonusPrizesForAttackKo, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, hasPassiveAbilityNamed, onEnergyAttachedFromHand } from './effects/passiveAbilities';
 import { isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
 import {
@@ -354,9 +354,18 @@ export const moves = {
       // regardless of whether the hit also knocked the holder out.
       let retaliation = getToolRetaliationDamage(G, defender);
       if (damage > 0 && hasPassiveAbilityNamed(defender, '反擊雞冠')) retaliation += 5;
+      if (damage > 0 && (hasPassiveAbilityNamed(defender, '自動用武') || hasPassiveAbilityNamed(defender, '反擊'))) retaliation += 3;
       retaliation += getGrudgeVortexRetaliation(G, defender);
       if (retaliation > 0) {
         attacker.damage += retaliation * 10;
+      }
+      // 炸裂針: only fires if this hit is what KOs the holder.
+      if (damage > 0) {
+        const defenderHpBefore = effectiveMaxHp(G, defender);
+        if (defenderHpBefore > 0 && defender.damage >= defenderHpBefore) {
+          const lethalRetaliation = getLethalOnlyRetaliation(defender);
+          if (lethalRetaliation > 0) attacker.damage += lethalRetaliation * 10;
+        }
       }
       // 毒刺 / 灼熱之軀-style retaliation: being hit while Active poisons/burns the attacker.
       if (damage > 0 && hasPassiveAbilityNamed(defender, '毒刺')) {
