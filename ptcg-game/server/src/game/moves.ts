@@ -347,6 +347,7 @@ export const moves = {
       addLog(G, G.currentPlayer, 'attack', `${attacker.cardData.name} used "${attack.name}"!`);
     } else {
       const damage = calculateDamage(G, G.currentPlayer as 0 | 1, attacker, attack, defender);
+      const defenderWasFullHp = defender.damage === 0;
       defender.damage += damage;
       addLog(G, G.currentPlayer, 'attack', `${attacker.cardData.name} used ${attack.name} for ${damage} damage to ${defender.cardData.name}`);
 
@@ -382,6 +383,12 @@ export const moves = {
         if (wouldBeLethal && Math.random() < 0.5) {
           defender.damage = effectiveMaxHp(G, defender) - 10;
         }
+      }
+      // 勤奮之心: unconditionally (no coin flip) survives a would-be-lethal hit at 10 HP,
+      // but only if it entered this hit at full HP.
+      if (hasPassiveAbilityNamed(defender, '勤奮之心') && defenderWasFullHp) {
+        const wouldBeLethal = effectiveMaxHp(G, defender) > 0 && defender.damage >= effectiveMaxHp(G, defender);
+        if (wouldBeLethal) defender.damage = effectiveMaxHp(G, defender) - 10;
       }
 
       const defenderHp = effectiveMaxHp(G, defender);

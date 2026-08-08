@@ -76,6 +76,13 @@ export function isDamageBlocked(G: PtcgGameState, attacker: GameCard, defender: 
     && teamOf(G, ownerIndexOf(G, defender)).some(c => hasAbility(c, '太古防壁') && isBenchedPokemon(G, c))) return true;
   // 球形盾牌: own Benched Pokémon are immune to opponent attack damage, unconditionally.
   if (isBenchedPokemon(G, defender) && teamOf(G, ownerIndexOf(G, defender)).some(c => hasAbility(c, '球形盾牌'))) return true;
+  // 深度下潛: self-only, while Benched, immune to opponent attack damage AND their attack effects
+  // (the "effects" half isn't separately enforceable — there's no generic attack-effect-targeting
+  // hook — but blocking damage here also prevents any effect that's gated on `damage > 0`).
+  if (hasAbility(defender, '深度下潛') && isBenchedPokemon(G, defender)) return true;
+  // 尾甲: immune to damage from an opponent's Basic-stage "ex" Pokémon specifically (a narrower
+  // variant of 神秘石居, which is immune to any opponent ex regardless of stage).
+  if (hasAbility(defender, '尾甲') && attacker.cardData.subtypes.includes('Basic') && attacker.cardData.subtypes.includes('ex')) return true;
   return false;
 }
 
@@ -97,6 +104,9 @@ export function getPassiveDamageReduction(G: PtcgGameState, defender: GameCard):
     && teamOf(G, ownerIndexOf(G, defender)).some(c => hasAbility(c, '齒輪塗層'))) reduction += 20;
   if (hasAbility(defender, '密林之軀')) reduction += 30;
   if (hasAbility(defender, '堅硬甲殼')) reduction += 20;
+  if (hasAbility(defender, '泥巴膜')) reduction += 30;
+  // 岩石盔甲: -30 only while holding at least 1 attached Energy card.
+  if (hasAbility(defender, '岩石盔甲') && defender.attachedEnergy.length > 0) reduction += 30;
   return reduction;
 }
 
@@ -147,6 +157,8 @@ export function getPassiveMaxHpBonus(G: PtcgGameState, card: GameCard): number {
   if (hasAbility(card, '腎上腺力量') && card.attachedEnergy.some(e => e.type === 'Darkness')) return 100;
   if (hasAbility(card, '雜草魂')) return G.players[(1 - ownerIndexOf(G, card)) as 0 | 1].takenPrizes * 50;
   if (hasAbility(card, '大師工藝')) return card.attachedEnergy.filter(e => e.type === 'Fighting').length * 40;
+  // 生機森巴: +40 max HP for every own Pokémon, doesn't stack across multiple holders.
+  if (teamOf(G, ownerIndexOf(G, card)).some(c => hasAbility(c, '生機森巴'))) return 40;
   return 0;
 }
 
@@ -287,4 +299,5 @@ export const PASSIVE_ABILITY_NAMES = new Set([
   '化身團結', '刺激進化', '咒縛火焰', '太古防壁', '同步脈衝', '順滑大衣', '力之鹽',
   '怨恨旋渦', '齒輪塗層', '堅忍之軀', '反擊雞冠', '大師工藝',
   '密林之軀', '堅硬甲殼', '炸裂針', '自動用武', '反擊', '球形盾牌', '熔岩波動', '出道演出',
+  '生機森巴', '深度下潛', '尾甲', '泥巴膜', '岩石盔甲', '勤奮之心',
 ]);

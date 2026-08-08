@@ -1,7 +1,7 @@
 import { EnergyType, GameCard } from '@ptcg/shared';
 import { EffectContext, EffectHandler, EffectStep, allPokemon, findOwnPokemon, opponent, player } from './types';
 import { handleKo } from '../damage';
-import { discardFromHand, drawCards, drawUpTo, moveDeckCardToHand, shuffleDeck } from './primitives';
+import { discardFromHand, drawCards, drawUpTo, flipCoin, moveDeckCardToHand, shuffleDeck } from './primitives';
 import { clearStatusConditionsOnLeaveActive } from '../statusConditions';
 
 /** 偵查指令: look at the top 2 cards of your deck, take 1 to hand, put the rest on the bottom. */
@@ -1285,6 +1285,278 @@ const sandWingbeat: EffectHandler = {
   resume() { return 'done'; },
 };
 
+/** 搜尋點心: once per turn, look at the top card of your deck; optionally discard it. */
+const snackSearch: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.deck.length === 0) return 'done';
+    const top = p.deck[p.deck.length - 1];
+    return {
+      prompt: `搜尋點心：牌庫最上方是「${top.cardData.name}」，是否丟棄？`,
+      choiceType: 'select_from_list',
+      count: 1,
+      options: [{ id: 'discard', label: '丟棄' }, { id: 'keep', label: '保留' }],
+      context: { topId: top.id },
+    };
+  },
+  resume(ctx, context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (selection[0] === 'discard') {
+      const i = p.deck.findIndex(c => c.id === context.topId);
+      if (i >= 0) p.discardPile.push(p.deck.splice(i, 1)[0]);
+    }
+    return 'done';
+  },
+};
+
+/** 過度放電: once per turn; using it KOs this Pokémon. Then discard up to 3 Basic Energy from
+ * the discard pile, attach them all to one chosen own Lightning-type Pokémon — simplified to a
+ * single target rather than a per-card distribution, matching attachEnergyFromDiscardAbility's
+ * existing single-target shape. */
+const overdischarge: EffectHandler = {
+  start(ctx) {
+    handleKo(ctx.G, ctx.playerIndex, ctx.sourceCardId);
+    const p = player(ctx.G, ctx.playerIndex);
+    const options = p.discardPile.filter(c => c.cardData.subtypes.includes('Basic Energy'));
+    const targets = allPokemon(ctx.G, ctx.playerIndex).filter(t => (t.cardData.types || []).includes('Lightning'));
+    if (options.length === 0 || targets.length === 0) return 'done';
+    return {
+      prompt: '過度放電：從棄牌區選最多 3 張基本能量卡',
+      choiceType: 'select_from_list',
+      maxCount: Math.min(3, options.length),
+      options: options.map(c => ({ id: c.id, label: c.cardData.name })),
+      context: { step: 'pick_energy' },
+    };
+  },
+  resume(ctx, context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (context.step === 'pick_energy') {
+      if (selection.length === 0) return 'done';
+      const targets = allPokemon(ctx.G, ctx.playerIndex).filter(t => (t.cardData.types || []).includes('Lightning'));
+      if (targets.length === 0) return 'done';
+      return {
+        prompt: '過度放電：選擇要附加能量的雷寶可夢',
+        choiceType: 'select_pokemon',
+        count: 1,
+        options: targets.map(t => ({ id: t.id, label: t.cardData.name })),
+        context: { step: 'pick_target', energyIds: selection },
+      };
+    }
+    const target = allPokemon(ctx.G, ctx.playerIndex).find(t => t.id === selection[0]);
+    const energyIds = context.energyIds as string[];
+    if (target) {
+      for (const id of energyIds) {
+        const i = p.discardPile.findIndex(c => c.id === id);
+        if (i === -1) continue;
+        const energy = p.discardPile.splice(i, 1)[0];
+        target.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+      }
+    }
+    return 'done';
+  },
+};
+
+/** 媚惑引誘: once per turn, flip a coin; if heads, force-switch one of the opponent's Benched
+ * Pokémon into Active, then Confuse the newly-promoted Pokémon. */
+const enticingLure: EffectHandler = {
+  start(ctx) {
+    if (!flipCoin()) return 'done';
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    const benched = opp.bench.filter((c): c is GameCard => c !== null);
+    if (!opp.active || benched.length === 0) return 'done';
+    return {
+      prompt: '媚惑引誘：擲硬幣結果為正面，選 1 隻對手備戰寶可夢換上場',
+      choiceType: 'select_from_list',
+      count: 1,
+      options: benched.map(c => ({ id: c.id, label: c.cardData.name })),
+      context: {},
+    };
+  },
+  resume(ctx, _context, selection) {
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    const idx = opp.bench.findIndex(c => c?.id === selection[0]);
+    if (idx >= 0 && opp.active) {
+      const chosen = opp.bench[idx]!;
+      clearStatusConditionsOnLeaveActive(opp.active);
+      opp.bench[idx] = opp.active;
+      opp.active = chosen;
+      opp.active.statusConditions = opp.active.statusConditions.filter(c => !['Asleep', 'Paralyzed', 'Confused'].includes(c));
+      opp.active.statusConditions.push('Confused');
+    }
+    return 'done';
+  },
+};
+
+/** 狂挖: real trigger is "when played from hand onto the Bench" — the engine has no on-play
+ * auto-trigger hook, so this is implemented as a regular once-per-turn triggered ability instead
+ * (consistent with how other on-play/on-evolve abilities in this file are simplified). Search
+ * the deck for up to 3 Basic Fighting Energy cards and discard them (a mill/thinning effect,
+ * not an attach), then reshuffle. */
+const franticDig: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const options = p.deck.filter(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes('Fighting'));
+    if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
+    return {
+      prompt: '狂挖：從牌庫選最多 3 張基本鬥能量卡丟棄',
+      choiceType: 'select_from_list',
+      maxCount: Math.min(3, options.length),
+      options: options.map(c => ({ id: c.id, label: c.cardData.name })),
+      context: {},
+    };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    for (const id of selection) {
+      const i = p.deck.findIndex(c => c.id === id);
+      if (i >= 0) p.discardPile.push(p.deck.splice(i, 1)[0]);
+    }
+    shuffleDeck(p.deck);
+    return 'done';
+  },
+};
+
+/** 王者呼聲: once per turn, search the deck for 1 "竹蘭的" family Pokémon, add to hand, reshuffle. */
+const kingsCall: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const options = p.deck.filter(c => c.cardData.supertype === 'Pokémon' && c.cardData.name.includes('竹蘭的'));
+    if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
+    return { prompt: '王者呼聲：從牌庫選 1 張「竹蘭的寶可夢」加入手牌', choiceType: 'select_from_list', count: 1, options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (selection[0]) moveDeckCardToHand(ctx.G, ctx.playerIndex, selection[0]); else shuffleDeck(p.deck);
+    return 'done';
+  },
+};
+
+/** 火箭腦力: unlimited use per turn — move 1 damage counter from your own "火箭隊的" Pokémon to
+ * another of your own Pokémon. */
+const rocketBrainpower: EffectHandler = {
+  unlimitedUse: true,
+  start(ctx) {
+    const sources = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.cardData.name.includes('火箭隊的') && c.damage > 0);
+    if (sources.length === 0) return 'done';
+    return {
+      prompt: '火箭腦力：選 1 隻己方受傷的「火箭隊的寶可夢」搬走 1 個傷害指示物',
+      choiceType: 'select_from_list',
+      count: 1,
+      options: sources.map(c => ({ id: c.id, label: `${c.cardData.name}（${c.damage} 傷害）` })),
+      context: { step: 'pick_source' },
+    };
+  },
+  resume(ctx, context, selection) {
+    if (context.step === 'pick_source') {
+      const targets = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.id !== selection[0]);
+      if (targets.length === 0) return 'done';
+      return {
+        prompt: '火箭腦力：選擇要移入 1 個傷害指示物的己方寶可夢',
+        choiceType: 'select_from_list',
+        count: 1,
+        options: targets.map(c => ({ id: c.id, label: c.cardData.name })),
+        context: { step: 'pick_target', sourceId: selection[0] },
+      };
+    }
+    const source = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === context.sourceId);
+    const target = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === selection[0]);
+    if (source && target && source.damage > 0) {
+      source.damage -= 10;
+      target.damage += 10;
+    }
+    return 'done';
+  },
+};
+
+/** 尖刺纏身: real trigger is "on evolving via this card from hand" — simplified to a regular
+ * once-per-turn triggered ability (same simplification as 狂挖 above, no on-evolve auto-trigger
+ * hook exists). Discard up to 2 named "扣殺能量" Special Energy from the discard pile, attach to self. */
+const spikeCling: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
+    const options = p.discardPile.filter(c => c.cardData.name === '扣殺能量');
+    if (!self || options.length === 0) return 'done';
+    return {
+      prompt: '尖刺纏身：從棄牌區選最多 2 張「扣殺能量」附於自己身上',
+      choiceType: 'select_from_list',
+      maxCount: Math.min(2, options.length),
+      options: options.map(c => ({ id: c.id, label: c.cardData.name })),
+      context: {},
+    };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
+    if (self) {
+      for (const id of selection) {
+        const i = p.discardPile.findIndex(c => c.id === id);
+        if (i === -1) continue;
+        const energy = p.discardPile.splice(i, 1)[0];
+        self.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+      }
+    }
+    return 'done';
+  },
+};
+
+/** 誘導之尾: once per turn, discard 1 named "悠哉尾草棒" card from hand as a cost, then
+ * force-switch one of the opponent's Benched Pokémon into Active. */
+const luringTail: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const costCard = p.hand.find(c => c.cardData.name === '悠哉尾草棒');
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    const benched = opp.bench.filter((c): c is GameCard => c !== null);
+    if (!costCard || !opp.active || benched.length === 0) return 'done';
+    return {
+      prompt: '誘導之尾：丟棄 1 張「悠哉尾草棒」，選 1 隻對手備戰寶可夢換上場',
+      choiceType: 'select_from_list',
+      count: 1,
+      options: benched.map(c => ({ id: c.id, label: c.cardData.name })),
+      context: { costCardId: costCard.id },
+    };
+  },
+  resume(ctx, context, selection) {
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    const idx = opp.bench.findIndex(c => c?.id === selection[0]);
+    if (idx >= 0 && opp.active) {
+      discardFromHand(ctx.G, ctx.playerIndex, [context.costCardId as string]);
+      const chosen = opp.bench[idx]!;
+      clearStatusConditionsOnLeaveActive(opp.active);
+      opp.bench[idx] = opp.active;
+      opp.active = chosen;
+    }
+    return 'done';
+  },
+};
+
+/** 貪慾點餐: real trigger is "on evolving via this card from hand" — simplified to a regular
+ * once-per-turn triggered ability (same simplification as 狂挖/尖刺纏身 above). Search the discard
+ * pile for up to 2 named "派帕的三明治" cards, add to hand. */
+const greedyOrder: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const options = p.discardPile.filter(c => c.cardData.name === '派帕的三明治');
+    if (options.length === 0) return 'done';
+    return {
+      prompt: '貪慾點餐：從棄牌區選最多 2 張「派帕的三明治」加入手牌',
+      choiceType: 'select_from_list',
+      maxCount: Math.min(2, options.length),
+      options: options.map(c => ({ id: c.id, label: c.cardData.name })),
+      context: {},
+    };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    for (const id of selection) {
+      const i = p.discardPile.findIndex(c => c.id === id);
+      if (i >= 0) p.hand.push(p.discardPile.splice(i, 1)[0]);
+    }
+    return 'done';
+  },
+};
+
 export const abilityEffects: Record<string, EffectHandler> = {
   '偵查指令': strategicCommand,
   '咒詛炸彈': curseBomb,
@@ -1355,6 +1627,16 @@ export const abilityEffects: Record<string, EffectHandler> = {
   '惡棍衝天': villainRise,
   '天空搬運': skyCarry,
   '沙之羽擊': sandWingbeat,
+
+  '搜尋點心': snackSearch,
+  '過度放電': overdischarge,
+  '媚惑引誘': enticingLure,
+  '狂挖': franticDig,
+  '王者呼聲': kingsCall,
+  '火箭腦力': rocketBrainpower,
+  '尖刺纏身': spikeCling,
+  '誘導之尾': luringTail,
+  '貪慾點餐': greedyOrder,
 };
 
 export function hasAbilityEffect(name: string): boolean {
