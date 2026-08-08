@@ -23,8 +23,8 @@ export interface PtcgPlayerState {
   usedBonusAttackThisTurn: boolean;
   /** "This turn, your X Pokémon's attacks deal +N to the opponent's active" Item/Supporter effects (e.g. 力量蛋白飲). */
   turnDamageBoosts: { typeFilter?: string; vsBigOnly?: boolean; excludeRuleBoxAttacker?: boolean; amount: number }[];
-  /** 白蕾雅-style "your next KO this turn gives 1 extra prize" flag. */
-  bonusPrizeNextKo: boolean;
+  /** 白蕾雅-style "your next KO this turn gives N extra prizes" count (0 = none). */
+  bonusPrizeNextKo: number;
   /** 阿蜜的目光 / 鐵之防禦強化-style "damage you take next opponent-turn is reduced" — set on the
    * PROTECTED side, consumed naturally since it's cleared at that side's own next turn-begin
    * (the same reset pass that clears turnDamageBoosts etc.), which lands right after the one

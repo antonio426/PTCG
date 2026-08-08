@@ -13,7 +13,7 @@ import { abilityEffects } from '../game/effects/abilities';
 import { attackEffects } from '../game/effects/attacks';
 import { hasToolEffect } from '../game/effects/tools';
 import { PASSIVE_ABILITY_NAMES } from '../game/effects/passiveAbilities';
-import { normalizeAbilityName } from '../game/effects/types';
+import { normalizeAbilityName, normalizeCardName } from '../game/effects/types';
 
 function isAbilityCovered(name: string): boolean {
   const n = normalizeAbilityName(name);
@@ -36,7 +36,7 @@ function main() {
   const toolOrStadiumNames = new Set(
     trainers.filter(c => c.subtypes.includes('Pokémon Tool') || c.subtypes.includes('Stadium')).map(c => c.name)
   );
-  const uncoveredTrainers = trainerNames.filter(n => !(n in trainerEffects) && !toolOrStadiumNames.has(n));
+  const uncoveredTrainers = trainerNames.filter(n => !(normalizeCardName(n) in trainerEffects) && !toolOrStadiumNames.has(n));
   const toolNamesWithCustomEffect = [...toolOrStadiumNames].filter(hasToolEffect);
 
   console.log('=== Trainer Cards ===');

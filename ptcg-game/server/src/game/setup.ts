@@ -66,7 +66,7 @@ function createPlayerState(deckCardIds: string[], cardData: Record<string, Card>
     abilitiesUsedThisTurn: [],
     usedBonusAttackThisTurn: false,
     turnDamageBoosts: [],
-    bonusPrizeNextKo: false,
+    bonusPrizeNextKo: 0,
     incomingDamageReduction: [],
   };
 }

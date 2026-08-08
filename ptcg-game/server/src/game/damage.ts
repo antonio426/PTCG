@@ -124,8 +124,8 @@ export function handleKo(G: PtcgGameState, koPlayerIndex: number, koCardId: stri
   }
 
   let prizeCount = koCard ? prizesForKo(koCard) : 1;
-  // 白蕾雅-style "next KO this turn gives 1 extra prize" — consumed on the first KO after being set.
-  if (attackingPlayer.bonusPrizeNextKo) { prizeCount += 1; attackingPlayer.bonusPrizeNextKo = false; }
+  // 白蕾雅 / 巴貝娜與荷蓮娜-style "next KO this turn gives N extra prizes" — consumed on the first KO after being set.
+  if (attackingPlayer.bonusPrizeNextKo > 0) { prizeCount += attackingPlayer.bonusPrizeNextKo; attackingPlayer.bonusPrizeNextKo = 0; }
   // 奇跡之吻: whenever the koPlayer's Active specifically faints (any cause), a coin flip may
   // grant the opposing side (whichever holds the ability) 1 extra prize.
   if (wasActive) prizeCount += rollBonusPrizeOnActiveKo(G, koPlayerIndex as 0 | 1);

@@ -33,7 +33,7 @@ export const PtcgGame: Game<PtcgGameState> = {
       player.abilitiesUsedThisTurn = [];
       player.usedBonusAttackThisTurn = false;
       player.turnDamageBoosts = [];
-      player.bonusPrizeNextKo = false;
+      player.bonusPrizeNextKo = 0;
       player.incomingDamageReduction = [];
     },
   },
