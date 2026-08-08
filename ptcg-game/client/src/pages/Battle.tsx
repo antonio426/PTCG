@@ -427,11 +427,48 @@ export default function Battle() {
         </div>
       )}
 
+      {/* Selected hand-card modal: full effect preview + action buttons, floats above the
+          layout entirely so it never pushes the main-phase panel taller and forces scrolling. */}
+      {!isOver && selectedCardInHand && (() => {
+        const hca = handCardActions.find(h => h.cardData.id === selectedCardInHand);
+        if (!hca) return null;
+        return (
+          <div
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70"
+            onClick={() => setSelectedCardInHand(null)}
+          >
+            <div
+              className="bg-slate-900 border border-blue-500/50 rounded-2xl w-full max-w-xs mx-4 max-h-[85vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <CardDetail card={hca.cardData} />
+              <div className="flex flex-col gap-1.5 p-3 pt-0">
+                {hca.moves.map((m, mi) => (
+                  <button
+                    key={mi}
+                    onClick={() => handleSubmitMove(m)}
+                    className="w-full px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-500 transition-colors"
+                  >
+                    {m.description.replace(/^(Play|Attach|Evolve) /, '')}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setSelectedCardInHand(null)}
+                  className="w-full px-3 py-1.5 text-slate-400 text-xs hover:text-slate-200 transition-colors"
+                >
+                  取消
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Left column: battlefield */}
       <div className="flex-1 flex flex-col min-h-0 gap-2">
 
         {/* Opponent area */}
-        <div className="bg-slate-800/80 border border-slate-700 rounded-xl p-3">
+        <div className="bg-slate-800/80 border border-slate-700 rounded-xl p-2 flex-shrink-0">
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-red-400">對手</span>
@@ -452,27 +489,27 @@ export default function Battle() {
             </div>
           </div>
 
-          <div className="flex justify-center mb-1">
+          <div className="flex items-center justify-center gap-3">
             {bs.opponent.active ? (
               <PokemonCardView card={bs.opponent.active} size="normal" showHp={true} previewPlacement="below" />
             ) : (
-              <div className="w-32 h-[6.5rem] bg-slate-700/50 border-2 border-dashed border-slate-600 rounded-lg flex items-center justify-center">
+              <div className="w-32 h-[6.5rem] bg-slate-700/50 border-2 border-dashed border-slate-600 rounded-lg flex items-center justify-center flex-shrink-0">
                 <span className="text-slate-600 text-xs">無寶可夢</span>
               </div>
             )}
-          </div>
-
-          <div className="flex justify-center gap-2">
-            {Array.from({ length: 5 }, (_, i) => {
-              const c = bs.opponent.bench[i];
-              return c ? (
-                <PokemonCardView key={c.id} card={c} size="small" showHp={false} previewPlacement="below" />
-              ) : (
-                <div key={i} className="w-24 h-[4.25rem] bg-slate-700/30 border border-dashed border-slate-600 rounded-md flex items-center justify-center">
-                  <span className="text-slate-600 text-xs">?</span>
-                </div>
-              );
-            })}
+            <div className="w-px self-stretch bg-slate-700/70 flex-shrink-0" />
+            <div className="flex gap-2">
+              {Array.from({ length: 5 }, (_, i) => {
+                const c = bs.opponent.bench[i];
+                return c ? (
+                  <PokemonCardView key={c.id} card={c} size="small" showHp={false} previewPlacement="below" />
+                ) : (
+                  <div key={i} className="w-24 h-[4.25rem] bg-slate-700/30 border border-dashed border-slate-600 rounded-md flex items-center justify-center">
+                    <span className="text-slate-600 text-xs">?</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
 
@@ -547,7 +584,7 @@ export default function Battle() {
 
               {/* Main / Attack phase */}
               {(bs.phase === 'main' || bs.phase === 'attack') && (
-                <div className="space-y-3">
+                <div className="space-y-2">
 
                   {/* Quick actions section */}
                   <section>
@@ -597,50 +634,26 @@ export default function Battle() {
                   {handCardActions.length > 0 && (
                     <section>
                       <SectionHeader icon="🎴" label="手牌（點擊卡片選擇動作，滑鼠移入可預覽效果）" />
-                      <div className="flex flex-wrap gap-3">
-                        <div className="flex flex-wrap gap-2 flex-1 min-w-[140px]">
-                          {handCardActions.map((hca, idx) => {
-                            const isSelected = selectedCardInHand === hca.cardData.id;
-                            return (
-                              <div key={idx} className="flex flex-col items-center">
-                                <HoverPreview card={hca.cardData} placement="above">
-                                  <img
-                                    src={hca.cardData.images.small}
-                                    alt={hca.cardData.name}
-                                    className={`w-14 h-[4.5rem] rounded-lg cursor-pointer transition-all object-contain border-2
-                                      ${isSelected ? 'border-blue-400 -translate-y-1 shadow-lg shadow-blue-500/30' : 'border-slate-600 hover:border-slate-400'}`}
-                                    onClick={() => handleCardClick(hca.cardData.id)}
-                                  />
-                                </HoverPreview>
-                                <span className="text-[10px] text-slate-400 mt-0.5 truncate max-w-16 text-center">
-                                  {hca.cardData.name}
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-
-                        {/* Selected-card detail + action panel */}
-                        {selectedCardInHand && (() => {
-                          const hca = handCardActions.find(h => h.cardData.id === selectedCardInHand);
-                          if (!hca) return null;
+                      <div className="flex flex-wrap gap-2">
+                        {handCardActions.map((hca, idx) => {
+                          const isSelected = selectedCardInHand === hca.cardData.id;
                           return (
-                            <div className="w-full max-w-[18rem] bg-slate-900/80 border border-blue-500/40 rounded-xl overflow-hidden">
-                              <CardDetail card={hca.cardData} />
-                              <div className="flex flex-col gap-1 p-2 pt-0">
-                                {hca.moves.map((m, mi) => (
-                                  <button
-                                    key={mi}
-                                    onClick={() => handleSubmitMove(m)}
-                                    className="w-full px-2 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-500 transition-colors"
-                                  >
-                                    {m.description.replace(/^(Play|Attach|Evolve) /, '')}
-                                  </button>
-                                ))}
-                              </div>
+                            <div key={idx} className="flex flex-col items-center">
+                              <HoverPreview card={hca.cardData} placement="above">
+                                <img
+                                  src={hca.cardData.images.small}
+                                  alt={hca.cardData.name}
+                                  className={`w-14 h-[4.5rem] rounded-lg cursor-pointer transition-all object-contain border-2
+                                    ${isSelected ? 'border-blue-400 -translate-y-1 shadow-lg shadow-blue-500/30' : 'border-slate-600 hover:border-slate-400'}`}
+                                  onClick={() => handleCardClick(hca.cardData.id)}
+                                />
+                              </HoverPreview>
+                              <span className="text-[10px] text-slate-400 mt-0.5 truncate max-w-16 text-center">
+                                {hca.cardData.name}
+                              </span>
                             </div>
                           );
-                        })()}
+                        })}
                       </div>
                     </section>
                   )}
@@ -701,7 +714,7 @@ export default function Battle() {
         </div>
 
         {/* Player area */}
-        <div className="bg-slate-800/80 border border-slate-700 rounded-xl p-3">
+        <div className="bg-slate-800/80 border border-slate-700 rounded-xl p-2 flex-shrink-0">
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-blue-400">你</span>
@@ -717,27 +730,27 @@ export default function Battle() {
             <span className="text-xs text-slate-500">手牌 {bs.player.hand.length}</span>
           </div>
 
-          <div className="flex justify-center mb-1">
+          <div className="flex items-center justify-center gap-3 mb-1">
             {bs.player.active ? (
               <PokemonCardView card={bs.player.active} size="normal" showHp={true} />
             ) : (
-              <div className="w-32 h-[6.5rem] bg-slate-700/50 border-2 border-dashed border-slate-600 rounded-lg flex items-center justify-center">
+              <div className="w-32 h-[6.5rem] bg-slate-700/50 border-2 border-dashed border-slate-600 rounded-lg flex items-center justify-center flex-shrink-0">
                 <span className="text-slate-600 text-xs">無寶可夢</span>
               </div>
             )}
-          </div>
-
-          <div className="flex justify-center gap-2 mb-1">
-            {Array.from({ length: 5 }, (_, i) => {
-              const c = bs.player.bench[i];
-              return c ? (
-                <PokemonCardView key={c.id} card={c} size="small" showHp={false} />
-              ) : (
-                <div key={i} className="w-24 h-[4.25rem] bg-slate-700/30 border border-dashed border-slate-600 rounded-md flex items-center justify-center">
-                  <span className="text-slate-600 text-xs">?</span>
-                </div>
-              );
-            })}
+            <div className="w-px self-stretch bg-slate-700/70 flex-shrink-0" />
+            <div className="flex gap-2">
+              {Array.from({ length: 5 }, (_, i) => {
+                const c = bs.player.bench[i];
+                return c ? (
+                  <PokemonCardView key={c.id} card={c} size="small" showHp={false} />
+                ) : (
+                  <div key={i} className="w-24 h-[4.25rem] bg-slate-700/30 border border-dashed border-slate-600 rounded-md flex items-center justify-center">
+                    <span className="text-slate-600 text-xs">?</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* Player hand row */}
