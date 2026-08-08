@@ -33,6 +33,8 @@ export interface GenericAttackOutcome {
   baseDamage: number;
   /** Applied to the defender only if final damage > 0, matching real rules for on-hit effects. */
   statusToInflict?: StatusCondition[];
+  /** Applied to the attacker itself, unconditional (no damage gate). */
+  selfStatusToInflict?: StatusCondition[];
   healSelfAmount?: number;
   drawCards?: number;
   /** Recoil: raw HP (not counters) the attacker itself also takes, unconditional. */
@@ -58,12 +60,30 @@ export interface AttackBoardContext {
   selfDamageCounters: number;
   /** Count of Energy cards attached to the defender. */
   opponentEnergyCount: number;
+  /** The defender's own current damage counters (damage / 10). */
+  opponentDamageCounters: number;
+  ownBenchCount: number;
+  opponentBenchCount: number;
+  ownRemainingPrizes: number;
+  opponentRemainingPrizes: number;
+  defenderStatusConditionCount: number;
+  defenderIsBurned: boolean;
+  defenderIsEx: boolean;
+  /** Count of each Energy type attached to the attacker itself, e.g. { Water: 2 }. */
+  attackerEnergyCounts: Record<string, number>;
+  /** Every Energy type present across the attacking side's own Bench Pokémon. */
+  ownBenchTypes: string[];
 }
 
 const STATUS_ZH: Record<string, StatusCondition> = {
   '睡眠': 'Asleep', '灼傷': 'Burned', '混亂': 'Confused', '麻痺': 'Paralyzed', '中毒': 'Poisoned',
 };
 const STATUS_ALT = Object.keys(STATUS_ZH).join('|');
+
+const ENERGY_TYPE_FROM_ZH: Record<string, string> = {
+  '草': 'Grass', '火': 'Fire', '水': 'Water', '雷': 'Lightning', '超': 'Psychic',
+  '鬥': 'Fighting', '惡': 'Darkness', '鋼': 'Metal', '妖': 'Fairy', '龍': 'Dragon', '無': 'Colorless',
+};
 
 function flipCoins(n: number): number {
   let heads = 0;
@@ -107,6 +127,24 @@ const TEMPLATES: RegExp[] = [
   /^在下個自己的回合，這隻寶可夢無法使用招式。$/,
   /^在下個對手的回合，受到這個招式的寶可夢無法撤退。$/,
   /^在下個對手的回合，受到這個招式的寶可夢無法使用招式。$/,
+  // 太晶 (Terastallization): handled as a special case directly in passiveAbilities.ts's
+  // isDamageBlocked (hasTeraBenchedImmunity), not through resolveGenericAttackEffect below —
+  // included here purely so coverage-report.ts counts it as covered.
+  /^只要這隻寶可夢在備戰區，不會受到招式的傷害。$/,
+  /^將這隻寶可夢【(?:睡眠|灼傷|混亂|麻痺|中毒)】。$/,
+  /^減少這隻寶可夢身上放置的傷害指示物的數量×(\d+)點傷害。$/,
+  /^造成對手的戰鬥寶可夢身上放置的傷害指示物的數量×(\d+)點傷害。$/,
+  /^增加對手的戰鬥寶可夢身上放置的傷害指示物的數量×(\d+)點傷害。$/,
+  /^增加對手的備戰寶可夢的數量×(\d+)點傷害。$/,
+  /^增加雙方的備戰寶可夢的數量×(\d+)點傷害。$/,
+  /^增加這隻寶可夢身上附加的【(.+?)】能量的數量×(\d+)點傷害。$/,
+  /^若自己的備戰區有【(.+?)】寶可夢，則增加(\d+)點傷害。$/,
+  /^若對手的戰鬥寶可夢為「寶可夢【ex】」，則增加(\d+)點傷害。$/,
+  /^造成對手的戰鬥寶可夢處於特殊狀態的數量×(\d+)點傷害。$/,
+  /^若對手的戰鬥寶可夢處於特殊狀態，則增加(\d+)點傷害。$/,
+  /^若對手的戰鬥寶可夢身上放置有傷害指示物，則增加(\d+)點傷害。$/,
+  /^若自己剩餘獎賞卡的張數，比對手剩餘獎賞卡的張數多，則增加(\d+)點傷害。$/,
+  /^若對手的戰鬥寶可夢沒有【灼傷】，則這個招式失敗。$/,
 ];
 
 /** Pure classifier (no randomness) — used by coverage-report.ts to count these as covered. */
@@ -256,6 +294,67 @@ export function resolveGenericAttackEffect(text: string, damageField: string, bo
   }
   if (/^在下個對手的回合，受到這個招式的寶可夢無法使用招式。$/.test(t)) {
     return { baseDamage: parseBaseNumber(damageField), opponentTimedEffect: { kind: 'cantAttack', turnOffset: 1 } };
+  }
+
+  // 將這隻寶可夢【狀態】。(self-inflicted status, unconditional)
+  m = t.match(new RegExp(`^將這隻寶可夢【(${STATUS_ALT})】。$`));
+  if (m) return { baseDamage: parseBaseNumber(damageField), selfStatusToInflict: [STATUS_ZH[m[1]]] };
+
+  // 減少這隻寶可夢身上放置的傷害指示物的數量×N點傷害。(more self damage = less damage dealt)
+  m = t.match(/^減少這隻寶可夢身上放置的傷害指示物的數量×(\d+)點傷害。$/);
+  if (m) return { baseDamage: Math.max(0, parseBaseNumber(damageField) - board.selfDamageCounters * parseInt(m[1], 10)) };
+
+  // 造成/增加對手的戰鬥寶可夢身上放置的傷害指示物的數量×N點傷害。
+  m = t.match(/^(?:造成|增加)對手的戰鬥寶可夢身上放置的傷害指示物的數量×(\d+)點傷害。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField) + board.opponentDamageCounters * parseInt(m[1], 10) };
+
+  // 增加對手的備戰寶可夢的數量×N點傷害。
+  m = t.match(/^增加對手的備戰寶可夢的數量×(\d+)點傷害。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField) + board.opponentBenchCount * parseInt(m[1], 10) };
+
+  // 增加雙方的備戰寶可夢的數量×N點傷害。
+  m = t.match(/^增加雙方的備戰寶可夢的數量×(\d+)點傷害。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField) + (board.ownBenchCount + board.opponentBenchCount) * parseInt(m[1], 10) };
+
+  // 增加這隻寶可夢身上附加的【X】能量的數量×N點傷害。
+  m = t.match(/^增加這隻寶可夢身上附加的【(.+?)】能量的數量×(\d+)點傷害。$/);
+  if (m) {
+    const type = ENERGY_TYPE_FROM_ZH[m[1]];
+    const count = type ? (board.attackerEnergyCounts[type] || 0) : 0;
+    return { baseDamage: parseBaseNumber(damageField) + count * parseInt(m[2], 10) };
+  }
+
+  // 若自己的備戰區有【X】寶可夢，則增加N點傷害。
+  m = t.match(/^若自己的備戰區有【(.+?)】寶可夢，則增加(\d+)點傷害。$/);
+  if (m) {
+    const type = ENERGY_TYPE_FROM_ZH[m[1]];
+    const has = !!type && board.ownBenchTypes.includes(type);
+    return { baseDamage: parseBaseNumber(damageField) + (has ? parseInt(m[2], 10) : 0) };
+  }
+
+  // 若對手的戰鬥寶可夢為「寶可夢【ex】」，則增加N點傷害。
+  m = t.match(/^若對手的戰鬥寶可夢為「寶可夢【ex】」，則增加(\d+)點傷害。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField) + (board.defenderIsEx ? parseInt(m[1], 10) : 0) };
+
+  // 造成對手的戰鬥寶可夢處於特殊狀態的數量×N點傷害。
+  m = t.match(/^造成對手的戰鬥寶可夢處於特殊狀態的數量×(\d+)點傷害。$/);
+  if (m) return { baseDamage: board.defenderStatusConditionCount * parseInt(m[1], 10) };
+
+  // 若對手的戰鬥寶可夢處於特殊狀態，則增加N點傷害。
+  m = t.match(/^若對手的戰鬥寶可夢處於特殊狀態，則增加(\d+)點傷害。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField) + (board.defenderStatusConditionCount > 0 ? parseInt(m[1], 10) : 0) };
+
+  // 若對手的戰鬥寶可夢身上放置有傷害指示物，則增加N點傷害。
+  m = t.match(/^若對手的戰鬥寶可夢身上放置有傷害指示物，則增加(\d+)點傷害。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField) + (board.opponentDamageCounters > 0 ? parseInt(m[1], 10) : 0) };
+
+  // 若自己剩餘獎賞卡的張數，比對手剩餘獎賞卡的張數多，則增加N點傷害。
+  m = t.match(/^若自己剩餘獎賞卡的張數，比對手剩餘獎賞卡的張數多，則增加(\d+)點傷害。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField) + (board.ownRemainingPrizes > board.opponentRemainingPrizes ? parseInt(m[1], 10) : 0) };
+
+  // 若對手的戰鬥寶可夢沒有【灼傷】，則這個招式失敗。
+  if (/^若對手的戰鬥寶可夢沒有【灼傷】，則這個招式失敗。$/.test(t)) {
+    return { baseDamage: board.defenderIsBurned ? parseBaseNumber(damageField) : 0 };
   }
 
   return undefined;

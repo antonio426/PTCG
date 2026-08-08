@@ -381,11 +381,22 @@ export const moves = {
       // draw, energy discard, board-scaled damage, timed self-protection/lockout) — resolved
       // from the printed text/damage string directly, no per-card registration needed. See
       // genericAttacks.ts for what is and isn't covered by this.
+      const ownBench = player.bench.filter((c): c is GameCard => c !== null);
       const attackBoard = {
         ownFieldPokemonCount: [player.active, ...player.bench].filter((c): c is GameCard => c !== null).length,
         ownToolCount: [player.active, ...player.bench].filter((c): c is GameCard => c !== null && !!c.attachedTool).length,
         selfDamageCounters: attacker.damage / 10,
         opponentEnergyCount: defender.attachedEnergy.length,
+        opponentDamageCounters: defender.damage / 10,
+        ownBenchCount: ownBench.length,
+        opponentBenchCount: opponent.bench.filter(c => c !== null).length,
+        ownRemainingPrizes: player.prizes.length,
+        opponentRemainingPrizes: opponent.prizes.length,
+        defenderStatusConditionCount: defender.statusConditions.length,
+        defenderIsBurned: defender.statusConditions.includes('Burned'),
+        defenderIsEx: defender.cardData.subtypes.includes('ex'),
+        attackerEnergyCounts: attacker.attachedEnergy.reduce((acc, e) => { acc[e.type] = (acc[e.type] || 0) + 1; return acc; }, {} as Record<string, number>),
+        ownBenchTypes: ownBench.flatMap(c => c.cardData.types || []),
       };
       const genericOutcome = attack.text ? resolveGenericAttackEffect(attack.text, attack.damage, attackBoard) : undefined;
       const effectiveAttack = genericOutcome ? { ...attack, damage: String(genericOutcome.baseDamage) } : attack;
@@ -461,6 +472,9 @@ export const moves = {
       if (genericOutcome) {
         if (damage > 0 && genericOutcome.statusToInflict) {
           for (const status of genericOutcome.statusToInflict) applyStatusCondition(defender, status);
+        }
+        if (genericOutcome.selfStatusToInflict) {
+          for (const status of genericOutcome.selfStatusToInflict) applyStatusCondition(attacker, status);
         }
         if (genericOutcome.healSelfAmount) attacker.damage = Math.max(0, attacker.damage - genericOutcome.healSelfAmount);
         if (genericOutcome.drawCards) drawCards(G, G.currentPlayer as 0 | 1, genericOutcome.drawCards);
