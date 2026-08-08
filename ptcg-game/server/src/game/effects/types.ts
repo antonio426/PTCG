@@ -56,7 +56,10 @@ export function allPokemon(G: PtcgGameState, idx: 0 | 1): GameCard[] {
  * silently fail — invisible in testing since the stray character doesn't print.
  */
 export function normalizeCardName(name: string): string {
-  return name.replace(/^[‌​]+/, '').replace(/^\[特性\]/, '');
+  // Zero-width chars are sometimes followed by a literal space before the real name
+  // (e.g. "‌ 天空徑線"), so strip whitespace together with them, not separately —
+  // otherwise the leftover leading space breaks equality against the clean registry key.
+  return name.replace(/^[‌​\s]+/, '').replace(/^\[特性\]\s*/, '').trim();
 }
 
 /** Alias kept for call-site clarity where the value is specifically an ability name. */
