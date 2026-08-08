@@ -1,5 +1,5 @@
 {
-  "timestamp": 1786199601285,
+  "timestamp": 1786199741647,
   "data": [
     {
       "id": "SVD-001",
@@ -435960,7 +435960,7 @@
       "name": "龐克頭盔",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Pokémon Tool"
       ],
       "set": {
         "id": "MBG",
@@ -437373,7 +437373,7 @@
       "name": "猛攻手鐲",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Pokémon Tool"
       ],
       "set": {
         "id": "MC",
@@ -438723,7 +438723,7 @@
       "name": "電氣球",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Pokémon Tool"
       ],
       "set": {
         "id": "M2a",

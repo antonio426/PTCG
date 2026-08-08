@@ -1,5 +1,5 @@
 import { GameCard } from '@ptcg/shared';
-import { EffectContext, EffectHandler, EffectStep, allPokemon, opponent, player, shuffleDeck } from './types';
+import { EffectContext, EffectHandler, EffectStep, allPokemon, normalizeCardName, opponent, player, shuffleDeck } from './types';
 import { discardFromHand, drawCards, drawUpTo, flipCoin, hasNoRuleBox, healDamage, moveDiscardCardToHand } from './primitives';
 import { clearStatusConditionsOnLeaveActive } from '../statusConditions';
 import { isEnergyDiscardProtected } from './passiveAbilities';
@@ -2367,13 +2367,13 @@ export const trainerEffects: Record<string, EffectHandler> = {
 };
 
 export function hasTrainerEffect(name: string): boolean {
-  return name in trainerEffects;
+  return normalizeCardName(name) in trainerEffects;
 }
 
 export function startTrainerEffect(name: string, ctx: EffectContext): EffectStep {
-  return trainerEffects[name].start(ctx);
+  return trainerEffects[normalizeCardName(name)].start(ctx);
 }
 
 export function resumeTrainerEffect(name: string, ctx: EffectContext, context: Record<string, unknown>, selection: string[]): EffectStep {
-  return trainerEffects[name].resume(ctx, context, selection);
+  return trainerEffects[normalizeCardName(name)].resume(ctx, context, selection);
 }

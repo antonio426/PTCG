@@ -49,14 +49,18 @@ export function allPokemon(G: PtcgGameState, idx: 0 | 1): GameCard[] {
 }
 
 /**
- * Some scraped ability names carry a stray leading zero-width char and/or a literal "[特性]"
- * baked into the text (e.g. "‌[特性]天空徑線" instead of "天空徑線"). Every place that matches
- * an ability name against a registry key must normalize through this first, or lookups for
- * those specific cards silently fail.
+ * Some scraped card names carry a stray leading zero-width char (e.g. "‌寶可夢中心的姐姐"
+ * instead of "寶可夢中心的姐姐"), and ability names specifically can also carry a literal
+ * "[特性]" baked into the text. Every place that matches a card/ability name against a
+ * registry key must normalize through this first, or lookups for those specific cards
+ * silently fail — invisible in testing since the stray character doesn't print.
  */
-export function normalizeAbilityName(name: string): string {
+export function normalizeCardName(name: string): string {
   return name.replace(/^[‌​]+/, '').replace(/^\[特性\]/, '');
 }
+
+/** Alias kept for call-site clarity where the value is specifically an ability name. */
+export const normalizeAbilityName = normalizeCardName;
 
 export function shuffleDeck(deck: GameCard[]): void {
   for (let i = deck.length - 1; i > 0; i--) {
