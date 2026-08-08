@@ -26,7 +26,7 @@ export function processBetweenTurns(G: PtcgGameState): void {
       }
     }
 
-    const hp = effectiveMaxHp(active);
+    const hp = effectiveMaxHp(G, active);
     if (hp > 0 && active.damage >= hp) {
       handleKo(G, idx, active.id);
     }

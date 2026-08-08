@@ -1,6 +1,6 @@
 import { Attack, GameCard } from '@ptcg/shared';
 import { PtcgGameState } from './GameState';
-import { getPassiveDamageBonus, getPassiveMaxHpBonus, getWeaknessTypeOverride, isDamageBlocked, shouldExilePrizes } from './effects/passiveAbilities';
+import { getPassiveDamageBonus, getPassiveDamageReduction, getPassiveMaxHpBonus, getWeaknessTypeOverride, isDamageBlocked, rollBonusPrizeOnActiveKo, shouldExilePrizes } from './effects/passiveAbilities';
 import { getToolDamageBonus } from './effects/tools';
 
 /** Rule-box Pokémon (ex/V/VMAX/VSTAR/GX/Mega/TAG TEAM) — same test as prizesForKo below. */
@@ -11,9 +11,9 @@ function isBigPokemon(card: GameCard): boolean {
 }
 
 /** `card`'s max HP including any passive-ability bonus (e.g. 腎上腺力量's +100 while holding Darkness energy). */
-export function effectiveMaxHp(card: GameCard): number {
+export function effectiveMaxHp(G: PtcgGameState, card: GameCard): number {
   const base = parseInt(card.cardData.hp || '0', 10);
-  return base > 0 ? base + getPassiveMaxHpBonus(card) : 0;
+  return base > 0 ? base + getPassiveMaxHpBonus(G, card) : 0;
 }
 
 /**
@@ -65,7 +65,8 @@ export function calculateDamage(G: PtcgGameState, attackerIdx: 0 | 1, attacker: 
     baseDamage += boost.amount;
   }
   const weaknessOverride = getWeaknessTypeOverride(G, (1 - attackerIdx) as 0 | 1, defender);
-  return applyWeaknessResistance(baseDamage, attacker, defender, weaknessOverride);
+  const afterWeakness = applyWeaknessResistance(baseDamage, attacker, defender, weaknessOverride);
+  return Math.max(0, afterWeakness - getPassiveDamageReduction(defender));
 }
 
 export function applyDamage(G: PtcgGameState, playerIndex: number, targetId: string, damage: number): void {
@@ -91,6 +92,7 @@ export function handleKo(G: PtcgGameState, koPlayerIndex: number, koCardId: stri
   const koPlayer = G.players[koPlayerIndex as 0 | 1];
   const attackingPlayer = G.players[(1 - koPlayerIndex) as 0 | 1];
   let koCard: GameCard | undefined;
+  const wasActive = koPlayer.active?.id === koCardId;
 
   if (koPlayer.active?.id === koCardId) {
     koCard = koPlayer.active;
@@ -117,6 +119,9 @@ export function handleKo(G: PtcgGameState, koPlayerIndex: number, koCardId: stri
   let prizeCount = koCard ? prizesForKo(koCard) : 1;
   // 白蕾雅-style "next KO this turn gives 1 extra prize" — consumed on the first KO after being set.
   if (attackingPlayer.bonusPrizeNextKo) { prizeCount += 1; attackingPlayer.bonusPrizeNextKo = false; }
+  // 奇跡之吻: whenever the koPlayer's Active specifically faints (any cause), a coin flip may
+  // grant the opposing side (whichever holds the ability) 1 extra prize.
+  if (wasActive) prizeCount += rollBonusPrizeOnActiveKo(G, koPlayerIndex as 0 | 1);
   // 放逐區障礙: if the side that just lost a Pokémon still has this ability in play, the
   // attacking side's prizes go to their exile zone instead of hand — permanently unusable.
   const exile = shouldExilePrizes(G, koPlayerIndex as 0 | 1);

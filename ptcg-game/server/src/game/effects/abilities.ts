@@ -620,6 +620,194 @@ const forestWalk: EffectHandler = {
   },
 };
 
+/** 快走: once per turn, draw 1 card. */
+const quickWalk: EffectHandler = {
+  start(ctx) {
+    if (player(ctx.G, ctx.playerIndex).deck.length === 0) return 'done';
+    drawCards(ctx.G, ctx.playerIndex, 1);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 電氣發電機: from discard, 1 Lightning Energy, attach to a Benched Pokémon. */
+const electricGenerator: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const targets = p.bench.filter((c): c is GameCard => c !== null);
+    const options = p.discardPile.filter(c => c.cardData.supertype === 'Energy' && (c.cardData.types || []).includes('Lightning'));
+    if (targets.length === 0 || options.length === 0) return 'done';
+    return { prompt: '電氣發電機：從棄牌區選 1 張雷能量卡', choiceType: 'select_from_list', count: 1, options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: { step: 'pick_energy' } };
+  },
+  resume(ctx, context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (context.step === 'pick_energy') {
+      const targets = p.bench.filter((c): c is GameCard => c !== null);
+      return { prompt: '電氣發電機：選擇要附加能量的備戰寶可夢', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: { step: 'pick_target', energyId: selection[0] } };
+    }
+    const energyId = context.energyId as string;
+    const target = p.bench.find(c => c?.id === selection[0]);
+    const i = p.discardPile.findIndex(c => c.id === energyId);
+    if (target && i >= 0) {
+      const energy = p.discardPile.splice(i, 1)[0];
+      target.attachedEnergy.push({ id: energy.id, type: 'Lightning' });
+    }
+    return 'done';
+  },
+};
+
+/** 燒灼蒸汽: only while Active, once per turn, Burn the opponent's Active. */
+const scorchingSteam: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.active?.id !== ctx.sourceCardId) return 'done';
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    if (opp.active) { opp.active.statusConditions = opp.active.statusConditions.filter(c => c !== 'Burned'); opp.active.statusConditions.push('Burned'); }
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 平靜之光: only while Active, once per turn, put the opponent's Active to Sleep. */
+const tranquilLight: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.active?.id !== ctx.sourceCardId) return 'done';
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    if (opp.active) { opp.active.statusConditions = opp.active.statusConditions.filter(c => !['Asleep', 'Paralyzed', 'Confused'].includes(c)); opp.active.statusConditions.push('Asleep'); }
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 必殺手裡劍: only while Active, discard 1 Basic Water Energy from hand, place 6 damage counters on 1 opponent Pokémon. */
+const finishingShuriken: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.active?.id !== ctx.sourceCardId) return 'done';
+    const cost = p.hand.filter(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes('Water'));
+    const targets = allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1);
+    if (cost.length === 0 || targets.length === 0) return 'done';
+    return { prompt: '必殺手裡劍：丟棄 1 張基本水能量卡', choiceType: 'select_from_list', count: 1, options: cost.map(c => ({ id: c.id, label: c.cardData.name })), context: { step: 'pay_cost' } };
+  },
+  resume(ctx, context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (context.step === 'pay_cost') {
+      const i = p.hand.findIndex(c => c.id === selection[0]);
+      if (i >= 0) p.discardPile.push(p.hand.splice(i, 1)[0]);
+      const targets = allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1);
+      return { prompt: '必殺手裡劍：選擇要放置 6 個傷害指示物的對手寶可夢', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: { step: 'pick_target' } };
+    }
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    const target = opp.active?.id === selection[0] ? opp.active : opp.bench.find(c => c?.id === selection[0]);
+    if (target) {
+      target.damage += 60;
+      const hp = parseInt(target.cardData.hp || '0', 10);
+      if (hp > 0 && target.damage >= hp) handleKo(ctx.G, (1 - ctx.playerIndex) as 0 | 1, target.id);
+    }
+    return 'done';
+  },
+};
+
+/** 烈火亂舞: unlimited uses per turn, attach 1 Basic Fire Energy from hand to any own Pokémon. */
+const flameDance: EffectHandler = {
+  unlimitedUse: true,
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const options = p.hand.filter(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes('Fire'));
+    const targets = allPokemon(ctx.G, ctx.playerIndex);
+    if (options.length === 0 || targets.length === 0) return 'done';
+    return { prompt: '烈火亂舞：選 1 張基本火能量卡', choiceType: 'select_from_list', count: 1, options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: { step: 'pick_energy' } };
+  },
+  resume(ctx, context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (context.step === 'pick_energy') {
+      const targets = allPokemon(ctx.G, ctx.playerIndex);
+      return { prompt: '烈火亂舞：選擇要附加能量的寶可夢', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: { step: 'pick_target', energyId: selection[0] } };
+    }
+    const energyId = context.energyId as string;
+    const target = p.active?.id === selection[0] ? p.active : p.bench.find(c => c?.id === selection[0]);
+    const i = p.hand.findIndex(c => c.id === energyId);
+    if (target && i >= 0) {
+      const energy = p.hand.splice(i, 1)[0];
+      target.attachedEnergy.push({ id: energy.id, type: 'Fire' });
+    }
+    return 'done';
+  },
+};
+
+/** 搜尋寶石: on evolve, search deck for up to 2 Trainer cards to hand. (The printed "own Tera Pokémon in play" gate can't be checked — see 玻璃喇叭 in trainers.ts for the same documented simplification.) */
+const gemSearch: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const options = p.deck.filter(c => c.cardData.supertype === 'Trainer');
+    if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
+    return { prompt: '搜尋寶石：從牌庫選最多 2 張訓練家卡加入手牌', choiceType: 'select_from_list', maxCount: Math.min(2, options.length), options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    for (const id of selection) moveDeckCardToHand(ctx.G, ctx.playerIndex, id);
+    shuffleDeck(p.deck);
+    return 'done';
+  },
+};
+
+/** 扭轉乾坤: once per turn, draw 3. (The printed "own Pokémon fainted last opponent-turn" gate can't be checked — same documented simplification as 不公印章 in trainers.ts.) */
+const turnaround: EffectHandler = {
+  start(ctx) {
+    if (player(ctx.G, ctx.playerIndex).deck.length === 0) return 'done';
+    drawCards(ctx.G, ctx.playerIndex, 3);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 支配鎖鏈: once per turn, switch a Benched Darkness Pokémon (excluding self) into Active, then Poison the new Active. */
+const dominationChain: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const targets = p.bench.filter((c): c is GameCard => c !== null && c.id !== ctx.sourceCardId && (c.cardData.types || []).includes('Darkness'));
+    if (!p.active || targets.length === 0) return 'done';
+    return { prompt: '支配鎖鏈：選擇要換上場的惡寶可夢', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const idx = p.bench.findIndex(c => c?.id === selection[0]);
+    if (idx >= 0 && p.active) {
+      const chosen = p.bench[idx]!;
+      p.bench[idx] = p.active;
+      p.active = chosen;
+      chosen.statusConditions = chosen.statusConditions.filter(c => c !== 'Poisoned');
+      chosen.statusConditions.push('Poisoned');
+    }
+    return 'done';
+  },
+};
+
+/** 精神抽出: on evolve, draw 3. */
+const mentalExtraction: EffectHandler = {
+  start(ctx) {
+    if (player(ctx.G, ctx.playerIndex).deck.length === 0) return 'done';
+    drawCards(ctx.G, ctx.playerIndex, 3);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/** 奔流之心: once per turn, place 5 damage counters on self, then this turn its attacks deal +120 damage. */
+const torrentHeart: EffectHandler = {
+  start(ctx) {
+    const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
+    if (!self) return 'done';
+    self.damage += 50;
+    const hp = parseInt(self.cardData.hp || '0', 10);
+    if (hp > 0 && self.damage >= hp) { handleKo(ctx.G, ctx.playerIndex, self.id); return 'done'; }
+    player(ctx.G, ctx.playerIndex).turnDamageBoosts.push({ amount: 120 });
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
 export const abilityEffects: Record<string, EffectHandler> = {
   '偵查指令': strategicCommand,
   '咒詛炸彈': curseBomb,
@@ -651,6 +839,18 @@ export const abilityEffects: Record<string, EffectHandler> = {
   '劇毒粉塵': poisonDust,
   '風扇呼喚': fanCall,
   '森林漫步': forestWalk,
+
+  '快走': quickWalk,
+  '電氣發電機': electricGenerator,
+  '燒灼蒸汽': scorchingSteam,
+  '平靜之光': tranquilLight,
+  '必殺手裡劍': finishingShuriken,
+  '烈火亂舞': flameDance,
+  '搜尋寶石': gemSearch,
+  '扭轉乾坤': turnaround,
+  '支配鎖鏈': dominationChain,
+  '精神抽出': mentalExtraction,
+  '奔流之心': torrentHeart,
 };
 
 export function hasAbilityEffect(name: string): boolean {

@@ -2,6 +2,7 @@ import { GameCard } from '@ptcg/shared';
 import { EffectContext, EffectHandler, EffectStep, allPokemon, opponent, player, shuffleDeck } from './types';
 import { discardFromHand, drawCards, drawUpTo, flipCoin, hasNoRuleBox, healDamage, moveDiscardCardToHand } from './primitives';
 import { clearStatusConditionsOnLeaveActive } from '../statusConditions';
+import { isEnergyDiscardProtected } from './passiveAbilities';
 
 function deckOptions(deck: GameCard[], filter: (c: GameCard) => boolean): { id: string; label: string }[] {
   return deck.filter(filter).map(c => ({ id: c.id, label: c.cardData.name }));
@@ -498,7 +499,8 @@ const energyRecyclingSystem: EffectHandler = {
 const crushingHammer: EffectHandler = {
   start(ctx) {
     if (!flipCoin()) return 'done';
-    const targets = allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1).filter(c => c.attachedEnergy.length > 0);
+    // 崗哨: benched Pokémon protected by this ability can't have their Energy targeted.
+    const targets = allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1).filter(c => c.attachedEnergy.length > 0 && !isEnergyDiscardProtected(ctx.G, c));
     if (targets.length === 0) return 'done';
     const options: { id: string; label: string }[] = [];
     for (const c of targets) for (const e of c.attachedEnergy) options.push({ id: e.id, label: `${c.cardData.name} 的 ${e.type} 能量` });
@@ -518,7 +520,7 @@ const crushingHammer: EffectHandler = {
 /** 改造之錘 Forest Hammer(-style): discard 1 Special Energy attached to an opponent's Pokémon (no coin flip). */
 const modifiedHammer: EffectHandler = {
   start(ctx) {
-    const targets = allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1).filter(c => c.attachedEnergy.some(e => e.type !== 'Colorless' || true));
+    const targets = allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1).filter(c => c.attachedEnergy.length > 0 && !isEnergyDiscardProtected(ctx.G, c));
     const options: { id: string; label: string }[] = [];
     for (const c of targets) for (const e of c.attachedEnergy) options.push({ id: e.id, label: `${c.cardData.name} 的能量` });
     if (options.length === 0) return 'done';

@@ -3,7 +3,7 @@ import { PtcgGameState, PendingChoice } from './GameState';
 import { canPlayPokemon, canEvolve, canAttachEnergy, canRetreat, canAttack, effectiveRetreatCost, FIRST_TURN_SUPPORTER_EXCEPTIONS } from './validation';
 import { clearStatusConditionsOnLeaveActive } from './statusConditions';
 import { calculateDamage, effectiveMaxHp, handleKo, prizesForKo } from './damage';
-import { hasPassiveAbilityNamed } from './effects/passiveAbilities';
+import { getBonusPrizesForAttackKo, hasPassiveAbilityNamed } from './effects/passiveAbilities';
 import { isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
 import {
@@ -332,7 +332,7 @@ export const moves = {
     if (attacker.statusConditions.includes('Confused') && Math.random() < 0.5) {
       attacker.damage += 30;
       addLog(G, G.currentPlayer, 'attack', `${attacker.cardData.name} is Confused and hurt itself for 30 damage!`);
-      const selfHp = effectiveMaxHp(attacker);
+      const selfHp = effectiveMaxHp(G, attacker);
       if (selfHp > 0 && attacker.damage >= selfHp) handleKo(G, G.currentPlayer, attacker.id);
       G.phase = 'end';
       ctx.events?.endTurn?.();
@@ -355,14 +355,25 @@ export const moves = {
       if (retaliation > 0) {
         attacker.damage += retaliation * 10;
       }
+      // 毒刺-style retaliation: being hit while Active poisons the attacker.
+      if (damage > 0 && hasPassiveAbilityNamed(defender, '毒刺')) {
+        attacker.statusConditions = attacker.statusConditions.filter(c => c !== 'Poisoned');
+        attacker.statusConditions.push('Poisoned');
+      }
 
-      const defenderHp = effectiveMaxHp(defender);
+      const defenderHp = effectiveMaxHp(G, defender);
       if (defender.damage >= defenderHp && defenderHp > 0) {
         handleKo(G, 1 - G.currentPlayer, defender.id);
         addLog(G, G.currentPlayer, 'ko', `Knocked out ${defender.cardData.name}`);
+        // 貪婪食客: this Pokémon's own attack KOing an opponent's Basic Pokémon awards 1 extra prize.
+        const bonus = getBonusPrizesForAttackKo(G, G.currentPlayer as 0 | 1, attacker, defender);
+        for (let i = 0; i < bonus; i++) {
+          const prize = player.prizes.pop();
+          if (prize) { player.hand.push(prize); player.takenPrizes++; }
+        }
       }
       if (retaliation > 0) {
-        const attackerHp = effectiveMaxHp(attacker);
+        const attackerHp = effectiveMaxHp(G, attacker);
         if (attacker.damage >= attackerHp && attackerHp > 0) handleKo(G, G.currentPlayer, attacker.id);
       }
     }

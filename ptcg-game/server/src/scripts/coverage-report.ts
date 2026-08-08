@@ -12,6 +12,13 @@ import { trainerEffects } from '../game/effects/trainers';
 import { abilityEffects } from '../game/effects/abilities';
 import { attackEffects } from '../game/effects/attacks';
 import { hasToolEffect } from '../game/effects/tools';
+import { PASSIVE_ABILITY_NAMES } from '../game/effects/passiveAbilities';
+import { normalizeAbilityName } from '../game/effects/types';
+
+function isAbilityCovered(name: string): boolean {
+  const n = normalizeAbilityName(name);
+  return n in abilityEffects || PASSIVE_ABILITY_NAMES.has(n);
+}
 
 const CARDS_CACHE = path.resolve(__dirname, '../../data/cards.json');
 
@@ -39,7 +46,7 @@ function main() {
   // ── Abilities ──
   const pokemon = cards.filter(c => c.supertype === 'Pokémon');
   const abilityNames = [...new Set(pokemon.flatMap(c => (c.abilities || []).map(a => a.name)))];
-  const coveredAbilities = abilityNames.filter(n => n in abilityEffects);
+  const coveredAbilities = abilityNames.filter(isAbilityCovered);
 
   console.log('\n=== Abilities ===');
   console.log(`  Unique names: ${abilityNames.length}, covered: ${coveredAbilities.length} (${(coveredAbilities.length / abilityNames.length * 100).toFixed(1)}%)`);
@@ -73,7 +80,7 @@ function main() {
   const abilityCounts: Record<string, number> = {};
   for (const p of pokemon) for (const a of p.abilities || []) abilityCounts[a.name] = (abilityCounts[a.name] || 0) + 1;
   const topUncoveredAbilities = abilityNames
-    .filter(n => !(n in abilityEffects))
+    .filter(n => !isAbilityCovered(n))
     .map(n => [n, abilityCounts[n]] as const)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 30);
@@ -84,7 +91,7 @@ function main() {
   // ── Save the full lists for future work ──
   const outDir = path.resolve(__dirname, '../../../data-scraped');
   fs.writeFileSync(path.join(outDir, 'coverage-uncovered-trainers.json'), JSON.stringify(uncoveredTrainers, null, 2), 'utf-8');
-  fs.writeFileSync(path.join(outDir, 'coverage-uncovered-abilities.json'), JSON.stringify(abilityNames.filter(n => !(n in abilityEffects)), null, 2), 'utf-8');
+  fs.writeFileSync(path.join(outDir, 'coverage-uncovered-abilities.json'), JSON.stringify(abilityNames.filter(n => !isAbilityCovered(n)), null, 2), 'utf-8');
   fs.writeFileSync(path.join(outDir, 'coverage-uncovered-attacks.json'), JSON.stringify(attackKeysWithText.filter(k => !(k in attackEffects)), null, 2), 'utf-8');
   console.log('\nFull uncovered lists saved to data-scraped/coverage-uncovered-*.json');
 }

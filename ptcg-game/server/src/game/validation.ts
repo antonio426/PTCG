@@ -2,7 +2,7 @@ import { GameCard, EnergyType, LegalAction } from '@ptcg/shared';
 import { PtcgGameState, GamePhase, PendingChoice } from './GameState';
 import { hasAbilityEffect, isAbilityUnlimitedUse } from './effects/abilities';
 import { getRetreatCostReduction, getColorlessCostReduction } from './effects/tools';
-import { canEvolveViaPassive, getPassiveAttackCostReduction, getPassiveRetreatWaiver } from './effects/passiveAbilities';
+import { canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostReduction, getPassiveRetreatWaiver } from './effects/passiveAbilities';
 import { normalizeAbilityName } from './effects/types';
 
 /** All k-sized combinations of `items`, capped so huge hands can't explode the move list. */
@@ -182,6 +182,7 @@ export function canAttack(G: PtcgGameState, playerIndex: number, attackIndex: nu
 
   const attack = player.active.cardData.attacks?.[attackIndex];
   if (!attack) return false;
+  if (!canUsePassiveGatedAttack(G, player.active)) return false;
 
   const colorlessReduction = getColorlessCostReduction(G, player.active, playerIndex as 0 | 1)
     + getPassiveAttackCostReduction(G, playerIndex as 0 | 1, player.active, attack.name);
