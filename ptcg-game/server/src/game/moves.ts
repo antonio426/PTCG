@@ -416,6 +416,23 @@ export const moves = {
         attackerEvolvesFrom: attacker.cardData.evolvesFrom,
         ownBenchNames: ownBench.map(c => c.cardData.name),
         opponentDiscardBasicEnergyCount: opponent.discardPile.filter(c => c.cardData.subtypes.includes('Basic Energy')).length,
+        ownDeckCount: player.deck.length,
+        ownFieldTotalEnergyCount: [player.active, ...player.bench].filter((c): c is GameCard => c !== null).reduce((sum, c) => sum + c.attachedEnergy.length, 0),
+        ownFieldEnergyCounts: [player.active, ...player.bench].filter((c): c is GameCard => c !== null).flatMap(c => c.attachedEnergy).reduce((acc, e) => { acc[e.type] = (acc[e.type] || 0) + 1; return acc; }, {} as Record<string, number>),
+        defenderTypes: defender.cardData.types || [],
+        defenderSubtypes: defender.cardData.subtypes || [],
+        defenderEvolvesFrom: defender.cardData.evolvesFrom,
+        defenderIsConfused: defender.statusConditions.includes('Confused'),
+        defenderRetreatCost: effectiveRetreatCost(G, defender),
+        opponentFieldTypes: [opponent.active, ...opponent.bench].filter((c): c is GameCard => c !== null).flatMap(c => c.cardData.types || []),
+        opponentHasFutureSubtype: [opponent.active, ...opponent.bench].some(c => c?.cardData.subtypes.includes('Future')),
+        opponentHandCount: opponent.hand.length,
+        ownFieldBasicCount: [player.active, ...player.bench].filter((c): c is GameCard => c !== null && c.cardData.subtypes.includes('Basic')).length,
+        hasActiveStadium: !!G.activeStadium,
+        ownFieldTypeCounts: [player.active, ...player.bench].filter((c): c is GameCard => c !== null).reduce((acc, c) => {
+          for (const ty of c.cardData.types || []) acc[ty] = (acc[ty] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>),
       };
       const genericOutcome = attack.text ? resolveGenericAttackEffect(attack.text, attack.damage, attackBoard) : undefined;
       if (genericOutcome?.familyScaledDamage) {
@@ -747,6 +764,17 @@ export const moves = {
             const pick = matches[Math.floor(Math.random() * matches.length)];
             const i = player.discardPile.findIndex(c => c.id === pick.id);
             if (i >= 0) player.hand.push(player.discardPile.splice(i, 1)[0]);
+          }
+        }
+        if (genericOutcome.discardPileSearchAnyEnergyToSelf) {
+          const matches = player.discardPile.filter(c => c.cardData.supertype === 'Energy');
+          if (matches.length > 0) {
+            const pick = matches[Math.floor(Math.random() * matches.length)];
+            const i = player.discardPile.findIndex(c => c.id === pick.id);
+            if (i >= 0) {
+              const energy = player.discardPile.splice(i, 1)[0];
+              attacker.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+            }
           }
         }
         if (genericOutcome.millOwnDeckCount) {

@@ -325,5 +325,27 @@ function freshBattle(attackerData: Card, defenderData: Card) {
   check('outgoingDamageBoost: +120 applied on the recorded turn (20 -> 140)', dmg === 140);
 }
 
+// 24. Conditional bonus damage based on defender's printed type
+{
+  const attacker = mon('atk', 'TypeCheckMon', '100', '若對手的戰鬥寶可夢為【火】寶可夢，則增加50點傷害。', '30');
+  const defender = mon('def', 'FireDef', '200', '', '10', { types: ['Fire'] });
+  const G = freshBattle(attacker, defender);
+  (moves.attack as any)({ G, ctx: { events: {} } }, 0);
+  check('defenderTypes conditional: +50 applied vs a Fire defender', G.players[1].active!.damage === 80);
+}
+
+// 25. Vulnerability debuff: defender takes +N damage on the attacker's own next turn
+{
+  const attacker = mon('atk', 'VulnMon', '100', '在下個自己的回合，受到這個招式的寶可夢受到招式的傷害「+50」點。', '20');
+  const defender = mon('def', 'DefMon25', '300', '', '10');
+  const G = freshBattle(attacker, defender);
+  (moves.attack as any)({ G, ctx: { events: {} } }, 0);
+  const boostTurn = G.players[1].active!.timedEffects!.find(e => e.kind === 'damageReduction' && (e.amount ?? 0) < 0)!.appliesOnTurn;
+  G.turn = boostTurn;
+  G.phase = 'attack';
+  const dmg = calculateDamage(G, 0, G.players[0].active!, { name: 'Tackle', cost: [], convertedEnergyCost: 0, damage: '20', text: '' }, G.players[1].active!);
+  check('vulnerability debuff: +50 damage lands on the recorded turn (20 -> 70)', dmg === 70);
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed > 0) process.exit(1);
