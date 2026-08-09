@@ -172,6 +172,8 @@ export function canRetreat(G: PtcgGameState, playerIndex: number): boolean {
   if (!player.bench.some(s => s !== null)) return false;
   if (player.active.statusConditions.includes('Asleep') || player.active.statusConditions.includes('Paralyzed')) return false;
   if (isRetreatLockedByTimedEffect(G, player.active)) return false;
+  // 霍米加的演奏: Poisoned Pokémon (including newly-poisoned ones) can't retreat this turn.
+  if (player.active.statusConditions.includes('Poisoned') && player.poisonedCantRetreatUntilTurn === G.turn) return false;
 
   const retreatCost = effectiveRetreatCost(G, player.active);
   const attachedEnergyCount = player.active.attachedEnergy.length;

@@ -35,6 +35,10 @@ export interface PtcgPlayerState {
    * timedEffects). Set on the LOCKED side (the attacker's opponent), so validation just checks
    * the locked player's own field. */
   itemLockedUntilTurn: number | null;
+  /** 霍米加的演奏-style "opponent's Poisoned Pokémon can't retreat next turn (including newly
+   * poisoned ones)" — set on the AFFECTED side (mirrors itemLockedUntilTurn's convention), since
+   * it's a condition-based check (any Poisoned Pokémon) rather than tied to one specific card. */
+  poisonedCantRetreatUntilTurn: number | null;
 }
 
 export interface PtcgGameState {

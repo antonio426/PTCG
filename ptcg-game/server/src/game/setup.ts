@@ -69,6 +69,7 @@ function createPlayerState(deckCardIds: string[], cardData: Record<string, Card>
     bonusPrizeNextKo: 0,
     incomingDamageReduction: [],
     itemLockedUntilTurn: null,
+    poisonedCantRetreatUntilTurn: null,
   };
 }
 

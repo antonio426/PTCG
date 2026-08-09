@@ -2728,6 +2728,38 @@ const moveTutorMachine: EffectHandler = {
   resume: hibikisAdventure.resume,
 };
 
+/** 阿塞蘿拉的惡作劇: usable only while the opponent has 2 or fewer remaining prize cards. Choose 1
+ * own field Pokémon; during the opponent's next turn, it's immune to damage from an opponent
+ * "ex" Pokémon's attacks — reuses the generic per-card timedEffects system built for attack text
+ * this session (damageImmune + vsSubtype:'ex'), the first time a TRAINER card writes one. */
+const arlosCharm: EffectHandler = {
+  start(ctx) {
+    if (opponent(ctx.G, ctx.playerIndex).prizes.length > 2) return 'done';
+    const targets = allPokemon(ctx.G, ctx.playerIndex);
+    if (targets.length === 0) return 'done';
+    return { prompt: '阿塞蘿拉的惡作劇：選 1 隻己方寶可夢，下個對手回合免疫對手 ex 寶可夢的招式傷害', choiceType: 'select_pokemon', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: {} };
+  },
+  resume(ctx, _context, selection) {
+    const target = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === selection[0]);
+    if (target) {
+      target.timedEffects = [...(target.timedEffects || []), { kind: 'damageImmune', vsSubtype: 'ex', appliesOnTurn: ctx.G.turn + 1 }];
+    }
+    return 'done';
+  },
+};
+
+/** 霍米加的演奏: during the opponent's next turn, their Poisoned Pokémon (including ones newly
+ * poisoned that same turn) can't retreat — a condition-based check rather than tied to one
+ * specific card, so it's a player-wide timed flag (poisonedCantRetreatUntilTurn) checked in
+ * canRetreat, mirroring itemLockedUntilTurn's existing pattern. */
+const homikasPerformance: EffectHandler = {
+  start(ctx) {
+    opponent(ctx.G, ctx.playerIndex).poisonedCantRetreatUntilTurn = ctx.G.turn + 1;
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
 export const trainerEffects: Record<string, EffectHandler> = {
   '高級球': ultraBall,
   '老大的指令': bosssOrders,
@@ -2893,6 +2925,8 @@ export const trainerEffects: Record<string, EffectHandler> = {
   '訂購盒': orderBox,
   '毅萬與馥好': yiwanAndFuhao,
   '招式學習器機': moveTutorMachine,
+  '阿塞蘿拉的惡作劇': arlosCharm,
+  '霍米加的演奏': homikasPerformance,
 };
 
 export function hasTrainerEffect(name: string): boolean {
