@@ -81,10 +81,10 @@ function hasTeraBenchedImmunity(card: GameCard): boolean {
 
 /** True if any of `card`'s active TimedCardEffect entries (set by attack text like "在下個對手
  * 的回合，這隻寶可夢不會受到招式的傷害") of the given kind currently applies. */
-function hasTimedEffect(G: PtcgGameState, card: GameCard, kind: 'cantAttack' | 'cantRetreat' | 'damageImmune' | 'damageReduction' | 'outgoingDamageReduction' | 'coinFlipAttackMiss'): boolean {
+function hasTimedEffect(G: PtcgGameState, card: GameCard, kind: 'cantAttack' | 'cantRetreat' | 'damageImmune' | 'damageReduction' | 'outgoingDamageReduction' | 'outgoingDamageBoost' | 'coinFlipAttackMiss'): boolean {
   return !!card.timedEffects?.some(e => e.kind === kind && e.appliesOnTurn === G.turn);
 }
-function getTimedEffectAmount(G: PtcgGameState, card: GameCard, kind: 'damageReduction' | 'outgoingDamageReduction'): number {
+function getTimedEffectAmount(G: PtcgGameState, card: GameCard, kind: 'damageReduction' | 'outgoingDamageReduction' | 'outgoingDamageBoost'): number {
   const e = card.timedEffects?.find(x => x.kind === kind && x.appliesOnTurn === G.turn);
   return e?.amount ?? 0;
 }
@@ -95,7 +95,11 @@ export function isRetreatLockedByTimedEffect(G: PtcgGameState, card: GameCard): 
   return hasTimedEffect(G, card, 'cantRetreat');
 }
 export function getOutgoingDamageReduction(G: PtcgGameState, attacker: GameCard): number {
-  return getTimedEffectAmount(G, attacker, 'outgoingDamageReduction');
+  return getTimedEffectAmount(G, attacker, 'outgoingDamageReduction') - getTimedEffectAmount(G, attacker, 'outgoingDamageBoost');
+}
+/** True if `attackName` specifically (not the card's other attacks) is locked out this turn. */
+export function isNamedAttackLockedByTimedEffect(G: PtcgGameState, card: GameCard, attackName: string): boolean {
+  return !!card.timedEffects?.some(e => e.kind === 'namedAttackLock' && e.appliesOnTurn === G.turn && e.attackName === attackName);
 }
 /** Consumes (and returns whether present) a "next attack has a 50% chance to fail" timed debuff. */
 export function hasCoinFlipAttackMissDebuff(G: PtcgGameState, card: GameCard): boolean {

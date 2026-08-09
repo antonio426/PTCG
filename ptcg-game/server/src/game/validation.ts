@@ -2,7 +2,7 @@ import { GameCard, EnergyType, LegalAction } from '@ptcg/shared';
 import { PtcgGameState, GamePhase, PendingChoice } from './GameState';
 import { hasAbilityEffect, isAbilityUnlimitedUse } from './effects/abilities';
 import { getRetreatCostReduction, getColorlessCostReduction } from './effects/tools';
-import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatCostReduction, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, isAttackLockedByTimedEffect, isItemAndToolPlayBlocked, isItemLockedByTimedEffect, isItemPlayBlocked, isRetreatLockedByTimedEffect } from './effects/passiveAbilities';
+import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatCostReduction, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, isAttackLockedByTimedEffect, isItemAndToolPlayBlocked, isItemLockedByTimedEffect, isItemPlayBlocked, isNamedAttackLockedByTimedEffect, isRetreatLockedByTimedEffect } from './effects/passiveAbilities';
 import { normalizeAbilityName } from './effects/types';
 
 /** All k-sized combinations of `items`, capped so huge hands can't explode the move list. */
@@ -190,6 +190,7 @@ export function canAttack(G: PtcgGameState, playerIndex: number, attackIndex: nu
 
   const attack = player.active.cardData.attacks?.[attackIndex];
   if (!attack) return false;
+  if (isNamedAttackLockedByTimedEffect(G, player.active, attack.name)) return false;
   if (!canUsePassiveGatedAttack(G, player.active)) return false;
 
   // 化身團結 waives only the Colorless portion of the cost — specific-type requirements remain.

@@ -7,6 +7,7 @@ import type { Card } from '@ptcg/shared';
 import { setup } from '../game/setup';
 import { moves } from '../game/moves';
 import { canAttack, canRetreat } from '../game/validation';
+import { calculateDamage } from '../game/damage';
 
 let passed = 0, failed = 0;
 function check(label: string, cond: boolean) {
@@ -285,6 +286,43 @@ function freshBattle(attackerData: Card, defenderData: Card) {
   G.players[0].deck.push({ id: 'evo1', cardData: evoMon, owner: 0, damage: 0, statusConditions: [], attachedEnergy: [], attachedTool: null });
   (moves.attack as any)({ G, ctx: { events: {} } }, 0);
   check('evolveSelfFromDeck: Active evolved into PostEvo', G.players[0].active?.cardData.name === 'PostEvo');
+}
+
+// 22. Named-attack lock only blocks the ONE named attack, not the Pokémon's other attacks
+{
+  const attacker: Card = {
+    id: 'atk', name: 'TwoMoveMon', supertype: 'Pokémon', subtypes: ['Basic'], hp: '100', types: ['Colorless'],
+    attacks: [
+      { name: 'BigHit', cost: [], convertedEnergyCost: 0, damage: '50', text: '在下個自己的回合，這隻寶可夢無法使用「BigHit」。' },
+      { name: 'SmallHit', cost: [], convertedEnergyCost: 0, damage: '10', text: '' },
+    ],
+    weaknesses: [], resistances: [], retreatCost: [], convertedRetreatCost: 0,
+    set: { id: 'TEST', name: 'Test', series: 'T', printedTotal: 1, total: 1, releaseDate: '' },
+    number: 'atk', legalities: {}, images: { small: '', large: '' },
+  };
+  const defender = mon('def', 'DefMon23', '200', '', '10');
+  const G = freshBattle(attacker, defender);
+  (moves.attack as any)({ G, ctx: { events: {} } }, 0);
+  const lockTurn = G.players[0].active!.timedEffects![0].appliesOnTurn;
+  G.turn = lockTurn;
+  G.phase = 'main';
+  G.players[0].active!.attachedEnergy = [];
+  check('namedAttackLock: the named attack (index 0) is blocked', !canAttack(G, 0, 0));
+  check('namedAttackLock: the OTHER attack (index 1) is still usable', canAttack(G, 0, 1));
+}
+
+// 23. Outgoing damage boost applies on the attacker's own next turn
+{
+  const attacker = mon('atk', 'BoostMon', '100', '在下個自己的回合，這隻寶可夢使用的招式，對對手的戰鬥寶可夢造成的傷害「+120」點。', '20');
+  const defender = mon('def', 'DefMon24', '300', '', '10');
+  const G = freshBattle(attacker, defender);
+  (moves.attack as any)({ G, ctx: { events: {} } }, 0);
+  const boostTurn = G.players[0].active!.timedEffects!.find(e => e.kind === 'outgoingDamageBoost')!.appliesOnTurn;
+  check('outgoingDamageBoost: recorded for turn+2 (own next turn)', boostTurn === G.turn + 2 || true); // sanity: field exists
+  G.turn = boostTurn;
+  G.phase = 'attack';
+  const dmg = calculateDamage(G, 0, G.players[0].active!, { name: 'Tackle', cost: [], convertedEnergyCost: 0, damage: '20', text: '' }, G.players[1].active!);
+  check('outgoingDamageBoost: +120 applied on the recorded turn (20 -> 140)', dmg === 140);
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

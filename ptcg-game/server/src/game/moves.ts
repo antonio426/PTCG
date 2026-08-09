@@ -412,12 +412,31 @@ export const moves = {
         ownBenchTypes: ownBench.flatMap(c => c.cardData.types || []),
         attackerTotalEnergyCount: attacker.attachedEnergy.length,
         bothActiveEnergyCount: attacker.attachedEnergy.length + defender.attachedEnergy.length,
+        ownDiscardCardNames: player.discardPile.map(c => c.cardData.name),
+        attackerEvolvesFrom: attacker.cardData.evolvesFrom,
+        ownBenchNames: ownBench.map(c => c.cardData.name),
+        opponentDiscardBasicEnergyCount: opponent.discardPile.filter(c => c.cardData.subtypes.includes('Basic Energy')).length,
       };
       const genericOutcome = attack.text ? resolveGenericAttackEffect(attack.text, attack.damage, attackBoard) : undefined;
       if (genericOutcome?.familyScaledDamage) {
         const { name, amount } = genericOutcome.familyScaledDamage;
         const familyCount = [player.active, ...player.bench].filter((c): c is GameCard => c !== null && c.cardData.name.includes(name)).length;
         genericOutcome.baseDamage = familyCount * amount;
+      }
+      if (genericOutcome?.discardPileAttackScaledDamage) {
+        const { attackName, amount } = genericOutcome.discardPileAttackScaledDamage;
+        const matchCount = player.discardPile.filter(c => c.cardData.attacks?.some(a => a.name === attackName)).length;
+        genericOutcome.baseDamage = matchCount * amount;
+      }
+      if (genericOutcome?.selfMillFamilyScaledDamage) {
+        const { millCount, name, amount } = genericOutcome.selfMillFamilyScaledDamage;
+        let matches = 0;
+        for (let i = 0; i < millCount && player.deck.length > 0; i++) {
+          const milled = player.deck.pop()!;
+          if (milled.cardData.name.includes(name)) matches++;
+          player.discardPile.push(milled);
+        }
+        genericOutcome.baseDamage = matches * amount;
       }
       const effectiveAttack = genericOutcome ? { ...attack, damage: String(genericOutcome.baseDamage) } : attack;
       const damage = calculateDamage(G, G.currentPlayer as 0 | 1, attacker, effectiveAttack, defender, genericOutcome?.ignoreResistance, genericOutcome?.ignoreWeakness);
@@ -521,11 +540,11 @@ export const moves = {
         }
         if (genericOutcome.selfTimedEffect) {
           const e = genericOutcome.selfTimedEffect;
-          attacker.timedEffects = [...(attacker.timedEffects || []), { kind: e.kind, amount: e.amount, vsSubtype: e.vsSubtype, appliesOnTurn: G.turn + e.turnOffset }];
+          attacker.timedEffects = [...(attacker.timedEffects || []), { kind: e.kind, amount: e.amount, vsSubtype: e.vsSubtype, attackName: e.attackName, appliesOnTurn: G.turn + e.turnOffset }];
         }
         if (damage > 0 && genericOutcome.opponentTimedEffect) {
           const e = genericOutcome.opponentTimedEffect;
-          defender.timedEffects = [...(defender.timedEffects || []), { kind: e.kind, amount: e.amount, vsSubtype: e.vsSubtype, appliesOnTurn: G.turn + e.turnOffset }];
+          defender.timedEffects = [...(defender.timedEffects || []), { kind: e.kind, amount: e.amount, vsSubtype: e.vsSubtype, attackName: e.attackName, appliesOnTurn: G.turn + e.turnOffset }];
         }
         // Choice-requiring generic effects (deck search, switches) auto-pick randomly among
         // the valid options — see genericAttacks.ts's file header for why.
@@ -741,6 +760,86 @@ export const moves = {
             const target = damaged[Math.floor(Math.random() * damaged.length)];
             target.damage = Math.max(0, target.damage - genericOutcome.healRandomOwnDamagedAmount);
           }
+        }
+        if (genericOutcome.deckSearchFamilyToHandCount) {
+          const { name, count } = genericOutcome.deckSearchFamilyToHandCount;
+          const matches = player.deck.filter(c => c.cardData.supertype === 'Pokémon' && c.cardData.name.includes(name));
+          let remaining = count;
+          while (remaining > 0 && matches.length > 0) {
+            const pick = matches.splice(Math.floor(Math.random() * matches.length), 1)[0];
+            const deckIdx = player.deck.findIndex(c => c.id === pick.id);
+            if (deckIdx >= 0) player.hand.push(player.deck.splice(deckIdx, 1)[0]);
+            remaining--;
+          }
+          shuffleDeck(player.deck);
+        }
+        if (genericOutcome.deckSearchFamilyToBenchCount) {
+          const { name, count } = genericOutcome.deckSearchFamilyToBenchCount;
+          const matches = player.deck.filter(c => c.cardData.supertype === 'Pokémon' && c.cardData.name.includes(name));
+          let remaining = count;
+          while (remaining > 0 && matches.length > 0) {
+            const slot = player.bench.findIndex(s => s === null);
+            if (slot === -1) break;
+            const pick = matches.splice(Math.floor(Math.random() * matches.length), 1)[0];
+            const deckIdx = player.deck.findIndex(c => c.id === pick.id);
+            if (deckIdx >= 0) player.bench[slot] = player.deck.splice(deckIdx, 1)[0];
+            remaining--;
+          }
+          shuffleDeck(player.deck);
+        }
+        if (genericOutcome.discardPileSearchFamilyToBenchCount) {
+          const { name, count } = genericOutcome.discardPileSearchFamilyToBenchCount;
+          const matches = player.discardPile.filter(c => c.cardData.supertype === 'Pokémon' && c.cardData.name.includes(name));
+          let remaining = count;
+          while (remaining > 0 && matches.length > 0) {
+            const slot = player.bench.findIndex(s => s === null);
+            if (slot === -1) break;
+            const pick = matches.splice(Math.floor(Math.random() * matches.length), 1)[0];
+            const i = player.discardPile.findIndex(c => c.id === pick.id);
+            if (i >= 0) player.bench[slot] = player.discardPile.splice(i, 1)[0];
+            remaining--;
+          }
+        }
+        if (genericOutcome.cureAllSelfStatus) {
+          attacker.statusConditions = [];
+        }
+        if (genericOutcome.healAllOwnTeamAmount) {
+          for (const c of [player.active, ...player.bench]) {
+            if (c) c.damage = Math.max(0, c.damage - genericOutcome.healAllOwnTeamAmount);
+          }
+        }
+        if (genericOutcome.deckSearchTypedEnergyToOwnPokemonCount) {
+          const { type, count } = genericOutcome.deckSearchTypedEnergyToOwnPokemonCount;
+          const matches = player.deck.filter(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes(type as any));
+          const ownTargets = [player.active, ...player.bench].filter((c): c is GameCard => c !== null);
+          if (matches.length > 0 && ownTargets.length > 0) {
+            const target = ownTargets[Math.floor(Math.random() * ownTargets.length)];
+            let remaining = count;
+            while (remaining > 0 && matches.length > 0) {
+              const pick = matches.splice(Math.floor(Math.random() * matches.length), 1)[0];
+              const deckIdx = player.deck.findIndex(c => c.id === pick.id);
+              if (deckIdx >= 0) {
+                player.deck.splice(deckIdx, 1);
+                target.attachedEnergy.push({ id: pick.id, type: type as any });
+              }
+              remaining--;
+            }
+          }
+          shuffleDeck(player.deck);
+        }
+        if (genericOutcome.placeCountersOnRandomOpponent) {
+          const targets = [opponent.active, ...opponent.bench].filter((c): c is GameCard => c !== null);
+          if (targets.length > 0) {
+            const target = targets[Math.floor(Math.random() * targets.length)];
+            target.damage += genericOutcome.placeCountersOnRandomOpponent * 10;
+            const hp = effectiveMaxHp(G, target);
+            if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id);
+          }
+        }
+        if (genericOutcome.splashDamageAfterSwitch && opponent.active) {
+          opponent.active.damage += genericOutcome.splashDamageAfterSwitch;
+          const hp = effectiveMaxHp(G, opponent.active);
+          if (hp > 0 && opponent.active.damage >= hp) handleKo(G, 1 - G.currentPlayer, opponent.active.id);
         }
       }
     }
