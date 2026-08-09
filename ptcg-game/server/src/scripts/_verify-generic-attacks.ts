@@ -265,9 +265,12 @@ function freshBattle(attackerData: Card, defenderData: Card) {
   check('opponentTimedEffect: outgoingDamageReduction recorded for turn+1', !!def.timedEffects?.some(e => e.kind === 'outgoingDamageReduction' && e.amount === 20 && e.appliesOnTurn === G.turn + 1));
 }
 
-// 20. Family-scaled damage: "造成自己的場上「測試家族」寶可夢的數量×20點傷害。"
+// 20. Family-scaled damage: "造成自己的場上「測試家族寶可夢」的數量×20點傷害。" (real phrasing, e.g.
+// 火箭隊的操陷蛛's 火箭猛攻 — 寶可夢 INSIDE the quote. This exact wording was a confirmed bug: the
+// original template required 寶可夢 OUTSIDE the quote and so never matched any real card until a
+// live reference-site log comparison caught it.)
 {
-  const attacker = mon('atk', '測試家族戰士', '100', '造成自己的場上「測試家族」寶可夢的數量×20點傷害。', '');
+  const attacker = mon('atk', '測試家族戰士', '100', '造成自己的場上「測試家族寶可夢」的數量×20點傷害。', '');
   const defender = mon('def', 'DefMon21', '200', '', '10');
   const G = freshBattle(attacker, defender);
   const familyMon = mon('fam', '測試家族學徒', '60', '', '10');
@@ -275,6 +278,17 @@ function freshBattle(attackerData: Card, defenderData: Card) {
   (moves.attack as any)({ G, ctx: { events: {} } }, 0);
   // Attacker itself ("測試家族戰士") + the benched "測試家族學徒" both match "測試家族" -> count 2 -> 40 damage.
   check('familyScaledDamage: 2 matching Pokémon -> 40 damage', G.players[1].active!.damage === 40);
+}
+
+// 20b. The OTHER real phrasing variant: "造成自己的場上的「古代」寶可夢的數量×N點傷害。" (的 before the
+// quote, 寶可夢 outside it — e.g. real "古代" Paradox Pokémon cards).
+{
+  const attacker = mon('atk', '古代測試獸', '100', '造成自己的場上的「古代測試」寶可夢的數量×30點傷害。', '');
+  const defender = mon('def', 'DefMon21b', '200', '', '10');
+  const G = freshBattle(attacker, defender);
+  (moves.attack as any)({ G, ctx: { events: {} } }, 0);
+  // Only the attacker itself ("古代測試獸") matches "古代測試" -> count 1 -> 30 damage.
+  check('familyScaledDamage (variant 2 phrasing): 1 matching Pokémon -> 30 damage', G.players[1].active!.damage === 30);
 }
 
 // 21. Evolve self from deck

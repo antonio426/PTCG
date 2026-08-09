@@ -1,7 +1,7 @@
 import { Attack, GameCard } from '@ptcg/shared';
 import { PtcgGameState } from './GameState';
 import { getOutgoingDamageReduction, getPassiveDamageBonus, getPassiveDamageReduction, getPassiveMaxHpBonus, getPrizeReduction, getWeaknessTypeOverride, hasPassiveAbilityNamed, isDamageBlocked, rollBonusPrizeOnActiveKo, shouldExilePrizes } from './effects/passiveAbilities';
-import { getToolDamageBonus } from './effects/tools';
+import { getToolDamageBonus, getToolHpBonus } from './effects/tools';
 
 /** Rule-box Pokémon (ex/V/VMAX/VSTAR/GX/Mega/TAG TEAM) — same test as prizesForKo below. */
 function isBigPokemon(card: GameCard): boolean {
@@ -10,10 +10,13 @@ function isBigPokemon(card: GameCard): boolean {
   return card.cardData.subtypes.some(s => bigSubtypes.includes(s));
 }
 
-/** `card`'s max HP including any passive-ability bonus (e.g. 腎上腺力量's +100 while holding Darkness energy). */
+/** `card`'s max HP including any passive-ability bonus (e.g. 腎上腺力量's +100 while holding
+ * Darkness energy) and any attached Tool's HP bonus (e.g. 英雄斗篷's +100). The Tool side of this
+ * was a real bug: getToolHpBonus() existed and was exported but never actually called from
+ * anywhere, so a Tool's hpBonus field silently did nothing even when correctly registered. */
 export function effectiveMaxHp(G: PtcgGameState, card: GameCard): number {
   const base = parseInt(card.cardData.hp || '0', 10);
-  return base > 0 ? base + getPassiveMaxHpBonus(G, card) : 0;
+  return base > 0 ? base + getPassiveMaxHpBonus(G, card) + getToolHpBonus(G, card) : 0;
 }
 
 /**

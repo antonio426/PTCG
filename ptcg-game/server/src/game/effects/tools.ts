@@ -36,6 +36,7 @@ export interface ToolEffect {
 
 const toolEffects: Record<string, ToolEffect> = {
   '氣球': { retreatCostReduction: () => 2 },
+  '英雄斗篷': { hpBonus: 100 },
   '緊急滑板': {
     retreatCostReduction: () => 1,
     retreatCostWaived: (card) => {

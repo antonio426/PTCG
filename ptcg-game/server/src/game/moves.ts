@@ -433,6 +433,17 @@ export const moves = {
           for (const ty of c.cardData.types || []) acc[ty] = (acc[ty] || 0) + 1;
           return acc;
         }, {} as Record<string, number>),
+        opponentFieldEnergyCounts: [opponent.active, ...opponent.bench].filter((c): c is GameCard => c !== null).flatMap(c => c.attachedEnergy).reduce((acc, e) => { acc[e.type] = (acc[e.type] || 0) + 1; return acc; }, {} as Record<string, number>),
+        opponentFieldTotalEnergyCount: [opponent.active, ...opponent.bench].filter((c): c is GameCard => c !== null).reduce((sum, c) => sum + c.attachedEnergy.length, 0),
+        opponentExCount: [opponent.active, ...opponent.bench].filter((c): c is GameCard => c !== null && c.cardData.subtypes.includes('ex')).length,
+        opponentExOrVCount: [opponent.active, ...opponent.bench].filter((c): c is GameCard => c !== null && (c.cardData.subtypes.includes('ex') || c.cardData.subtypes.includes('V'))).length,
+        ownDamagedBenchCount: ownBench.filter(c => c.damage > 0).length,
+        ownFieldDamagedCount: [player.active, ...player.bench].filter((c): c is GameCard => c !== null && c.damage > 0).length,
+        ownBenchStage2Count: ownBench.filter(c => c.cardData.subtypes.includes('Stage 2')).length,
+        ownBenchEnergyHolderCounts: ownBench.reduce((acc, c) => {
+          for (const ty of new Set(c.attachedEnergy.map(e => e.type))) acc[ty] = (acc[ty] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>),
       };
       const genericOutcome = attack.text ? resolveGenericAttackEffect(attack.text, attack.damage, attackBoard) : undefined;
       if (genericOutcome?.familyScaledDamage) {
@@ -443,6 +454,16 @@ export const moves = {
       if (genericOutcome?.discardPileAttackScaledDamage) {
         const { attackName, amount } = genericOutcome.discardPileAttackScaledDamage;
         const matchCount = player.discardPile.filter(c => c.cardData.attacks?.some(a => a.name === attackName)).length;
+        genericOutcome.baseDamage = matchCount * amount;
+      }
+      if (genericOutcome?.ownFieldAttackScaledDamage) {
+        const { attackName, amount } = genericOutcome.ownFieldAttackScaledDamage;
+        const matchCount = [player.active, ...player.bench].filter((c): c is GameCard => c !== null && !!c.cardData.attacks?.some(a => a.name === attackName)).length;
+        genericOutcome.baseDamage = matchCount * amount;
+      }
+      if (genericOutcome?.ownBenchFamilyScaledDamage) {
+        const { name, amount } = genericOutcome.ownBenchFamilyScaledDamage;
+        const matchCount = ownBench.filter(c => c.cardData.name.includes(name)).length;
         genericOutcome.baseDamage = matchCount * amount;
       }
       if (genericOutcome?.selfMillFamilyScaledDamage) {
