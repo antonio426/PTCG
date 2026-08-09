@@ -81,10 +81,10 @@ function hasTeraBenchedImmunity(card: GameCard): boolean {
 
 /** True if any of `card`'s active TimedCardEffect entries (set by attack text like "在下個對手
  * 的回合，這隻寶可夢不會受到招式的傷害") of the given kind currently applies. */
-function hasTimedEffect(G: PtcgGameState, card: GameCard, kind: 'cantAttack' | 'cantRetreat' | 'damageImmune' | 'damageReduction'): boolean {
+function hasTimedEffect(G: PtcgGameState, card: GameCard, kind: 'cantAttack' | 'cantRetreat' | 'damageImmune' | 'damageReduction' | 'outgoingDamageReduction' | 'coinFlipAttackMiss'): boolean {
   return !!card.timedEffects?.some(e => e.kind === kind && e.appliesOnTurn === G.turn);
 }
-function getTimedEffectAmount(G: PtcgGameState, card: GameCard, kind: 'damageReduction'): number {
+function getTimedEffectAmount(G: PtcgGameState, card: GameCard, kind: 'damageReduction' | 'outgoingDamageReduction'): number {
   const e = card.timedEffects?.find(x => x.kind === kind && x.appliesOnTurn === G.turn);
   return e?.amount ?? 0;
 }
@@ -93,6 +93,16 @@ export function isAttackLockedByTimedEffect(G: PtcgGameState, card: GameCard): b
 }
 export function isRetreatLockedByTimedEffect(G: PtcgGameState, card: GameCard): boolean {
   return hasTimedEffect(G, card, 'cantRetreat');
+}
+export function getOutgoingDamageReduction(G: PtcgGameState, attacker: GameCard): number {
+  return getTimedEffectAmount(G, attacker, 'outgoingDamageReduction');
+}
+/** Consumes (and returns whether present) a "next attack has a 50% chance to fail" timed debuff. */
+export function hasCoinFlipAttackMissDebuff(G: PtcgGameState, card: GameCard): boolean {
+  return hasTimedEffect(G, card, 'coinFlipAttackMiss');
+}
+export function isItemLockedByTimedEffect(G: PtcgGameState, playerIndex: 0 | 1): boolean {
+  return G.players[playerIndex].itemLockedUntilTurn === G.turn;
 }
 
 /** True if `defender` takes zero damage (and, per real rules for these two, zero attack effects)
@@ -104,8 +114,10 @@ export function isDamageBlocked(G: PtcgGameState, attacker: GameCard, defender: 
   // 太晶: Benched Tera Pokémon are untouchable.
   if (hasTeraBenchedImmunity(defender) && isBenchedPokemon(G, defender)) return true;
   // Timed self-protection set by the defender's own earlier attack (e.g. "在下個對手的回合，
-  // 這隻寶可夢不會受到招式的傷害").
-  if (hasTimedEffect(G, defender, 'damageImmune')) return true;
+  // 這隻寶可夢不會受到招式的傷害"). `vsSubtype`, when present, restricts the immunity to
+  // attackers of that printed Subtype only (e.g. "Basic").
+  const immuneEffect = defender.timedEffects?.find(e => e.kind === 'damageImmune' && e.appliesOnTurn === G.turn);
+  if (immuneEffect && (!immuneEffect.vsSubtype || attacker.cardData.subtypes.includes(immuneEffect.vsSubtype as any))) return true;
   // 礎石之勢: immune to damage from any Pokémon that itself has an ability.
   if (hasAbility(defender, '礎石之勢') && attacker.cardData.abilities?.some(a => a.text)) return true;
   // 藏隱: while benched, untouchable by opponent attacks entirely (relevant to bench-hitting attacks).

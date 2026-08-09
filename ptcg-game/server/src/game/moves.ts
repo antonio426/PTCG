@@ -3,10 +3,10 @@ import { PtcgGameState, PendingChoice } from './GameState';
 import { canPlayPokemon, canEvolve, canAttachEnergy, canRetreat, canAttack, effectiveRetreatCost, FIRST_TURN_SUPPORTER_EXCEPTIONS } from './validation';
 import { clearStatusConditionsOnLeaveActive } from './statusConditions';
 import { calculateDamage, effectiveMaxHp, handleKo, prizesForKo } from './damage';
-import { getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasPassiveAbilityNamed, isRetreatBlockedByOpponent, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat, shouldDiscardAttackerEnergy } from './effects/passiveAbilities';
+import { getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasCoinFlipAttackMissDebuff, hasPassiveAbilityNamed, isRetreatBlockedByOpponent, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat, shouldDiscardAttackerEnergy } from './effects/passiveAbilities';
 import { isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
-import { applyStatusCondition, drawCards, shuffleDeck } from './effects/primitives';
+import { applyStatusCondition, drawCards, drawUpTo, shuffleDeck } from './effects/primitives';
 import { resolveGenericAttackEffect } from './effects/genericAttacks';
 import {
   EffectContext, EffectStep,
@@ -371,6 +371,19 @@ export const moves = {
       return;
     }
 
+    // Timed "next attack has a 50% chance to fail" debuff (e.g. from an opponent's earlier
+    // attack) — consumed (removed) the moment it's checked, whether it fires or not, since it
+    // only ever covers exactly one attack attempt.
+    if (hasCoinFlipAttackMissDebuff(G, attacker)) {
+      attacker.timedEffects = (attacker.timedEffects || []).filter(e => !(e.kind === 'coinFlipAttackMiss' && e.appliesOnTurn === G.turn));
+      if (Math.random() < 0.5) {
+        addLog(G, G.currentPlayer, 'attack', `${attacker.cardData.name}'s attack failed!`);
+        G.phase = 'end';
+        ctx.events?.endTurn?.();
+        return;
+      }
+    }
+
     if (hasAttackEffect(attacker.cardData.name, attack.name)) {
       const ctxInfo: EffectContext = { G, playerIndex: G.currentPlayer as 0 | 1, sourceCardId: attacker.id };
       const step = startAttackEffect(attacker.cardData.name, attack.name, ctxInfo);
@@ -400,7 +413,7 @@ export const moves = {
       };
       const genericOutcome = attack.text ? resolveGenericAttackEffect(attack.text, attack.damage, attackBoard) : undefined;
       const effectiveAttack = genericOutcome ? { ...attack, damage: String(genericOutcome.baseDamage) } : attack;
-      const damage = calculateDamage(G, G.currentPlayer as 0 | 1, attacker, effectiveAttack, defender);
+      const damage = calculateDamage(G, G.currentPlayer as 0 | 1, attacker, effectiveAttack, defender, genericOutcome?.ignoreResistance, genericOutcome?.ignoreWeakness);
       const defenderWasFullHp = defender.damage === 0;
       defender.damage += damage;
       addLog(G, G.currentPlayer, 'attack', `${attacker.cardData.name} used ${attack.name} for ${damage} damage to ${defender.cardData.name}`);
@@ -501,11 +514,11 @@ export const moves = {
         }
         if (genericOutcome.selfTimedEffect) {
           const e = genericOutcome.selfTimedEffect;
-          attacker.timedEffects = [...(attacker.timedEffects || []), { kind: e.kind, amount: e.amount, appliesOnTurn: G.turn + e.turnOffset }];
+          attacker.timedEffects = [...(attacker.timedEffects || []), { kind: e.kind, amount: e.amount, vsSubtype: e.vsSubtype, appliesOnTurn: G.turn + e.turnOffset }];
         }
         if (damage > 0 && genericOutcome.opponentTimedEffect) {
           const e = genericOutcome.opponentTimedEffect;
-          defender.timedEffects = [...(defender.timedEffects || []), { kind: e.kind, amount: e.amount, appliesOnTurn: G.turn + e.turnOffset }];
+          defender.timedEffects = [...(defender.timedEffects || []), { kind: e.kind, amount: e.amount, vsSubtype: e.vsSubtype, appliesOnTurn: G.turn + e.turnOffset }];
         }
         // Choice-requiring generic effects (deck search, switches) auto-pick randomly among
         // the valid options — see genericAttacks.ts's file header for why.
@@ -587,6 +600,81 @@ export const moves = {
             const i = Math.floor(Math.random() * attacker.attachedEnergy.length);
             target.attachedEnergy.push(attacker.attachedEnergy.splice(i, 1)[0]);
           }
+        }
+        if (genericOutcome.benchSplashDamage) {
+          const targets = opponent.bench.filter((c): c is GameCard => c !== null);
+          if (targets.length > 0) {
+            const target = targets[Math.floor(Math.random() * targets.length)];
+            target.damage += genericOutcome.benchSplashDamage;
+            const hp = effectiveMaxHp(G, target);
+            if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id);
+          }
+        }
+        if (genericOutcome.selfAllBenchSplashDamage) {
+          for (const target of player.bench.filter((c): c is GameCard => c !== null)) {
+            target.damage += genericOutcome.selfAllBenchSplashDamage;
+            const hp = effectiveMaxHp(G, target);
+            if (hp > 0 && target.damage >= hp) handleKo(G, G.currentPlayer, target.id);
+          }
+        }
+        if (genericOutcome.drawToHandSize) drawUpTo(G, G.currentPlayer as 0 | 1, genericOutcome.drawToHandSize);
+        if (genericOutcome.healSelfByDamageDealt && damage > 0) attacker.damage = Math.max(0, attacker.damage - damage);
+        if (genericOutcome.moveOpponentEnergyToTheirBench && defender.attachedEnergy.length > 0) {
+          const benchTargets = opponent.bench.filter((c): c is GameCard => c !== null);
+          if (benchTargets.length > 0) {
+            const target = benchTargets[Math.floor(Math.random() * benchTargets.length)];
+            const i = Math.floor(Math.random() * defender.attachedEnergy.length);
+            target.attachedEnergy.push(defender.attachedEnergy.splice(i, 1)[0]);
+          }
+        }
+        if (genericOutcome.shuffleHandThenDrawCount) {
+          player.deck.push(...player.hand);
+          player.hand = [];
+          shuffleDeck(player.deck);
+          drawCards(G, G.currentPlayer as 0 | 1, genericOutcome.shuffleHandThenDrawCount);
+        }
+        if (genericOutcome.deckSearchBasicEnergyToOwnPokemonCount) {
+          const matches = player.deck.filter(c => c.cardData.subtypes.includes('Basic Energy'));
+          const ownTargets = [player.active, ...player.bench].filter((c): c is GameCard => c !== null);
+          if (matches.length > 0 && ownTargets.length > 0) {
+            const target = ownTargets[Math.floor(Math.random() * ownTargets.length)];
+            let remaining = genericOutcome.deckSearchBasicEnergyToOwnPokemonCount;
+            while (remaining > 0 && matches.length > 0) {
+              const pick = matches.splice(Math.floor(Math.random() * matches.length), 1)[0];
+              const deckIdx = player.deck.findIndex(c => c.id === pick.id);
+              if (deckIdx >= 0) target.attachedEnergy.push({ id: pick.id, type: pick.cardData.types?.[0] || 'Colorless' });
+              if (deckIdx >= 0) player.deck.splice(deckIdx, 1);
+              remaining--;
+            }
+          }
+          shuffleDeck(player.deck);
+        }
+        if (genericOutcome.deckSearchTypedEnergyToSelfCount) {
+          const { type, count } = genericOutcome.deckSearchTypedEnergyToSelfCount;
+          const matches = player.deck.filter(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes(type as any));
+          let remaining = count;
+          while (remaining > 0 && matches.length > 0) {
+            const pick = matches.splice(Math.floor(Math.random() * matches.length), 1)[0];
+            const deckIdx = player.deck.findIndex(c => c.id === pick.id);
+            if (deckIdx >= 0) {
+              player.deck.splice(deckIdx, 1);
+              attacker.attachedEnergy.push({ id: pick.id, type: type as any });
+            }
+            remaining--;
+          }
+          shuffleDeck(player.deck);
+        }
+        if (genericOutcome.deckSearchToolToHand) {
+          const matches = player.deck.filter(c => c.cardData.subtypes.includes('Pokémon Tool'));
+          if (matches.length > 0) {
+            const pick = matches[Math.floor(Math.random() * matches.length)];
+            const deckIdx = player.deck.findIndex(c => c.id === pick.id);
+            if (deckIdx >= 0) player.hand.push(player.deck.splice(deckIdx, 1)[0]);
+          }
+          shuffleDeck(player.deck);
+        }
+        if (genericOutcome.itemLockOpponentNextTurn) {
+          opponent.itemLockedUntilTurn = G.turn + 1;
         }
       }
     }

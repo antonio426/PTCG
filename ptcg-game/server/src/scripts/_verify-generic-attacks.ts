@@ -224,5 +224,45 @@ function freshBattle(attackerData: Card, defenderData: Card) {
   check('forceOpponentSwitchToRandomBench: opponent Active is now the former Bench Pokémon', G.players[1].active?.id === 'bench16-1');
 }
 
+// 16. Bench splash damage: "對手的1隻備戰寶可夢也受到30點傷害。[在備戰區不計算弱點・抵抗力。]"
+{
+  const attacker = mon('atk', 'SplashMon', '100', '對手的1隻備戰寶可夢也受到30點傷害。[在備戰區不計算弱點・抵抗力。]', '20');
+  const defender = mon('def', 'DefMon17', '100', '', '10');
+  const G = freshBattle(attacker, defender);
+  const benchMon = mon('bench17', 'BenchMon17', '60', '', '10');
+  G.players[1].bench[0] = { id: 'bench17-1', cardData: benchMon, owner: 1, damage: 0, statusConditions: [], attachedEnergy: [], attachedTool: null };
+  (moves.attack as any)({ G, ctx: { events: {} } }, 0);
+  check('benchSplashDamage: the benched Pokémon took exactly 30', G.players[1].bench[0]?.damage === 30);
+  check('benchSplashDamage: primary defender still took the flat 20', G.players[1].active!.damage === 20);
+}
+
+// 17. Ignore resistance: damage is not reduced despite a printed resistance
+{
+  const attacker = mon('atk', 'IgnoreResistMon', '100', '這個招式的傷害不計算抵抗力。', '50');
+  const defender = mon('def', 'DefMon18', '200', '', '10', { resistances: [{ type: 'Colorless', value: '-30' }] });
+  const G = freshBattle(attacker, defender);
+  (moves.attack as any)({ G, ctx: { events: {} } }, 0);
+  check('ignoreResistance: full 50 damage lands despite -30 printed resistance', G.players[1].active!.damage === 50);
+}
+
+// 18. Item lock: "在下個對手的回合，對手無法從手牌使出物品卡。"
+{
+  const attacker = mon('atk', 'ItemLockMon', '100', '在下個對手的回合，對手無法從手牌使出物品卡。', '20');
+  const defender = mon('def', 'DefMon19', '200', '', '10');
+  const G = freshBattle(attacker, defender);
+  (moves.attack as any)({ G, ctx: { events: {} } }, 0);
+  check('itemLockOpponentNextTurn: recorded for turn+1', G.players[1].itemLockedUntilTurn === G.turn + 1);
+}
+
+// 19. Outgoing damage reduction inflicted on the defender
+{
+  const attacker = mon('atk', 'NerfMon', '100', '在下個對手的回合，受到這個招式的寶可夢使用招式的傷害「-20」點。', '20');
+  const defender = mon('def', 'DefMon20', '200', '', '10');
+  const G = freshBattle(attacker, defender);
+  (moves.attack as any)({ G, ctx: { events: {} } }, 0);
+  const def = G.players[1].active!;
+  check('opponentTimedEffect: outgoingDamageReduction recorded for turn+1', !!def.timedEffects?.some(e => e.kind === 'outgoingDamageReduction' && e.amount === 20 && e.appliesOnTurn === G.turn + 1));
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed > 0) process.exit(1);

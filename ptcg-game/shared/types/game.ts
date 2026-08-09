@@ -19,9 +19,11 @@ export interface GameCard {
 }
 
 export interface TimedCardEffect {
-  kind: 'cantAttack' | 'cantRetreat' | 'damageImmune' | 'damageReduction';
+  kind: 'cantAttack' | 'cantRetreat' | 'damageImmune' | 'damageReduction' | 'outgoingDamageReduction' | 'coinFlipAttackMiss';
   amount?: number;
   appliesOnTurn: number;
+  /** For 'damageImmune': restricts the immunity to attackers of this Subtype only (e.g. "Basic"). */
+  vsSubtype?: string;
 }
 
 export interface AttachedEnergy {

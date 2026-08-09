@@ -1,6 +1,6 @@
 import { Attack, GameCard } from '@ptcg/shared';
 import { PtcgGameState } from './GameState';
-import { getPassiveDamageBonus, getPassiveDamageReduction, getPassiveMaxHpBonus, getPrizeReduction, getWeaknessTypeOverride, hasPassiveAbilityNamed, isDamageBlocked, rollBonusPrizeOnActiveKo, shouldExilePrizes } from './effects/passiveAbilities';
+import { getOutgoingDamageReduction, getPassiveDamageBonus, getPassiveDamageReduction, getPassiveMaxHpBonus, getPrizeReduction, getWeaknessTypeOverride, hasPassiveAbilityNamed, isDamageBlocked, rollBonusPrizeOnActiveKo, shouldExilePrizes } from './effects/passiveAbilities';
 import { getToolDamageBonus } from './effects/tools';
 
 /** Rule-box Pokémon (ex/V/VMAX/VSTAR/GX/Mega/TAG TEAM) — same test as prizesForKo below. */
@@ -21,20 +21,23 @@ export function effectiveMaxHp(G: PtcgGameState, card: GameCard): number {
  * damage number. `weaknessOverride`, when given, replaces `defender`'s printed weakness type
  * (e.g. 妖精領域 turning every opposing Dragon's weakness into Psychic).
  */
-export function applyWeaknessResistance(baseDamageIn: number, attacker: GameCard, defender: GameCard, weaknessOverride?: string): number {
+export function applyWeaknessResistance(baseDamageIn: number, attacker: GameCard, defender: GameCard, weaknessOverride?: string, ignoreResistance?: boolean, ignoreWeakness?: boolean): number {
   let baseDamage = baseDamageIn;
   const attackerTypes = attacker.cardData.types || [];
 
   for (const attackerType of attackerTypes) {
-    const weaknesses = weaknessOverride
-      ? [{ type: weaknessOverride, value: '×2' }]
-      : (defender.cardData.weaknesses || []);
-    for (const weakness of weaknesses) {
-      if (weakness.type === attackerType) {
-        if (weakness.value === '×2') baseDamage *= 2;
+    if (!ignoreWeakness) {
+      const weaknesses = weaknessOverride
+        ? [{ type: weaknessOverride, value: '×2' }]
+        : (defender.cardData.weaknesses || []);
+      for (const weakness of weaknesses) {
+        if (weakness.type === attackerType) {
+          if (weakness.value === '×2') baseDamage *= 2;
+        }
       }
     }
 
+    if (ignoreResistance) continue;
     const resistances = defender.cardData.resistances || [];
     for (const resistance of resistances) {
       if (resistance.type === attackerType) {
@@ -53,7 +56,7 @@ export function applyWeaknessResistance(baseDamageIn: number, attacker: GameCard
  * bench (e.g. 輝煌聲援), and a weakness override can come from the attacker's whole team
  * (e.g. 妖精領域). Returns 0 if a passive ability blocks the hit outright (e.g. 藏隱, 礎石之勢).
  */
-export function calculateDamage(G: PtcgGameState, attackerIdx: 0 | 1, attacker: GameCard, attack: Attack, defender: GameCard): number {
+export function calculateDamage(G: PtcgGameState, attackerIdx: 0 | 1, attacker: GameCard, attack: Attack, defender: GameCard, ignoreResistance?: boolean, ignoreWeakness?: boolean): number {
   let baseDamage = parseInt(attack.damage) || 0;
   if (isNaN(baseDamage)) baseDamage = 0;
   if (isDamageBlocked(G, attacker, defender, baseDamage)) return 0;
@@ -65,8 +68,12 @@ export function calculateDamage(G: PtcgGameState, attackerIdx: 0 | 1, attacker: 
     if (boost.excludeRuleBoxAttacker && isBigPokemon(attacker)) continue;
     baseDamage += boost.amount;
   }
+  // Timed self-nerf from the attacker's own earlier attack (e.g. "在下個對手的回合，受到這個招式
+  // 的寶可夢使用招式的傷害「-N」點" — printed on the DEFENDER at the time, so it reduces THEIR
+  // outgoing damage once it becomes their turn to attack).
+  baseDamage = Math.max(0, baseDamage - getOutgoingDamageReduction(G, attacker));
   const weaknessOverride = getWeaknessTypeOverride(G, (1 - attackerIdx) as 0 | 1, defender);
-  const afterWeakness = applyWeaknessResistance(baseDamage, attacker, defender, weaknessOverride);
+  const afterWeakness = applyWeaknessResistance(baseDamage, attacker, defender, weaknessOverride, ignoreResistance, ignoreWeakness);
   const defenderIdx = (1 - attackerIdx) as 0 | 1;
   let reduction = getPassiveDamageReduction(G, defender, attacker);
   for (const r of G.players[defenderIdx].incomingDamageReduction) {

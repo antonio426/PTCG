@@ -30,6 +30,11 @@ export interface PtcgPlayerState {
    * (the same reset pass that clears turnDamageBoosts etc.), which lands right after the one
    * opponent turn it's meant to cover. */
   incomingDamageReduction: { typeFilter?: string; amount: number }[];
+  /** "在下個對手的回合，對手無法從手牌使出物品卡"-style timed Item-lock — an absolute G.turn
+   * number, active while G.turn === this value (same single-turn-exact pattern as GameCard's
+   * timedEffects). Set on the LOCKED side (the attacker's opponent), so validation just checks
+   * the locked player's own field. */
+  itemLockedUntilTurn: number | null;
 }
 
 export interface PtcgGameState {
