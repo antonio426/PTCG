@@ -264,5 +264,28 @@ function freshBattle(attackerData: Card, defenderData: Card) {
   check('opponentTimedEffect: outgoingDamageReduction recorded for turn+1', !!def.timedEffects?.some(e => e.kind === 'outgoingDamageReduction' && e.amount === 20 && e.appliesOnTurn === G.turn + 1));
 }
 
+// 20. Family-scaled damage: "造成自己的場上「測試家族」寶可夢的數量×20點傷害。"
+{
+  const attacker = mon('atk', '測試家族戰士', '100', '造成自己的場上「測試家族」寶可夢的數量×20點傷害。', '');
+  const defender = mon('def', 'DefMon21', '200', '', '10');
+  const G = freshBattle(attacker, defender);
+  const familyMon = mon('fam', '測試家族學徒', '60', '', '10');
+  G.players[0].bench[0] = { id: 'fam1', cardData: familyMon, owner: 0, damage: 0, statusConditions: [], attachedEnergy: [], attachedTool: null };
+  (moves.attack as any)({ G, ctx: { events: {} } }, 0);
+  // Attacker itself ("測試家族戰士") + the benched "測試家族學徒" both match "測試家族" -> count 2 -> 40 damage.
+  check('familyScaledDamage: 2 matching Pokémon -> 40 damage', G.players[1].active!.damage === 40);
+}
+
+// 21. Evolve self from deck
+{
+  const attacker = mon('atk', 'PreEvo', '100', '從自己的牌庫選擇1張從這隻寶可夢進化而來的卡，放置於這隻寶可夢身上完成進化。並且重洗牌庫。', '20');
+  const defender = mon('def', 'DefMon22', '100', '', '10');
+  const G = freshBattle(attacker, defender);
+  const evoMon = mon('evo', 'PostEvo', '150', '', '10', { evolvesFrom: 'PreEvo' });
+  G.players[0].deck.push({ id: 'evo1', cardData: evoMon, owner: 0, damage: 0, statusConditions: [], attachedEnergy: [], attachedTool: null });
+  (moves.attack as any)({ G, ctx: { events: {} } }, 0);
+  check('evolveSelfFromDeck: Active evolved into PostEvo', G.players[0].active?.cardData.name === 'PostEvo');
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed > 0) process.exit(1);

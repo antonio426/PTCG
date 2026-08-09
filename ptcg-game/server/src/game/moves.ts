@@ -410,8 +410,15 @@ export const moves = {
         defenderIsEx: defender.cardData.subtypes.includes('ex'),
         attackerEnergyCounts: attacker.attachedEnergy.reduce((acc, e) => { acc[e.type] = (acc[e.type] || 0) + 1; return acc; }, {} as Record<string, number>),
         ownBenchTypes: ownBench.flatMap(c => c.cardData.types || []),
+        attackerTotalEnergyCount: attacker.attachedEnergy.length,
+        bothActiveEnergyCount: attacker.attachedEnergy.length + defender.attachedEnergy.length,
       };
       const genericOutcome = attack.text ? resolveGenericAttackEffect(attack.text, attack.damage, attackBoard) : undefined;
+      if (genericOutcome?.familyScaledDamage) {
+        const { name, amount } = genericOutcome.familyScaledDamage;
+        const familyCount = [player.active, ...player.bench].filter((c): c is GameCard => c !== null && c.cardData.name.includes(name)).length;
+        genericOutcome.baseDamage = familyCount * amount;
+      }
       const effectiveAttack = genericOutcome ? { ...attack, damage: String(genericOutcome.baseDamage) } : attack;
       const damage = calculateDamage(G, G.currentPlayer as 0 | 1, attacker, effectiveAttack, defender, genericOutcome?.ignoreResistance, genericOutcome?.ignoreWeakness);
       const defenderWasFullHp = defender.damage === 0;
@@ -675,6 +682,65 @@ export const moves = {
         }
         if (genericOutcome.itemLockOpponentNextTurn) {
           opponent.itemLockedUntilTurn = G.turn + 1;
+        }
+        if (genericOutcome.evolveSelfFromDeck) {
+          const matches = player.deck.filter(c => c.cardData.evolvesFrom === attacker.cardData.name);
+          if (matches.length > 0) {
+            const pick = matches[Math.floor(Math.random() * matches.length)];
+            const deckIdx = player.deck.findIndex(c => c.id === pick.id);
+            const isActive = player.active?.id === attacker.id;
+            const benchIdx = isActive ? -1 : player.bench.findIndex(c => c?.id === attacker.id);
+            if (deckIdx >= 0 && (isActive || benchIdx >= 0)) {
+              const evolution = player.deck.splice(deckIdx, 1)[0];
+              player.discardPile.push(attacker);
+              evolution.attachedEnergy = attacker.attachedEnergy;
+              evolution.damage = attacker.damage;
+              evolution.attachedTool = attacker.attachedTool;
+              if (isActive) player.active = evolution; else player.bench[benchIdx] = evolution;
+            }
+          }
+          shuffleDeck(player.deck);
+        }
+        if (genericOutcome.deckSearchPokemonToHandCount) {
+          const matches = player.deck.filter(c => c.cardData.supertype === 'Pokémon');
+          let remaining = genericOutcome.deckSearchPokemonToHandCount;
+          while (remaining > 0 && matches.length > 0) {
+            const pick = matches.splice(Math.floor(Math.random() * matches.length), 1)[0];
+            const deckIdx = player.deck.findIndex(c => c.id === pick.id);
+            if (deckIdx >= 0) player.hand.push(player.deck.splice(deckIdx, 1)[0]);
+            remaining--;
+          }
+          shuffleDeck(player.deck);
+        }
+        if (genericOutcome.discardPileSearchPokemonToHandCount) {
+          const matches = player.discardPile.filter(c => c.cardData.supertype === 'Pokémon');
+          let remaining = genericOutcome.discardPileSearchPokemonToHandCount;
+          while (remaining > 0 && matches.length > 0) {
+            const pick = matches.splice(Math.floor(Math.random() * matches.length), 1)[0];
+            const i = player.discardPile.findIndex(c => c.id === pick.id);
+            if (i >= 0) player.hand.push(player.discardPile.splice(i, 1)[0]);
+            remaining--;
+          }
+        }
+        if (genericOutcome.discardPileSearchSupporterToHand) {
+          const matches = player.discardPile.filter(c => c.cardData.subtypes.includes('Supporter'));
+          if (matches.length > 0) {
+            const pick = matches[Math.floor(Math.random() * matches.length)];
+            const i = player.discardPile.findIndex(c => c.id === pick.id);
+            if (i >= 0) player.hand.push(player.discardPile.splice(i, 1)[0]);
+          }
+        }
+        if (genericOutcome.millOwnDeckCount) {
+          for (let i = 0; i < genericOutcome.millOwnDeckCount && player.deck.length > 0; i++) {
+            player.discardPile.push(player.deck.pop()!);
+          }
+        }
+        if (genericOutcome.healRandomOwnDamagedAmount) {
+          const damaged = [player.active, ...player.bench].filter((c): c is GameCard => c !== null && c.damage > 0);
+          if (damaged.length > 0) {
+            const target = damaged[Math.floor(Math.random() * damaged.length)];
+            target.damage = Math.max(0, target.damage - genericOutcome.healRandomOwnDamagedAmount);
+          }
         }
       }
     }

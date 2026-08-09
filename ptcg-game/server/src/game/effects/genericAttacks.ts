@@ -103,6 +103,21 @@ export interface GenericAttackOutcome {
   ignoreWeakness?: boolean;
   /** Sets the OPPONENT's Item-lock for their very next turn. */
   itemLockOpponentNextTurn?: boolean;
+
+  /** Evolve the attacker itself using a random matching card from its own deck, reshuffle. */
+  evolveSelfFromDeck?: boolean;
+  /** Search the deck for up to N Pokémon (any stage, random pick), add to hand, reshuffle. */
+  deckSearchPokemonToHandCount?: number;
+  /** Search the DISCARD PILE for up to N Pokémon (random pick), add to hand. */
+  discardPileSearchPokemonToHandCount?: number;
+  /** Search the discard pile for 1 Supporter card, add to hand. */
+  discardPileSearchSupporterToHand?: boolean;
+  /** Discard the top N cards of the attacker's OWN deck (self-mill). */
+  millOwnDeckCount?: number;
+  /** Heal a random damaged own Pokémon by this amount (no-op if none are damaged). */
+  healRandomOwnDamagedAmount?: number;
+  /** Damage scaled by the count of own-field Pokémon whose name contains this substring. */
+  familyScaledDamage?: { name: string; amount: number };
 }
 
 export interface AttackBoardContext {
@@ -127,6 +142,10 @@ export interface AttackBoardContext {
   attackerEnergyCounts: Record<string, number>;
   /** Every Energy type present across the attacking side's own Bench Pokémon. */
   ownBenchTypes: string[];
+  /** Total Energy cards attached to the attacker itself (sum across all types). */
+  attackerTotalEnergyCount: number;
+  /** Total Energy cards attached to both Active Pokémon combined. */
+  bothActiveEnergyCount: number;
 }
 
 const STATUS_ZH: Record<string, StatusCondition> = {
@@ -172,7 +191,7 @@ const TEMPLATES: RegExp[] = [
   /^造成自己的場上寶可夢的數量×(\d+)點傷害。$/,
   /^增加這隻寶可夢身上放置的傷害指示物的數量×(\d+)點傷害。$/,
   /^造成這隻寶可夢身上放置的傷害指示物的數量×(\d+)點傷害。$/,
-  /^增加對手的戰鬥寶可夢身上附加的能量的數量×(\d+)點傷害。$/,
+  /^(?:造成|增加)對手的戰鬥寶可夢身上附加的能量的數量×(\d+)點傷害。$/,
   /^在下個對手的回合，這隻寶可夢不會受到招式的傷害與效果的影響。$/,
   /^在下個對手的回合，這隻寶可夢不會受到招式的傷害。$/,
   /^擲1次硬幣[，,]?若為正面，則在下個對手的回合，這隻寶可夢不會受到招式的傷害與效果的影響。$/,
@@ -235,6 +254,16 @@ const TEMPLATES: RegExp[] = [
   /^在下個對手的回合，受到這個招式的寶可夢使用招式時，對手擲1次硬幣。若為反面，則那個招式失敗。$/,
   /^擲(\d+)次硬幣，選擇與正面出現的次數相同數量的對手的戰鬥寶可夢身上附加的能量，將其丟棄。$/,
   /^對手選擇(\d+)張對手自己的手牌，將其丟棄。$/,
+  new RegExp(`^從自己的牌庫選擇1張從這隻寶可夢進化而來的卡，放置於這隻寶可夢身上完成進化。並且重洗牌庫。$`),
+  new RegExp(`^將對手的戰鬥寶可夢【(${STATUS_ALT})】。在下個對手的回合，受到這個招式的寶可夢無法撤退。$`),
+  /^從自己的牌庫選擇最多(\d+)張寶可夢卡，在給對手看過後加入手牌。並且重洗牌庫。$/,
+  /^從自己的棄牌區選擇最多(\d+)張寶可夢卡，在給對手看過後加入手牌。$/,
+  /^從自己的棄牌區選擇1張支援者卡，在給對手看過後加入手牌。$/,
+  /^將自己的牌庫上方(\d+)張卡丟棄。$/,
+  /^將自己的1隻寶可夢恢復「(\d+)」HP。$/,
+  /^造成自己的場上「(.+?)」寶可夢的數量×(\d+)點傷害。$/,
+  /^擲與這隻寶可夢身上附加的能量的數量相同次數的硬幣，(?:造成|增加)正面出現的次數×(\d+)點傷害。$/,
+  /^擲與雙方的戰鬥寶可夢身上附加的能量的數量相同次數的硬幣，(?:造成|增加)正面出現的次數×(\d+)點傷害。$/,
 ];
 
 /** Pure classifier (no randomness) — used by coverage-report.ts to count these as covered. */
@@ -353,8 +382,8 @@ export function resolveGenericAttackEffect(text: string, damageField: string, bo
   m = t.match(/^(?:增加|造成)這隻寶可夢身上放置的傷害指示物的數量×(\d+)點傷害。$/);
   if (m) return { baseDamage: parseBaseNumber(damageField) + board.selfDamageCounters * parseInt(m[1], 10) };
 
-  // 增加對手的戰鬥寶可夢身上附加的能量的數量×N點傷害。
-  m = t.match(/^增加對手的戰鬥寶可夢身上附加的能量的數量×(\d+)點傷害。$/);
+  // 造成/增加對手的戰鬥寶可夢身上附加的能量的數量×N點傷害。
+  m = t.match(/^(?:造成|增加)對手的戰鬥寶可夢身上附加的能量的數量×(\d+)點傷害。$/);
   if (m) return { baseDamage: parseBaseNumber(damageField) + board.opponentEnergyCount * parseInt(m[1], 10) };
 
   // 在下個對手的回合，這隻寶可夢不會受到招式的傷害(與效果的影響)?。(可選先擲硬幣)
@@ -606,6 +635,54 @@ export function resolveGenericAttackEffect(text: string, damageField: string, bo
   // identical to a blind discard of that many cards from their hand)
   m = t.match(/^對手選擇(\d+)張對手自己的手牌，將其丟棄。$/);
   if (m) return { baseDamage: parseBaseNumber(damageField), discardRandomOpponentHandCount: parseInt(m[1], 10) };
+
+  // 從自己的牌庫選擇1張從這隻寶可夢進化而來的卡，放置於這隻寶可夢身上完成進化。並且重洗牌庫。
+  if (/^從自己的牌庫選擇1張從這隻寶可夢進化而來的卡，放置於這隻寶可夢身上完成進化。並且重洗牌庫。$/.test(t)) {
+    return { baseDamage: parseBaseNumber(damageField), evolveSelfFromDeck: true };
+  }
+
+  // 將對手的戰鬥寶可夢【狀態】。在下個對手的回合，受到這個招式的寶可夢無法撤退。(combined)
+  m = t.match(new RegExp(`^將對手的戰鬥寶可夢【(${STATUS_ALT})】。在下個對手的回合，受到這個招式的寶可夢無法撤退。$`));
+  if (m) return { baseDamage: parseBaseNumber(damageField), statusToInflict: [STATUS_ZH[m[1]]], opponentTimedEffect: { kind: 'cantRetreat', turnOffset: 1 } };
+
+  // 從自己的牌庫選擇最多N張寶可夢卡，在給對手看過後加入手牌。並且重洗牌庫。(any stage, not just Basic)
+  m = t.match(/^從自己的牌庫選擇最多(\d+)張寶可夢卡，在給對手看過後加入手牌。並且重洗牌庫。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), deckSearchPokemonToHandCount: parseInt(m[1], 10) };
+
+  // 從自己的棄牌區選擇最多N張寶可夢卡，在給對手看過後加入手牌。
+  m = t.match(/^從自己的棄牌區選擇最多(\d+)張寶可夢卡，在給對手看過後加入手牌。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), discardPileSearchPokemonToHandCount: parseInt(m[1], 10) };
+
+  // 從自己的棄牌區選擇1張支援者卡，在給對手看過後加入手牌。
+  if (/^從自己的棄牌區選擇1張支援者卡，在給對手看過後加入手牌。$/.test(t)) {
+    return { baseDamage: parseBaseNumber(damageField), discardPileSearchSupporterToHand: true };
+  }
+
+  // 將自己的牌庫上方N張卡丟棄。(self-mill)
+  m = t.match(/^將自己的牌庫上方(\d+)張卡丟棄。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), millOwnDeckCount: parseInt(m[1], 10) };
+
+  // 將自己的1隻寶可夢恢復「N」HP。(choice among own team — random pick among the damaged ones)
+  m = t.match(/^將自己的1隻寶可夢恢復「(\d+)」HP。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), healRandomOwnDamagedAmount: parseInt(m[1], 10) };
+
+  // 造成自己的場上「X」寶可夢的數量×N點傷害。(named-family count, generalized)
+  m = t.match(/^造成自己的場上「(.+?)」寶可夢的數量×(\d+)點傷害。$/);
+  if (m) return { baseDamage: 0, familyScaledDamage: { name: m[1], amount: parseInt(m[2], 10) } };
+
+  // 擲與這隻寶可夢身上附加的能量的數量相同次數的硬幣，造成/增加正面出現的次數×N點傷害。
+  m = t.match(/^擲與這隻寶可夢身上附加的能量的數量相同次數的硬幣，(?:造成|增加)正面出現的次數×(\d+)點傷害。$/);
+  if (m) {
+    const heads = flipCoins(board.attackerTotalEnergyCount);
+    return { baseDamage: parseBaseNumber(damageField) + heads * parseInt(m[1], 10) };
+  }
+
+  // 擲與雙方的戰鬥寶可夢身上附加的能量的數量相同次數的硬幣，造成/增加正面出現的次數×N點傷害。
+  m = t.match(/^擲與雙方的戰鬥寶可夢身上附加的能量的數量相同次數的硬幣，(?:造成|增加)正面出現的次數×(\d+)點傷害。$/);
+  if (m) {
+    const heads = flipCoins(board.bothActiveEnergyCount);
+    return { baseDamage: parseBaseNumber(damageField) + heads * parseInt(m[1], 10) };
+  }
 
   return undefined;
 }
