@@ -11,6 +11,7 @@ export interface SanitizedGameCard {
   damage: number;
   statusConditions: string[];
   attachedEnergy: { id: string; type: string }[];
+  attachedTool: { id: string; cardData: Card } | null;
 }
 
 export interface BattlePlayerState {
@@ -28,6 +29,7 @@ export interface BattleOpponentState {
   handCount: number;
   prizes: number;
   discardCount: number;
+  discardPile: SanitizedGameCard[];
   deckCount: number;
 }
 
@@ -42,6 +44,7 @@ export interface BattleState {
   winner: number | null;
   winReason: string | null;
   pendingChoice: PendingChoice | null;
+  activeStadium: { id: string; cardData: Card } | null;
 }
 
 export type BattlePhase = 'select' | 'playing' | 'ended';
