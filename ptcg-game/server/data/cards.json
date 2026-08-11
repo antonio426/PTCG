@@ -1,5 +1,5 @@
 {
-  "timestamp": 1786201027239,
+  "timestamp": 1786468600467,
   "data": [
     {
       "id": "SVD-001",
@@ -429936,6 +429936,8 @@
         "releaseDate": ""
       },
       "number": "067",
+      "artist": "",
+      "rarity": "Uncommon",
       "legalities": {},
       "regulationMark": "D",
       "images": {
@@ -429966,6 +429968,8 @@
         "releaseDate": ""
       },
       "number": "067",
+      "artist": "",
+      "rarity": "Uncommon",
       "legalities": {},
       "regulationMark": "F",
       "images": {
@@ -430026,6 +430030,8 @@
         "releaseDate": ""
       },
       "number": "068",
+      "artist": "",
+      "rarity": "Uncommon",
       "legalities": {},
       "regulationMark": "F",
       "images": {
@@ -430086,6 +430092,8 @@
         "releaseDate": ""
       },
       "number": "069",
+      "artist": "",
+      "rarity": "Uncommon",
       "legalities": {},
       "regulationMark": "E",
       "images": {
@@ -430116,6 +430124,8 @@
         "releaseDate": ""
       },
       "number": "070",
+      "artist": "",
+      "rarity": "Uncommon",
       "legalities": {},
       "regulationMark": "E",
       "images": {
@@ -430146,6 +430156,8 @@
         "releaseDate": ""
       },
       "number": "070",
+      "artist": "",
+      "rarity": "Uncommon",
       "legalities": {},
       "regulationMark": "E",
       "images": {
@@ -430176,6 +430188,8 @@
         "releaseDate": ""
       },
       "number": "070",
+      "artist": "",
+      "rarity": "Uncommon",
       "legalities": {},
       "regulationMark": "E",
       "images": {
@@ -430378,7 +430392,7 @@
       "name": "雙重渦輪能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -430394,8 +430408,11 @@
         "releaseDate": ""
       },
       "number": "P",
-      "legalities": {},
-      "regulationMark": "F",
+      "artist": "",
+      "rarity": "Promo",
+      "legalities": {
+        "expanded": "Legal"
+      },
       "images": {
         "small": "/api/images/SV/SV-P/086/low",
         "large": "/api/images/SV/SV-P/086/high"
@@ -430424,6 +430441,7 @@
         "releaseDate": ""
       },
       "number": "098",
+      "artist": "",
       "rarity": "Uncommon",
       "legalities": {
         "standard": "Legal"
@@ -430552,6 +430570,8 @@
         "releaseDate": ""
       },
       "number": "100",
+      "artist": "",
+      "rarity": "Uncommon",
       "legalities": {},
       "regulationMark": "F",
       "images": {
@@ -430613,6 +430633,8 @@
         "releaseDate": ""
       },
       "number": "100",
+      "artist": "",
+      "rarity": "Uncommon",
       "legalities": {},
       "regulationMark": "E",
       "images": {
@@ -432237,6 +432259,8 @@
         "releaseDate": ""
       },
       "number": "171",
+      "artist": "",
+      "rarity": "None",
       "legalities": {},
       "regulationMark": "F",
       "images": {
@@ -432267,6 +432291,8 @@
         "releaseDate": ""
       },
       "number": "171",
+      "artist": "",
+      "rarity": "None",
       "legalities": {},
       "regulationMark": "D",
       "images": {
@@ -432327,6 +432353,8 @@
         "releaseDate": ""
       },
       "number": "172",
+      "artist": "",
+      "rarity": "None",
       "legalities": {},
       "regulationMark": "E",
       "images": {
@@ -432357,6 +432385,8 @@
         "releaseDate": ""
       },
       "number": "172",
+      "artist": "",
+      "rarity": "None",
       "legalities": {},
       "regulationMark": "D",
       "images": {
@@ -432417,6 +432447,8 @@
         "releaseDate": ""
       },
       "number": "173",
+      "artist": "",
+      "rarity": "None",
       "legalities": {},
       "regulationMark": "D",
       "images": {
@@ -432447,6 +432479,8 @@
         "releaseDate": ""
       },
       "number": "174",
+      "artist": "",
+      "rarity": "None",
       "legalities": {},
       "regulationMark": "D",
       "images": {
@@ -432477,6 +432511,8 @@
         "releaseDate": ""
       },
       "number": "175",
+      "artist": "",
+      "rarity": "None",
       "legalities": {},
       "regulationMark": "D",
       "images": {
@@ -432507,6 +432543,8 @@
         "releaseDate": ""
       },
       "number": "176",
+      "artist": "",
+      "rarity": "None",
       "legalities": {},
       "regulationMark": "D",
       "images": {
@@ -432537,6 +432575,8 @@
         "releaseDate": ""
       },
       "number": "177",
+      "artist": "",
+      "rarity": "None",
       "legalities": {},
       "regulationMark": "D",
       "images": {
@@ -432567,6 +432607,8 @@
         "releaseDate": ""
       },
       "number": "178",
+      "artist": "",
+      "rarity": "None",
       "legalities": {},
       "regulationMark": "D",
       "images": {
@@ -432597,6 +432639,8 @@
         "releaseDate": ""
       },
       "number": "179",
+      "artist": "",
+      "rarity": "None",
       "legalities": {},
       "regulationMark": "D",
       "images": {
@@ -432627,6 +432671,8 @@
         "releaseDate": ""
       },
       "number": "180",
+      "artist": "",
+      "rarity": "None",
       "legalities": {},
       "regulationMark": "E",
       "images": {
@@ -432657,6 +432703,8 @@
         "releaseDate": ""
       },
       "number": "181",
+      "artist": "",
+      "rarity": "None",
       "legalities": {},
       "regulationMark": "D",
       "images": {
@@ -432687,6 +432735,8 @@
         "releaseDate": ""
       },
       "number": "182",
+      "artist": "",
+      "rarity": "None",
       "legalities": {},
       "regulationMark": "D",
       "images": {
@@ -432747,6 +432797,8 @@
         "releaseDate": ""
       },
       "number": "183",
+      "artist": "",
+      "rarity": "None",
       "legalities": {},
       "regulationMark": "D",
       "images": {
@@ -432807,6 +432859,8 @@
         "releaseDate": ""
       },
       "number": "184",
+      "artist": "",
+      "rarity": "None",
       "legalities": {},
       "regulationMark": "E",
       "images": {

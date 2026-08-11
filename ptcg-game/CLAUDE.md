@@ -73,3 +73,11 @@ npm run preview              # 僅 client — 預覽 production build
 
 ### 一次性資料腳本
 `server/src/scripts/` 存放匯入/爬取/合併/修補用的腳本（例如 `scrape-official-standard.ts`、`merge-all-official.ts`、`patch-ace-spec.ts`），用來建立/修復 `server/data/*.json` 的資料快照。這些腳本是用 `tsx` 手動執行的，不屬於日常開發流程的一部分 — 執行前請先讀過該腳本的內容，因為有些會直接就地修改 `server/data/*.json`。
+
+## 成本 /情境使用紀律
+
+此專案的使用者對 token 用量敏感，長時間 session 容易不知不覺耗盡額度。請遵守：
+- 回覆盡量精簡，不要重複輸出已經在對話中出現過的內容（例如剛編輯過的檔案，Edit 成功後不需要再 Read 一次確認）。
+- 避免重新讀取已經在上下文中的檔案；需要引用時直接用 `file:line` 標記即可。
+- 對話變長時（尤其是連續多輪工具呼叫之後），主動建議使用者執行 `/compact`，不要等到被 `.claude/hooks/context-guard.js` 這個 PreToolUse hook 擋下來才處理（該 hook 會在 transcript 超過約 10 萬 token 時警告、超過約 18 萬 token 時直接封鎖 Bash/Edit/Write，並要求先 `/compact`）。
+- 大型一次性稽核/爬蟲腳本盡量寫在 scratchpad 或 `server/src/scripts/` 裡執行完就刪除（如既有慣例），不要把大量中間產出貼回對話內容。

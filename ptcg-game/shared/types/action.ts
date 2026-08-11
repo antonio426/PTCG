@@ -1,4 +1,5 @@
 export type GameActionType =
+  | 'choose_active'
   | 'draw_card'
   | 'play_pokemon'
   | 'evolve_pokemon'
@@ -15,6 +16,10 @@ export interface GameAction {
   type: GameActionType;
   payload: Record<string, unknown>;
   player: number;
+}
+
+export interface ChooseActivePayload {
+  cardId: string;
 }
 
 export interface PlayPokemonPayload {

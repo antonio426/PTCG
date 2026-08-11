@@ -12,6 +12,19 @@ import { fetchAllCards } from './card-api/tcgdex';
 
 const PORT = parseInt(process.env.PORT || '3001', 10);
 
+// Without these, any exception thrown outside a request handler (a timer callback, an
+// unawaited promise, boardgame.io's own internals) is a genuinely uncaught exception —
+// Node's default response is to silently kill the whole process. `tsx watch` only restarts on
+// file changes, not runtime crashes, so a crash here would otherwise leave the server dead
+// (port closed) with the watcher process still sitting there looking alive, no error visible
+// anywhere the user would think to look. Logging keeps the process up and leaves a paper trail.
+process.on('uncaughtException', (err) => {
+  console.error('[uncaughtException]', err);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[unhandledRejection]', reason);
+});
+
 const server = Server({
   games: [PtcgGame],
   origins: ['http://localhost:5173', 'http://localhost:3000'],

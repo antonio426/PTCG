@@ -10,6 +10,11 @@ import { getBurnCounterBonus, getColdCurtainVictims, getPoisonCounterBonus, getS
  * validation.canAttack); this only covers the two condition are damage tick.
  */
 export function processBetweenTurns(G: PtcgGameState): void {
+  // The player whose turn just ended — i.e. whoever was G.currentPlayer up until this call
+  // (applyTurnBegin/turn.onBegin already flip G.currentPlayer to the new turn's player before
+  // calling this). Needed for Paralysis below.
+  const justFinishedIdx = (1 - G.currentPlayer) as 0 | 1;
+
   for (let idx = 0 as 0 | 1; idx <= 1; idx = (idx + 1) as 0 | 1) {
     const p = G.players[idx];
     const active = p.active;
@@ -25,6 +30,13 @@ export function processBetweenTurns(G: PtcgGameState): void {
       if (Math.random() < 0.5) {
         active.statusConditions = active.statusConditions.filter(c => c !== 'Burned');
       }
+    }
+    // Paralyzed: no coin flip (unlike Burned) and not re-checked at the start of the paralyzed
+    // player's OWN turn (unlike Asleep, via processWakeUpCheck) — clearing it then would let
+    // them act freely on the very turn it's meant to lock out. It clears once their one locked
+    // turn has passed, i.e. right as the turn transitions to their opponent.
+    if (idx === justFinishedIdx && active.statusConditions.includes('Paralyzed')) {
+      active.statusConditions = active.statusConditions.filter(c => c !== 'Paralyzed');
     }
 
     const hp = effectiveMaxHp(G, active);

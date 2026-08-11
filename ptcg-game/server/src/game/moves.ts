@@ -8,6 +8,7 @@ import { isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
 import { applyStatusCondition, drawCards, drawUpTo, shuffleDeck } from './effects/primitives';
 import { resolveGenericAttackEffect } from './effects/genericAttacks';
+import { inferEvolvesFromSpecies, evolvesFromMatches } from './evolutionChains';
 import {
   EffectContext, EffectStep,
   hasTrainerEffect, startTrainerEffect, resumeTrainerEffect,
@@ -34,7 +35,73 @@ function addLog(G: PtcgGameState, player: number, action: string, details: strin
   });
 }
 
+const ENERGY_TYPE_ZH_LABEL: Record<string, string> = {
+  Grass: '草', Fire: '火', Water: '水', Lightning: '雷', Psychic: '超',
+  Fighting: '鬥', Darkness: '惡', Metal: '鋼', Fairy: '妖', Dragon: '龍', Colorless: '無',
+};
+
+/** Executes an already-decided retreat: pays the energy cost (specific ids if given, else the
+ * first `retreatCost` attached) and swaps in the given (or first available) bench Pokémon. */
+function performRetreat(G: PtcgGameState, targetBenchPosition: number | undefined, discardEnergyIds: string[] | undefined): void {
+  const player = G.players[G.currentPlayer];
+  const activePokemon = player.active;
+  if (!activePokemon) return;
+
+  const retreatCost = effectiveRetreatCost(G, activePokemon);
+  if (discardEnergyIds && discardEnergyIds.length > 0) {
+    for (const id of discardEnergyIds.slice(0, retreatCost)) {
+      const idx = activePokemon.attachedEnergy.findIndex(e => e.id === id);
+      if (idx >= 0) activePokemon.attachedEnergy.splice(idx, 1);
+    }
+  } else {
+    activePokemon.attachedEnergy.splice(0, retreatCost);
+  }
+
+  let benchIdx = targetBenchPosition ?? -1;
+  if (benchIdx < 0 || benchIdx >= 5 || player.bench[benchIdx] === null) {
+    benchIdx = player.bench.findIndex(s => s !== null);
+  }
+  if (benchIdx < 0) return;
+
+  const benchPokemon = player.bench[benchIdx];
+  clearStatusConditionsOnLeaveActive(activePokemon);
+  player.bench[benchIdx] = player.active;
+  player.active = benchPokemon;
+  player.retreatedThisTurn = true;
+  addLog(G, G.currentPlayer, 'retreat', `Retreated to ${benchPokemon!.cardData.name}`);
+
+  // 凹洞: 2 damage counters land on the Pokémon that just retreated (now benched).
+  const punishCounters = getRetreatPunishmentCounters(G, G.currentPlayer as 0 | 1);
+  if (punishCounters > 0) {
+    activePokemon.damage += punishCounters * 10;
+    const hp = effectiveMaxHp(G, activePokemon);
+    if (hp > 0 && activePokemon.damage >= hp) handleKo(G, G.currentPlayer, activePokemon.id);
+  }
+  // 漩渦言靈: the newly promoted Pokémon gets Confused.
+  if (shouldConfuseOnOpponentRetreat(G, G.currentPlayer as 0 | 1) && player.active) {
+    applyStatusCondition(player.active, 'Confused');
+  }
+  // 熔岩地域: the newly promoted Pokémon gets Burned.
+  if (shouldBurnOnOpponentRetreat(G, G.currentPlayer as 0 | 1) && player.active) {
+    applyStatusCondition(player.active, 'Burned');
+  }
+}
+
 export const moves = {
+  chooseActive: ({ G, ctx }: { G: PtcgGameState; ctx: any }, cardId: string) => {
+    if (G.phase !== 'choose_active') return;
+    const player = G.players[parseInt(ctx.currentPlayer) as 0 | 1];
+    const idx = player.hand.findIndex(c => c.id === cardId);
+    if (idx === -1) return;
+    const card = player.hand[idx];
+    if (card.cardData.supertype !== 'Pokémon' || !card.cardData.subtypes.includes('Basic')) return;
+
+    player.hand.splice(idx, 1);
+    player.active = card;
+    G.phase = 'draw';
+    addLog(G, parseInt(ctx.currentPlayer), 'choose_active', `Set ${card.cardData.name} as Active Pokémon`);
+  },
+
   drawCard: ({ G, ctx }: { G: PtcgGameState; ctx: any }) => {
     if (G.phase !== 'draw') return;
     if (G.currentPlayer !== parseInt(ctx.currentPlayer)) return;
@@ -42,6 +109,14 @@ export const moves = {
     const player = G.players[G.currentPlayer];
 
     if (player.deck.length === 0) {
+      // Deck-out: one of the three standard ways to lose. This must be decided HERE, not left
+      // for a caller to notice afterward — every engine's post-move win-check only ever looks
+      // at G.winner directly (all four gate on `if (G.winner !== null) return true/G.winner`
+      // as their first line), and none of them re-derive "was this a failed draw" from G.phase,
+      // since by the time any of them run, G.phase has already moved on to 'main' below.
+      G.winner = (1 - G.currentPlayer) as 0 | 1;
+      G.winReason = 'deck empty at draw';
+      addLog(G, G.currentPlayer, 'draw_card', 'Deck is empty — cannot draw');
       G.phase = 'main';
       return;
     }
@@ -110,6 +185,10 @@ export const moves = {
     evolution.damage = savedDamage;
     evolution.attachedTool = savedTool;
     player.cardsPlayedThisTurn++;
+    // Without this, canEvolve()'s "already evolved/played this turn" check never sees the new
+    // card's id, so a Pokémon that just evolved could illegally evolve again the same turn
+    // (e.g. Basic -> Stage 1 -> Stage 2 in one turn) whenever the next evolution card was in hand.
+    player.pokemonPlayedThisTurn.push(evolution.id);
     addLog(G, G.currentPlayer, 'evolve', `Evolved into ${evolution.cardData.name}`);
 
     // 黑暗脈衝: the opponent's ability may place 4 damage counters on the newly evolved Pokémon.
@@ -271,6 +350,50 @@ export const moves = {
       return;
     }
 
+    if (effectKey === 'retreat') {
+      const player = G.players[G.currentPlayer];
+      if (context.step === 'pick_bench') {
+        const benchIdx = player.bench.findIndex(c => c?.id === selection[0]);
+        if (context.needsEnergyChoice && player.active) {
+          const retreatCost = effectiveRetreatCost(G, player.active);
+          G.pendingChoice = {
+            player: G.currentPlayer as 0 | 1,
+            effectKey: 'retreat',
+            prompt: `選擇 ${retreatCost} 張要棄置的能量（撤退費用）`,
+            choiceType: 'select_from_list',
+            count: retreatCost,
+            options: player.active.attachedEnergy.map(e => ({ id: e.id, label: ENERGY_TYPE_ZH_LABEL[e.type] || e.type })),
+            context: { step: 'pick_energy', benchIdx },
+          };
+          addLog(G, G.currentPlayer, 'resolve_choice', 'Retreat: selected bench Pokémon');
+        } else {
+          G.pendingChoice = null;
+          performRetreat(G, benchIdx, undefined);
+        }
+        return;
+      }
+      if (context.step === 'pick_energy') {
+        const benchIdx = context.benchIdx as number | undefined;
+        G.pendingChoice = null;
+        performRetreat(G, benchIdx, selection);
+        return;
+      }
+      G.pendingChoice = null;
+      return;
+    }
+
+    if (effectKey === 'ko_promotion') {
+      const player = G.players[G.currentPlayer];
+      const idx = player.bench.findIndex(c => c?.id === selection[0]);
+      if (idx >= 0) {
+        player.active = player.bench[idx];
+        player.bench[idx] = null;
+      }
+      G.pendingChoice = null;
+      addLog(G, G.currentPlayer, 'resolve_choice', `Set ${player.active?.cardData.name ?? '?'} as new Active Pokémon`);
+      return;
+    }
+
     const colonIdx = effectKey.indexOf(':');
     const kind = effectKey.slice(0, colonIdx);
     const name = effectKey.slice(colonIdx + 1);
@@ -306,44 +429,51 @@ export const moves = {
 
     const player = G.players[G.currentPlayer];
     const activePokemon = player.active;
-
     if (!activePokemon) return;
+
+    // Explicit args mean the caller already made its choice (resuming below via resolveChoice,
+    // or a direct legacy call) — skip straight to execution.
+    if (targetBenchPosition !== undefined || discardEnergyIds !== undefined) {
+      performRetreat(G, targetBenchPosition, discardEnergyIds);
+      return;
+    }
+
+    // A player is entitled to choose BOTH which Benched Pokémon comes up AND which attached
+    // energy pays the retreat cost — auto-picking "first bench slot" / "first N energies
+    // attached" (the old behavior) silently took that choice away whenever more than one
+    // option existed. Only ask when there's a real choice to make; otherwise resolve instantly
+    // to keep the common case (one bench Pokémon, cost fully covered) a single click.
     const retreatCost = effectiveRetreatCost(G, activePokemon);
-    if (discardEnergyIds && discardEnergyIds.length > 0) {
-      for (const id of discardEnergyIds.slice(0, retreatCost)) {
-        const idx = activePokemon.attachedEnergy.findIndex(e => e.id === id);
-        if (idx >= 0) activePokemon.attachedEnergy.splice(idx, 1);
-      }
+    const benchSlots: number[] = [];
+    player.bench.forEach((c, i) => { if (c) benchSlots.push(i); });
+    const needsBenchChoice = benchSlots.length > 1;
+    const needsEnergyChoice = retreatCost > 0 && activePokemon.attachedEnergy.length > retreatCost;
+
+    if (!needsBenchChoice && !needsEnergyChoice) {
+      performRetreat(G, benchSlots[0], undefined);
+      return;
+    }
+
+    if (needsBenchChoice) {
+      G.pendingChoice = {
+        player: G.currentPlayer as 0 | 1,
+        effectKey: 'retreat',
+        prompt: '選擇要換上場的備戰寶可夢',
+        choiceType: 'select_bench_pokemon',
+        count: 1,
+        options: benchSlots.map(i => ({ id: player.bench[i]!.id, label: player.bench[i]!.cardData.name })),
+        context: { step: 'pick_bench', needsEnergyChoice },
+      };
     } else {
-      activePokemon.attachedEnergy.splice(0, retreatCost);
-    }
-
-    let benchIdx = targetBenchPosition ?? -1;
-    if (benchIdx < 0 || benchIdx >= 5 || player.bench[benchIdx] === null) {
-      benchIdx = player.bench.findIndex(s => s !== null);
-    }
-    if (benchIdx < 0) return;
-
-    const benchPokemon = player.bench[benchIdx];
-    clearStatusConditionsOnLeaveActive(activePokemon);
-    player.bench[benchIdx] = player.active;
-    player.active = benchPokemon;
-    addLog(G, G.currentPlayer, 'retreat', `Retreated to ${benchPokemon!.cardData.name}`);
-
-    // 凹洞: 2 damage counters land on the Pokémon that just retreated (now benched).
-    const punishCounters = getRetreatPunishmentCounters(G, G.currentPlayer as 0 | 1);
-    if (punishCounters > 0) {
-      activePokemon.damage += punishCounters * 10;
-      const hp = effectiveMaxHp(G, activePokemon);
-      if (hp > 0 && activePokemon.damage >= hp) handleKo(G, G.currentPlayer, activePokemon.id);
-    }
-    // 漩渦言靈: the newly promoted Pokémon gets Confused.
-    if (shouldConfuseOnOpponentRetreat(G, G.currentPlayer as 0 | 1) && player.active) {
-      applyStatusCondition(player.active, 'Confused');
-    }
-    // 熔岩地域: the newly promoted Pokémon gets Burned.
-    if (shouldBurnOnOpponentRetreat(G, G.currentPlayer as 0 | 1) && player.active) {
-      applyStatusCondition(player.active, 'Burned');
+      G.pendingChoice = {
+        player: G.currentPlayer as 0 | 1,
+        effectKey: 'retreat',
+        prompt: `選擇 ${retreatCost} 張要棄置的能量（撤退費用）`,
+        choiceType: 'select_from_list',
+        count: retreatCost,
+        options: activePokemon.attachedEnergy.map(e => ({ id: e.id, label: ENERGY_TYPE_ZH_LABEL[e.type] || e.type })),
+        context: { step: 'pick_energy', benchIdx: benchSlots[0] },
+      };
     }
   },
 
@@ -413,7 +543,7 @@ export const moves = {
         attackerTotalEnergyCount: attacker.attachedEnergy.length,
         bothActiveEnergyCount: attacker.attachedEnergy.length + defender.attachedEnergy.length,
         ownDiscardCardNames: player.discardPile.map(c => c.cardData.name),
-        attackerEvolvesFrom: attacker.cardData.evolvesFrom,
+        attackerEvolvesFrom: attacker.cardData.evolvesFrom || inferEvolvesFromSpecies(attacker.cardData.name),
         ownBenchNames: ownBench.map(c => c.cardData.name),
         opponentDiscardBasicEnergyCount: opponent.discardPile.filter(c => c.cardData.subtypes.includes('Basic Energy')).length,
         ownDeckCount: player.deck.length,
@@ -421,7 +551,7 @@ export const moves = {
         ownFieldEnergyCounts: [player.active, ...player.bench].filter((c): c is GameCard => c !== null).flatMap(c => c.attachedEnergy).reduce((acc, e) => { acc[e.type] = (acc[e.type] || 0) + 1; return acc; }, {} as Record<string, number>),
         defenderTypes: defender.cardData.types || [],
         defenderSubtypes: defender.cardData.subtypes || [],
-        defenderEvolvesFrom: defender.cardData.evolvesFrom,
+        defenderEvolvesFrom: defender.cardData.evolvesFrom || inferEvolvesFromSpecies(defender.cardData.name),
         defenderIsConfused: defender.statusConditions.includes('Confused'),
         defenderRetreatCost: effectiveRetreatCost(G, defender),
         opponentFieldTypes: [opponent.active, ...opponent.bench].filter((c): c is GameCard => c !== null).flatMap(c => c.cardData.types || []),
@@ -741,7 +871,7 @@ export const moves = {
           opponent.itemLockedUntilTurn = G.turn + 1;
         }
         if (genericOutcome.evolveSelfFromDeck) {
-          const matches = player.deck.filter(c => c.cardData.evolvesFrom === attacker.cardData.name);
+          const matches = player.deck.filter(c => evolvesFromMatches(c.cardData, attacker.cardData.name));
           if (matches.length > 0) {
             const pick = matches[Math.floor(Math.random() * matches.length)];
             const deckIdx = player.deck.findIndex(c => c.id === pick.id);

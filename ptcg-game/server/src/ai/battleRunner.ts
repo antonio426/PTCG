@@ -3,6 +3,7 @@ import { setup } from '../game/setup';
 import { moves } from '../game/moves';
 import { getLegalMoves } from '../game/validation';
 import { processBetweenTurns, processWakeUpCheck } from '../game/statusConditions';
+import { promoteActiveIfNeeded } from '../game/damage';
 import { IAIPlayer } from './aiPlayer';
 import { AIThought, AIPlayerResult } from './types';
 
@@ -52,6 +53,7 @@ function checkEndCondition(G: PtcgGameState): void {
 }
 
 function applyTurnBegin(G: PtcgGameState): void {
+  promoteActiveIfNeeded(G, G.currentPlayer as 0 | 1);
   if (G.turn > 1) processBetweenTurns(G);
   G.phase = G.turn === 1 ? 'main' : 'draw';
   processWakeUpCheck(G, G.currentPlayer as 0 | 1);
@@ -66,6 +68,7 @@ function applyTurnBegin(G: PtcgGameState): void {
   player.turnDamageBoosts = [];
   player.bonusPrizeNextKo = 0;
   player.incomingDamageReduction = [];
+  player.retreatedThisTurn = false;
 }
 
 function advanceTurn(G: PtcgGameState): void {
@@ -142,7 +145,9 @@ async function runSingleGame(
 
   applyTurnBegin(G);
 
-  while (G.winner === null) {
+  let moveSafety = 0;
+  while (G.winner === null && moveSafety < 2000) {
+    moveSafety++;
     const playerIdx = G.currentPlayer;
     const ai = players[playerIdx];
     const legalMoves = getLegalMoves(G, playerIdx);
@@ -172,6 +177,10 @@ async function runSingleGame(
       advanceTurn(G);
       applyTurnBegin(G);
     }
+  }
+  if (G.winner === null) {
+    G.winner = 0;
+    G.winReason = 'safety cap exceeded';
   }
 
   return {

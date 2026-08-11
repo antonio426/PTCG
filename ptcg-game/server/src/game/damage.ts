@@ -2,6 +2,7 @@ import { Attack, GameCard } from '@ptcg/shared';
 import { PtcgGameState } from './GameState';
 import { getOutgoingDamageReduction, getPassiveDamageBonus, getPassiveDamageReduction, getPassiveMaxHpBonus, getPrizeReduction, getWeaknessTypeOverride, hasPassiveAbilityNamed, isDamageBlocked, rollBonusPrizeOnActiveKo, shouldExilePrizes } from './effects/passiveAbilities';
 import { getToolDamageBonus, getToolHpBonus } from './effects/tools';
+import { parseBaseNumber } from './effects/genericAttacks';
 
 /** Rule-box Pokémon (ex/V/VMAX/VSTAR/GX/Mega/TAG TEAM) — same test as prizesForKo below. */
 function isBigPokemon(card: GameCard): boolean {
@@ -24,6 +25,23 @@ export function effectiveMaxHp(G: PtcgGameState, card: GameCard): number {
  * damage number. `weaknessOverride`, when given, replaces `defender`'s printed weakness type
  * (e.g. 妖精領域 turning every opposing Dragon's weakness into Psychic).
  */
+// The underlying card data mixes character variants for the same value depending on which
+// source scraped/returned a given card — e.g. weakness "×2" (U+00D7 multiplication sign) vs
+// "x2" (ASCII 'x'; 5828 of ~10714 cards in the current snapshot use this form), and resistance
+// "-30" (ASCII hyphen-minus) vs "－30" (U+FF0D fullwidth) vs "₋30" (U+208B subscript minus).
+// Comparing/parsing against only one variant silently no-ops weakness/resistance for every card
+// using the other(s) — this single distinction affects the majority of the card pool.
+function isDoubleWeakness(value: string | undefined): boolean {
+  return !!value && /^[x×]2$/i.test(value.trim());
+}
+
+function parseResistanceValue(value: string | undefined): number {
+  if (!value) return 0;
+  const normalized = value.trim().replace(/^[-－₋−]/, '-');
+  const n = parseInt(normalized, 10);
+  return isNaN(n) ? 0 : n;
+}
+
 export function applyWeaknessResistance(baseDamageIn: number, attacker: GameCard, defender: GameCard, weaknessOverride?: string, ignoreResistance?: boolean, ignoreWeakness?: boolean): number {
   let baseDamage = baseDamageIn;
   const attackerTypes = attacker.cardData.types || [];
@@ -35,7 +53,7 @@ export function applyWeaknessResistance(baseDamageIn: number, attacker: GameCard
         : (defender.cardData.weaknesses || []);
       for (const weakness of weaknesses) {
         if (weakness.type === attackerType) {
-          if (weakness.value === '×2') baseDamage *= 2;
+          if (isDoubleWeakness(weakness.value)) baseDamage *= 2;
         }
       }
     }
@@ -44,8 +62,13 @@ export function applyWeaknessResistance(baseDamageIn: number, attacker: GameCard
     const resistances = defender.cardData.resistances || [];
     for (const resistance of resistances) {
       if (resistance.type === attackerType) {
-        const resistValue = parseInt(resistance.value);
-        if (!isNaN(resistValue)) baseDamage = Math.max(0, baseDamage - resistValue);
+        // resistValue is already the signed correction as printed (e.g. -30) — ADD it to apply
+        // the reduction. Subtracting it (as this line used to) flips the sign: `dmg - (-30)` =
+        // `dmg + 30`, making Resistance increase damage instead of reducing it. This bug
+        // predates the value-format fix above — it affected every card with a Resistance,
+        // regardless of which minus-sign character its value happened to use.
+        const resistValue = parseResistanceValue(resistance.value);
+        if (resistValue !== 0) baseDamage = Math.max(0, baseDamage + resistValue);
       }
     }
   }
@@ -60,8 +83,11 @@ export function applyWeaknessResistance(baseDamageIn: number, attacker: GameCard
  * (e.g. 妖精領域). Returns 0 if a passive ability blocks the hit outright (e.g. 藏隱, 礎石之勢).
  */
 export function calculateDamage(G: PtcgGameState, attackerIdx: 0 | 1, attacker: GameCard, attack: Attack, defender: GameCard, ignoreResistance?: boolean, ignoreWeakness?: boolean): number {
-  let baseDamage = parseInt(attack.damage) || 0;
-  if (isNaN(baseDamage)) baseDamage = 0;
+  // Reuses genericAttacks.ts's parser (not a raw parseInt) so an attack whose text goes
+  // unrecognized by every generic template — instead of falling through with its damage field
+  // substituted by the resolved outcome — doesn't misread a coin-flip "40x" multiplier as a
+  // guaranteed flat 40 damage.
+  let baseDamage = parseBaseNumber(attack.damage);
   if (isDamageBlocked(G, attacker, defender, baseDamage)) return 0;
   baseDamage += getPassiveDamageBonus(G, attackerIdx, attacker, defender);
   baseDamage += getToolDamageBonus(G, attacker, defender);
@@ -131,13 +157,13 @@ export function handleKo(G: PtcgGameState, koPlayerIndex: number, koCardId: stri
     koCard = koPlayer.active;
     retireCard(koCard);
     koPlayer.active = null;
-
-    const promo = koPlayer.bench.find(s => s !== null);
-    if (promo) {
-      const idx = koPlayer.bench.indexOf(promo);
-      koPlayer.active = promo;
-      koPlayer.bench[idx] = null;
-    }
+    // New Active selection is deferred to the start of koPlayer's own next turn — see
+    // promoteActiveIfNeeded() below. Real rules have the player who lost their Active choose
+    // the replacement themselves; auto-grabbing "whichever bench slot happens to be first" here
+    // would silently take that choice away. Deferring is safe because the only way to KO an
+    // opponent's Active is via an attack, which always ends the attacker's turn immediately —
+    // there's no point before koPlayer's own next turn where anything needs their Active to be
+    // already resolved.
   } else {
     const idx = koPlayer.bench.findIndex(c => c?.id === koCardId);
     if (idx >= 0) {
@@ -166,4 +192,30 @@ export function handleKo(G: PtcgGameState, koPlayerIndex: number, koCardId: stri
       attackingPlayer.takenPrizes++;
     }
   }
+}
+
+/** Fills `playerIndex`'s empty Active slot at the start of their own turn (see handleKo's KO
+ * branch, which leaves it empty rather than guessing). Auto-promotes when there's exactly one
+ * Benched Pokémon (no real choice to make); otherwise asks via the normal same-player
+ * pendingChoice flow, exactly like any other "pick one of your own Pokémon" effect. */
+export function promoteActiveIfNeeded(G: PtcgGameState, playerIndex: 0 | 1): void {
+  const player = G.players[playerIndex];
+  if (player.active) return;
+  const benchOptions = player.bench.filter((c): c is GameCard => c !== null);
+  if (benchOptions.length === 0) return;
+  if (benchOptions.length === 1) {
+    const idx = player.bench.indexOf(benchOptions[0]);
+    player.active = benchOptions[0];
+    player.bench[idx] = null;
+    return;
+  }
+  G.pendingChoice = {
+    player: playerIndex,
+    effectKey: 'ko_promotion',
+    prompt: '你的出戰寶可夢已離場，選擇一隻備戰寶可夢上場',
+    choiceType: 'select_bench_pokemon',
+    count: 1,
+    options: benchOptions.map(c => ({ id: c.id, label: c.cardData.name })),
+    context: {},
+  };
 }

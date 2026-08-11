@@ -1,10 +1,15 @@
-import { Card, GameCard } from '@ptcg/shared';
+import { Card, GameCard, TurnAction } from '@ptcg/shared';
 import { PtcgGameState, PtcgPlayerState } from './GameState';
 
 export interface PtcgSetupData {
   decks: string[][];
   cardData: Record<string, Card>;
   seed?: number;
+  /** Which player index (if any) picks their own opening Active instead of having the
+   * first Basic in their hand auto-placed — used for the human side of a human-vs-AI
+   * battle. That player's hand keeps every Basic; they place one as Active via the
+   * 'choose_active' move, and any others normally via 'play_pokemon' on their first turn. */
+  interactivePlayer?: 0 | 1;
 }
 
 function seededRandom(seed: number) {
@@ -70,6 +75,7 @@ function createPlayerState(deckCardIds: string[], cardData: Record<string, Card>
     incomingDamageReduction: [],
     itemLockedUntilTurn: null,
     poisonedCantRetreatUntilTurn: null,
+    retreatedThisTurn: false,
   };
 }
 
@@ -111,6 +117,10 @@ function placeBasics(player: PtcgPlayerState): void {
   }
 }
 
+function addSetupLog(log: TurnAction[], player: 0 | 1, action: string, details: string): void {
+  log.push({ player, turn: 1, action, details, timestamp: Date.now() });
+}
+
 function setupPrizes(player: PtcgPlayerState, count: number): void {
   for (let i = 0; i < count; i++) {
     const card = player.deck.shift();
@@ -135,15 +145,25 @@ export function setup(setupData?: PtcgSetupData): PtcgGameState {
   drawCards(players[1], 7);
 
   const mulliganCounts = [0, 0];
+  const turnLog: TurnAction[] = [];
 
+  const MAX_MULLIGANS = 100;
   for (let p = 0; p < 2; p++) {
     const player = players[p as 0 | 1];
+    // A deck with zero Basic Pokémon anywhere in it (malformed deck list, whether from a client
+    // bug or a direct API call) can never satisfy hasBasicInHand no matter how many times it's
+    // reshuffled — without this cap that's an unconditional infinite loop, hanging whatever
+    // request triggered it forever.
     while (!hasBasicInHand(player)) {
       mulliganCounts[p]++;
+      if (mulliganCounts[p] > MAX_MULLIGANS) {
+        throw new Error(`Deck for player ${p} has no Basic Pokémon — cannot complete setup`);
+      }
       player.deck.push(...player.hand);
       player.hand = [];
       player.deck = shuffle(player.deck, seed + p + mulliganCounts[p]);
       drawCards(player, 7);
+      addSetupLog(turnLog, p as 0 | 1, 'mulligan', `No Basic Pokémon in hand — reshuffled and drew a new hand of 7`);
     }
   }
 
@@ -153,9 +173,13 @@ export function setup(setupData?: PtcgSetupData): PtcgGameState {
       const card = players[opponentIdx].deck.pop();
       if (card) players[opponentIdx].hand.push(card);
     }
+    if (mulliganCounts[p] > 0) {
+      addSetupLog(turnLog, opponentIdx, 'mulligan_bonus_draw', `Opponent mulliganed ${mulliganCounts[p]} time(s) — drew ${mulliganCounts[p]} bonus card(s)`);
+    }
   }
 
   for (let p = 0; p < 2; p++) {
+    if (setupData.interactivePlayer === p) continue;
     placeBasics(players[p as 0 | 1]);
   }
 
@@ -167,10 +191,10 @@ export function setup(setupData?: PtcgSetupData): PtcgGameState {
     players,
     turn: 1,
     currentPlayer: 0,
-    phase: 'draw',
+    phase: setupData.interactivePlayer !== undefined ? 'choose_active' : 'draw',
     winner: null,
     winReason: null,
-    turnLog: [],
+    turnLog,
     pendingChoice: null,
     activeStadium: null,
   };

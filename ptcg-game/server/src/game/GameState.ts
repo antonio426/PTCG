@@ -39,13 +39,19 @@ export interface PtcgPlayerState {
    * poisoned ones)" — set on the AFFECTED side (mirrors itemLockedUntilTurn's convention), since
    * it's a condition-based check (any Poisoned Pokémon) rather than tied to one specific card. */
   poisonedCantRetreatUntilTurn: number | null;
+  /** Real rules allow at most one retreat per turn (barring a specific card effect granting an
+   * extra one, not currently modeled). Reset at this player's own turn-begin, same as the other
+   * *ThisTurn flags. */
+  retreatedThisTurn: boolean;
 }
 
 export interface PtcgGameState {
   players: [PtcgPlayerState, PtcgPlayerState];
   turn: number;
   currentPlayer: number;
-  phase: 'draw' | 'main' | 'attack' | 'end';
+  /** 'choose_active' precedes the very first turn for a player who was dealt a hand
+   * without an auto-placed Active — see setup.ts's `interactivePlayer` option. */
+  phase: 'choose_active' | 'draw' | 'main' | 'attack' | 'end';
   winner: number | null;
   winReason: string | null;
   turnLog: TurnAction[];

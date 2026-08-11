@@ -3,6 +3,7 @@ import { EffectContext, EffectHandler, EffectStep, allPokemon, findOwnPokemon, o
 import { handleKo } from '../damage';
 import { applyStatusCondition, discardFromHand, drawCards, drawUpTo, flipCoin, flipCoins, moveDeckCardToBench, moveDeckCardToHand, shuffleDeck } from './primitives';
 import { clearStatusConditionsOnLeaveActive } from '../statusConditions';
+import { hasEvolvesFrom, evolvesFromMatches } from '../evolutionChains';
 
 /** 偵查指令: look at the top 2 cards of your deck, take 1 to hand, put the rest on the bottom. */
 const strategicCommand: EffectHandler = {
@@ -875,7 +876,7 @@ const invitingWink: EffectHandler = {
 const bellyfulTime: EffectHandler = {
   start(ctx) {
     for (const c of allPokemon(ctx.G, ctx.playerIndex)) {
-      if (!c.cardData.evolvesFrom) continue;
+      if (!hasEvolvesFrom(c.cardData)) continue;
       c.damage = 0;
       c.attachedEnergy = [];
     }
@@ -1079,7 +1080,7 @@ const primalWing: EffectHandler = {
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     if (p.active?.id !== ctx.sourceCardId) return 'done';
-    const targets = allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1).filter(c => !!c.cardData.evolvesFrom);
+    const targets = allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1).filter(c => hasEvolvesFrom(c.cardData));
     if (targets.length === 0) return 'done';
     return { prompt: '原始之翼：選擇對手 1 隻進化寶可夢使其退化', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: {} };
   },
@@ -1087,8 +1088,8 @@ const primalWing: EffectHandler = {
     const oppIdx = (1 - ctx.playerIndex) as 0 | 1;
     const opp = opponent(ctx.G, ctx.playerIndex);
     const target = allPokemon(ctx.G, oppIdx).find(c => c.id === selection[0]);
-    if (!target || !target.cardData.evolvesFrom) return 'done';
-    const priorIdx = opp.discardPile.findIndex(c => c.cardData.name === target.cardData.evolvesFrom);
+    if (!target || !hasEvolvesFrom(target.cardData)) return 'done';
+    const priorIdx = opp.discardPile.findIndex(c => evolvesFromMatches(target.cardData, c.cardData.name));
     if (priorIdx === -1) return 'done';
     const priorStage = opp.discardPile.splice(priorIdx, 1)[0];
     priorStage.attachedEnergy = target.attachedEnergy;
@@ -1107,7 +1108,7 @@ const primalWing: EffectHandler = {
 const metalSignal: EffectHandler = {
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
-    const options = p.deck.filter(c => c.cardData.supertype === 'Pokémon' && (c.cardData.types || []).includes('Metal') && !!c.cardData.evolvesFrom);
+    const options = p.deck.filter(c => c.cardData.supertype === 'Pokémon' && (c.cardData.types || []).includes('Metal') && hasEvolvesFrom(c.cardData));
     if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
     return { prompt: '金屬信號：從牌庫選最多 2 張鋼屬性進化寶可夢卡加入手牌', choiceType: 'select_from_list', maxCount: Math.min(2, options.length), options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
   },
@@ -1792,7 +1793,7 @@ const evolutionGuide: EffectHandler = {
     const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
     if (!self || self.attachedEnergy.length === 0) return 'done';
     const p = player(ctx.G, ctx.playerIndex);
-    const options = p.deck.filter(c => c.cardData.supertype === 'Pokémon' && !!c.cardData.evolvesFrom);
+    const options = p.deck.filter(c => c.cardData.supertype === 'Pokémon' && hasEvolvesFrom(c.cardData));
     if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
     return { prompt: '進化指引：從牌庫選 1 張進化寶可夢卡加入手牌', choiceType: 'select_from_list', count: 1, options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
   },
@@ -1890,7 +1891,7 @@ const grudgeEvolution: EffectHandler = {
     const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
     const p = player(ctx.G, ctx.playerIndex);
     if (!self) return 'done';
-    const options = p.hand.filter(c => c.cardData.evolvesFrom === self.cardData.name);
+    const options = p.hand.filter(c => evolvesFromMatches(c.cardData, self.cardData.name));
     if (options.length === 0) return 'done';
     return { prompt: '怨恨進化：選 1 張手牌進化卡完成進化', choiceType: 'select_from_list', count: 1, options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
   },

@@ -232,9 +232,17 @@ function flipCoins(n: number): number {
   return heads;
 }
 
-function parseBaseNumber(damageField: string): number {
-  const m = damageField.match(/^(\d+)/);
-  return m ? parseInt(m[1], 10) : 0;
+export function parseBaseNumber(damageField: string): number {
+  const m = damageField.match(/^(\d+)(.*)$/);
+  if (!m) return 0;
+  // "Nx"/"N×" (e.g. "40x") means the printed number is ONLY the per-coin-flip/per-count
+  // multiplier for attacks like "Flip 2 coins. This attack does 40 damage for each heads." —
+  // that per-unit value is already pulled straight from the attack TEXT by every template
+  // below (as `per`), so treating the printed number as an ADDITIONAL flat base double-counts
+  // one flip's worth of damage on every single use of the attack, including a complete miss
+  // (0 heads would otherwise still deal `base` damage instead of the correct 0).
+  if (/^[x×]/i.test(m[2])) return 0;
+  return parseInt(m[1], 10);
 }
 
 const TEMPLATES: RegExp[] = [

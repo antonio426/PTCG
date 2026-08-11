@@ -4,6 +4,7 @@ import { hasAbilityEffect, isAbilityUnlimitedUse } from './effects/abilities';
 import { getRetreatCostReduction, getColorlessCostReduction } from './effects/tools';
 import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatCostReduction, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, isAttackLockedByTimedEffect, isItemAndToolPlayBlocked, isItemLockedByTimedEffect, isItemPlayBlocked, isNamedAttackLockedByTimedEffect, isRetreatLockedByTimedEffect } from './effects/passiveAbilities';
 import { normalizeAbilityName } from './effects/types';
+import { hasEvolvesFrom, evolvesFromMatches, inferEvolvesFromSpecies } from './evolutionChains';
 
 /** All k-sized combinations of `items`, capped so huge hands can't explode the move list. */
 function combinations<T>(items: T[], k: number, cap = 40): T[][] {
@@ -134,8 +135,11 @@ export function canEvolve(G: PtcgGameState, playerIndex: number, cardId: string,
   if (!card) return false;
   if (card.cardData.supertype !== 'Pokémon') return false;
 
-  const evolvesFrom = card.cardData.evolvesFrom;
-  if (!evolvesFrom) return false;
+  // TCGdex's zh-tw locale never populates `evolvesFrom` (confirmed: every Stage 1/Stage 2/VMAX/
+  // VSTAR card in the dataset is missing it, not just some) — hasEvolvesFrom/evolvesFromMatches
+  // fall back to a static species-chain table built from PokeAPI (see evolutionChains.ts) so
+  // evolution isn't silently blocked for effectively every evolution card in the game.
+  if (!hasEvolvesFrom(card.cardData)) return false;
 
   const target = player.active?.id === targetId
     ? player.active
@@ -144,7 +148,9 @@ export function canEvolve(G: PtcgGameState, playerIndex: number, cardId: string,
   // 提升進化: this specific Pokémon is exempt from the first-turn / just-played restrictions below.
   const bypassTiming = canEvolveOnFirstTurnOrJustPlayed(G, target);
   if (!bypassTiming && isFirstTurnOfGame(G)) return false;
-  if (target.cardData.name !== evolvesFrom && !canEvolveViaPassive(target, card.cardData)) return false;
+  const nameMatches = evolvesFromMatches(card.cardData, target.cardData.name);
+  const effectiveEvolvesFrom = card.cardData.evolvesFrom || inferEvolvesFromSpecies(card.cardData.name);
+  if (!nameMatches && !canEvolveViaPassive(target, effectiveEvolvesFrom)) return false;
   if (!bypassTiming && player.pokemonPlayedThisTurn.includes(target.id)) return false;
 
   return true;
@@ -169,6 +175,11 @@ export function canRetreat(G: PtcgGameState, playerIndex: number): boolean {
   const player = playerState(G, playerIndex, ['main']);
   if (!player) return false;
   if (!player.active) return false;
+  // Real rules: at most one retreat per turn. Without this, an AI whose active and bench
+  // Pokémon can each afford to pay their own retreat cost will ping-pong between them forever
+  // (retreat is high in MockAI's priority list, above draw_card/end_turn) until the turn-safety
+  // cap fires and the game falsely ends with the human declared the winner.
+  if (player.retreatedThisTurn) return false;
   if (!player.bench.some(s => s !== null)) return false;
   if (player.active.statusConditions.includes('Asleep') || player.active.statusConditions.includes('Paralyzed')) return false;
   if (isRetreatLockedByTimedEffect(G, player.active)) return false;
@@ -185,6 +196,17 @@ export function canAttack(G: PtcgGameState, playerIndex: number, attackIndex: nu
   const player = playerState(G, playerIndex, ['main', 'attack']);
   if (!player) return false;
   if (!player.active) return false;
+  // KO-promotion is deferred to the start of the KO'd player's own next turn (see
+  // promoteActiveIfNeeded's comment) — that assumed the only way to empty an opponent's Active
+  // is an attack, which always ends the attacker's turn immediately. Between-turns damage
+  // (Poison/Burn/passive abilities) can also do it, and that runs at the START of THIS player's
+  // turn, so the opponent can sit with active === null for this entire turn. Without this guard,
+  // attacking then silently no-ops (moves.attack's own `!opponent.active` check) and leaves
+  // G.phase stuck at 'attack' — end_turn is never offered again since it's gated to 'main' only,
+  // so the AI just retries 'attack' every iteration until the turn-safety cap fires and the
+  // human is declared the winner even though the opponent never actually lost.
+  const opponent = G.players[(1 - playerIndex) as 0 | 1];
+  if (!opponent.active) return false;
   // 出道演出: this specific Pokémon is exempt from the first-turn attack restriction.
   if (isFirstTurnOfGame(G) && !canAttackOnFirstTurn(player.active)) return false;
   if (player.active.statusConditions.includes('Asleep') || player.active.statusConditions.includes('Paralyzed')) return false;
@@ -209,6 +231,20 @@ export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalActio
   const player = G.players[playerIndex as 0 | 1];
 
   if (G.currentPlayer !== playerIndex) return legalMoves;
+
+  if (G.phase === 'choose_active') {
+    for (const card of player.hand) {
+      if (card.cardData.supertype === 'Pokémon' && card.cardData.subtypes.includes('Basic')) {
+        legalMoves.push({
+          type: 'choose_active',
+          description: `Set ${card.cardData.name} as your Active Pokémon`,
+          payload: { cardId: card.id },
+        });
+      }
+    }
+    legalMoves.push({ type: 'forfeit', description: 'Forfeit the game' });
+    return legalMoves;
+  }
 
   // A multi-step trainer/ability effect is mid-resolution — nothing else is legal until it's answered.
   if (G.pendingChoice) {
@@ -246,7 +282,7 @@ export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalActio
         });
       }
 
-      if (card.cardData.supertype === 'Pokémon' && card.cardData.evolvesFrom) {
+      if (card.cardData.supertype === 'Pokémon' && hasEvolvesFrom(card.cardData)) {
         const targets = [player.active, ...player.bench.filter((s): s is GameCard => s !== null)];
         for (const target of targets) {
           if (target && canEvolve(G, playerIndex, card.id, target.id)) {
@@ -291,10 +327,14 @@ export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalActio
       }
     }
 
-    if (canRetreat(G, playerIndex)) {
+    if (canRetreat(G, playerIndex) && player.active) {
       legalMoves.push({
         type: 'retreat',
         description: 'Retreat active pokemon',
+        // Display-only metadata (the retreat move handler doesn't read this) — lets the client
+        // show the true, post-reduction cost (e.g. 氣球) as energy icons without duplicating
+        // the reduction math client-side.
+        payload: { retreatCost: effectiveRetreatCost(G, player.active) },
       });
     }
 

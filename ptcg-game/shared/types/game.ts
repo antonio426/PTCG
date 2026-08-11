@@ -97,8 +97,12 @@ export interface PendingChoice {
   count?: number;
   minCount?: number;
   maxCount?: number;
-  /** For select_from_list: the concrete options being chosen from. */
-  options?: { id: string; label: string }[];
+  /** For select_from_list: the concrete options being chosen from. `cardData` is filled in
+   * server-side (see humanBattle.ts's buildResponse) whenever an option's id resolves to a real
+   * card in a zone visible to this player — lets the client show actual card art instead of a
+   * bare text button. Options that aren't real cards (energy already attached to a Pokémon,
+   * abstract numeric choices like "move N counters") are left without it. */
+  options?: { id: string; label: string; cardData?: Card }[];
   context: Record<string, unknown>;
   /** The trainer/pokemon/tool instance id that started this effect — restored into EffectContext on resume. */
   sourceCardId?: string;

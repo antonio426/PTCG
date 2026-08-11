@@ -4,6 +4,7 @@ import { applyStatusCondition, discardFromHand, drawCards, drawUpTo, flipCoin, h
 import { clearStatusConditionsOnLeaveActive } from '../statusConditions';
 import { isEnergyDiscardProtected } from './passiveAbilities';
 import { handleKo } from '../damage';
+import { hasEvolvesFrom, evolvesFromMatches, inferEvolvesFromSpecies } from '../evolutionChains';
 
 function deckOptions(deck: GameCard[], filter: (c: GameCard) => boolean): { id: string; label: string }[] {
   return deck.filter(filter).map(c => ({ id: c.id, label: c.cardData.name }));
@@ -99,7 +100,7 @@ const rareCandy: EffectHandler = {
       prompt: '神奇糖果：選擇要使用的 2 階寶可夢卡',
       choiceType: 'select_from_list',
       count: 1,
-      options: stage2InHand.map(c => ({ id: c.id, label: `${c.cardData.name}（進化自 ${c.cardData.evolvesFrom ?? '?'} 的前一階）` })),
+      options: stage2InHand.map(c => ({ id: c.id, label: `${c.cardData.name}（進化自 ${c.cardData.evolvesFrom ?? inferEvolvesFromSpecies(c.cardData.name) ?? '?'} 的前一階）` })),
       context: { step: 'pick_card' },
     };
   },
@@ -1036,7 +1037,7 @@ const saijo: EffectHandler = {
   start(ctx) {
     const targets = allPokemon(ctx.G, ctx.playerIndex).filter(t => !t.cardData.abilities?.some(a => a.text));
     const p = player(ctx.G, ctx.playerIndex);
-    const options = p.deck.filter(c => c.cardData.supertype === 'Pokémon' && targets.some(t => c.cardData.evolvesFrom === t.cardData.name));
+    const options = p.deck.filter(c => c.cardData.supertype === 'Pokémon' && targets.some(t => evolvesFromMatches(c.cardData, t.cardData.name)));
     if (options.length === 0 || targets.length === 0) { shuffleDeck(p.deck); return 'done'; }
     return { prompt: '賽吉：從牌庫選 1 張進化卡直接進化場上寶可夢', choiceType: 'select_from_list', count: 1, options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: { step: 'pick_card' } };
   },
@@ -1045,7 +1046,7 @@ const saijo: EffectHandler = {
     if (context.step === 'pick_card') {
       const cardId = selection[0];
       const card = p.deck.find(c => c.id === cardId);
-      const targets = allPokemon(ctx.G, ctx.playerIndex).filter(t => !t.cardData.abilities?.some(a => a.text) && t.cardData.name === card?.cardData.evolvesFrom);
+      const targets = allPokemon(ctx.G, ctx.playerIndex).filter(t => !t.cardData.abilities?.some(a => a.text) && !!card && evolvesFromMatches(card.cardData, t.cardData.name));
       if (!card || targets.length === 0) { shuffleDeck(p.deck); return 'done'; }
       return { prompt: '賽吉：選擇要進化的寶可夢', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: { step: 'pick_target', cardId } };
     }
@@ -1177,7 +1178,7 @@ const rocketSakaki: EffectHandler = {
 const takeshisExcavation: EffectHandler = {
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
-    const options = deckOptions(p.deck, c => c.cardData.supertype === 'Pokémon' && (c.cardData.subtypes.includes('Basic') || !!c.cardData.evolvesFrom));
+    const options = deckOptions(p.deck, c => c.cardData.supertype === 'Pokémon' && (c.cardData.subtypes.includes('Basic') || hasEvolvesFrom(c.cardData)));
     if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
     return { prompt: '小剛的發掘：從牌庫選最多 2 張基礎寶可夢卡，或 1 張進化寶可夢卡加入手牌', choiceType: 'select_from_list', maxCount: Math.min(2, options.length), options, context: {} };
   },
@@ -1855,7 +1856,7 @@ const rocketSuperBall: EffectHandler = {
     const p = player(ctx.G, ctx.playerIndex);
     const heads = flipCoin();
     const options = deckOptions(p.deck, c => c.cardData.supertype === 'Pokémon' && c.cardData.name.includes('火箭隊的')
-      && (heads ? !!c.cardData.evolvesFrom : c.cardData.subtypes.includes('Basic')));
+      && (heads ? hasEvolvesFrom(c.cardData) : c.cardData.subtypes.includes('Basic')));
     if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
     return { prompt: `火箭隊的超級球：擲硬幣${heads ? '正面' : '反面'}，選 1 張${heads ? '進化' : '基礎'}的「火箭隊的寶可夢」加入手牌`, choiceType: 'select_from_list', count: 1, options, context: {} };
   },
@@ -2530,15 +2531,15 @@ const miareGrayPie: EffectHandler = {
 /** 奇異時鐘: de-evolve 1 own Psychic Pokémon back to Basic; the removed evolution card(s) return to hand. Simplified to a single stage (as with 原始之翼), not the full possible multi-stage chain. */
 const mysteriousClock: EffectHandler = {
   start(ctx) {
-    const targets = allPokemon(ctx.G, ctx.playerIndex).filter(c => (c.cardData.types || []).includes('Psychic') && !!c.cardData.evolvesFrom);
+    const targets = allPokemon(ctx.G, ctx.playerIndex).filter(c => (c.cardData.types || []).includes('Psychic') && hasEvolvesFrom(c.cardData));
     if (targets.length === 0) return 'done';
     return { prompt: '奇異時鐘：選擇要使其退化的超系寶可夢', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: {} };
   },
   resume(ctx, _context, selection) {
     const p = player(ctx.G, ctx.playerIndex);
     const target = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === selection[0]);
-    if (!target || !target.cardData.evolvesFrom) return 'done';
-    const priorIdx = p.discardPile.findIndex(c => c.cardData.name === target.cardData.evolvesFrom);
+    if (!target || !hasEvolvesFrom(target.cardData)) return 'done';
+    const priorIdx = p.discardPile.findIndex(c => evolvesFromMatches(target.cardData, c.cardData.name));
     if (priorIdx === -1) return 'done';
     const priorStage = p.discardPile.splice(priorIdx, 1)[0];
     priorStage.attachedEnergy = target.attachedEnergy;

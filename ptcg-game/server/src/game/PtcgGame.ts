@@ -4,6 +4,7 @@ import { PtcgGameState } from './GameState';
 import { setup } from './setup';
 import { moves } from './moves';
 import { processBetweenTurns, processWakeUpCheck } from './statusConditions';
+import { promoteActiveIfNeeded } from './damage';
 
 export const PtcgGame: Game<PtcgGameState> = {
   name: 'ptcg',
@@ -22,6 +23,7 @@ export const PtcgGame: Game<PtcgGameState> = {
       if (ctx.turn > 1) processBetweenTurns(G);
       G.turn = ctx.turn;
       G.currentPlayer = parseInt(ctx.currentPlayer) as 0 | 1;
+      promoteActiveIfNeeded(G, G.currentPlayer as 0 | 1);
       G.phase = ctx.turn === 1 ? 'main' : 'draw';
       processWakeUpCheck(G, G.currentPlayer as 0 | 1);
       const player = G.players[G.currentPlayer];
@@ -35,6 +37,7 @@ export const PtcgGame: Game<PtcgGameState> = {
       player.turnDamageBoosts = [];
       player.bonusPrizeNextKo = 0;
       player.incomingDamageReduction = [];
+      player.retreatedThisTurn = false;
     },
   },
 

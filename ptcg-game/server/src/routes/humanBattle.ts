@@ -2,10 +2,12 @@ import Router from '@koa/router';
 import { randomUUID } from 'crypto';
 import { Card, LegalAction, TurnAction, GameActionType } from '@ptcg/shared';
 import type { PtcgGameState, PendingChoice } from '../game/GameState';
+import type { GameCard } from '@ptcg/shared';
 import { setup } from '../game/setup';
 import { getLegalMoves } from '../game/validation';
 import { moves } from '../game/moves';
 import { processBetweenTurns, processWakeUpCheck } from '../game/statusConditions';
+import { promoteActiveIfNeeded } from '../game/damage';
 import { fetchCardsByIds } from '../card-api/tcgdex';
 import { MockAI, IAIPlayer } from '../ai/aiPlayer';
 
@@ -19,6 +21,7 @@ interface SanitizedGameCard {
   damage: number;
   statusConditions: string[];
   attachedEnergy: { id: string; type: string }[];
+  attachedTool: { id: string; cardData: Card } | null;
 }
 
 interface SanitizedPlayerState {
@@ -38,6 +41,9 @@ interface BattleStateResponse {
     handCount: number;
     prizes: number;
     discardCount: number;
+    // Discard piles are public information in the real rules — either player may look through
+    // either pile at any time — so unlike `hand`, sending the actual cards isn't an info leak.
+    discardPile: SanitizedGameCard[];
     deckCount: number;
   };
   turn: number;
@@ -49,6 +55,8 @@ interface BattleStateResponse {
   winReason: string | null;
   /** Set while a multi-step trainer/ability effect (e.g. Ultra Ball) is awaiting the player's answer. */
   pendingChoice: PendingChoice | null;
+  /** Shared, board-wide — only one Stadium may be in play at a time and it affects both sides. */
+  activeStadium: { id: string; cardData: Card } | null;
 }
 
 interface BattleSession {
@@ -66,6 +74,46 @@ interface BattleSession {
 
 const sessions = new Map<string, BattleSession>();
 
+// Sessions are never removed on their own (no "leave"/"end" signal from the client — leaving
+// the page just resets local state) — without this sweep, every battle ever created stays in
+// memory for the server's entire lifetime. Stale ones (long-idle or long-finished) are swept
+// periodically rather than deleted the moment a game ends, so a client that re-fetches a
+// just-finished game's state still gets it. Also hard-capped by count (MAX_SESSIONS): the
+// time-based sweep alone wasn't enough — a sibling map in battles.ts, with the same
+// time-only cleanup, was the direct cause of a real "JavaScript heap out of memory" crash
+// after a long dev session of repeated testing well within the 2-hour TTL window.
+const SESSION_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
+const SESSION_SWEEP_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
+const MAX_SESSIONS = 50;
+setInterval(() => {
+  try {
+    const cutoff = Date.now() - SESSION_TTL_MS;
+    for (const [id, session] of sessions) {
+      if (session.createdAt < cutoff) sessions.delete(id);
+    }
+  } catch (err) {
+    // A timer callback runs outside any request's try/catch — an exception here would
+    // otherwise be a genuinely uncaught exception and crash the whole server process.
+    console.error('[humanBattle] session sweep failed:', err);
+  }
+}, SESSION_SWEEP_INTERVAL_MS).unref();
+
+/** Finds a real card by instance id across every zone visible to `viewerIdx` — their own hand/
+ * deck/discard/active/bench, plus the opponent's PUBLIC zones only (active/bench/discard; never
+ * their hand or deck, which stay hidden). Used to enrich pendingChoice options with real card art
+ * for the client — an option whose id doesn't resolve to anything here (e.g. an energy instance
+ * already attached to a Pokémon, or an abstract "move N counters" choice) just has no cardData,
+ * and the client falls back to a plain text option for it. */
+function findCardDataById(G: PtcgGameState, viewerIdx: 0 | 1, id: string): Card | undefined {
+  const me = G.players[viewerIdx];
+  const opp = G.players[(1 - viewerIdx) as 0 | 1];
+  const zones: (GameCard | null | undefined)[] = [
+    ...me.hand, ...me.deck, ...me.discardPile, me.active, ...me.bench,
+    opp.active, ...opp.bench, ...opp.discardPile,
+  ];
+  return zones.find((c): c is GameCard => !!c && c.id === id)?.cardData;
+}
+
 function sanitizeCard(gc: PtcgGameState['players'][0]['active']): SanitizedGameCard | null {
   if (!gc) return null;
   return {
@@ -74,6 +122,7 @@ function sanitizeCard(gc: PtcgGameState['players'][0]['active']): SanitizedGameC
     damage: gc.damage,
     statusConditions: gc.statusConditions,
     attachedEnergy: gc.attachedEnergy,
+    attachedTool: gc.attachedTool ? { id: gc.attachedTool.id, cardData: gc.attachedTool.cardData } : null,
   };
 }
 
@@ -100,6 +149,7 @@ function buildResponse(session: BattleSession): BattleStateResponse {
       handCount: opponent.hand.length,
       prizes: opponent.prizes.length,
       discardCount: opponent.discardPile.length,
+      discardPile: opponent.discardPile.map(c => sanitizeCard(c)).filter(Boolean) as SanitizedGameCard[],
       deckCount: opponent.deck.length,
     },
     turn: G.turn,
@@ -107,9 +157,18 @@ function buildResponse(session: BattleSession): BattleStateResponse {
     phase: G.phase,
     legalMoves: getLegalMoves(G, 0),
     turnLog: G.turnLog,
+    activeStadium: G.activeStadium ? { id: G.activeStadium.id, cardData: G.activeStadium.cardData } : null,
     winner: G.winner,
     winReason: G.winReason,
-    pendingChoice: G.pendingChoice && G.pendingChoice.player === 0 ? G.pendingChoice : null,
+    pendingChoice: enrichPendingChoice(G, G.pendingChoice && G.pendingChoice.player === 0 ? G.pendingChoice : null),
+  };
+}
+
+function enrichPendingChoice(G: PtcgGameState, choice: PendingChoice | null): PendingChoice | null {
+  if (!choice?.options) return choice;
+  return {
+    ...choice,
+    options: choice.options.map(o => ({ ...o, cardData: findCardDataById(G, choice.player, o.id) })),
   };
 }
 
@@ -139,6 +198,9 @@ function checkAndApplyWin(G: PtcgGameState): boolean {
 }
 
 function applyTurnBegin(G: PtcgGameState): void {
+  // If this player's Active was Knocked Out last turn, they choose their new one now — see
+  // promoteActiveIfNeeded's own comment for why this timing is always safe.
+  promoteActiveIfNeeded(G, G.currentPlayer as 0 | 1);
   if (G.turn > 1) processBetweenTurns(G);
   G.phase = G.turn === 1 ? 'main' : 'draw';
   processWakeUpCheck(G, G.currentPlayer as 0 | 1);
@@ -153,6 +215,7 @@ function applyTurnBegin(G: PtcgGameState): void {
   player.turnDamageBoosts = [];
   player.bonusPrizeNextKo = 0;
   player.incomingDamageReduction = [];
+  player.retreatedThisTurn = false;
 }
 
 function executeGameAction(G: PtcgGameState, action: { type: string; payload?: Record<string, any> }): void {
@@ -163,6 +226,7 @@ function executeGameAction(G: PtcgGameState, action: { type: string; payload?: R
   };
   const p = action.payload || {};
   switch (action.type) {
+    case 'choose_active': moves.chooseActive({ G, ctx }, p.cardId as string); break;
     case 'draw_card': moves.drawCard({ G, ctx }); break;
     case 'play_pokemon': moves.playPokemon({ G, ctx }, p.cardId as string, p.benchPosition as number); break;
     case 'evolve_pokemon': moves.evolvePokemon({ G, ctx }, p.cardId as string, p.targetId as string); break;
@@ -180,7 +244,14 @@ function executeGameAction(G: PtcgGameState, action: { type: string; payload?: R
 /** Run AI turns until it's the human's turn again or game ends */
 async function runAiTurns(session: BattleSession): Promise<void> {
   const G = session.gameState;
-  while (G.winner === null && G.currentPlayer === 1) {
+  // Belt-and-suspenders against an AI that keeps re-selecting the same still-legal move without
+  // ever advancing G.phase to 'end' (e.g. a validation gap letting a move stay legal after it's
+  // already been executed) — without this cap, the loop spins forever, pushing to G.turnLog on
+  // every iteration until the process OOMs. Mirrors the moveSafety cap in battles.ts, which never
+  // got applied here.
+  let aiMoveSafety = 0;
+  while (G.winner === null && G.currentPlayer === 1 && aiMoveSafety < 500) {
+    aiMoveSafety++;
     const ai = session.aiPlayer;
     const legalMoves = getLegalMoves(G, 1);
     if (legalMoves.length === 0) {
@@ -198,6 +269,10 @@ async function runAiTurns(session: BattleSession): Promise<void> {
       applyTurnBegin(G);
       if (checkAndApplyWin(G)) break;
     }
+  }
+  if (aiMoveSafety >= 500 && G.winner === null) {
+    G.winner = 0;
+    G.winReason = 'AI turn safety cap exceeded';
   }
 }
 
@@ -220,7 +295,7 @@ router.post('/', async (ctx) => {
     const allIds = [...new Set([...deckA, ...opponentDeck])];
     const cardDataRaw = await fetchCardsByIds(allIds);
     const cardData = cardDataRaw as unknown as Record<string, Card>;
-    const G = setup({ decks: [deckA, opponentDeck], cardData, seed: Date.now() });
+    const G = setup({ decks: [deckA, opponentDeck], cardData, seed: Date.now(), interactivePlayer: 0 });
     const session: BattleSession = {
       id: randomUUID(),
       gameState: G,
@@ -230,6 +305,12 @@ router.post('/', async (ctx) => {
       createdAt: Date.now(),
     };
     sessions.set(session.id, session);
+    // Map iteration order is insertion order, so the first key is the oldest.
+    while (sessions.size > MAX_SESSIONS) {
+      const oldest = sessions.keys().next().value;
+      if (oldest === undefined) break;
+      sessions.delete(oldest);
+    }
     // If AI goes first, run AI turns immediately
     if (G.currentPlayer === 1) {
       await runAiTurns(session);

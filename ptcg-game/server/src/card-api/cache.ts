@@ -29,14 +29,22 @@ function readCacheFile<T>(filePath: string): CacheData<T> | null {
   }
 }
 
-function writeCacheFile<T>(filePath: string, data: T): void {
+// Async on purpose: the card cache is ~10,000+ entries, and a synchronous write blocks the
+// ENTIRE Node event loop for its duration — every other in-flight request (including totally
+// unrelated ones, like fetching preset decks) stalls until it finishes. This is called several
+// times per background-enrichment pass (every 100 cards + a final save), and enrichment
+// re-runs after every `tsx watch` restart — so under active development this could fire
+// repeatedly in quick succession, each one freezing the whole server for however long the
+// synchronous stringify+write took. This was reproduced live: the server stopped responding to
+// ANY request, including ones with no card-data dependency at all, matching exactly that pattern.
+async function writeCacheFile<T>(filePath: string, data: T): Promise<void> {
   ensureDataDir();
   const cache: CacheData<T> = { timestamp: Date.now(), data };
-  fs.writeFileSync(filePath, JSON.stringify(cache, null, 2), 'utf-8');
+  await fs.promises.writeFile(filePath, JSON.stringify(cache, null, 2), 'utf-8');
 }
 
-export function saveCardCache(cards: MapCard[]): void {
-  writeCacheFile(CARDS_FILE, cards);
+export async function saveCardCache(cards: MapCard[]): Promise<void> {
+  await writeCacheFile(CARDS_FILE, cards);
 }
 
 export function loadCardCache(ignoreTTL = false): MapCard[] | null {
@@ -46,8 +54,8 @@ export function loadCardCache(ignoreTTL = false): MapCard[] | null {
   return null;
 }
 
-export function saveSetCache(sets: SetData[]): void {
-  writeCacheFile(SETS_FILE, sets);
+export async function saveSetCache(sets: SetData[]): Promise<void> {
+  await writeCacheFile(SETS_FILE, sets);
 }
 
 export function loadSetCache(ignoreTTL = false): SetData[] | null {

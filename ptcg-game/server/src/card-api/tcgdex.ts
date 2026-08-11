@@ -317,7 +317,7 @@ export async function fetchAllCards(lang = 'zh-tw'): Promise<MapCard[]> {
   console.log(`[tcgdex] Loaded ${cards.length}/${total} cards via category endpoints`);
 
   inMemoryCards = cards;
-  cache.saveCardCache(cards);
+  await cache.saveCardCache(cards);
   return cards;
 }
 
@@ -455,7 +455,7 @@ export async function fetchAllSets(lang = 'zh-tw'): Promise<SetData[]> {
     });
   }
   inMemorySets = sets;
-  cache.saveSetCache(sets);
+  await cache.saveSetCache(sets);
   return sets;
 }
 
@@ -535,7 +535,7 @@ export async function enrichAllCards(lang = 'zh-tw'): Promise<void> {
   }
   if (migrated > 0) {
     console.log(`[enrich] Migrated ${migrated} cards to local image URLs`);
-    cache.saveCardCache(cards);
+    await cache.saveCardCache(cards);
   }
 
   // Stale subtype values from prior mapping versions that need re-fetch
@@ -588,13 +588,13 @@ export async function enrichAllCards(lang = 'zh-tw'): Promise<void> {
 
     // Save to file cache every 100 cards
     if (enrichmentStats.done % 100 === 0) {
-      cache.saveCardCache(cards);
+      await cache.saveCardCache(cards);
       console.log(`[enrich] ${enrichmentStats.done}/${enrichmentStats.total} done (${enrichmentStats.failed} failed)`);
     }
   }
 
   // Final save
-  cache.saveCardCache(cards);
+  await cache.saveCardCache(cards);
   console.log(`[enrich] Completed: ${enrichmentStats.done} enriched, ${enrichmentStats.failed} failed`);
 }
 

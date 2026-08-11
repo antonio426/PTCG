@@ -6,6 +6,8 @@ import { setup } from '../game/setup';
 import { moves } from '../game/moves';
 import { getLegalMoves } from '../game/validation';
 import { fetchCardsByIds } from '../card-api/tcgdex';
+import { promoteActiveIfNeeded } from '../game/damage';
+import { processBetweenTurns, processWakeUpCheck } from '../game/statusConditions';
 
 interface BattleRecord {
   matchId: string; deckA: string[]; deckB: string[];
@@ -13,6 +15,26 @@ interface BattleRecord {
   logs: any[]; createdAt: number;
 }
 const battleStore = new Map<string, BattleRecord>();
+
+// Same unbounded-growth issue as humanBattle.ts's session map — these records hold full turn
+// logs (up to 10 games' worth per request) and are never removed on their own. Swept
+// periodically AND hard-capped by count (see MAX_RECORDS below) — the time-based sweep alone
+// isn't enough protection against heavy short-burst usage (e.g. repeated manual testing/
+// regression batches within the same couple of hours): this exact map, uncapped, was the
+// direct cause of a real "JavaScript heap out of memory" crash after a long dev session.
+const RECORD_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
+const RECORD_SWEEP_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
+const MAX_RECORDS = 20; // ~20 batches x up to 10 games' worth of logs each, worst case
+setInterval(() => {
+  try {
+    const cutoff = Date.now() - RECORD_TTL_MS;
+    for (const [id, record] of battleStore) {
+      if (record.createdAt < cutoff) battleStore.delete(id);
+    }
+  } catch (err) {
+    console.error('[battles] record sweep failed:', err);
+  }
+}, RECORD_SWEEP_INTERVAL_MS).unref();
 
 function checkWinner(G: PtcgGameState): number | null {
   for (let p = 0; p < 2; p++) {
@@ -35,7 +57,9 @@ function executeMove(G: PtcgGameState, move: LegalAction, player: number): void 
     case 'evolve_pokemon': moves.evolvePokemon({ G, ctx }, p.cardId as string, p.targetId as string); break;
     case 'attach_energy': moves.attachEnergy({ G, ctx }, p.cardId as string, p.targetId as string); break;
     case 'play_trainer': moves.playTrainer({ G, ctx }, p.cardId as string); break;
-    case 'retreat': moves.retreat({ G, ctx }, p.targetBenchPosition as number); break;
+    case 'use_ability': moves.useAbility({ G, ctx }, p.cardId as string); break;
+    case 'resolve_choice': moves.resolveChoice({ G, ctx }, p.selection as string[]); break;
+    case 'retreat': moves.retreat({ G, ctx }, p.targetBenchPosition as number, p.discardEnergyIds as string[]); break;
     case 'attack': moves.attack({ G, ctx }, p.attackIndex as number); break;
     case 'end_turn': moves.endTurn({ G, ctx }); break;
     case 'forfeit': moves.forfeit({ G, ctx }); break;
@@ -43,7 +67,14 @@ function executeMove(G: PtcgGameState, move: LegalAction, player: number): void 
 }
 
 function runTurnBegin(G: PtcgGameState): void {
+  // Mirrors humanBattle.ts's applyTurnBegin ordering — this engine had never wired up
+  // processBetweenTurns at all, so Poison/Burn damage-over-time, Paralysis clearing, and
+  // Sleep's wake-up check were all silently inert in AI-vs-AI (BattleLab) simulations: the
+  // status conditions could be applied but none of their between-turn effects ever fired.
+  promoteActiveIfNeeded(G, G.currentPlayer as 0 | 1);
+  if (G.turn > 1) processBetweenTurns(G);
   G.phase = G.turn === 1 ? 'main' : 'draw';
+  processWakeUpCheck(G, G.currentPlayer as 0 | 1);
   const player = G.players[G.currentPlayer as 0 | 1];
   if (player) {
     player.energyAttachedThisTurn = 0; player.basicPokemonPlayedThisTurn = 0;
@@ -53,6 +84,7 @@ function runTurnBegin(G: PtcgGameState): void {
     player.turnDamageBoosts = [];
     player.bonusPrizeNextKo = 0;
     player.incomingDamageReduction = [];
+    player.retreatedThisTurn = false;
   }
 }
 
@@ -74,7 +106,12 @@ async function simulateBattle(decks: string[][], seed: number): Promise<{ winner
   while (G.winner === null && safety < 200) {
     safety++;
     const player = G.currentPlayer as 0 | 1;
-    while (G.winner === null && G.phase !== 'end') {
+    let moveSafety = 0;
+    // Bounds a single turn's move count — belt-and-suspenders against any move type that
+    // `executeMove` doesn't recognize (a silent no-op would otherwise spin this loop forever,
+    // since `G.phase` never reaches 'end' without genuine progress).
+    while (G.winner === null && G.phase !== 'end' && moveSafety < 500) {
+      moveSafety++;
       const move = selectRandomMove(G, player);
       if (!move) break;
       executeMove(G, move, player);
@@ -114,6 +151,12 @@ router.post('/ai-vs-ai', async (ctx) => {
       createdAt: Date.now(),
     };
     battleStore.set(matchId, record);
+    // Map iteration order is insertion order, so the first key is the oldest.
+    while (battleStore.size > MAX_RECORDS) {
+      const oldest = battleStore.keys().next().value;
+      if (oldest === undefined) break;
+      battleStore.delete(oldest);
+    }
     ctx.body = { matchId, results, summary: { games: numGames, aggregated, overall_winner: record.winner, avg_turns: numGames > 0 ? totalTurns / numGames : 0 } };
   } catch (err: any) {
     ctx.status = 500;

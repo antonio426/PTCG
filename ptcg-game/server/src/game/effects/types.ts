@@ -55,7 +55,11 @@ export function allPokemon(G: PtcgGameState, idx: 0 | 1): GameCard[] {
  * registry key must normalize through this first, or lookups for those specific cards
  * silently fail — invisible in testing since the stray character doesn't print.
  */
-export function normalizeCardName(name: string): string {
+export function normalizeCardName(name: string | undefined | null): string {
+  // At least one real card (S5R-059 爆炸頭水牛) has an ability entry scraped with no `name` at
+  // all (just empty text) — guard here, at the one shared root, rather than at every call site
+  // that assumes a string.
+  if (!name) return '';
   // Zero-width chars are sometimes followed by a literal space before the real name
   // (e.g. "‌ 天空徑線"), so strip whitespace together with them, not separately —
   // otherwise the leftover leading space breaks equality against the clean registry key.

@@ -1,6 +1,7 @@
 import { EnergyType, GameCard } from '@ptcg/shared';
 import { PtcgGameState } from '../GameState';
 import { normalizeAbilityName } from './types';
+import { hasEvolvesFrom } from '../evolutionChains';
 
 /**
  * Most real Pokémon abilities are NOT "use once per turn" triggered effects (the shape
@@ -55,12 +56,12 @@ export function getPassiveDamageBonus(G: PtcgGameState, attackerIdx: 0 | 1, atta
     if (hasAbility(holder, '激動力量') && holder.id === attacker.id
       && teamOf(G, attackerIdx).some(c => c.cardData.name.startsWith('超級') && c.cardData.subtypes.includes('ex') && (c.cardData.types || []).includes('Darkness'))) bonus += 120;
     // 勝利聲援: +10 for own Fire-type evolved-stage Pokémon's attacks specifically.
-    if (hasAbility(holder, '勝利聲援') && (attacker.cardData.types || []).includes('Fire') && !!attacker.cardData.evolvesFrom) bonus += 10;
+    if (hasAbility(holder, '勝利聲援') && (attacker.cardData.types || []).includes('Fire') && hasEvolvesFrom(attacker.cardData)) bonus += 10;
     // 憤怒穴: self-only, +120 while holding 2+ damage counters.
     if (hasAbility(holder, '憤怒穴') && holder.id === attacker.id && attacker.damage >= 20) bonus += 120;
   }
   // 原始心得: +30 vs an opponent's evolved-stage Active Pokémon specifically.
-  if (teamOf(G, attackerIdx).some(c => hasAbility(c, '原始心得')) && !!defender.cardData.evolvesFrom) bonus += 30;
+  if (teamOf(G, attackerIdx).some(c => hasAbility(c, '原始心得')) && hasEvolvesFrom(defender.cardData)) bonus += 30;
   // 複眼: +50 vs an opponent Active that itself holds any ability.
   if (teamOf(G, attackerIdx).some(c => hasAbility(c, '複眼')) && defender.cardData.abilities?.some(a => a.text)) bonus += 50;
   // 大晴天: +20 for own Grass or Fire attackers.
@@ -344,7 +345,7 @@ export function getPassiveRetreatCostIncrease(G: PtcgGameState, card: GameCard):
   const oppIdx = (1 - ownerIndexOf(G, card)) as 0 | 1;
   let increase = teamOf(G, oppIdx).some(c => hasAbility(c, '咒縛火焰')) ? 1 : 0;
   // 大網: +1, only for evolved-stage opponent Active Pokémon (anything with evolvesFrom set).
-  if (!!card.cardData.evolvesFrom && teamOf(G, oppIdx).some(c => hasAbility(c, '大網'))) increase += 1;
+  if (hasEvolvesFrom(card.cardData) && teamOf(G, oppIdx).some(c => hasAbility(c, '大網'))) increase += 1;
   return increase;
 }
 
@@ -499,9 +500,12 @@ export function getPassiveAttackCostReduction(G: PtcgGameState, ownerIdx: 0 | 1,
 }
 
 /** 虹色DNA: 伊布ex lets any "Eevee"-evolution ex be played from hand directly onto it, as if it evolved from 伊布. */
-export function canEvolveViaPassive(target: GameCard, evolutionCardData: GameCard['cardData']): boolean {
+/** `effectiveEvolvesFrom` is the evolution card's real `evolvesFrom` if TCGdex provided one, or
+ * the species-chain-inferred fallback otherwise (see validation.ts's canEvolve) — never read
+ * `evolutionCardData.evolvesFrom` directly here, since TCGdex's zh-tw locale never populates it. */
+export function canEvolveViaPassive(target: GameCard, effectiveEvolvesFrom: string | undefined): boolean {
   if (!hasAbility(target, '虹色DNA')) return false;
-  return evolutionCardData.evolvesFrom === '伊布';
+  return effectiveEvolvesFrom === '伊布';
 }
 
 /** 放逐區障礙: if `defenderIdx`'s side has this ability in play, the attacking side's prizes are exiled, not drawn to hand. */
