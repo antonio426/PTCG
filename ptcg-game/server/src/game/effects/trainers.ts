@@ -1,6 +1,6 @@
 import { GameCard } from '@ptcg/shared';
 import { EffectContext, EffectHandler, EffectStep, allPokemon, normalizeCardName, opponent, player, shuffleDeck } from './types';
-import { applyStatusCondition, discardFromHand, drawCards, drawUpTo, flipCoin, hasNoRuleBox, healDamage, moveDiscardCardToHand } from './primitives';
+import { applyStatusCondition, discardAttachedEnergy, discardFromHand, drawCards, drawUpTo, flipCoin, hasNoRuleBox, healDamage, moveDiscardCardToHand } from './primitives';
 import { clearStatusConditionsOnLeaveActive } from '../statusConditions';
 import { isEnergyDiscardProtected } from './passiveAbilities';
 import { handleKo } from '../damage';
@@ -513,7 +513,7 @@ const crushingHammer: EffectHandler = {
     for (const c of [opp.active, ...opp.bench]) {
       if (!c) continue;
       const i = c.attachedEnergy.findIndex(e => e.id === selection[0]);
-      if (i >= 0) { c.attachedEnergy.splice(i, 1); break; }
+      if (i >= 0) { discardAttachedEnergy(ctx.G, c.owner, c.attachedEnergy.splice(i, 1)[0]); break; }
     }
     return 'done';
   },
@@ -1446,7 +1446,7 @@ const highTempBurner: EffectHandler = {
         return 'done';
       }
       const i = c.attachedEnergy.findIndex(e => e.id === targetId);
-      if (i >= 0) { c.attachedEnergy.splice(i, 1); return 'done'; }
+      if (i >= 0) { discardAttachedEnergy(ctx.G, c.owner, c.attachedEnergy.splice(i, 1)[0]); return 'done'; }
     }
     return 'done';
   },
@@ -1881,7 +1881,7 @@ const goodPotion: EffectHandler = {
     const target = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === context.targetId);
     if (target) {
       const i = target.attachedEnergy.findIndex(e => e.id === selection[0]);
-      if (i >= 0) target.attachedEnergy.splice(i, 1);
+      if (i >= 0) discardAttachedEnergy(ctx.G, ctx.playerIndex, target.attachedEnergy.splice(i, 1)[0]);
     }
     return 'done';
   },
@@ -2038,7 +2038,7 @@ const scaryBrother: EffectHandler = {
     const target = opp.active?.id === selection[0] ? opp.active : opp.bench.find(c => c?.id === selection[0]);
     if (target) {
       if (target.attachedTool) { opp.discardPile.push(target.attachedTool); target.attachedTool = null; }
-      if (target.attachedEnergy.length > 0) target.attachedEnergy.splice(0, 1);
+      if (target.attachedEnergy.length > 0) discardAttachedEnergy(ctx.G, target.owner, target.attachedEnergy.splice(0, 1)[0]);
     }
     return 'done';
   },
@@ -2232,7 +2232,7 @@ const laidBackTailGrass: EffectHandler = {
     for (const c of [opp.active, ...opp.bench]) {
       if (!c) continue;
       const i = c.attachedEnergy.findIndex(e => e.id === selection[0]);
-      if (i >= 0) { c.attachedEnergy.splice(i, 1); break; }
+      if (i >= 0) { discardAttachedEnergy(ctx.G, c.owner, c.attachedEnergy.splice(i, 1)[0]); break; }
     }
     return 'done';
   },
@@ -2321,7 +2321,7 @@ const megatonHairDryer: EffectHandler = {
     for (const c of [opp.active, ...opp.bench]) {
       if (!c) continue;
       if (c.attachedTool) { opp.discardPile.push(c.attachedTool); c.attachedTool = null; }
-      c.attachedEnergy = [];
+      for (const energy of c.attachedEnergy.splice(0)) discardAttachedEnergy(ctx.G, c.owner, energy);
     }
     if (ctx.G.activeStadium) {
       player(ctx.G, ctx.G.activeStadium.owner).discardPile.push(ctx.G.activeStadium);

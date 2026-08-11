@@ -31,6 +31,12 @@ export interface TimedCardEffect {
 export interface AttachedEnergy {
   id: string;
   type: string;
+  /** The original card, preserved through the hand->attached transition so effects that later
+   * discard this energy (retreat cost, attack-effect energy discard) can push a real card into
+   * the discard pile instead of the energy silently vanishing from the game entirely. Optional
+   * only for backward compatibility with any in-memory game state from before this field existed
+   * — never omit it when constructing a new AttachedEnergy. */
+  cardData?: Card;
 }
 
 export type StatusCondition = 'Asleep' | 'Burned' | 'Confused' | 'Paralyzed' | 'Poisoned';

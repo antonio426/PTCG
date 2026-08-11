@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef, type ReactNode, type KeyboardEvent } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, type ReactNode, type KeyboardEvent, type SyntheticEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { useDeckStore } from '../stores/deckStore';
 import { useCardStore } from '../stores/cardStore';
@@ -29,6 +29,28 @@ function EnergyIcon({ type, size = 'sm' }: { type: string; size?: 'sm' | 'md' })
       {ENERGY_LABELS[type] || '?'}
     </span>
   );
+}
+
+/* ====================================================== */
+/*  Card art fallback — some cards in the dataset have no artwork hosted   */
+/*  on TCGdex at all (confirmed live: the CDN 404s for both size variants  */
+/*  and the card's own detail response has no `image` field), not a URL-  */
+/*  construction bug on our side. Swap to a placeholder instead of        */
+/*  leaving the browser's broken-image icon on screen.                    */
+/* ====================================================== */
+
+const CARD_IMAGE_FALLBACK = 'data:image/svg+xml,' + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 140">' +
+  '<rect width="100" height="140" rx="8" fill="#1e293b"/>' +
+  '<rect x="4" y="4" width="92" height="132" rx="6" fill="none" stroke="#475569" stroke-width="2" stroke-dasharray="5 5"/>' +
+  '<text x="50" y="80" font-size="40" fill="#64748b" text-anchor="middle" font-family="sans-serif">?</text>' +
+  '</svg>'
+);
+
+function handleCardImgError(e: SyntheticEvent<HTMLImageElement>) {
+  const img = e.currentTarget;
+  img.onerror = null; // avoid a loop if the fallback data URI itself somehow fails to render
+  img.src = CARD_IMAGE_FALLBACK;
 }
 
 /* ====================================================== */
@@ -109,6 +131,7 @@ function CardDetail({ card }: { card: Card }) {
         <img
           src={card.images.large || card.images.small}
           alt={card.name}
+          onError={handleCardImgError}
           className="w-20 h-auto rounded-lg object-contain bg-slate-800 flex-shrink-0 border border-slate-700"
         />
         <div className="min-w-0 flex-1">
@@ -366,7 +389,7 @@ function PendingChoicePicker({
                 >
                   {item.cardData ? (
                     <div className={`w-16 h-[4.5rem] rounded-md border-2 overflow-hidden bg-slate-900 transition-colors ${isChecked ? 'border-emerald-400' : 'border-slate-600'}`}>
-                      <img src={item.cardData.images.small} alt={item.label} className="w-full h-full object-contain" />
+                      <img src={item.cardData.images.small} alt={item.label} onError={handleCardImgError} className="w-full h-full object-contain" />
                     </div>
                   ) : (
                     <div className={`px-3 py-2 rounded-md border-2 text-xs text-slate-100 transition-colors ${isChecked ? 'border-emerald-400 bg-emerald-900/30' : 'border-slate-600'}`}>
@@ -674,7 +697,7 @@ export default function Battle() {
       >
         <HoverPreview card={cd} placement={previewPlacement}>
           <div className={`${wCls} ${imgH} bg-slate-900 border-2 border-slate-600/80 rounded-xl overflow-hidden hover:border-emerald-400 transition-colors shadow-lg shadow-black/40`}>
-            <img src={cd.images.small} alt={cd.name} className="w-full h-full object-contain" />
+            <img src={cd.images.small} alt={cd.name} onError={handleCardImgError} className="w-full h-full object-contain" />
           </div>
         </HoverPreview>
         {showHp && hp > 0 && (
@@ -699,7 +722,7 @@ export default function Battle() {
             {card.attachedTool && (
               <HoverPreview card={card.attachedTool.cardData} placement={previewPlacement}>
                 <span className="animate-card-enter inline-flex w-4 h-4 rounded overflow-hidden border border-amber-400/70 shadow-[0_0_4px_rgba(251,191,36,0.5)]">
-                  <img src={card.attachedTool.cardData.images.small} alt={card.attachedTool.cardData.name} className="w-full h-full object-cover" />
+                  <img src={card.attachedTool.cardData.images.small} alt={card.attachedTool.cardData.name} onError={handleCardImgError} className="w-full h-full object-cover" />
                 </span>
               </HoverPreview>
             )}
@@ -762,7 +785,7 @@ export default function Battle() {
             <div className="flex flex-wrap gap-2">
               {cards.map((c, i) => (
                 <HoverPreview key={c.id ?? i} card={c.cardData} placement="above">
-                  <img src={c.cardData.images.small} alt={c.cardData.name}
+                  <img src={c.cardData.images.small} alt={c.cardData.name} onError={handleCardImgError}
                     className="w-16 h-[4.5rem] rounded-lg object-contain bg-slate-900 border border-slate-700 hover:ring-2 hover:ring-emerald-400 hover:border-emerald-400 transition-all" />
                 </HoverPreview>
               ))}
@@ -1011,7 +1034,7 @@ export default function Battle() {
           <div className="relative flex-shrink-0 flex items-center justify-center gap-2 px-3 py-1 bg-amber-950/30 border-b border-amber-700/30">
             <HoverPreview card={bs.activeStadium.cardData} placement="below">
               <div className="flex items-center gap-1.5 cursor-default">
-                <img src={bs.activeStadium.cardData.images.small} alt={bs.activeStadium.cardData.name} className="w-4 h-5 object-contain rounded-sm" />
+                <img src={bs.activeStadium.cardData.images.small} alt={bs.activeStadium.cardData.name} onError={handleCardImgError} className="w-4 h-5 object-contain rounded-sm" />
                 <IconBuilding className="w-3.5 h-3.5 text-amber-400" />
                 <span className="text-[11px] text-amber-300 font-medium">{bs.activeStadium.cardData.name}</span>
               </div>
@@ -1159,7 +1182,7 @@ export default function Battle() {
                           className="flex flex-col items-center gap-1 group animate-card-enter disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           <div className="w-20 h-[6.75rem] bg-slate-900 border-2 border-emerald-600/60 rounded-lg overflow-hidden group-hover:border-emerald-400 group-hover:-translate-y-1 transition-all shadow-lg shadow-emerald-950/50">
-                            <img src={cardData.images.small} alt={cardData.name} className="w-full h-full object-contain" />
+                            <img src={cardData.images.small} alt={cardData.name} onError={handleCardImgError} className="w-full h-full object-contain" />
                           </div>
                           <span className="text-xs text-slate-200 font-medium max-w-20 truncate">{cardData.name}</span>
                         </button>
@@ -1258,6 +1281,7 @@ export default function Battle() {
                                 <img
                                   src={hca.cardData.images.small}
                                   alt={hca.cardData.name}
+                                  onError={handleCardImgError}
                                   className={`w-14 h-[4.5rem] rounded-lg transition-all object-contain border-2
                                     ${isTargetingSource ? 'border-sky-400 -translate-y-1 shadow-lg shadow-sky-500/30' : 'border-slate-600 hover:border-slate-400'}
                                     ${loading ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
@@ -1291,7 +1315,7 @@ export default function Battle() {
                               disabled={loading}
                               className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-700 text-white rounded-lg text-xs font-medium hover:bg-indigo-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             >
-                              {cardData && <img src={cardData.images.small} alt="" className="w-5 h-7 object-contain rounded-sm" />}
+                              {cardData && <img src={cardData.images.small} alt="" onError={handleCardImgError} className="w-5 h-7 object-contain rounded-sm" />}
                               {m.description}
                             </button>
                           );
@@ -1315,7 +1339,7 @@ export default function Battle() {
                               disabled={loading}
                               className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-700 text-white rounded-lg text-xs font-medium hover:bg-emerald-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             >
-                              {cardData && <img src={cardData.images.small} alt="" className="w-5 h-7 object-contain rounded-sm" />}
+                              {cardData && <img src={cardData.images.small} alt="" onError={handleCardImgError} className="w-5 h-7 object-contain rounded-sm" />}
                               {m.description}
                             </button>
                           );
@@ -1429,7 +1453,7 @@ export default function Battle() {
                       tabIndex={loading ? -1 : 0}
                       onKeyDown={keyActivate(() => (handTargeting ? handleTargetClick(card.id) : handleCardClick(card.id)))}
                     >
-                      <img src={card.images.small} alt={card.name} className="w-full h-full object-contain" />
+                      <img src={card.images.small} alt={card.name} onError={handleCardImgError} className="w-full h-full object-contain" />
                     </div>
                   </HoverPreview>
                 );

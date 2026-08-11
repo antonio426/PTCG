@@ -1,7 +1,7 @@
 import { EnergyType, GameCard } from '@ptcg/shared';
 import { EffectContext, EffectHandler, EffectStep, allPokemon, findOwnPokemon, opponent, player } from './types';
 import { handleKo } from '../damage';
-import { applyStatusCondition, discardFromHand, drawCards, drawUpTo, flipCoin, flipCoins, moveDeckCardToBench, moveDeckCardToHand, shuffleDeck } from './primitives';
+import { applyStatusCondition, discardAttachedEnergy, discardFromHand, drawCards, drawUpTo, flipCoin, flipCoins, moveDeckCardToBench, moveDeckCardToHand, shuffleDeck } from './primitives';
 import { clearStatusConditionsOnLeaveActive } from '../statusConditions';
 import { hasEvolvesFrom, evolvesFromMatches } from '../evolutionChains';
 
@@ -285,7 +285,7 @@ const flashDraw: EffectHandler = {
     const source = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
     if (source) {
       const i = source.attachedEnergy.findIndex(e => e.id === selection[0]);
-      if (i >= 0) source.attachedEnergy.splice(i, 1);
+      if (i >= 0) discardAttachedEnergy(ctx.G, ctx.playerIndex, source.attachedEnergy.splice(i, 1)[0]);
     }
     drawUpTo(ctx.G, ctx.playerIndex, 6);
     return 'done';
@@ -455,8 +455,8 @@ const teleporter: EffectHandler = {
     const p = player(ctx.G, ctx.playerIndex);
     if (p.active?.id !== ctx.sourceCardId) return 'done';
     const self = p.active;
-    self.attachedEnergy = [];
-    self.attachedTool = null;
+    for (const energy of self.attachedEnergy.splice(0)) discardAttachedEnergy(ctx.G, ctx.playerIndex, energy);
+    if (self.attachedTool) { p.discardPile.push(self.attachedTool); self.attachedTool = null; }
     self.damage = 0;
     self.statusConditions = [];
     p.deck.push(self);
@@ -878,7 +878,7 @@ const bellyfulTime: EffectHandler = {
     for (const c of allPokemon(ctx.G, ctx.playerIndex)) {
       if (!hasEvolvesFrom(c.cardData)) continue;
       c.damage = 0;
-      c.attachedEnergy = [];
+      for (const energy of c.attachedEnergy.splice(0)) discardAttachedEnergy(ctx.G, ctx.playerIndex, energy);
     }
     return 'done';
   },
@@ -976,8 +976,8 @@ const escapeDraw: EffectHandler = {
     if (p.active?.id !== ctx.sourceCardId) return 'done';
     drawCards(ctx.G, ctx.playerIndex, 3);
     const self = p.active;
-    self.attachedEnergy = [];
-    self.attachedTool = null;
+    for (const energy of self.attachedEnergy.splice(0)) discardAttachedEnergy(ctx.G, ctx.playerIndex, energy);
+    if (self.attachedTool) { p.discardPile.push(self.attachedTool); self.attachedTool = null; }
     self.damage = 0;
     self.statusConditions = [];
     p.deck.push(self);
@@ -1151,7 +1151,7 @@ const gentleHealing: EffectHandler = {
     const p = player(ctx.G, ctx.playerIndex);
     if (p.active && (p.active.cardData.types || []).includes('Grass')) {
       p.active.damage = 0;
-      p.active.attachedEnergy = [];
+      for (const energy of p.active.attachedEnergy.splice(0)) discardAttachedEnergy(ctx.G, ctx.playerIndex, energy);
     }
     return 'done';
   },
@@ -1221,7 +1221,7 @@ const heavyStepJump: EffectHandler = {
     if (p.deck.length > 0) p.discardPile.push(p.deck.shift()!);
     p.bench[benchIdx] = null;
     if (self.attachedTool) p.discardPile.push(self.attachedTool);
-    self.attachedEnergy = [];
+    for (const energy of self.attachedEnergy.splice(0)) discardAttachedEnergy(ctx.G, ctx.playerIndex, energy);
     self.attachedTool = null;
     self.damage = 0;
     self.statusConditions = [];
@@ -1834,7 +1834,7 @@ const wreckingHeadbutt: EffectHandler = {
     const opp = opponent(ctx.G, ctx.playerIndex);
     if (opp.active) {
       const i = opp.active.attachedEnergy.findIndex(e => e.id === selection[0]);
-      if (i >= 0) opp.active.attachedEnergy.splice(i, 1);
+      if (i >= 0) discardAttachedEnergy(ctx.G, opp.active.owner, opp.active.attachedEnergy.splice(i, 1)[0]);
     }
     return 'done';
   },
@@ -2034,7 +2034,7 @@ const timelyHammer: EffectHandler = {
     const opp = opponent(ctx.G, ctx.playerIndex);
     if (opp.active) {
       const i = opp.active.attachedEnergy.findIndex(e => e.id === selection[0]);
-      if (i >= 0) opp.active.attachedEnergy.splice(i, 1);
+      if (i >= 0) discardAttachedEnergy(ctx.G, opp.active.owner, opp.active.attachedEnergy.splice(i, 1)[0]);
     }
     return 'done';
   },
@@ -2090,7 +2090,7 @@ const gentleBreeze: EffectHandler = {
     const opp = opponent(ctx.G, ctx.playerIndex);
     if (opp.active) {
       const i = opp.active.attachedEnergy.findIndex(e => e.id === selection[0]);
-      if (i >= 0) opp.active.attachedEnergy.splice(i, 1);
+      if (i >= 0) discardAttachedEnergy(ctx.G, opp.active.owner, opp.active.attachedEnergy.splice(i, 1)[0]);
     }
     return 'done';
   },

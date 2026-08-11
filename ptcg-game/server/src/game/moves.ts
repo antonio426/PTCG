@@ -6,7 +6,7 @@ import { calculateDamage, effectiveMaxHp, handleKo, prizesForKo } from './damage
 import { getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasCoinFlipAttackMissDebuff, hasPassiveAbilityNamed, isRetreatBlockedByOpponent, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat, shouldDiscardAttackerEnergy } from './effects/passiveAbilities';
 import { isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
-import { applyStatusCondition, drawCards, drawUpTo, shuffleDeck } from './effects/primitives';
+import { applyStatusCondition, discardAttachedEnergy, drawCards, drawUpTo, shuffleDeck } from './effects/primitives';
 import { resolveGenericAttackEffect } from './effects/genericAttacks';
 import { inferEvolvesFromSpecies, evolvesFromMatches } from './evolutionChains';
 import {
@@ -51,10 +51,12 @@ function performRetreat(G: PtcgGameState, targetBenchPosition: number | undefine
   if (discardEnergyIds && discardEnergyIds.length > 0) {
     for (const id of discardEnergyIds.slice(0, retreatCost)) {
       const idx = activePokemon.attachedEnergy.findIndex(e => e.id === id);
-      if (idx >= 0) activePokemon.attachedEnergy.splice(idx, 1);
+      if (idx >= 0) discardAttachedEnergy(G, G.currentPlayer as 0 | 1, activePokemon.attachedEnergy.splice(idx, 1)[0]);
     }
   } else {
-    activePokemon.attachedEnergy.splice(0, retreatCost);
+    for (const energy of activePokemon.attachedEnergy.splice(0, retreatCost)) {
+      discardAttachedEnergy(G, G.currentPlayer as 0 | 1, energy);
+    }
   }
 
   let benchIdx = targetBenchPosition ?? -1;
@@ -221,6 +223,7 @@ export const moves = {
     target.attachedEnergy.push({
       id: energyCard.id,
       type: energyType,
+      cardData: energyCard.cardData,
     });
     onEnergyAttachedFromHand(G, G.currentPlayer as 0 | 1, target);
 
@@ -624,7 +627,8 @@ export const moves = {
       }
       // 甲殼刺: being hit while Active discards 1 Energy attached to the attacker.
       if (damage > 0 && shouldDiscardAttackerEnergy(defender) && attacker.attachedEnergy.length > 0) {
-        attacker.attachedEnergy.splice(Math.floor(Math.random() * attacker.attachedEnergy.length), 1);
+        const removed = attacker.attachedEnergy.splice(Math.floor(Math.random() * attacker.attachedEnergy.length), 1)[0];
+        discardAttachedEnergy(G, attacker.owner, removed);
       }
       // 炸裂針: only fires if this hit is what KOs the holder.
       if (damage > 0) {
@@ -691,15 +695,17 @@ export const moves = {
           if (selfHp > 0 && attacker.damage >= selfHp) handleKo(G, G.currentPlayer, attacker.id);
         }
         if (genericOutcome.discardAllSelfEnergy) {
-          attacker.attachedEnergy = [];
+          for (const energy of attacker.attachedEnergy.splice(0)) discardAttachedEnergy(G, attacker.owner, energy);
         } else if (genericOutcome.discardSelfEnergyCount) {
           for (let i = 0; i < genericOutcome.discardSelfEnergyCount && attacker.attachedEnergy.length > 0; i++) {
-            attacker.attachedEnergy.splice(Math.floor(Math.random() * attacker.attachedEnergy.length), 1);
+            const removed = attacker.attachedEnergy.splice(Math.floor(Math.random() * attacker.attachedEnergy.length), 1)[0];
+            discardAttachedEnergy(G, attacker.owner, removed);
           }
         }
         if (damage > 0 && genericOutcome.discardOpponentEnergyCount) {
           for (let i = 0; i < genericOutcome.discardOpponentEnergyCount && defender.attachedEnergy.length > 0; i++) {
-            defender.attachedEnergy.splice(Math.floor(Math.random() * defender.attachedEnergy.length), 1);
+            const removed = defender.attachedEnergy.splice(Math.floor(Math.random() * defender.attachedEnergy.length), 1)[0];
+            discardAttachedEnergy(G, defender.owner, removed);
           }
         }
         if (genericOutcome.discardOpponentTool && defender.attachedTool) {

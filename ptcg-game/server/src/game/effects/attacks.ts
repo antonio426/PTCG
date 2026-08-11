@@ -1,6 +1,7 @@
 import { GameCard } from '@ptcg/shared';
 import { EffectContext, EffectHandler, EffectStep, opponent, player } from './types';
 import { applyWeaknessResistance, handleKo } from '../damage';
+import { discardAttachedEnergy } from './primitives';
 
 /**
  * Attacks whose text does something beyond flat weakness/resistance damage
@@ -73,7 +74,7 @@ const floralRay: EffectHandler = {
     if (!attacker) return 'done';
     for (const id of selection) {
       const i = attacker.attachedEnergy.findIndex(e => e.id === id);
-      if (i >= 0) attacker.attachedEnergy.splice(i, 1);
+      if (i >= 0) discardAttachedEnergy(ctx.G, ctx.playerIndex, attacker.attachedEnergy.splice(i, 1)[0]);
     }
     damageDefenderActive(ctx, selection.length * 120);
     return 'done';

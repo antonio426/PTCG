@@ -143,7 +143,13 @@ export function handleKo(G: PtcgGameState, koPlayerIndex: number, koCardId: stri
   const retireCard = (c: GameCard) => {
     if (c.attachedTool) koPlayer.discardPile.push(c.attachedTool);
     if (returnsToHand(c)) {
-      c.attachedEnergy = [];
+      // Inlined rather than imported from effects/primitives.ts — that file imports handleKo
+      // from here, so importing back would be circular.
+      for (const energy of c.attachedEnergy.splice(0)) {
+        if (energy.cardData) {
+          koPlayer.discardPile.push({ id: energy.id, cardData: energy.cardData, owner: koPlayerIndex as 0 | 1, damage: 0, statusConditions: [], attachedEnergy: [] });
+        }
+      }
       c.attachedTool = null;
       c.damage = 0;
       c.statusConditions = [];

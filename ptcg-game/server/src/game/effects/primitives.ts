@@ -17,6 +17,19 @@ export function drawUpTo(G: PtcgGameState, idx: 0 | 1, target: number): void {
   while (p.hand.length < target && p.deck.length > 0) p.hand.push(p.deck.pop()!);
 }
 
+/** Moves a discarded AttachedEnergy into its owner's discard pile as a real card. Energy removed
+ * from a Pokémon (retreat cost, attack-effect energy discard, etc.) must end up in the discard
+ * pile per real rules — it doesn't just vanish, and effects like 奇跡修正檔 search the discard
+ * pile for exactly this. No-ops if `cardData` wasn't preserved on the attachment (only possible
+ * for energy attached before this field existed), rather than pushing a malformed entry that
+ * would crash rendering. */
+export function discardAttachedEnergy(G: PtcgGameState, ownerIdx: 0 | 1, energy: { id: string; cardData?: GameCard['cardData'] }): void {
+  if (!energy.cardData) return;
+  player(G, ownerIdx).discardPile.push({
+    id: energy.id, cardData: energy.cardData, owner: ownerIdx, damage: 0, statusConditions: [], attachedEnergy: [],
+  });
+}
+
 export function discardFromHand(G: PtcgGameState, idx: 0 | 1, cardIds: string[]): GameCard[] {
   const p = player(G, idx);
   const discarded: GameCard[] = [];
