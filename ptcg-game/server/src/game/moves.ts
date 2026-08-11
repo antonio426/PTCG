@@ -609,6 +609,60 @@ export const moves = {
         }
         genericOutcome.baseDamage = matches * amount;
       }
+      // The real card leaves "how many/which" up to the player; auto-maximize (discard every
+      // matching Energy available, up to any printed cap) rather than opening a PendingChoice —
+      // same documented simplification as the rest of this file's choice-requiring templates.
+      if (genericOutcome?.selfEnergyDiscardScaledDamage) {
+        const { type, max, amount } = genericOutcome.selfEnergyDiscardScaledDamage;
+        const eligible = attacker.attachedEnergy.filter(e => !type || e.type === type);
+        const toDiscard = eligible.slice(0, max ?? eligible.length);
+        for (const e of toDiscard) {
+          const idx = attacker.attachedEnergy.findIndex(x => x.id === e.id);
+          if (idx >= 0) discardAttachedEnergy(G, attacker.owner, attacker.attachedEnergy.splice(idx, 1)[0]);
+        }
+        genericOutcome.baseDamage = toDiscard.length * amount;
+      }
+      if (genericOutcome?.ownFieldEnergyDiscardScaledDamage) {
+        const { type, max, amount } = genericOutcome.ownFieldEnergyDiscardScaledDamage;
+        let remaining = max ?? Infinity;
+        let discarded = 0;
+        for (const c of [player.active, ...player.bench]) {
+          if (!c || remaining <= 0) continue;
+          const eligible = c.attachedEnergy.filter(e => !type || e.type === type).slice(0, remaining);
+          for (const e of eligible) {
+            const idx = c.attachedEnergy.findIndex(x => x.id === e.id);
+            if (idx >= 0) { discardAttachedEnergy(G, c.owner, c.attachedEnergy.splice(idx, 1)[0]); discarded++; remaining--; }
+          }
+        }
+        genericOutcome.baseDamage = discarded * genericOutcome.ownFieldEnergyDiscardScaledDamage.amount;
+      }
+      if (genericOutcome?.handDiscardScaledDamage) {
+        const { filter, max, amount } = genericOutcome.handDiscardScaledDamage;
+        const matchesFilter = (c: GameCard) => {
+          if (filter.kind === 'anyEnergy') return c.cardData.supertype === 'Energy';
+          if (filter.kind === 'energyType') return c.cardData.supertype === 'Energy' && (c.cardData.types || []).includes(filter.type as any);
+          return c.cardData.name.includes(filter.name);
+        };
+        const eligible = player.hand.filter(matchesFilter);
+        const toDiscard = eligible.slice(0, max ?? eligible.length);
+        for (const c of toDiscard) {
+          const idx = player.hand.findIndex(x => x.id === c.id);
+          if (idx >= 0) player.discardPile.push(player.hand.splice(idx, 1)[0]);
+        }
+        genericOutcome.baseDamage = toDiscard.length * amount;
+      }
+      if (genericOutcome?.selfRevealTopMatchDiscardRestReshuffle) {
+        const { revealCount, name, amount } = genericOutcome.selfRevealTopMatchDiscardRestReshuffle;
+        const revealed: typeof player.deck = [];
+        for (let i = 0; i < revealCount && player.deck.length > 0; i++) revealed.push(player.deck.pop()!);
+        let matches = 0;
+        for (const c of revealed) {
+          if (c.cardData.name.includes(name)) { matches++; player.discardPile.push(c); }
+          else player.deck.push(c);
+        }
+        shuffleDeck(player.deck);
+        genericOutcome.baseDamage = matches * amount;
+      }
       const effectiveAttack = genericOutcome ? { ...attack, damage: String(genericOutcome.baseDamage) } : attack;
       const damage = calculateDamage(G, G.currentPlayer as 0 | 1, attacker, effectiveAttack, defender, genericOutcome?.ignoreResistance, genericOutcome?.ignoreWeakness);
       const defenderWasFullHp = defender.damage === 0;

@@ -147,6 +147,26 @@ export interface GenericAttackOutcome {
   splashDamageAfterSwitch?: number;
   /** Search the discard pile for 1 Energy card of any type, attach to self. */
   discardPileSearchAnyEnergyToSelf?: boolean;
+
+  /** Discard Energy attached to the attacker (optionally filtered to one printed type, optionally
+   * capped) for a damage bonus of count x amount. The real card leaves "how many" up to the
+   * player; this generic layer auto-maximizes (discards as many as available up to the cap),
+   * matching the file's documented choice-auto-pick simplification. */
+  selfEnergyDiscardScaledDamage?: { type?: string; max?: number; amount: number };
+  /** Same, but scanning every one of the attacker's own Pokémon in play (active+bench), not just
+   * the attacker itself. */
+  ownFieldEnergyDiscardScaledDamage?: { type?: string; max?: number; amount: number };
+  /** Discard up to `max` cards from the attacker's own HAND matching `filter`, for a damage bonus
+   * of count x amount (auto-maximized, same simplification as above). */
+  handDiscardScaledDamage?: {
+    filter: { kind: 'anyEnergy' } | { kind: 'energyType'; type: string } | { kind: 'nameIncludes'; name: string };
+    max?: number;
+    amount: number;
+  };
+  /** Reveal the top `revealCount` of the attacker's own deck; damage = (how many match this name
+   * substring) x amount; only the MATCHING cards are discarded, the rest are shuffled back into
+   * the deck (unlike selfMillFamilyScaledDamage, which discards the whole revealed batch). */
+  selfRevealTopMatchDiscardRestReshuffle?: { revealCount: number; name: string; amount: number };
 }
 
 export interface AttackBoardContext {
@@ -483,6 +503,40 @@ export function resolveGenericAttackEffect(text: string, damageField: string, bo
   if (/^將這隻寶可夢身上附加的能量卡全部丟棄。$/.test(t)) {
     return { baseDamage: parseBaseNumber(damageField), discardAllSelfEnergy: true };
   }
+
+  // 將最多N張這隻寶可夢身上附加的能量卡丟棄，造成其張數×M點傷害。(self, any type, capped)
+  m = t.match(/^將最多(\d+)張這隻寶可夢身上附加的能量卡丟棄，造成其張數×(\d+)點傷害。$/);
+  if (m) return { baseDamage: 0, selfEnergyDiscardScaledDamage: { max: parseInt(m[1], 10), amount: parseInt(m[2], 10) } };
+
+  // 將這隻寶可夢身上附加的【X】能量卡全部丟棄，造成其張數×M點傷害。(self, type-filtered, unbounded)
+  m = t.match(/^將這隻寶可夢身上附加的【(.+?)】能量卡全部丟棄，造成其張數×(\d+)點傷害。$/);
+  if (m) {
+    const type = ENERGY_TYPE_FROM_ZH[m[1]];
+    if (type) return { baseDamage: 0, selfEnergyDiscardScaledDamage: { type, amount: parseInt(m[2], 10) } };
+  }
+
+  // 將自己的場上寶可夢身上附加的任意數量的【X】能量卡丟棄，造成其張數×M點傷害。(own whole field,
+  // type-filtered, unbounded — e.g. 超級噴火龍Xex's 烈獄狂火X)
+  m = t.match(/^將自己的場上寶可夢身上附加的任意數量的【(.+?)】能量卡丟棄，造成其張數×(\d+)點傷害。$/);
+  if (m) {
+    const type = ENERGY_TYPE_FROM_ZH[m[1]];
+    if (type) return { baseDamage: 0, ownFieldEnergyDiscardScaledDamage: { type, amount: parseInt(m[2], 10) } };
+  }
+
+  // 從自己的手牌將最多N張能量卡丟棄，造成其張數×M點傷害。(hand, any Energy, capped)
+  m = t.match(/^從自己的手牌將最多(\d+)張能量卡丟棄，造成其張數×(\d+)點傷害。$/);
+  if (m) return { baseDamage: 0, handDiscardScaledDamage: { filter: { kind: 'anyEnergy' }, max: parseInt(m[1], 10), amount: parseInt(m[2], 10) } };
+
+  // 從自己的手牌將最多N張「基本【X】能量」卡丟棄，造成其張數×M點傷害。(hand, one Basic Energy type, capped)
+  m = t.match(/^從自己的手牌將最多(\d+)張「基本【(.+?)】能量」卡丟棄，造成其張數×(\d+)點傷害。$/);
+  if (m) {
+    const type = ENERGY_TYPE_FROM_ZH[m[2]];
+    if (type) return { baseDamage: 0, handDiscardScaledDamage: { filter: { kind: 'energyType', type }, max: parseInt(m[1], 10), amount: parseInt(m[3], 10) } };
+  }
+
+  // 從自己的手牌將任意數量的名稱中有「X」的Y卡丟棄，造成其張數×M點傷害。(hand, name substring, unbounded)
+  m = t.match(/^從自己的手牌將任意數量的名稱中有「(.+?)」的.+?卡丟棄，造成其張數×(\d+)點傷害。$/);
+  if (m) return { baseDamage: 0, handDiscardScaledDamage: { filter: { kind: 'nameIncludes', name: m[1] }, amount: parseInt(m[2], 10) } };
 
   // 在造成傷害前，將對手的戰鬥寶可夢身上附加的「寶可夢道具」卡丟棄。
   if (/^在造成傷害前，將對手的戰鬥寶可夢身上附加的「寶可夢道具」卡丟棄。$/.test(t)) {
@@ -838,9 +892,16 @@ export function resolveGenericAttackEffect(text: string, damageField: string, bo
   m = t.match(/^在這個回合，若這隻寶可夢從「(.+?)」進化，則增加(\d+)點傷害。$/);
   if (m) return { baseDamage: parseBaseNumber(damageField) + (board.attackerEvolvesFrom === m[1] ? parseInt(m[2], 10) : 0) };
 
-  // 將自己的牌庫上方N張卡丟棄，造成其中「X」的張數×M點傷害。
-  m = t.match(/^將自己的牌庫上方(\d+)張卡丟棄，造成其中「(.+?)」的張數×(\d+)點傷害。$/);
+  // 將自己的牌庫上方N張卡丟棄，造成其中「X」(卡)的張數×M點傷害。(trailing 卡 is optional — e.g.
+  // "其中「基本【水】能量」卡的張數" vs "其中「小霞的寶可夢」的張數")
+  m = t.match(/^將自己的牌庫上方(\d+)張卡丟棄，造成其中「(.+?)」(?:卡)?的張數×(\d+)點傷害。$/);
   if (m) return { baseDamage: 0, selfMillFamilyScaledDamage: { millCount: parseInt(m[1], 10), name: m[2], amount: parseInt(m[3], 10) } };
+
+  // 將自己的牌庫上方N張卡翻到正面，造成其中的「X」卡的張數×M點傷害。將翻到正面的「X」卡丟棄，將剩餘卡放回牌庫並重洗。
+  // (reveal N, count matches, discard ONLY the matches, rest goes back + reshuffle — unlike the
+  // mill-everything template above)
+  m = t.match(/^將自己的牌庫上方(\d+)張卡翻到正面，造成其中的「(.+?)」卡的張數×(\d+)點傷害。將翻到正面的「\2」卡丟棄，將剩餘卡放回牌庫並重洗。$/);
+  if (m) return { baseDamage: 0, selfRevealTopMatchDiscardRestReshuffle: { revealCount: parseInt(m[1], 10), name: m[2], amount: parseInt(m[3], 10) } };
 
   // 從自己的牌庫選擇最多N張「X」，在給對手看過後加入手牌。並且重洗牌庫。
   m = t.match(/^從自己的牌庫選擇最多(\d+)張「(.+?)」，在給對手看過後加入手牌。並且重洗牌庫。$/);
