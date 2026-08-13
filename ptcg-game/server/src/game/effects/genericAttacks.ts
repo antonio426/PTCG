@@ -101,6 +101,9 @@ export interface GenericAttackOutcome {
   deckSearchBasicEnergyToOwnPokemonCount?: number;
   /** Search the deck for up to N Basic Energy of a specific type, attach to self, reshuffle. */
   deckSearchTypedEnergyToSelfCount?: { type: string; count: number };
+  /** Attach 1 Basic Energy of a specific type from the deck to EACH of the attacker's own Benched
+   * Pokémon (skipping any bench slot the deck runs out of matching Energy for), reshuffle. */
+  deckSearchTypedEnergyToAllBenchEach?: string;
   /** Search the deck for 1 Pokémon Tool card, add to hand, reshuffle. */
   deckSearchToolToHand?: boolean;
   /** Skip resistance / skip weakness when computing this hit's damage. */
@@ -768,6 +771,19 @@ export function resolveGenericAttackEffect(text: string, damageField: string, bo
   if (m) {
     const type = ENERGY_TYPE_FROM_ZH[m[1]];
     if (type) return { baseDamage: parseBaseNumber(damageField), deckSearchTypedEnergyToSelfCount: { type, count: 1 } };
+  }
+
+  // 從牌庫附給自己的所有備戰寶可夢各1張「基本【X】能量」卡。並且重洗牌庫。
+  m = t.match(/^從牌庫附給自己的所有備戰寶可夢各1張「基本【(.+?)】能量」卡。並且重洗牌庫。$/);
+  if (m) {
+    const type = ENERGY_TYPE_FROM_ZH[m[1]];
+    if (type) return { baseDamage: parseBaseNumber(damageField), deckSearchTypedEnergyToAllBenchEach: type };
+  }
+  // 附給自己的所有備戰寶可夢各1張牌庫的【X】能量卡。並且重洗牌庫。 (同義措辭，如 霜奶仙VMAX::妝點)
+  m = t.match(/^附給自己的所有備戰寶可夢各1張牌庫的【(.+?)】能量卡。並且重洗牌庫。$/);
+  if (m) {
+    const type = ENERGY_TYPE_FROM_ZH[m[1]];
+    if (type) return { baseDamage: parseBaseNumber(damageField), deckSearchTypedEnergyToAllBenchEach: type };
   }
 
   // 從自己的牌庫選擇1張「寶可夢道具」卡，在給對手看過後加入手牌。並且重洗牌庫。

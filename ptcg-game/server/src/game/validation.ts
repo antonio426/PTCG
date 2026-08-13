@@ -4,7 +4,7 @@ import { hasAbilityEffect } from './effects/abilities';
 import { getRetreatCostReduction, getColorlessCostReduction } from './effects/tools';
 import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatCostReduction, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, isAttackLockedByTimedEffect, isItemAndToolPlayBlocked, isItemLockedByTimedEffect, isItemPlayBlocked, isNamedAttackLockedByTimedEffect, isRetreatLockedByTimedEffect } from './effects/passiveAbilities';
 import { normalizeAbilityName } from './effects/types';
-import { hasEvolvesFrom, evolvesFromMatches, inferEvolvesFromSpecies } from './evolutionChains';
+import { hasEvolvesFrom, evolvesFromMatches, inferEvolvesFromSpecies, chainTracesBackTo } from './evolutionChains';
 
 /** All k-sized combinations of `items`, capped so huge hands can't explode the move list. */
 function combinations<T>(items: T[], k: number, cap = 40): T[][] {
@@ -321,7 +321,24 @@ export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalActio
         const isItem = card.cardData.subtypes.includes('Item');
         const blockedByOpponentAbility = ((isItem || card.cardData.subtypes.includes('Pokémon Tool')) && isItemAndToolPlayBlocked(G, playerIndex as 0 | 1))
           || (isItem && (isItemPlayBlocked(G, playerIndex as 0 | 1) || isItemLockedByTimedEffect(G, playerIndex as 0 | 1)));
-        if (!blockedFirstTurn && !blockedAlreadyPlayed && !blockedByOpponentAbility) {
+        // 神奇糖果 Rare Candy: real rules only let it evolve a Basic straight to Stage 2 (never
+        // Stage 1 -> Stage 2), and it can't be played at all on the first turn. Without this check
+        // the card was always offered as playable, then unconditionally discarded by the generic
+        // trainer-play flow below regardless of whether a legal Basic target actually existed —
+        // i.e. the item "failed" but still cost the card. Gate it here instead so an illegal use
+        // is simply not offered as a move, matching how canEvolve/canPlayPokemon gate other plays.
+        const blockedRareCandy = card.cardData.name === '神奇糖果' && (
+          isFirstTurnOfGame(G) ||
+          !player.hand
+            .filter(c => c.cardData.supertype === 'Pokémon' && c.cardData.subtypes.includes('Stage 2'))
+            .some(stage2 =>
+              [player.active, ...player.bench].some(t =>
+                t && t.cardData.subtypes.includes('Basic') && !player.pokemonPlayedThisTurn.includes(t.id)
+                  && chainTracesBackTo(stage2.cardData, t.cardData.name)
+              )
+            )
+        );
+        if (!blockedFirstTurn && !blockedAlreadyPlayed && !blockedByOpponentAbility && !blockedRareCandy) {
           legalMoves.push({
             type: 'play_trainer',
             description: `Play ${card.cardData.name}`,

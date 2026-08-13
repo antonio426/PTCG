@@ -1100,56 +1100,64 @@ export default function Battle() {
             </div>
           )}
 
-          {/* Game over */}
+          {/* Game over — a fixed-position Modal overlay rather than inline content in this
+              flex-1/min-h-0 panel: this panel's height is whatever's left after the opponent/
+              player board rows above/below it, which can be too short for this block's natural
+              height (icon + title + prize display + buttons). Inline, that overflow wasn't
+              clipped or scrollable, so it visually bled into the board rows above and below
+              instead of being contained. The Modal shell is viewport-fixed with its own
+              max-h/overflow-y-auto, so it's never squeezed by board layout. */}
           {isOver && (
-            <div className="flex-1 flex flex-col items-center justify-center animate-result-pop">
-              <div className={`text-6xl mb-2 ${bs.winner === 0 ? 'animate-glow-pulse' : 'opacity-60 grayscale'}`}>
-                {bs.winner === 0 ? '🏆' : '💀'}
-              </div>
-              <p
-                className={`text-3xl font-black tracking-wide mb-1 ${
-                  bs.winner === 0
-                    ? 'bg-gradient-to-b from-yellow-200 to-yellow-500 bg-clip-text text-transparent drop-shadow-[0_2px_16px_rgba(250,204,21,0.45)]'
-                    : 'text-slate-400'
-                }`}
-              >
-                {bs.winner === 0 ? '勝利！' : '戰敗'}
-              </p>
-              <p className="text-xs text-slate-500 mb-5">{(bs.winReason && winReasonLabels[bs.winReason]) || bs.winReason}</p>
-              <div className="flex items-center gap-8 mb-6">
-                <div className="flex flex-col items-center gap-1.5">
-                  <span className="text-xs font-medium text-blue-300">你</span>
-                  <PrizeDisplay count={bs.player.prizes} label="" />
-                  <span className="text-[10px] text-slate-500">已奪 {bs.player.prizes}/6</span>
+            <Modal maxWidthClassName="max-w-md">
+              <div className="flex flex-col items-center animate-result-pop">
+                <div className={`text-6xl mb-2 ${bs.winner === 0 ? 'animate-glow-pulse' : 'opacity-60 grayscale'}`}>
+                  {bs.winner === 0 ? '🏆' : '💀'}
                 </div>
-                <div className="w-px h-10 bg-emerald-900/60" />
-                <div className="flex flex-col items-center gap-1.5">
-                  <span className="text-xs font-medium text-red-300">對手</span>
-                  <PrizeDisplay count={bs.opponent.prizes} label="" />
-                  <span className="text-[10px] text-slate-500">已奪 {bs.opponent.prizes}/6</span>
+                <p
+                  className={`text-3xl font-black tracking-wide mb-1 ${
+                    bs.winner === 0
+                      ? 'bg-gradient-to-b from-yellow-200 to-yellow-500 bg-clip-text text-transparent drop-shadow-[0_2px_16px_rgba(250,204,21,0.45)]'
+                      : 'text-slate-400'
+                  }`}
+                >
+                  {bs.winner === 0 ? '勝利！' : '戰敗'}
+                </p>
+                <p className="text-xs text-slate-500 mb-5">{(bs.winReason && winReasonLabels[bs.winReason]) || bs.winReason}</p>
+                <div className="flex items-center gap-8 mb-6">
+                  <div className="flex flex-col items-center gap-1.5">
+                    <span className="text-xs font-medium text-blue-300">你</span>
+                    <PrizeDisplay count={bs.player.prizes} label="" />
+                    <span className="text-[10px] text-slate-500">已奪 {bs.player.prizes}/6</span>
+                  </div>
+                  <div className="w-px h-10 bg-emerald-900/60" />
+                  <div className="flex flex-col items-center gap-1.5">
+                    <span className="text-xs font-medium text-red-300">對手</span>
+                    <PrizeDisplay count={bs.opponent.prizes} label="" />
+                    <span className="text-[10px] text-slate-500">已奪 {bs.opponent.prizes}/6</span>
+                  </div>
+                </div>
+                <button
+                  onClick={handleRetry}
+                  className="px-8 py-2.5 bg-gradient-to-b from-emerald-500 to-emerald-700 text-white rounded-xl font-medium hover:from-emerald-400 hover:to-emerald-600 transition-colors shadow-lg shadow-emerald-950/50"
+                >
+                  返回大廳
+                </button>
+                <div className="flex items-center gap-2 mt-3">
+                  <button
+                    onClick={() => exportTurnLogAsText(bs.turnLog)}
+                    className="px-3 py-1.5 text-xs bg-black/30 border border-emerald-800/60 text-emerald-300 rounded-lg hover:bg-black/50 transition-colors"
+                  >
+                    匯出紀錄 (.txt)
+                  </button>
+                  <button
+                    onClick={() => exportTurnLogAsJson(bs.turnLog)}
+                    className="px-3 py-1.5 text-xs bg-black/30 border border-emerald-800/60 text-emerald-300 rounded-lg hover:bg-black/50 transition-colors"
+                  >
+                    匯出紀錄 (.json)
+                  </button>
                 </div>
               </div>
-              <button
-                onClick={handleRetry}
-                className="px-8 py-2.5 bg-gradient-to-b from-emerald-500 to-emerald-700 text-white rounded-xl font-medium hover:from-emerald-400 hover:to-emerald-600 transition-colors shadow-lg shadow-emerald-950/50"
-              >
-                返回大廳
-              </button>
-              <div className="flex items-center gap-2 mt-3">
-                <button
-                  onClick={() => exportTurnLogAsText(bs.turnLog)}
-                  className="px-3 py-1.5 text-xs bg-black/30 border border-emerald-800/60 text-emerald-300 rounded-lg hover:bg-black/50 transition-colors"
-                >
-                  匯出紀錄 (.txt)
-                </button>
-                <button
-                  onClick={() => exportTurnLogAsJson(bs.turnLog)}
-                  className="px-3 py-1.5 text-xs bg-black/30 border border-emerald-800/60 text-emerald-300 rounded-lg hover:bg-black/50 transition-colors"
-                >
-                  匯出紀錄 (.json)
-                </button>
-              </div>
-            </div>
+            </Modal>
           )}
 
           {/* Waiting for AI */}

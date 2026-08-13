@@ -1,6 +1,7 @@
 import { GameCard } from '@ptcg/shared';
 import { PtcgGameState } from '../GameState';
 import { toolsAreDisabled } from './stadiums';
+import { normalizeCardName } from './types';
 
 /** Non-rule-box Pokémon: no ex/V/VMAX/VSTAR/GX/Radiant/Mega subtype or name prefix. Duplicated
  * from primitives.ts's identical helper to avoid a tools.ts -> primitives.ts -> damage.ts ->
@@ -65,13 +66,13 @@ const toolEffects: Record<string, ToolEffect> = {
 };
 
 export function hasToolEffect(name: string): boolean {
-  return name in toolEffects;
+  return normalizeCardName(name) in toolEffects;
 }
 
 export function getRetreatCostReduction(G: PtcgGameState, card: GameCard): { reduction: number; waived: boolean } {
   const tool = card.attachedTool;
   if (!tool || toolsAreDisabled(G)) return { reduction: 0, waived: false };
-  const effect = toolEffects[tool.cardData.name];
+  const effect = toolEffects[normalizeCardName(tool.cardData.name)];
   if (!effect) return { reduction: 0, waived: false };
   return {
     reduction: effect.retreatCostReduction?.(card) ?? 0,
@@ -82,20 +83,20 @@ export function getRetreatCostReduction(G: PtcgGameState, card: GameCard): { red
 export function getColorlessCostReduction(G: PtcgGameState, card: GameCard, ownerIdx: 0 | 1): number {
   const tool = card.attachedTool;
   if (!tool || toolsAreDisabled(G)) return 0;
-  const effect = toolEffects[tool.cardData.name];
+  const effect = toolEffects[normalizeCardName(tool.cardData.name)];
   return effect?.colorlessCostReduction?.(card, G, ownerIdx) ?? 0;
 }
 
 export function getToolHpBonus(G: PtcgGameState, card: GameCard): number {
   const tool = card.attachedTool;
   if (!tool || toolsAreDisabled(G)) return 0;
-  return toolEffects[tool.cardData.name]?.hpBonus ?? 0;
+  return toolEffects[normalizeCardName(tool.cardData.name)]?.hpBonus ?? 0;
 }
 
 export function getToolDamageBonus(G: PtcgGameState, card: GameCard, defender: GameCard): number {
   const tool = card.attachedTool;
   if (!tool || toolsAreDisabled(G)) return 0;
-  return toolEffects[tool.cardData.name]?.damageBonus?.(card, defender) ?? 0;
+  return toolEffects[normalizeCardName(tool.cardData.name)]?.damageBonus?.(card, defender) ?? 0;
 }
 
 export function getToolRetaliationDamage(G: PtcgGameState, card: GameCard): number {

@@ -933,6 +933,21 @@ export const moves = {
           }
           shuffleDeck(player.deck);
         }
+        if (genericOutcome.deckSearchTypedEnergyToAllBenchEach) {
+          const type = genericOutcome.deckSearchTypedEnergyToAllBenchEach;
+          const benchTargets = player.bench.filter((c): c is GameCard => c !== null);
+          for (const target of benchTargets) {
+            const matches = player.deck.filter(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes(type as any));
+            if (matches.length === 0) break; // deck ran out of that Energy type — remaining bench slots get nothing
+            const pick = matches[Math.floor(Math.random() * matches.length)];
+            const deckIdx = player.deck.findIndex(c => c.id === pick.id);
+            if (deckIdx >= 0) {
+              player.deck.splice(deckIdx, 1);
+              target.attachedEnergy.push({ id: pick.id, type: type as any });
+            }
+          }
+          shuffleDeck(player.deck);
+        }
         if (genericOutcome.deckSearchToolToHand) {
           const matches = player.deck.filter(c => c.cardData.subtypes.includes('Pokémon Tool'));
           if (matches.length > 0) {
