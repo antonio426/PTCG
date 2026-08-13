@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useCardStore } from '../stores/cardStore';
 import type { SortOrder } from '../stores/cardStore';
 import type { Card, Supertype, EnergyType, Subtype } from '@ptcg/shared';
+import { handleCardImgError } from '../utils/cardImageFallback';
+import CardArtDetail from '../components/CardArtDetail';
 
 /** 29 ACE SPEC card names (zh-tw) — matched by name like the MEGA prefix tag */
 const ACE_SPEC_NAMES = [
@@ -145,7 +147,7 @@ function CardHoverPopover({ cardId, position }: { cardId: string; position: { x:
       <div className="bg-slate-800/95 border border-slate-600 rounded-2xl shadow-2xl backdrop-blur-sm w-72 overflow-hidden">
         {/* Card image */}
         <div className="bg-slate-700/50 p-3 flex justify-center">
-          <img src={card.images.large} alt={card.name} className="h-64 w-auto object-contain rounded-lg" />
+          <img src={card.images.large} alt={card.name} className="h-64 w-auto object-contain rounded-lg" onError={handleCardImgError} />
         </div>
         <div className="p-3 space-y-2">
           <div className="flex items-start justify-between">
@@ -167,19 +169,32 @@ function CardHoverPopover({ cardId, position }: { cardId: string; position: { x:
             {card.regulationMark && <span>規制: {card.regulationMark}</span>}
           </div>
 
+          {/* Rules text (V/VMAX/ex rule box etc.) */}
+          {card.rules && card.rules.length > 0 && (
+            <div className="space-y-1">
+              {card.rules.map((rule, i) => (
+                <p key={i} className="text-slate-400 text-[11px] italic">{rule}</p>
+              ))}
+            </div>
+          )}
+
           {/* Abilities */}
           {card.abilities && card.abilities.length > 0 && (
-            <div className="bg-yellow-900/20 border border-yellow-700/30 rounded-lg p-2">
-              <span className="text-yellow-400 font-semibold text-xs">{card.abilities[0].type}</span>
-              <p className="text-slate-200 text-xs font-medium">{card.abilities[0].name}</p>
-              <p className="text-slate-400 text-[11px]">{card.abilities[0].text}</p>
+            <div className="space-y-1.5">
+              {card.abilities.map((ab, i) => (
+                <div key={i} className="bg-yellow-900/20 border border-yellow-700/30 rounded-lg p-2">
+                  <span className="text-yellow-400 font-semibold text-xs">{ab.type}</span>
+                  <p className="text-slate-200 text-xs font-medium">{ab.name}</p>
+                  <p className="text-slate-400 text-[11px]">{ab.text}</p>
+                </div>
+              ))}
             </div>
           )}
 
           {/* Attacks */}
           {card.attacks && card.attacks.length > 0 && (
             <div className="space-y-1.5">
-              {card.attacks.slice(0, 2).map((atk, i) => (
+              {card.attacks.map((atk, i) => (
                 <div key={i} className="bg-slate-700/40 rounded-lg p-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
@@ -244,97 +259,11 @@ function CardModal({ card, onClose }: { card: Card; onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
-      <div className="bg-slate-800 border border-slate-600 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="flex flex-col md:flex-row gap-6 p-6">
-          <div className="flex-shrink-0 flex justify-center">
-            <img src={card.images.large} alt={card.name} className="w-64 h-auto max-h-96 object-contain rounded-lg shadow-lg" />
-          </div>
-          <div className="flex-1 space-y-4">
-            <div className="flex items-start justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-white">{card.name}</h2>
-                <p className="text-slate-400 text-sm">{card.supertype} {getDisplaySubtypes(card).join(' - ')}</p>
-              </div>
-              <button onClick={onClose} className="text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
-            </div>
-            {card.hp && (
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-bold text-red-400">HP {card.hp}</span>
-                {card.types?.map((t) => <EnergyIcon key={t} type={t} size="md" />)}
-              </div>
-            )}
-            {card.abilities && card.abilities.length > 0 && (
-              <div className="bg-slate-700/50 rounded-lg p-3 border-l-4 border-yellow-500">
-                <span className="text-yellow-400 font-semibold text-sm">{card.abilities[0].type}</span>
-                <p className="text-slate-200 font-medium">{card.abilities[0].name}</p>
-                <p className="text-slate-300 text-sm">{card.abilities[0].text}</p>
-              </div>
-            )}
-            {card.attacks && card.attacks.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">招式</h3>
-                {card.attacks.map((atk, i) => (
-                  <div key={i} className="bg-slate-700/30 rounded-lg p-3">
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-white font-medium">{atk.name}</span>
-                        <div className="flex gap-0.5">
-                          {atk.cost.map((c, j) => <EnergyIcon key={j} type={c} />)}
-                        </div>
-                      </div>
-                      <span className="text-lg font-bold text-slate-100">{atk.damage}</span>
-                    </div>
-                    {atk.text && <p className="text-slate-400 text-xs">{atk.text}</p>}
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              {card.weaknesses && card.weaknesses.length > 0 && (
-                <div>
-                  <span className="text-slate-500">弱點</span>
-                  <div className="flex gap-1 mt-1">
-                    {card.weaknesses.map((w, i) => (
-                      <div key={i} className="flex items-center gap-1">
-                        <EnergyIcon type={w.type} /> <span className="text-slate-300">{w.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {card.resistances && card.resistances.length > 0 && (
-                <div>
-                  <span className="text-slate-500">抵抗力</span>
-                  <div className="flex gap-1 mt-1">
-                    {card.resistances.map((r, i) => (
-                      <div key={i} className="flex items-center gap-1">
-                        <EnergyIcon type={r.type} /> <span className="text-slate-300">{r.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-            {card.retreatCost && (
-              <div className="flex items-center gap-2">
-                <span className="text-slate-500 text-sm">撤退費用</span>
-                <div className="flex gap-0.5">
-                  {card.retreatCost.map((c, i) => <EnergyIcon key={i} type={c} />)}
-                </div>
-              </div>
-            )}
-            <div className="pt-2 border-t border-slate-700 text-xs text-slate-500 space-y-1">
-              <p>編號: {card.set.id} - {card.number}</p>
-              <p>系列: {card.set.series} / {card.set.name}</p>
-              {card.rarity && <p>稀有度: {card.rarity}</p>}
-              {card.artist && <p>繪師: {card.artist}</p>}
-              <div className="flex gap-3 mt-1">
-                {card.legalities.standard && <span className={`${card.legalities.standard === 'Legal' ? 'text-green-400' : 'text-red-400'}`}>標準: {card.legalities.standard}</span>}
-                {card.legalities.expanded && <span className={`${card.legalities.expanded === 'Legal' ? 'text-green-400' : 'text-red-400'}`}>擴充: {card.legalities.expanded}</span>}
-              </div>
-            </div>
-          </div>
+      <div className="bg-slate-800 border border-slate-600 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-end -mt-2 -mr-2 mb-1">
+          <button onClick={onClose} className="text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
         </div>
+        <CardArtDetail card={card} variant="full" />
       </div>
     </div>
   );
@@ -371,10 +300,7 @@ function CardGridItem({
           alt={card.name}
           className="w-full h-full object-contain p-1.5 group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
-          onError={(e) => {
-            // If image fails, show placeholder
-            (e.target as HTMLImageElement).style.display = 'none';
-          }}
+          onError={handleCardImgError}
         />
         {/* Type badge top-left (only when types available) */}
         {card.types && card.types.length > 0 && (
@@ -526,7 +452,7 @@ export default function CardBrowser() {
         if ('supertype' in def) typeMatch = c.supertype === def.supertype;
         if ('subtype' in def) typeMatch = c.subtypes?.includes(def.subtype);
         if ('rarity' in def) typeMatch = c.rarity === def.rarity;
-        if ('names' in def) typeMatch = def.names.includes(c.name);
+        if ('names' in def) typeMatch = (def.names as readonly string[]).includes(c.name);
         if ('excludeSubtypes' in def && def.excludeSubtypes) {
           typeMatch = typeMatch && !def.excludeSubtypes.some(s => c.subtypes?.includes(s));
         }

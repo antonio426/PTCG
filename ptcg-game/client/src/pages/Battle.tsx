@@ -1,9 +1,16 @@
-import { useState, useEffect, useCallback, useMemo, useRef, type ReactNode, type KeyboardEvent, type SyntheticEvent } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, type ReactNode, type KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { useDeckStore } from '../stores/deckStore';
 import { useCardStore } from '../stores/cardStore';
 import { useGameStore, type SanitizedGameCard } from '../stores/gameStore';
 import type { Card, LegalAction, PendingChoice } from '@ptcg/shared';
+import { exportTurnLogAsJson, exportTurnLogAsText } from '../utils/exportLog';
+import { CARD_IMAGE_FALLBACK, handleCardImgError } from '../utils/cardImageFallback';
+import HpBar from '../components/HpBar';
+import Badge from '../components/Badge';
+import Modal from '../components/Modal';
+import StatBox from '../components/StatBox';
+import CardArtDetail from '../components/CardArtDetail';
 
 /* ====================================================== */
 /*  Energy icons                                           */
@@ -32,28 +39,6 @@ function EnergyIcon({ type, size = 'sm' }: { type: string; size?: 'sm' | 'md' })
 }
 
 /* ====================================================== */
-/*  Card art fallback — some cards in the dataset have no artwork hosted   */
-/*  on TCGdex at all (confirmed live: the CDN 404s for both size variants  */
-/*  and the card's own detail response has no `image` field), not a URL-  */
-/*  construction bug on our side. Swap to a placeholder instead of        */
-/*  leaving the browser's broken-image icon on screen.                    */
-/* ====================================================== */
-
-const CARD_IMAGE_FALLBACK = 'data:image/svg+xml,' + encodeURIComponent(
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 140">' +
-  '<rect width="100" height="140" rx="8" fill="#1e293b"/>' +
-  '<rect x="4" y="4" width="92" height="132" rx="6" fill="none" stroke="#475569" stroke-width="2" stroke-dasharray="5 5"/>' +
-  '<text x="50" y="80" font-size="40" fill="#64748b" text-anchor="middle" font-family="sans-serif">?</text>' +
-  '</svg>'
-);
-
-function handleCardImgError(e: SyntheticEvent<HTMLImageElement>) {
-  const img = e.currentTarget;
-  img.onerror = null; // avoid a loop if the fallback data URI itself somehow fails to render
-  img.src = CARD_IMAGE_FALLBACK;
-}
-
-/* ====================================================== */
 /*  Structural icons — plain SVG rather than emoji: emoji render          */
 /*  inconsistently across platforms/fonts and can't be sized, stroked, or */
 /*  themed like the rest of the UI. Emoji stay only where they're a       */
@@ -78,6 +63,7 @@ const IconSword = (p: { className?: string }) => <Icon {...p}><path d="m14.5 3 6
 const IconUndo = (p: { className?: string }) => <Icon {...p}><path d="M9 14 4 9l5-5" /><path d="M4 9h10a6 6 0 0 1 6 6v1" /></Icon>;
 const IconArrowLeft = (p: { className?: string }) => <Icon {...p}><path d="M19 12H5" /><path d="m11 18-6-6 6-6" /></Icon>;
 const IconBuilding = (p: { className?: string }) => <Icon {...p}><rect x="4" y="3" width="16" height="18" rx="1" /><path d="M9 21v-4h6v4M9 8h.01M15 8h.01M9 12h.01M15 12h.01" /></Icon>;
+const IconClock = (p: { className?: string }) => <Icon {...p}><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" /></Icon>;
 const IconTrash = (p: { className?: string }) => <Icon {...p}><path d="M4 7h16M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13" /></Icon>;
 const IconX = (p: { className?: string }) => <Icon {...p}><path d="m18 6-12 12M6 6l12 12" /></Icon>;
 const IconMoon = (p: { className?: string }) => <Icon {...p}><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z" /></Icon>;
@@ -104,12 +90,7 @@ function StatusConditionBadges({ conditions }: { conditions: string[] }) {
       {conditions.map((c, i) => {
         const style = STATUS_CONDITION_STYLE[c];
         const IconComp = style?.icon ?? IconSparkle;
-        return (
-          <span key={i} className={`flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded border font-medium ${style?.cls ?? 'bg-yellow-900/50 border-yellow-700/50 text-yellow-300'}`}>
-            <IconComp className="w-2.5 h-2.5" />
-            {style?.label ?? c}
-          </span>
-        );
+        return <Badge key={i} icon={<IconComp className="w-2.5 h-2.5" />} label={style?.label ?? c} className={style?.cls} />;
       })}
     </div>
   );
@@ -118,78 +99,6 @@ function StatusConditionBadges({ conditions }: { conditions: string[] }) {
 /* ====================================================== */
 /*  Card effect preview (hover popover)                    */
 /* ====================================================== */
-
-const ABILITY_TYPE_LABELS: Record<string, string> = {
-  Ability: '特性', 'Pokémon-Power': '寶可夢力量', 'Poké-Body': '寶可夢身體', 'Poké-Power': '寶可夢力量',
-};
-
-function CardDetail({ card }: { card: Card }) {
-  const hasWRR = (card.weaknesses?.length || card.resistances?.length || (card.retreatCost?.length ?? 0) > 0);
-  return (
-    <div className="p-3 w-72">
-      <div className="flex gap-3 mb-2">
-        <img
-          src={card.images.large || card.images.small}
-          alt={card.name}
-          onError={handleCardImgError}
-          className="w-20 h-auto rounded-lg object-contain bg-slate-800 flex-shrink-0 border border-slate-700"
-        />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-white leading-tight">{card.name}</p>
-          <p className="text-[10px] text-slate-400 mt-0.5">
-            {card.supertype}{card.subtypes?.length ? ` · ${card.subtypes.join(' / ')}` : ''}
-          </p>
-          {card.hp && (
-            <div className="flex items-center gap-1 mt-1.5">
-              <span className="text-xs text-slate-300 font-medium">HP {card.hp}</span>
-              {card.types?.map((t, i) => <EnergyIcon key={i} type={t} />)}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {card.rules?.map((r, i) => (
-        <p key={i} className="text-[11px] text-slate-200 leading-snug mb-1.5">{r}</p>
-      ))}
-
-      {card.abilities?.filter(a => a.text).map((a, i) => (
-        <div key={i} className="mb-1.5 bg-emerald-950/40 border border-emerald-800/50 rounded-lg px-2 py-1.5">
-          <p className="text-[11px] font-semibold text-emerald-400">{ABILITY_TYPE_LABELS[a.type] || a.type}：{a.name}</p>
-          <p className="text-[11px] text-slate-300 leading-snug mt-0.5">{a.text}</p>
-        </div>
-      ))}
-
-      {card.attacks?.map((atk, i) => (
-        <div key={i} className="mb-1.5">
-          <div className="flex items-center gap-1 flex-wrap">
-            {atk.cost.map((c, ci) => <EnergyIcon key={ci} type={c} />)}
-            <span className="text-xs font-semibold text-white ml-1">{atk.name}</span>
-            {atk.damage && <span className="text-xs text-red-400 ml-auto font-bold">{atk.damage}</span>}
-          </div>
-          {atk.text && <p className="text-[11px] text-slate-400 leading-snug mt-0.5">{atk.text}</p>}
-        </div>
-      ))}
-
-      {hasWRR && (
-        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-400 mt-2 pt-2 border-t border-slate-700">
-          {card.weaknesses?.map((w, i) => (
-            <span key={i}>弱點 <EnergyIcon type={w.type} />{w.value}</span>
-          ))}
-          {card.resistances?.map((r, i) => (
-            <span key={i}>抵抗 <EnergyIcon type={r.type} />{r.value}</span>
-          ))}
-          {(card.retreatCost?.length ?? 0) > 0 && (
-            <span className="flex items-center gap-1">撤退 {card.retreatCost!.map((_, i) => <EnergyIcon key={i} type="Colorless" />)}</span>
-          )}
-        </div>
-      )}
-
-      {card.flavorText && (
-        <p className="text-[10px] text-slate-500 italic leading-snug mt-2 pt-2 border-t border-slate-700">{card.flavorText}</p>
-      )}
-    </div>
-  );
-}
 
 // Popovers are portaled to <body> and positioned with `fixed` + measured coordinates
 // rather than `absolute` inside the trigger — the battlefield has several
@@ -247,7 +156,7 @@ function HoverPreview({ card, children, placement = 'above' }: { card: Card; chi
             transform: `translate(-50%, ${pos.flipped ? '-100%' : '0'})`,
           }}
         >
-          <CardDetail card={card} />
+          <div className="p-3"><CardArtDetail card={card} variant="compact" /></div>
         </div>,
         document.body
       )}
@@ -272,22 +181,16 @@ function SectionHeader({ icon, label }: { icon: ReactNode; label: string }) {
 /*  HP Bar                                                */
 /* ====================================================== */
 
-function HpBar({ current, max }: { current: number; max: number }) {
-  const pct = max > 0 ? Math.max(0, Math.min(100, (current / max) * 100)) : 0;
-  const color = pct > 50 ? 'from-green-400 to-green-600' : pct > 20 ? 'from-yellow-400 to-yellow-600' : 'from-red-400 to-red-600';
-  return (
-    <div className="w-full bg-black/40 rounded-full h-2.5 overflow-hidden border border-black/30 shadow-inner">
-      <div
-        className={`h-full bg-gradient-to-b ${color} transition-all duration-500 ease-out rounded-full`}
-        style={{ width: `${pct}%` }}
-      />
-    </div>
-  );
-}
-
 /* ====================================================== */
 /*  Helper: group legal moves by hand card                */
 /* ====================================================== */
+
+function formatDuration(ms: number): string {
+  const totalSec = Math.max(0, Math.floor(ms / 1000));
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
 
 interface HandCardAction {
   cardData: Card;
@@ -314,6 +217,33 @@ function groupMovesByHandCard(legalMoves: LegalAction[], hand: Card[]): HandCard
 /*  Pending-choice picker — for choices with no on-field    */
 /*  representation (deck search results, energy type, etc.) */
 /* ====================================================== */
+
+/** Collapsible "查看牌庫剩餘全部" list — only ever populated (server-side) for the searching
+ * player's own deck, so showing it here is equivalent to a physical player fanning out their deck. */
+function DeckPreviewDisclosure({ cards }: { cards: Card[] }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mb-3">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="text-xs text-emerald-400/80 hover:text-emerald-300 transition-colors underline decoration-dotted"
+      >
+        {open ? '收起牌庫其餘內容' : `查看牌庫剩餘全部（${cards.length} 張）`}
+      </button>
+      {open && (
+        <div className="mt-2 flex flex-wrap gap-1.5 max-h-40 overflow-y-auto p-2 bg-black/20 rounded-lg border border-emerald-900/40">
+          {cards.map((c, i) => (
+            <HoverPreview key={`${c.id}-${i}`} card={c} placement="above">
+              <div className="w-10 h-14 rounded border border-slate-700 overflow-hidden bg-slate-900">
+                <img src={c.images.small} alt={c.name} onError={handleCardImgError} className="w-full h-full object-contain" />
+              </div>
+            </HoverPreview>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /** Server enumerates every legal N-item combination as a separate 'resolve_choice' move (so it
  * can validate whatever gets submitted). Used only for choices that aren't already visible as
@@ -363,14 +293,20 @@ function PendingChoicePicker({
         return sel.length === checked.size && sel.every(id => checked.has(id));
       })
     : undefined;
+  // Single-pick-but-optional choices (e.g. Ultra Ball's search step, minCount 0 / maxCount 1)
+  // have no pool item to click for "don't take anything" — that's a real, separate legal move
+  // with an empty selection, surfaced as its own button below the grid.
+  const skipMove = !isMultiSelect
+    ? moves.find(m => ((m.payload?.selection as string[] | undefined) || []).length === 0)
+    : undefined;
 
   const countLabel = choice.count !== undefined
-    ? `選 ${choice.count} 項`
-    : minCount > 0 ? `選 ${minCount}–${maxCount} 項` : `最多選 ${maxCount} 項`;
+    ? `選${choice.count}張`
+    : minCount > 0 ? `選${minCount}~${maxCount}張` : `最多選${maxCount}張`;
 
   return (
     <div className="flex flex-col gap-3 flex-1 min-h-0">
-      {isMultiSelect && <p className="text-xs text-slate-400">{countLabel} · 已選 {checked.size} 項</p>}
+      {isMultiSelect && <p className="text-xs text-slate-400">{countLabel}・已選{checked.size}張</p>}
       <div className="flex-1 overflow-y-auto">
         {pool.length === 0 ? (
           <p className="text-slate-500 text-sm">沒有可選的項目……</p>
@@ -417,11 +353,20 @@ function PendingChoicePicker({
           disabled={!matchedMove || loading}
           className="w-full py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex-shrink-0"
         >
-          確認選擇
+          {checked.size === 0 && minCount === 0 ? '不選（跳過）' : `確定（${checked.size}張）`}
         </button>
       )}
       {isMultiSelect && checked.size > 0 && countOk && !matchedMove && (
         <p className="text-red-400 text-xs text-center">此組合暫時無法使用，請重新選擇</p>
+      )}
+      {!isMultiSelect && minCount === 0 && skipMove && (
+        <button
+          onClick={() => onSubmit(skipMove)}
+          disabled={loading}
+          className="w-full py-2 bg-slate-700 text-slate-200 rounded-lg text-sm font-medium hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+        >
+          不選（跳過）
+        </button>
       )}
     </div>
   );
@@ -440,9 +385,12 @@ export default function Battle() {
   } = useGameStore();
 
   const [selectedDeckId, setSelectedDeckId] = useState('');
+  const [difficulty, setDifficulty] = useState<'easy' | 'normal' | 'hard'>('normal');
+  const [hardModeAvailable, setHardModeAvailable] = useState(false);
   const [showPlayerDiscard, setShowPlayerDiscard] = useState(false);
   const [showOpponentDiscard, setShowOpponentDiscard] = useState(false);
   const [showOpponentHand, setShowOpponentHand] = useState(false);
+  const [fullDetailCard, setFullDetailCard] = useState<SanitizedGameCard | null>(null);
   const [floaters, setFloaters] = useState<{ id: number; side: 'player' | 'opponent'; text: string; kind: 'damage' | 'ko' }[]>([]);
   // Hand-card-initiated targeting (e.g. "attach this energy to which of your Pokémon?") — set
   // when a hand card has more than one legal move and every one of them targets a Pokémon
@@ -460,6 +408,7 @@ export default function Battle() {
   useEffect(() => {
     fetchCards();
     fetchPresetDecks();
+    fetch('/api/ai').then(r => r.json()).then(d => setHardModeAvailable(!!d.hard)).catch(() => {});
   }, [fetchCards, fetchPresetDecks]);
 
   // Derive transient damage-number/KO floaters from newly appended turnLog entries — the
@@ -531,9 +480,9 @@ export default function Battle() {
     const deck = selectableDecks.find(d => d.id === selectedDeckId);
     if (!deck) return;
     try {
-      await createBattle(deck.cards);
+      await createBattle(deck.cards, undefined, difficulty);
     } catch { /* handled by store */ }
-  }, [selectedDeckId, selectableDecks, createBattle]);
+  }, [selectedDeckId, selectableDecks, createBattle, difficulty]);
 
   // Every interactive surface (quick actions, hand cards, board targets, pending-choice picks)
   // funnels through this handler or the two below — guarding `loading` here once, rather than on
@@ -567,6 +516,26 @@ export default function Battle() {
   }, [leaveGame]);
 
   const bs = battleState;
+
+  // Purely cosmetic timers — never read by move submission or any legality check, just wall-clock
+  // display state local to this component. `clockNow` ticks once a second to force a re-render.
+  const battleStartRef = useRef<number | null>(null);
+  const turnStartRef = useRef<number>(Date.now());
+  const lastSeenTurnRef = useRef<number | null>(null);
+  const [clockNow, setClockNow] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setClockNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  useEffect(() => {
+    if (!bs) return;
+    if (battleStartRef.current === null) battleStartRef.current = bs.turnLog[0]?.timestamp ?? Date.now();
+    if (lastSeenTurnRef.current !== bs.turn) {
+      lastSeenTurnRef.current = bs.turn;
+      turnStartRef.current = Date.now();
+    }
+  }, [bs?.turn, bs?.turnLog]);
+
   const phaseLabels: Record<string, string> = {
     choose_active: '選擇出戰寶可夢', draw: '抽牌階段', main: '主要階段', attack: '攻擊階段', end: '結束階段',
   };
@@ -583,7 +552,7 @@ export default function Battle() {
   if (battlePhase === 'select') {
     return (
       <div className="flex items-center justify-center min-h-[70vh] relative overflow-hidden rounded-2xl">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,#14532d_0%,#052e16_55%,#031f0f_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,theme(colors.battle.felt.from)_0%,theme(colors.battle.felt.via)_55%,theme(colors.battle.felt.to)_100%)]" />
         <div
           className="absolute inset-0 opacity-[0.06] pointer-events-none"
           style={{
@@ -624,6 +593,20 @@ export default function Battle() {
                   )}
                 </select>
               )}
+            </div>
+            <div>
+              <label className="text-sm text-slate-400 mb-1.5 block">AI 難度</label>
+              <select
+                value={difficulty}
+                onChange={(e) => setDifficulty(e.target.value as 'easy' | 'normal' | 'hard')}
+                className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 text-slate-100 focus:outline-none focus:border-emerald-500"
+              >
+                <option value="easy">簡單（隨機出牌）</option>
+                <option value="normal">普通（規則式 AI）</option>
+                <option value="hard" disabled={!hardModeAvailable}>
+                  困難（Claude AI{hardModeAvailable ? '' : '・伺服器未設定金鑰，暫不可用'}）
+                </option>
+              </select>
             </div>
             <button
               onClick={handleStartBattle}
@@ -696,8 +679,15 @@ export default function Battle() {
         onKeyDown={onClick ? keyActivate(onClick) : undefined}
       >
         <HoverPreview card={cd} placement={previewPlacement}>
-          <div className={`${wCls} ${imgH} bg-slate-900 border-2 border-slate-600/80 rounded-xl overflow-hidden hover:border-emerald-400 transition-colors shadow-lg shadow-black/40`}>
+          <div className={`relative ${wCls} ${imgH} bg-slate-900 border-2 border-slate-600/80 rounded-xl overflow-hidden hover:border-emerald-400 transition-colors shadow-lg shadow-black/40`}>
             <img src={cd.images.small} alt={cd.name} onError={handleCardImgError} className="w-full h-full object-contain" />
+            <button
+              onClick={(e) => { e.stopPropagation(); setFullDetailCard(card); }}
+              aria-label="查看詳情"
+              className="absolute top-0.5 right-0.5 w-5 h-5 flex items-center justify-center rounded-full bg-black/60 text-emerald-300 hover:bg-black/80 hover:text-emerald-100 transition-colors text-[10px] font-bold"
+            >
+              i
+            </button>
           </div>
         </HoverPreview>
         {showHp && hp > 0 && (
@@ -761,38 +751,20 @@ export default function Battle() {
    * actual cards rather than just a count. */
   function DiscardModal({ title, cards, onClose }: { title: string; cards: SanitizedGameCard[]; onClose: () => void }) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={onClose}>
-        <div
-          className="relative bg-[radial-gradient(ellipse_at_top,#14532d_0%,#052e16_60%,#031f0f_100%)] border border-emerald-800/60 rounded-2xl p-5 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto shadow-2xl"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-white font-semibold flex items-center gap-1.5">
-              <IconTrash className="w-4 h-4" />
-              {title}（{cards.length} 張）
-            </h3>
-            <button
-              onClick={onClose}
-              aria-label="關閉"
-              className="w-11 h-11 -m-2 flex items-center justify-center rounded-full text-emerald-500/70 hover:text-emerald-200 hover:bg-white/5 transition-colors"
-            >
-              <IconX className="w-4 h-4" />
-            </button>
+      <Modal onClose={onClose} title={<><IconTrash className="w-4 h-4" />{title}（{cards.length} 張）</>}>
+        {cards.length === 0 ? (
+          <p className="text-emerald-700/70 text-sm">暫無棄牌</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {cards.map((c, i) => (
+              <HoverPreview key={c.id ?? i} card={c.cardData} placement="above">
+                <img src={c.cardData.images.small} alt={c.cardData.name} onError={handleCardImgError}
+                  className="w-16 h-[4.5rem] rounded-lg object-contain bg-slate-900 border border-slate-700 hover:ring-2 hover:ring-emerald-400 hover:border-emerald-400 transition-all" />
+              </HoverPreview>
+            ))}
           </div>
-          {cards.length === 0 ? (
-            <p className="text-emerald-700/70 text-sm">暫無棄牌</p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {cards.map((c, i) => (
-                <HoverPreview key={c.id ?? i} card={c.cardData} placement="above">
-                  <img src={c.cardData.images.small} alt={c.cardData.name} onError={handleCardImgError}
-                    className="w-16 h-[4.5rem] rounded-lg object-contain bg-slate-900 border border-slate-700 hover:ring-2 hover:ring-emerald-400 hover:border-emerald-400 transition-all" />
-                </HoverPreview>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+        )}
+      </Modal>
     );
   }
 
@@ -899,41 +871,44 @@ export default function Battle() {
           directly instead — see boardTargeting/handTargeting and their banner further below. */}
       {!isOver && bs.pendingChoice && !boardTargeting && !handTargeting && (() => {
         const choice = bs.pendingChoice;
-        const effectiveMax = choice.count ?? choice.maxCount ?? 1;
-        const isMultiSelect = effectiveMax > 1;
+        // PendingChoicePicker already renders single-pick choices correctly (card-art tiles,
+        // auto-submit on click) — route through it whenever there's a concrete option list to
+        // show, not just for multi-pick. The plain description-text list is only a fallback for
+        // choices with no candidate list at all (e.g. a bare confirm).
+        const hasOptionList = !!choice.options && choice.options.length > 0;
         return (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70">
-            <div className="bg-slate-800 border border-blue-500/50 rounded-2xl p-6 max-w-lg w-full mx-4 max-h-[80vh] flex flex-col">
-              <h3 className="text-white font-semibold mb-1">卡牌效果</h3>
-              <p className="text-slate-300 text-sm mb-4">{choice.prompt}</p>
-              {isMultiSelect ? (
-                <PendingChoicePicker
-                  key={choice.prompt}
-                  choice={choice}
-                  moves={pendingChoiceMoves}
-                  loading={loading}
-                  onSubmit={handleSubmitMove}
-                />
-              ) : (
-                <div className="flex-1 overflow-y-auto space-y-1.5">
-                  {pendingChoiceMoves.length === 0 ? (
-                    <p className="text-slate-500 text-sm">沒有可行的選項……</p>
-                  ) : (
-                    pendingChoiceMoves.map((m, i) => (
-                      <button
-                        key={i}
-                        onClick={() => handleSubmitMove(m)}
-                        disabled={loading}
-                        className="w-full text-left px-3 py-2 bg-slate-700 hover:bg-blue-700 disabled:opacity-40 text-slate-100 rounded-lg text-sm transition-colors"
-                      >
-                        {m.description}
-                      </button>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
+          <Modal backdropClassName="bg-black/40" title="卡牌效果" maxWidthClassName="max-w-lg">
+            <p className="text-emerald-100/90 text-sm mb-4">{choice.prompt}</p>
+            {choice.remainingDeckPreview && choice.remainingDeckPreview.length > 0 && (
+              <DeckPreviewDisclosure cards={choice.remainingDeckPreview} />
+            )}
+            {hasOptionList ? (
+              <PendingChoicePicker
+                key={choice.prompt}
+                choice={choice}
+                moves={pendingChoiceMoves}
+                loading={loading}
+                onSubmit={handleSubmitMove}
+              />
+            ) : (
+              <div className="flex-1 overflow-y-auto space-y-1.5">
+                {pendingChoiceMoves.length === 0 ? (
+                  <p className="text-slate-500 text-sm">沒有可行的選項……</p>
+                ) : (
+                  pendingChoiceMoves.map((m, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleSubmitMove(m)}
+                      disabled={loading}
+                      className="w-full text-left px-3 py-2 bg-slate-700 hover:bg-blue-700 disabled:opacity-40 text-slate-100 rounded-lg text-sm transition-colors"
+                    >
+                      {m.description}
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </Modal>
         );
       })()}
 
@@ -972,7 +947,7 @@ export default function Battle() {
       )}
 
       {/* Left column: battlefield — one continuous felt board instead of stacked boxed panels */}
-      <div className="flex-1 flex flex-col min-h-0 rounded-2xl overflow-hidden border border-emerald-900/60 shadow-2xl relative bg-[radial-gradient(ellipse_at_top,#14532d_0%,#052e16_55%,#031f0f_100%)]">
+      <div className="flex-1 flex flex-col min-h-0 rounded-2xl overflow-hidden border border-emerald-900/60 shadow-2xl relative bg-[radial-gradient(ellipse_at_top,theme(colors.battle.felt.from)_0%,theme(colors.battle.felt.via)_55%,theme(colors.battle.felt.to)_100%)]">
         <div
           className="absolute inset-0 opacity-[0.05] pointer-events-none"
           style={{
@@ -1023,8 +998,15 @@ export default function Battle() {
               ))}
             </div>
           )}
-          <span className="text-[11px] text-slate-500">
-            對手手牌 {bs.opponent.handCount} · 你的手牌 {bs.player.hand.length}
+          <span className="text-[11px] text-slate-500 flex items-center gap-2">
+            {!isOver && (
+              <span className="flex items-center gap-1 tabular-nums" title="本回合已進行時間（純顯示，不影響回合判定）">
+                <IconClock className="w-3 h-3" />
+                {formatDuration(clockNow - turnStartRef.current)}
+              </span>
+            )}
+            <span className="tabular-nums" title="對戰總時長（純顯示）">總計 {formatDuration(clockNow - (battleStartRef.current ?? clockNow))}</span>
+            <span>對手手牌 {bs.opponent.handCount} · 你的手牌 {bs.player.hand.length}</span>
           </span>
         </div>
 
@@ -1048,19 +1030,11 @@ export default function Battle() {
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-red-300">對手</span>
               <PrizeDisplay count={bs.opponent.prizes} label="" />
-              <button
-                onClick={() => setShowOpponentHand(true)}
-                className="text-xs text-emerald-500/60 hover:text-emerald-300 transition-colors"
-              >
-                手牌 ({bs.opponent.handCount})
-              </button>
-              <button
-                onClick={() => setShowOpponentDiscard(true)}
-                className="text-xs text-emerald-500/60 hover:text-emerald-300 transition-colors"
-              >
-                棄牌 ({bs.opponent.discardCount})
-              </button>
-              <span className="text-xs text-emerald-700/60">牌庫 {bs.opponent.deckCount}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <StatBox value={bs.opponent.handCount} label="手牌" icon={<IconCards className="w-3 h-3" />} onClick={() => setShowOpponentHand(true)} colorClassName="bg-red-950/50 border-red-800/50 text-red-200" />
+              <StatBox value={bs.opponent.discardCount} label="棄牌" icon={<IconTrash className="w-3 h-3" />} onClick={() => setShowOpponentDiscard(true)} colorClassName="bg-red-950/50 border-red-800/50 text-red-200" />
+              <StatBox value={bs.opponent.deckCount} label="牌庫" colorClassName="bg-black/30 border-red-900/40 text-red-300/80" />
             </div>
           </div>
 
@@ -1068,7 +1042,7 @@ export default function Battle() {
             <div className="relative">
               {bs.opponent.active ? (
                 <PokemonCardView
-                  key={bs.opponent.active.id}
+                  key="opponent-active"
                   card={bs.opponent.active}
                   size="normal"
                   showHp={true}
@@ -1094,7 +1068,7 @@ export default function Battle() {
               {Array.from({ length: 5 }, (_, i) => {
                 const c = bs.opponent.bench[i];
                 return c ? (
-                  <PokemonCardView key={c.id} card={c} size="small" showHp={false} previewPlacement="below" {...targetProps(c.id)} />
+                  <PokemonCardView key={i} card={c} size="small" showHp={false} previewPlacement="below" {...targetProps(c.id)} />
                 ) : (
                   <div key={i} className="w-24 h-[4.5rem] bg-black/10 border border-dashed border-emerald-900/50 rounded-md flex items-center justify-center">
                     <span className="text-emerald-700/80 text-xs">?</span>
@@ -1150,6 +1124,20 @@ export default function Battle() {
               >
                 返回大廳
               </button>
+              <div className="flex items-center gap-2 mt-3">
+                <button
+                  onClick={() => exportTurnLogAsText(bs.turnLog)}
+                  className="px-3 py-1.5 text-xs bg-black/30 border border-emerald-800/60 text-emerald-300 rounded-lg hover:bg-black/50 transition-colors"
+                >
+                  匯出紀錄 (.txt)
+                </button>
+                <button
+                  onClick={() => exportTurnLogAsJson(bs.turnLog)}
+                  className="px-3 py-1.5 text-xs bg-black/30 border border-emerald-800/60 text-emerald-300 rounded-lg hover:bg-black/50 transition-colors"
+                >
+                  匯出紀錄 (.json)
+                </button>
+              </div>
             </div>
           )}
 
@@ -1365,22 +1353,19 @@ export default function Battle() {
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-blue-300">你</span>
               <PrizeDisplay count={bs.player.prizes} label="" />
-              <button
-                onClick={() => setShowPlayerDiscard(true)}
-                className="text-xs text-emerald-500/60 hover:text-emerald-300 transition-colors"
-              >
-                棄牌 ({bs.player.discardPile.length})
-              </button>
-              <span className="text-xs text-emerald-700/60">牌庫 {bs.player.deckCount}</span>
             </div>
-            <span className="text-xs text-emerald-700/60">手牌 {bs.player.hand.length}</span>
+            <div className="flex items-center gap-1.5">
+              <StatBox value={bs.player.hand.length} label="手牌" icon={<IconCards className="w-3 h-3" />} colorClassName="bg-blue-950/50 border-blue-800/50 text-blue-200" />
+              <StatBox value={bs.player.discardPile.length} label="棄牌" icon={<IconTrash className="w-3 h-3" />} onClick={() => setShowPlayerDiscard(true)} colorClassName="bg-blue-950/50 border-blue-800/50 text-blue-200" />
+              <StatBox value={bs.player.deckCount} label="牌庫" colorClassName="bg-black/30 border-blue-900/40 text-blue-300/80" />
+            </div>
           </div>
 
           <div className="flex items-center justify-center gap-3 mb-1.5">
             <div className="relative">
               {bs.player.active ? (
                 <PokemonCardView
-                  key={bs.player.active.id}
+                  key="player-active"
                   card={bs.player.active}
                   size="normal"
                   showHp={true}
@@ -1413,7 +1398,7 @@ export default function Battle() {
               {Array.from({ length: 5 }, (_, i) => {
                 const c = bs.player.bench[i];
                 return c ? (
-                  <PokemonCardView key={c.id} card={c} size="small" showHp={false} {...targetProps(c.id)} />
+                  <PokemonCardView key={i} card={c} size="small" showHp={false} {...targetProps(c.id)} />
                 ) : (
                   <div key={i} className="w-24 h-[4.5rem] bg-black/10 border border-dashed border-emerald-900/50 rounded-md flex items-center justify-center">
                     <span className="text-emerald-700/80 text-xs">?</span>
@@ -1434,12 +1419,15 @@ export default function Battle() {
                 const isTargetingSource = manualTargeting?.sourceCardId === card.id;
                 const isHandTarget = !!handTargeting && targetIds.has(card.id);
                 const isPicked = isHandTarget && pickedTargets.has(card.id);
+                const isCurrentlyPlayable = !handTargeting && !manualTargeting && handCardActions.some(h => h.cardData.id === card.id);
                 const ring = isTargetingSource
                   ? 'border-sky-400 -translate-y-2 shadow-lg shadow-sky-500/30'
                   : isPicked
                   ? 'border-emerald-400 -translate-y-1 shadow-lg shadow-emerald-500/40'
                   : isHandTarget
                   ? 'border-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.5)] animate-pulse'
+                  : isCurrentlyPlayable
+                  ? 'border-yellow-400 ring-2 ring-yellow-400/70'
                   : 'border-slate-600 hover:border-emerald-400';
                 return (
                   <HoverPreview key={card.id} card={card} placement="above">
@@ -1464,7 +1452,7 @@ export default function Battle() {
       </div>
 
       {/* Right column: Turn log */}
-      <div className="w-64 flex-shrink-0 bg-[radial-gradient(ellipse_at_top,#0f2e1c_0%,#052e16_55%,#031f0f_100%)] border border-emerald-900/50 rounded-2xl p-3 flex flex-col min-h-0 shadow-xl">
+      <div className="w-64 flex-shrink-0 bg-[radial-gradient(ellipse_at_top,theme(colors.battle.feltFrom)_0%,theme(colors.battle.felt.via)_55%,theme(colors.battle.felt.to)_100%)] border border-emerald-900/50 rounded-2xl p-3 flex flex-col min-h-0 shadow-xl">
         <h3 className="text-sm font-semibold text-emerald-100 mb-3 flex items-center gap-1.5 pb-2 border-b border-emerald-900/50">
           <IconScroll className="w-4 h-4" />
           對戰紀錄
@@ -1497,32 +1485,32 @@ export default function Battle() {
       {/* Opponent hand modal — hand contents are genuinely hidden info, so this shows face-down
           placeholders (just the count) rather than pretending to reveal anything. */}
       {showOpponentHand && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setShowOpponentHand(false)}>
-          <div
-            className="bg-[radial-gradient(ellipse_at_top,#14532d_0%,#052e16_60%,#031f0f_100%)] border border-emerald-800/60 rounded-2xl p-5 max-w-sm w-full mx-4 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-white font-semibold flex items-center gap-1.5">
-                <IconCards className="w-4 h-4" />
-                對手手牌
-              </h3>
-              <button
-                onClick={() => setShowOpponentHand(false)}
-                aria-label="關閉"
-                className="w-11 h-11 -m-2 flex items-center justify-center rounded-full text-emerald-500/70 hover:text-emerald-200 hover:bg-white/5 transition-colors"
-              >
-                <IconX className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-1.5 mb-2">
-              {Array.from({ length: bs.opponent.handCount }, (_, i) => (
-                <div key={i} className="w-10 h-14 rounded-md bg-gradient-to-br from-slate-700 to-slate-900 border border-slate-600 shadow-inner" />
-              ))}
-            </div>
-            <p className="text-emerald-700/70 text-xs">對手有 {bs.opponent.handCount} 張手牌（內容為隱藏資訊）</p>
+        <Modal
+          onClose={() => setShowOpponentHand(false)}
+          title={<><IconCards className="w-4 h-4" />對手手牌</>}
+          maxWidthClassName="max-w-sm"
+        >
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {Array.from({ length: bs.opponent.handCount }, (_, i) => (
+              <div key={i} className="w-10 h-14 rounded-md bg-gradient-to-br from-slate-700 to-slate-900 border border-slate-600 shadow-inner" />
+            ))}
           </div>
-        </div>
+          <p className="text-emerald-700/70 text-xs">對手有 {bs.opponent.handCount} 張手牌（內容為隱藏資訊）</p>
+        </Modal>
+      )}
+
+      {fullDetailCard && (
+        <Modal onClose={() => setFullDetailCard(null)} maxWidthClassName="max-w-3xl">
+          <CardArtDetail
+            card={fullDetailCard.cardData}
+            variant="full"
+            battleStatus={fullDetailCard.cardData.hp ? {
+              currentHp: Math.max(0, parseInt(fullDetailCard.cardData.hp, 10) - fullDetailCard.damage),
+              maxHp: parseInt(fullDetailCard.cardData.hp, 10),
+              statusNode: <StatusConditionBadges conditions={fullDetailCard.statusConditions} />,
+            } : undefined}
+          />
+        </Modal>
       )}
     </div>
   );

@@ -4,6 +4,8 @@ import { useDeckStore } from '../stores/deckStore';
 import { MAX_DECK_SIZE } from '@ptcg/shared';
 import type { Card, Supertype, EnergyType, Subtype } from '@ptcg/shared';
 import type { SortOrder } from '../stores/cardStore';
+import { handleCardImgError } from '../utils/cardImageFallback';
+import CardArtDetail from '../components/CardArtDetail';
 
 /** 29 ACE SPEC card names (zh-tw) — matched by name like the MEGA prefix tag */
 const ACE_SPEC_NAMES = [
@@ -252,7 +254,7 @@ export default function DeckBuilder() {
         if ('supertype' in def) typeMatch = c.supertype === def.supertype;
         if ('subtype' in def) typeMatch = c.subtypes?.includes(def.subtype);
         if ('rarity' in def) typeMatch = c.rarity === def.rarity;
-        if ('names' in def) typeMatch = def.names.includes(c.name);
+        if ('names' in def) typeMatch = (def.names as readonly string[]).includes(c.name);
         if ('excludeSubtypes' in def && def.excludeSubtypes) {
           typeMatch = typeMatch && !def.excludeSubtypes.some(s => c.subtypes?.includes(s));
         }
@@ -587,9 +589,7 @@ export default function DeckBuilder() {
                         alt={card.name}
                         className="w-full h-full object-contain p-1.5 group-hover:scale-105 transition-transform duration-300"
                         loading="lazy"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
-                        }}
+                        onError={handleCardImgError}
                       />
                       {/* Type badges */}
                       {card.types && card.types.length > 0 && (
@@ -827,7 +827,7 @@ export default function DeckBuilder() {
                     {entries.map(({ card, count }) => (
                       <div key={card.id} className="flex items-center gap-2 bg-slate-700/40 rounded-lg px-2.5 py-1.5 group/card">
                         <div className="w-8 h-8 rounded bg-slate-600 overflow-hidden flex-shrink-0">
-                          <img src={card.images.small} alt={card.name} className="w-full h-full object-contain" />
+                          <img src={card.images.small} alt={card.name} className="w-full h-full object-contain" onError={handleCardImgError} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-xs text-white truncate">{card.name}</p>
@@ -866,87 +866,8 @@ export default function DeckBuilder() {
           className="fixed z-[60] pointer-events-none"
           style={{ left: hoverPos.x + 20, top: hoverPos.y - 40 }}
         >
-          <div className="bg-slate-800/95 border border-slate-600 rounded-2xl shadow-2xl backdrop-blur-sm w-72 overflow-hidden">
-            <div className="bg-slate-700/50 p-3 flex justify-center">
-              <img src={hoveredCard.images.large} alt={hoveredCard.name} className="h-64 w-auto object-contain rounded-lg" />
-            </div>
-            <div className="p-3 space-y-2">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="text-white font-bold text-sm leading-tight">{hoveredCard.name}</h3>
-                  <p className="text-slate-400 text-xs">{hoveredCard.supertype} | {hoveredCard.set.id} #{hoveredCard.number}</p>
-                </div>
-                {hoveredCard.hp && (
-                  <div className="flex items-center gap-1">
-                    <span className="text-red-400 font-bold text-base">HP {hoveredCard.hp}</span>
-                    {hoveredCard.types?.map((t) => <EnergyIcon key={t} type={t} size="sm" />)}
-                  </div>
-                )}
-              </div>
-              <div className="flex gap-2 text-[11px] text-slate-500">
-                {hoveredCard.rarity && <span>稀有度: {hoveredCard.rarity}</span>}
-                {hoveredCard.regulationMark && <span>規制: {hoveredCard.regulationMark}</span>}
-              </div>
-              {hoveredCard.abilities && hoveredCard.abilities.length > 0 && (
-                <div className="bg-yellow-900/20 border border-yellow-700/30 rounded-lg p-2">
-                  <span className="text-yellow-400 font-semibold text-xs">{hoveredCard.abilities[0].type}</span>
-                  <p className="text-slate-200 text-xs font-medium">{hoveredCard.abilities[0].name}</p>
-                  <p className="text-slate-400 text-[11px]">{hoveredCard.abilities[0].text}</p>
-                </div>
-              )}
-              {hoveredCard.attacks && hoveredCard.attacks.length > 0 && (
-                <div className="space-y-1.5">
-                  {hoveredCard.attacks.slice(0, 2).map((atk, i) => (
-                    <div key={i} className="bg-slate-700/40 rounded-lg p-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-white text-xs font-medium">{atk.name}</span>
-                          <div className="flex gap-0.5">
-                            {atk.cost?.map((c, j) => <EnergyIcon key={j} type={c} />)}
-                          </div>
-                        </div>
-                        <span className="text-sm font-bold text-slate-200">{atk.damage}</span>
-                      </div>
-                      {atk.text && <p className="text-slate-500 text-[10px] mt-0.5">{atk.text}</p>}
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className="flex items-center gap-3 text-xs text-slate-400">
-                {hoveredCard.weaknesses && hoveredCard.weaknesses.length > 0 && (
-                  <span className="flex items-center gap-1">
-                    <span className="text-slate-500">弱:</span>
-                    <EnergyIcon type={hoveredCard.weaknesses[0].type} />
-                    <span>{hoveredCard.weaknesses[0].value}</span>
-                  </span>
-                )}
-                {hoveredCard.resistances && hoveredCard.resistances.length > 0 && (
-                  <span className="flex items-center gap-1">
-                    <span className="text-slate-500">抗:</span>
-                    <EnergyIcon type={hoveredCard.resistances[0].type} />
-                    <span>{hoveredCard.resistances[0].value}</span>
-                  </span>
-                )}
-                {hoveredCard.retreatCost && hoveredCard.retreatCost.length > 0 && (
-                  <span className="flex items-center gap-1">
-                    <span className="text-slate-500">逃:</span>
-                    {hoveredCard.retreatCost.map((c, i) => <EnergyIcon key={i} type={c} />)}
-                  </span>
-                )}
-              </div>
-              <div className="flex gap-2 text-[11px]">
-                {hoveredCard.legalities?.standard && (
-                  <span className={hoveredCard.legalities.standard === 'Legal' ? 'text-green-400' : 'text-red-400'}>
-                    標準: {hoveredCard.legalities.standard}
-                  </span>
-                )}
-                {hoveredCard.legalities?.expanded && (
-                  <span className={hoveredCard.legalities.expanded === 'Legal' ? 'text-green-400' : 'text-red-400'}>
-                    擴充: {hoveredCard.legalities.expanded}
-                  </span>
-                )}
-              </div>
-            </div>
+          <div className="bg-slate-800/95 border border-slate-600 rounded-2xl shadow-2xl backdrop-blur-sm overflow-hidden">
+            <CardArtDetail card={hoveredCard} variant="compact" />
           </div>
         </div>
       )}

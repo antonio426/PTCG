@@ -6,6 +6,27 @@ export default {
   ],
   theme: {
     extend: {
+      colors: {
+        // Dark battle-table felt gradient — collapses the hand-repeated hex triplet used across
+        // Battle.tsx's board/panel/modal backgrounds into one place. `feltFrom` is the variant
+        // used only by the turn-log panel background (slightly darker top stop than `felt.from`).
+        battle: {
+          felt: {
+            from: '#14532d',
+            via: '#052e16',
+            to: '#031f0f',
+          },
+          feltFrom: '#0f2e1c',
+        },
+        // Light theme reserved for the home page — the one intentionally light-on-dark exception
+        // in an otherwise dark app; do not use these outside Home.tsx.
+        home: {
+          bg: '#f8fafc',
+          surface: '#ffffff',
+          border: '#e2e8f0',
+          accent: '#2563eb',
+        },
+      },
       keyframes: {
         'card-enter': {
           '0%': { opacity: '0', transform: 'scale(0.6) translateY(14px)' },

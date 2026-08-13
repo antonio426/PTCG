@@ -50,24 +50,34 @@ function PageFallback() {
   );
 }
 
+// Home gets a light theme (see tailwind.config.js's `home.*` tokens) while every other page keeps
+// the dark battle-table look — this needs the current route, so it has to live inside
+// <BrowserRouter> rather than in App() itself (useLocation isn't available above the Router).
+function AppShell() {
+  const isHome = useLocation().pathname === '/';
+  return (
+    <div className={`min-h-screen ${isHome ? 'bg-home-bg' : 'bg-slate-900'}`}>
+      <NavBar />
+      <main className="max-w-7xl mx-auto px-4 py-6">
+        <Suspense fallback={<PageFallback />}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/cards" element={<CardBrowser />} />
+            <Route path="/deck" element={<DeckBuilder />} />
+            <Route path="/battle" element={<Battle />} />
+            <Route path="/battle/:id" element={<Battle />} />
+            <Route path="/lab" element={<BattleLab />} />
+          </Routes>
+        </Suspense>
+      </main>
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-slate-900">
-        <NavBar />
-        <main className="max-w-7xl mx-auto px-4 py-6">
-          <Suspense fallback={<PageFallback />}>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/cards" element={<CardBrowser />} />
-              <Route path="/deck" element={<DeckBuilder />} />
-              <Route path="/battle" element={<Battle />} />
-              <Route path="/battle/:id" element={<Battle />} />
-              <Route path="/lab" element={<BattleLab />} />
-            </Routes>
-          </Suspense>
-        </main>
-      </div>
+      <AppShell />
     </BrowserRouter>
   );
 }

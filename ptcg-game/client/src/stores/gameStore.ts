@@ -63,7 +63,7 @@ interface GameState {
   matchResult: { wins: number; losses: number; total: number };
   playerName: string;
 
-  createBattle: (deckA: string[], deckB?: string[]) => Promise<string>;
+  createBattle: (deckA: string[], deckB?: string[], difficulty?: 'easy' | 'normal' | 'hard') => Promise<string>;
   submitMove: (type: string, payload?: Record<string, unknown>) => Promise<void>;
   refreshState: () => Promise<void>;
   leaveGame: () => void;
@@ -82,13 +82,13 @@ export const useGameStore = create<GameState>((set, get) => ({
   matchResult: { wins: 0, losses: 0, total: 0 },
   playerName: 'Player',
 
-  createBattle: async (deckA: string[], deckB?: string[]) => {
+  createBattle: async (deckA: string[], deckB?: string[], difficulty?: 'easy' | 'normal' | 'hard') => {
     set({ loading: true, error: null });
     try {
       const res = await fetch(BASE, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deckA, deckB }),
+        body: JSON.stringify({ deckA, deckB, difficulty }),
       });
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
