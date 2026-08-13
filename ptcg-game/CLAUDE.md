@@ -71,6 +71,7 @@ npm run preview              # 僅 client — 預覽 production build
 - 硬碟快取：`server/src/card-api/cache.ts` 會把資料存到 `server/data/cards.json` / `server/data/sets.json`，並包一層 24 小時 TTL（`{ timestamp, data }`）。`server/data/cards-final.json` 是另一份由 `server/src/scripts/` 內的一次性腳本合併/修補產生的、規模更大的資料集 — 使用前務必確認某個 script 或 route 實際讀的是哪一份檔案，不要假設它們可以互換。
 - 圖片絕不會直接把 TCGdex CDN 網址回傳給前端；`buildImageUrl` 一律指向 `/api/images/{serie}/{setId}/{localId}/{high|low}`（`server/src/routes/images.ts`），由該路由代理到本地快取，找不到才 fallback 到 CDN。
 - 卡片 ID 格式為 `{SetCode}-{Number}`（例如 `SV1V-001`）。**已知未解決問題**：`server/data/preset-decks*.json` 以及部分較舊、存在 `localStorage` 的使用者牌組，使用的是舊版爬蟲 ID 格式（例如 `scr-14129`），與目前 TCGdex 的 ID 對不上，導致這些牌組在 `fetchCardsByIds` 查詢時失敗（完整說明與候選解法見 `ptcg-game/AGENTS.md`）。
+- **已知未解決問題**：`cards.json`/`cards-final.json` 裡個別卡片印刷版本會漏掉 `abilities`/`attacks` 欄位——即使同一張卡的其他印刷版本（同名同副屬性同 HP）有完整資料，UI 仍會照 `cardData.abilities` 顯示效果文字，但遊戲邏輯查不到資料就等於該效果被無聲跳過。不是全部同名卡都能直接互相回填：同名卡在不同印刷版本有時是完全不同的設計（招式/特性都不同），回填前務必用 `find-sibling-data-gaps.ts`（見下方）比對招式簽章，不要只憑同名同 HP 就假設是同一張卡。
 
 ### 前端結構
 - `client/src/stores/` — Zustand stores：`cardStore`（卡片目錄/搜尋狀態）、`deckStore`（牌組編輯器：`addCard`、`validateDeck` — 60 張牌 / 同名卡最多 4 張規則，一般能量除外、`saveDeck`/`loadDeck` 存取 `localStorage`）、`gameStore`（對戰 session 狀態）。
@@ -79,6 +80,13 @@ npm run preview              # 僅 client — 預覽 production build
 
 ### 一次性資料腳本
 `server/src/scripts/` 存放匯入/爬取/合併/修補用的腳本（例如 `scrape-official-standard.ts`、`merge-all-official.ts`、`patch-ace-spec.ts`），用來建立/修復 `server/data/*.json` 的資料快照。這些腳本是用 `tsx` 手動執行的，不屬於日常開發流程的一部分 — 執行前請先讀過該腳本的內容，因為有些會直接就地修改 `server/data/*.json`。臨時的一次性驗證/稽核腳本用完即刪（慣例用 `_` 前綴命名，例如 `_verify-xxx.ts`），不要留在 repo 裡。
+
+### 卡片邏輯覆蓋率稽核工具
+用來找「卡片文字寫了效果、但遊戲裡沒有真的執行」這類不會讓遊戲崩潰、也不會被一般測試發現的隱藏漏洞，分兩支互補的腳本（都用 `npx tsx src/scripts/<name>.ts` 執行，在 `server/` 目錄下）：
+- `coverage-report.ts` — 找「資料有寫、程式沒接」：比對 `abilityEffects`/`trainerEffects`/`attackEffects`（`server/src/game/effects/{abilities,trainers,attacks}.ts`）的 key 是否涵蓋 `cards.json` 裡實際出現過的特性/訓練家/攻擊名稱，依重印次數排序輸出，結果存到 `data-scraped/coverage-uncovered-*.json`。
+- `find-sibling-data-gaps.ts` — 找「資料本身就漏寫」：把同名卡分組，比對是否有印刷版本缺 `abilities`/`attacks` 而其他印刷版本（招式簽章相符）有，輸出候選清單到 `data-scraped/sibling-data-gaps.json`。**這支工具只能抓到「有姊妹版本可比對」的缺口**，孤例卡片抓不到，且比對出的候選仍需人工核對招式/HP 是否真的是同一張卡才能回填，不要盲目自動套用。
+
+`cards.json` 每次重新抓取/enrich 後這兩份報告就可能過期，改動卡片效果實作或懷疑有資料缺口時應該重跑一次。
 
 ## 成本 /情境使用紀律
 
