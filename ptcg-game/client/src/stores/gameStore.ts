@@ -12,6 +12,11 @@ export interface SanitizedGameCard {
   statusConditions: string[];
   attachedEnergy: { id: string; type: string }[];
   attachedTool: { id: string; cardData: Card } | null;
+  /** Max HP after every in-play modifier the server applies (Pokémon Tools like 英雄斗篷's +100,
+   * passive max-HP abilities) — NOT the printed `cardData.hp`. Always render HP from this: the
+   * server decides KOs against it, so showing printed HP instead makes a boosted Pokémon appear
+   * to sit at 0 HP without fainting, which reads as the boost having done nothing. */
+  maxHp: number;
 }
 
 export interface BattlePlayerState {

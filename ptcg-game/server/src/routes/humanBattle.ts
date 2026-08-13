@@ -7,7 +7,7 @@ import { setup } from '../game/setup';
 import { getLegalMoves } from '../game/validation';
 import { moves } from '../game/moves';
 import { processBetweenTurns, processWakeUpCheck } from '../game/statusConditions';
-import { promoteActiveIfNeeded } from '../game/damage';
+import { promoteActiveIfNeeded, effectiveMaxHp } from '../game/damage';
 import { fetchCardsByIds } from '../card-api/tcgdex';
 import { RandomAI, ClaudeAI, IAIPlayer } from '../ai/aiPlayer';
 import { HeuristicAI } from '../ai/heuristicAI';
@@ -31,6 +31,7 @@ export function resolveAiPlayer(difficulty?: string): { ai: IAIPlayer } | { erro
 /*  Types                                                  */
 /* ------------------------------------------------------- */
 
+/** Mirrored by `SanitizedGameCard` in client/src/stores/gameStore.ts — keep the two in sync. */
 interface SanitizedGameCard {
   id: string;
   cardData: Card;
@@ -38,6 +39,8 @@ interface SanitizedGameCard {
   statusConditions: string[];
   attachedEnergy: { id: string; type: string }[];
   attachedTool: { id: string; cardData: Card } | null;
+  /** Effective max HP including Tool/passive-ability bonuses — see sanitizeCard's comment. */
+  maxHp: number;
 }
 
 interface SanitizedPlayerState {
@@ -130,7 +133,11 @@ function findCardDataById(G: PtcgGameState, viewerIdx: 0 | 1, id: string): Card 
   return zones.find((c): c is GameCard => !!c && c.id === id)?.cardData;
 }
 
-function sanitizeCard(gc: PtcgGameState['players'][0]['active']): SanitizedGameCard | null {
+/** Needs `G` because max HP isn't a property of the card alone — Tools (英雄斗篷 +100) and
+ * passive abilities modify it, and only `effectiveMaxHp` knows the full set. The client must not
+ * recompute this from `cardData.hp`: the server decides KOs against the effective value, so a
+ * client showing printed HP renders a boosted Pokémon as sitting at 0 HP but not fainting. */
+function sanitizeCard(G: PtcgGameState, gc: PtcgGameState['players'][0]['active']): SanitizedGameCard | null {
   if (!gc) return null;
   return {
     id: gc.id,
@@ -139,6 +146,7 @@ function sanitizeCard(gc: PtcgGameState['players'][0]['active']): SanitizedGameC
     statusConditions: gc.statusConditions,
     attachedEnergy: gc.attachedEnergy,
     attachedTool: gc.attachedTool ? { id: gc.attachedTool.id, cardData: gc.attachedTool.cardData } : null,
+    maxHp: effectiveMaxHp(G, gc),
   };
 }
 
@@ -153,19 +161,19 @@ function buildResponse(session: BattleSession): BattleStateResponse {
       // payload.cardId always refers to the instance, so the client's hand-to-move matching
       // (groupMovesByHandCard) needs the same id here, not the shared catalog id.
       hand: player.hand.map(c => ({ ...c.cardData, id: c.id })),
-      active: sanitizeCard(player.active),
-      bench: player.bench.map(c => sanitizeCard(c)),
+      active: sanitizeCard(G, player.active),
+      bench: player.bench.map(c => sanitizeCard(G, c)),
       prizes: player.prizes.length,
-      discardPile: player.discardPile.map(c => sanitizeCard(c)).filter(Boolean) as SanitizedGameCard[],
+      discardPile: player.discardPile.map(c => sanitizeCard(G, c)).filter(Boolean) as SanitizedGameCard[],
       deckCount: player.deck.length,
     },
     opponent: {
-      active: sanitizeCard(opponent.active),
-      bench: opponent.bench.map(c => sanitizeCard(c)),
+      active: sanitizeCard(G, opponent.active),
+      bench: opponent.bench.map(c => sanitizeCard(G, c)),
       handCount: opponent.hand.length,
       prizes: opponent.prizes.length,
       discardCount: opponent.discardPile.length,
-      discardPile: opponent.discardPile.map(c => sanitizeCard(c)).filter(Boolean) as SanitizedGameCard[],
+      discardPile: opponent.discardPile.map(c => sanitizeCard(G, c)).filter(Boolean) as SanitizedGameCard[],
       deckCount: opponent.deck.length,
     },
     turn: G.turn,

@@ -407,7 +407,9 @@ function PokemonCardView({
   onShowDetail: (card: SanitizedGameCard) => void;
 }) {
   const cd = card.cardData;
-  const hp = cd.hp ? parseInt(cd.hp) : 0;
+  // Server-computed effective max HP (includes Tool/passive-ability bonuses), NOT the printed
+  // cardData.hp — see SanitizedGameCard.maxHp. Falls back to printed HP only for safety.
+  const hp = card.maxHp || (cd.hp ? parseInt(cd.hp) : 0);
   const remainingHp = Math.max(0, hp - card.damage);
   const isW = size === 'small';
   const wCls = isW ? 'w-24' : 'w-36';
@@ -1515,11 +1517,16 @@ export default function Battle() {
           <CardArtDetail
             card={fullDetailCard.cardData}
             variant="full"
-            battleStatus={fullDetailCard.cardData.hp ? {
-              currentHp: Math.max(0, parseInt(fullDetailCard.cardData.hp, 10) - fullDetailCard.damage),
-              maxHp: parseInt(fullDetailCard.cardData.hp, 10),
-              statusNode: <StatusConditionBadges conditions={fullDetailCard.statusConditions} />,
-            } : undefined}
+            battleStatus={(() => {
+              // Same rule as PokemonCardView: prefer the server's effective max HP so Tool /
+              // passive-ability bonuses show here too, not the printed cardData.hp.
+              const maxHp = fullDetailCard.maxHp || (fullDetailCard.cardData.hp ? parseInt(fullDetailCard.cardData.hp, 10) : 0);
+              return maxHp ? {
+                currentHp: Math.max(0, maxHp - fullDetailCard.damage),
+                maxHp,
+                statusNode: <StatusConditionBadges conditions={fullDetailCard.statusConditions} />,
+              } : undefined;
+            })()}
           />
         </Modal>
       )}
