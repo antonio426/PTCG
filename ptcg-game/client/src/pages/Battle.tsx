@@ -372,6 +372,152 @@ function PendingChoicePicker({
   );
 }
 
+/** Lets keyboard users (Tab + Enter/Space) drive the same board/hand click targets that mouse
+ * users click directly — the whole targeting redesign is built on real elements with onClick,
+ * so this is the one addition needed for keyboard parity rather than a separate input path. */
+const keyActivate = (fn: () => void) => (e: KeyboardEvent) => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fn(); }
+};
+
+/** Was previously defined inside Battle() — a component defined inside another component's
+ * render body gets a new function identity every render, which React treats as an entirely
+ * different component type, forcing a full unmount/remount (and replaying animate-card-enter)
+ * on every Pokémon card every time Battle re-renders — which happens once a second just from
+ * the clockNow tick. Hoisting to module scope keeps the type stable across renders. */
+function PokemonCardView({
+  card, size = 'normal', showHp = true, onClick, targetable, picked, previewPlacement = 'above', shake = false, loading, onShowDetail,
+}: {
+  card: SanitizedGameCard;
+  size?: 'normal' | 'small';
+  showHp?: boolean;
+  onClick?: () => void;
+  /** This Pokémon is a legal click-target for whatever's currently being resolved (attaching
+   * energy, evolving, or a server-forced pendingChoice) — gets a pulsing highlight so the
+   * valid options read at a glance instead of needing a separate list to cross-reference. */
+  targetable?: boolean;
+  /** Provisionally selected as part of a multi-pick targeting choice (not yet confirmed). */
+  picked?: boolean;
+  previewPlacement?: 'above' | 'below';
+  shake?: boolean;
+  /** Whether a move submission is in flight — disables/dims the card the same way the rest of
+   * the board does while waiting on the server. */
+  loading: boolean;
+  /** Opens the full-detail modal for this card (the "i" button) — passed in since it's
+   * `setFullDetailCard` from Battle's own state. */
+  onShowDetail: (card: SanitizedGameCard) => void;
+}) {
+  const cd = card.cardData;
+  const hp = cd.hp ? parseInt(cd.hp) : 0;
+  const remainingHp = Math.max(0, hp - card.damage);
+  const isW = size === 'small';
+  const wCls = isW ? 'w-24' : 'w-36';
+  const imgH = isW ? 'h-[4.5rem]' : 'h-[7.5rem]';
+  const ring = picked
+    ? 'ring-2 ring-emerald-400 shadow-[0_0_14px_rgba(52,211,153,0.6)]'
+    : targetable
+    ? 'ring-2 ring-sky-400 shadow-[0_0_14px_rgba(56,189,248,0.6)] animate-pulse'
+    : '';
+
+  return (
+    <div
+      className={`flex flex-col items-center gap-1 cursor-pointer transition-all animate-card-enter ${ring ? 'rounded-xl' : ''} ${ring}
+        ${onClick ? 'hover:-translate-y-1 focus-visible:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 focus-visible:outline-offset-2 rounded-xl' : ''} ${shake ? 'animate-shake' : ''}
+        ${onClick && loading ? 'opacity-40 !cursor-not-allowed' : ''}`}
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick && !loading ? 0 : undefined}
+      onKeyDown={onClick ? keyActivate(onClick) : undefined}
+    >
+      <HoverPreview card={cd} placement={previewPlacement}>
+        <div className={`relative ${wCls} ${imgH} bg-slate-900 border-2 border-slate-600/80 rounded-xl overflow-hidden hover:border-emerald-400 transition-colors shadow-lg shadow-black/40`}>
+          <img src={cd.images.small} alt={cd.name} onError={handleCardImgError} className="w-full h-full object-contain" />
+          <button
+            onClick={(e) => { e.stopPropagation(); onShowDetail(card); }}
+            aria-label="查看詳情"
+            className="absolute top-0.5 right-0.5 w-5 h-5 flex items-center justify-center rounded-full bg-black/60 text-emerald-300 hover:bg-black/80 hover:text-emerald-100 transition-colors text-[10px] font-bold"
+          >
+            i
+          </button>
+        </div>
+      </HoverPreview>
+      {showHp && hp > 0 && (
+        <div className="w-full px-0.5">
+          <div className="flex justify-between items-baseline text-[10px] mb-0.5">
+            <span className="truncate max-w-[60%] text-slate-100 font-medium">{cd.name}</span>
+            <span className="text-slate-300 font-semibold tabular-nums">{remainingHp}/{hp}</span>
+          </div>
+          <HpBar current={remainingHp} max={hp} />
+        </div>
+      )}
+      {!showHp && (
+        <span className="text-[10px] text-slate-300 truncate max-w-[90%] font-medium">{cd.name}</span>
+      )}
+      {(card.attachedEnergy.length > 0 || card.attachedTool) && (
+        <div className="flex gap-0.5 flex-wrap justify-center items-center mt-0.5">
+          {card.attachedEnergy.map((e) => (
+            <span key={e.id} className="animate-card-enter inline-flex">
+              <EnergyIcon type={e.type} size={isW ? 'sm' : 'sm'} />
+            </span>
+          ))}
+          {card.attachedTool && (
+            <HoverPreview card={card.attachedTool.cardData} placement={previewPlacement}>
+              <span className="animate-card-enter inline-flex w-4 h-4 rounded overflow-hidden border border-amber-400/70 shadow-[0_0_4px_rgba(251,191,36,0.5)]">
+                <img src={card.attachedTool.cardData.images.small} alt={card.attachedTool.cardData.name} onError={handleCardImgError} className="w-full h-full object-cover" />
+              </span>
+            </HoverPreview>
+          )}
+        </div>
+      )}
+      {card.damage > 0 && (
+        <span className="text-[10px] text-red-400 font-bold">-{card.damage}</span>
+      )}
+      <StatusConditionBadges conditions={card.statusConditions} />
+    </div>
+  );
+}
+
+function PrizeDisplay({ count, label }: { count: number; label: string }) {
+  return (
+    <div className="flex items-center gap-1.5" title={`獎賞卡 ${count}/6`}>
+      {label && <span className="text-xs text-slate-400">{label}</span>}
+      <div className="flex gap-0.5">
+        {Array.from({ length: 6 }, (_, i) => (
+          <div
+            key={i}
+            className={`w-2 h-2.5 rounded-[2px] border ${
+              i < count
+                ? 'bg-gradient-to-b from-yellow-300 to-yellow-500 border-yellow-200/60 shadow-[0_0_3px_rgba(250,204,21,0.6)]'
+                : 'bg-slate-800 border-slate-700'
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Shared modal for either side's discard pile — real rules treat both piles as public
+ * information (either player may look through either at any time), so both render the
+ * actual cards rather than just a count. */
+function DiscardModal({ title, cards, onClose }: { title: string; cards: SanitizedGameCard[]; onClose: () => void }) {
+  return (
+    <Modal onClose={onClose} title={<><IconTrash className="w-4 h-4" />{title}（{cards.length} 張）</>}>
+      {cards.length === 0 ? (
+        <p className="text-emerald-700/70 text-sm">暫無棄牌</p>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {cards.map((c, i) => (
+            <HoverPreview key={c.id ?? i} card={c.cardData} placement="above">
+              <img src={c.cardData.images.small} alt={c.cardData.name} onError={handleCardImgError}
+                className="w-16 h-[4.5rem] rounded-lg object-contain bg-slate-900 border border-slate-700 hover:ring-2 hover:ring-emerald-400 hover:border-emerald-400 transition-all" />
+            </HoverPreview>
+          ))}
+        </div>
+      )}
+    </Modal>
+  );
+}
+
 /* ====================================================== */
 /*  Main Battle Component                                 */
 /* ====================================================== */
@@ -637,138 +783,6 @@ export default function Battle() {
   }
 
   /* ======================== */
-  /*  Helper sub-components   */
-  /* ======================== */
-
-  function PokemonCardView({
-    card, size = 'normal', showHp = true, onClick, targetable, picked, previewPlacement = 'above', shake = false,
-  }: {
-    card: SanitizedGameCard;
-    size?: 'normal' | 'small';
-    showHp?: boolean;
-    onClick?: () => void;
-    /** This Pokémon is a legal click-target for whatever's currently being resolved (attaching
-     * energy, evolving, or a server-forced pendingChoice) — gets a pulsing highlight so the
-     * valid options read at a glance instead of needing a separate list to cross-reference. */
-    targetable?: boolean;
-    /** Provisionally selected as part of a multi-pick targeting choice (not yet confirmed). */
-    picked?: boolean;
-    previewPlacement?: 'above' | 'below';
-    shake?: boolean;
-  }) {
-    const cd = card.cardData;
-    const hp = cd.hp ? parseInt(cd.hp) : 0;
-    const remainingHp = Math.max(0, hp - card.damage);
-    const isW = size === 'small';
-    const wCls = isW ? 'w-24' : 'w-36';
-    const imgH = isW ? 'h-[4.5rem]' : 'h-[7.5rem]';
-    const ring = picked
-      ? 'ring-2 ring-emerald-400 shadow-[0_0_14px_rgba(52,211,153,0.6)]'
-      : targetable
-      ? 'ring-2 ring-sky-400 shadow-[0_0_14px_rgba(56,189,248,0.6)] animate-pulse'
-      : '';
-
-    return (
-      <div
-        className={`flex flex-col items-center gap-1 cursor-pointer transition-all animate-card-enter ${ring ? 'rounded-xl' : ''} ${ring}
-          ${onClick ? 'hover:-translate-y-1 focus-visible:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 focus-visible:outline-offset-2 rounded-xl' : ''} ${shake ? 'animate-shake' : ''}
-          ${onClick && loading ? 'opacity-40 !cursor-not-allowed' : ''}`}
-        onClick={onClick}
-        role={onClick ? 'button' : undefined}
-        tabIndex={onClick && !loading ? 0 : undefined}
-        onKeyDown={onClick ? keyActivate(onClick) : undefined}
-      >
-        <HoverPreview card={cd} placement={previewPlacement}>
-          <div className={`relative ${wCls} ${imgH} bg-slate-900 border-2 border-slate-600/80 rounded-xl overflow-hidden hover:border-emerald-400 transition-colors shadow-lg shadow-black/40`}>
-            <img src={cd.images.small} alt={cd.name} onError={handleCardImgError} className="w-full h-full object-contain" />
-            <button
-              onClick={(e) => { e.stopPropagation(); setFullDetailCard(card); }}
-              aria-label="查看詳情"
-              className="absolute top-0.5 right-0.5 w-5 h-5 flex items-center justify-center rounded-full bg-black/60 text-emerald-300 hover:bg-black/80 hover:text-emerald-100 transition-colors text-[10px] font-bold"
-            >
-              i
-            </button>
-          </div>
-        </HoverPreview>
-        {showHp && hp > 0 && (
-          <div className="w-full px-0.5">
-            <div className="flex justify-between items-baseline text-[10px] mb-0.5">
-              <span className="truncate max-w-[60%] text-slate-100 font-medium">{cd.name}</span>
-              <span className="text-slate-300 font-semibold tabular-nums">{remainingHp}/{hp}</span>
-            </div>
-            <HpBar current={remainingHp} max={hp} />
-          </div>
-        )}
-        {!showHp && (
-          <span className="text-[10px] text-slate-300 truncate max-w-[90%] font-medium">{cd.name}</span>
-        )}
-        {(card.attachedEnergy.length > 0 || card.attachedTool) && (
-          <div className="flex gap-0.5 flex-wrap justify-center items-center mt-0.5">
-            {card.attachedEnergy.map((e) => (
-              <span key={e.id} className="animate-card-enter inline-flex">
-                <EnergyIcon type={e.type} size={isW ? 'sm' : 'sm'} />
-              </span>
-            ))}
-            {card.attachedTool && (
-              <HoverPreview card={card.attachedTool.cardData} placement={previewPlacement}>
-                <span className="animate-card-enter inline-flex w-4 h-4 rounded overflow-hidden border border-amber-400/70 shadow-[0_0_4px_rgba(251,191,36,0.5)]">
-                  <img src={card.attachedTool.cardData.images.small} alt={card.attachedTool.cardData.name} onError={handleCardImgError} className="w-full h-full object-cover" />
-                </span>
-              </HoverPreview>
-            )}
-          </div>
-        )}
-        {card.damage > 0 && (
-          <span className="text-[10px] text-red-400 font-bold">-{card.damage}</span>
-        )}
-        <StatusConditionBadges conditions={card.statusConditions} />
-      </div>
-    );
-  }
-
-  function PrizeDisplay({ count, label }: { count: number; label: string }) {
-    return (
-      <div className="flex items-center gap-1.5" title={`獎賞卡 ${count}/6`}>
-        {label && <span className="text-xs text-slate-400">{label}</span>}
-        <div className="flex gap-0.5">
-          {Array.from({ length: 6 }, (_, i) => (
-            <div
-              key={i}
-              className={`w-2 h-2.5 rounded-[2px] border ${
-                i < count
-                  ? 'bg-gradient-to-b from-yellow-300 to-yellow-500 border-yellow-200/60 shadow-[0_0_3px_rgba(250,204,21,0.6)]'
-                  : 'bg-slate-800 border-slate-700'
-              }`}
-            />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  /** Shared modal for either side's discard pile — real rules treat both piles as public
-   * information (either player may look through either at any time), so both render the
-   * actual cards rather than just a count. */
-  function DiscardModal({ title, cards, onClose }: { title: string; cards: SanitizedGameCard[]; onClose: () => void }) {
-    return (
-      <Modal onClose={onClose} title={<><IconTrash className="w-4 h-4" />{title}（{cards.length} 張）</>}>
-        {cards.length === 0 ? (
-          <p className="text-emerald-700/70 text-sm">暫無棄牌</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {cards.map((c, i) => (
-              <HoverPreview key={c.id ?? i} card={c.cardData} placement="above">
-                <img src={c.cardData.images.small} alt={c.cardData.name} onError={handleCardImgError}
-                  className="w-16 h-[4.5rem] rounded-lg object-contain bg-slate-900 border border-slate-700 hover:ring-2 hover:ring-emerald-400 hover:border-emerald-400 transition-all" />
-              </HoverPreview>
-            ))}
-          </div>
-        )}
-      </Modal>
-    );
-  }
-
-  /* ======================== */
   /*  Main Battle Layout      */
   /* ======================== */
 
@@ -853,13 +867,6 @@ export default function Battle() {
       else if (next.size < activeTargeting.maxCount) next.add(targetId);
       return next;
     });
-  };
-
-  /** Lets keyboard users (Tab + Enter/Space) drive the same board/hand click targets that mouse
-   * users click directly — the whole targeting redesign is built on real elements with onClick,
-   * so this is the one addition needed for keyboard parity rather than a separate input path. */
-  const keyActivate = (fn: () => void) => (e: KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fn(); }
   };
 
   return (
@@ -1047,6 +1054,8 @@ export default function Battle() {
                   size="normal"
                   showHp={true}
                   previewPlacement="below"
+                  loading={loading}
+                  onShowDetail={setFullDetailCard}
                   shake={floaters.some(f => f.side === 'opponent' && f.kind === 'damage')}
                   {...targetProps(bs.opponent.active.id)}
                 />
@@ -1068,7 +1077,7 @@ export default function Battle() {
               {Array.from({ length: 5 }, (_, i) => {
                 const c = bs.opponent.bench[i];
                 return c ? (
-                  <PokemonCardView key={i} card={c} size="small" showHp={false} previewPlacement="below" {...targetProps(c.id)} />
+                  <PokemonCardView key={i} card={c} size="small" showHp={false} previewPlacement="below" loading={loading} onShowDetail={setFullDetailCard} {...targetProps(c.id)} />
                 ) : (
                   <div key={i} className="w-24 h-[4.5rem] bg-black/10 border border-dashed border-emerald-900/50 rounded-md flex items-center justify-center">
                     <span className="text-emerald-700/80 text-xs">?</span>
@@ -1369,6 +1378,8 @@ export default function Battle() {
                   card={bs.player.active}
                   size="normal"
                   showHp={true}
+                  loading={loading}
+                  onShowDetail={setFullDetailCard}
                   shake={floaters.some(f => f.side === 'player' && f.kind === 'damage')}
                   {...targetProps(bs.player.active.id)}
                 />
@@ -1398,7 +1409,7 @@ export default function Battle() {
               {Array.from({ length: 5 }, (_, i) => {
                 const c = bs.player.bench[i];
                 return c ? (
-                  <PokemonCardView key={i} card={c} size="small" showHp={false} {...targetProps(c.id)} />
+                  <PokemonCardView key={i} card={c} size="small" showHp={false} loading={loading} onShowDetail={setFullDetailCard} {...targetProps(c.id)} />
                 ) : (
                   <div key={i} className="w-24 h-[4.5rem] bg-black/10 border border-dashed border-emerald-900/50 rounded-md flex items-center justify-center">
                     <span className="text-emerald-700/80 text-xs">?</span>
