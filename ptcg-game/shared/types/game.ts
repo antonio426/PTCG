@@ -10,6 +10,14 @@ export interface GameCard {
   /** At most one Pokémon Tool card may be attached per Pokémon under current rules. */
   attachedTool?: GameCard | null;
   turnedFacedown?: boolean;
+  /** Real rules: evolving does NOT discard the pre-evolution card — it stays stacked underneath
+   * the new card as part of the same in-play Pokémon, and the whole stack only goes to the
+   * discard pile together when this Pokémon is later Knocked Out (or otherwise permanently
+   * leaves play). Ordered oldest-first (e.g. Basic, then Stage 1, for a Stage-2 top card).
+   * Entries here always have `attachedEnergy: []`/`attachedTool: null`/`damage: 0` — the current
+   * top card is the sole owner of "live" attachments; historical stack entries are inert
+   * markers only kept so the discard pile ends up with the right cards. */
+  preEvolutions?: GameCard[];
   /** Per-card, single-turn effects set by attack text like "在下個對手的回合，這隻寶可夢不會
    * 受到招式的傷害" (self-protection) or "在下個對手的回合，受到這個招式的寶可夢無法撤退"
    * (inflicted on the defender). `appliesOnTurn` is an absolute GameState.turn number — the
@@ -72,12 +80,25 @@ export type GamePhase = 'setup' | 'play' | 'attack' | 'end';
 
 export type TurnStage = 'draw_phase' | 'main_phase' | 'attack_phase' | 'end_phase';
 
+export interface DamageDetail {
+  baseDamage: number;
+  afterWeakness: number;
+  weaknessApplied: boolean;
+  resistanceApplied: boolean;
+  finalDamage: number;
+}
+
 export interface TurnAction {
   player: 0 | 1;
   turn: number;
   action: string;
   details: string;
   timestamp: number;
+  /** Optional structured breakdown for 'attack' actions — `details` stays the source of truth
+   * for display/parsing (e.g. Battle.tsx's damage-floater regex), this is additive only. */
+  damageDetail?: DamageDetail;
+  /** Optional coin-flip summary for actions whose `details` text mentions a coin flip. */
+  coinFlipNote?: string;
 }
 
 export interface DeckValidation {
@@ -112,4 +133,9 @@ export interface PendingChoice {
   context: Record<string, unknown>;
   /** The trainer/pokemon/tool instance id that started this effect — restored into EffectContext on resume. */
   sourceCardId?: string;
+  /** For deck-search choices only: the rest of the searching player's own deck (beyond `options`),
+   * so they can browse what else is in there before picking — same information a physical player
+   * would see by fanning out their own deck. Server-side, this is only ever populated for the
+   * player whose own deck is being searched (never the opponent's). */
+  remainingDeckPreview?: Card[];
 }

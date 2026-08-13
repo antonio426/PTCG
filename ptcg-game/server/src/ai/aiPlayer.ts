@@ -42,7 +42,7 @@ export function selectRandomMove(G: PtcgGameState, playerIndex: number): LegalAc
 export class ClaudeAI implements IAIPlayer {
   name = 'ClaudeAI';
 
-  constructor(private config: { apiKey: string; apiUrl?: string; showThought?: boolean; temperature?: number }) {}
+  constructor(private config: { apiKey: string; apiUrl?: string; model?: string; showThought?: boolean; temperature?: number }) {}
 
   async decide(gameState: PtcgGameState, playerIndex: number, legalMoves: LegalAction[]) {
     const prompt = this.buildPrompt(gameState, playerIndex, legalMoves);
@@ -257,7 +257,7 @@ export class ClaudeAI implements IAIPlayer {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: this.config.model || 'claude-sonnet-5',
         max_tokens: 1024,
         temperature: this.config.temperature ?? 0.3,
         messages: [{ role: 'user', content: prompt }],

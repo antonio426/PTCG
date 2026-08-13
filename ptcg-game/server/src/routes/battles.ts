@@ -8,6 +8,22 @@ import { getLegalMoves } from '../game/validation';
 import { fetchCardsByIds } from '../card-api/tcgdex';
 import { promoteActiveIfNeeded } from '../game/damage';
 import { processBetweenTurns, processWakeUpCheck } from '../game/statusConditions';
+import { IAIPlayer, RandomAI, MockAI, ClaudeAI } from '../ai/aiPlayer';
+import { HeuristicAI } from '../ai/heuristicAI';
+
+/** Only 'claude' needs a real API key; everything else (including an unrecognized/missing
+ * type) falls back to RandomAI, matching the old hardcoded-random behavior exactly when no
+ * aiType is requested at all — so existing callers see zero behavior change. */
+function resolveAiPlayer(type: string | undefined): IAIPlayer {
+  if (type === 'heuristic') return new HeuristicAI();
+  if (type === 'mock') return new MockAI();
+  if (type === 'claude') {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) throw new Error('Claude AI type requested but ANTHROPIC_API_KEY is not configured on this server.');
+    return new ClaudeAI({ apiKey, model: process.env.ANTHROPIC_MODEL });
+  }
+  return new RandomAI();
+}
 
 interface BattleRecord {
   matchId: string; deckA: string[]; deckB: string[];
@@ -88,19 +104,12 @@ function runTurnBegin(G: PtcgGameState): void {
   }
 }
 
-function selectRandomMove(G: PtcgGameState, playerIndex: number): LegalAction | null {
-  const legalMoves = getLegalMoves(G, playerIndex);
-  if (legalMoves.length === 0) return null;
-  const validMoves = legalMoves.filter(m => m.type !== 'forfeit');
-  const pool = validMoves.length > 0 ? validMoves : legalMoves;
-  return pool[Math.floor(Math.random() * pool.length)] || null;
-}
-
-async function simulateBattle(decks: string[][], seed: number): Promise<{ winner: number; winReason: string | null; turns: number; logs: any[] }> {
+async function simulateBattle(decks: string[][], seed: number, aiTypeA: string | undefined, aiTypeB: string | undefined): Promise<{ winner: number; winReason: string | null; turns: number; logs: any[] }> {
   const allIds = [...new Set([...decks[0], ...decks[1]])];
   const cardData = await fetchCardsByIds(allIds);
   const cardDataMap = cardData as unknown as Record<string, Card>;
   const G = setup({ decks, cardData: cardDataMap, seed });
+  const ais: [IAIPlayer, IAIPlayer] = [resolveAiPlayer(aiTypeA), resolveAiPlayer(aiTypeB)];
   runTurnBegin(G);
   let safety = 0;
   while (G.winner === null && safety < 200) {
@@ -112,7 +121,9 @@ async function simulateBattle(decks: string[][], seed: number): Promise<{ winner
     // since `G.phase` never reaches 'end' without genuine progress).
     while (G.winner === null && G.phase !== 'end' && moveSafety < 500) {
       moveSafety++;
-      const move = selectRandomMove(G, player);
+      const legalMoves = getLegalMoves(G, player);
+      if (legalMoves.length === 0) break;
+      const { action: move } = await ais[player].decide(G, player, legalMoves);
       if (!move) break;
       executeMove(G, move, player);
       const winner = checkWinner(G);
@@ -130,14 +141,18 @@ const router = new Router();
 
 router.post('/ai-vs-ai', async (ctx) => {
   try {
-    const { deckA, deckB, games } = ctx.request.body as any;
+    const { deckA, deckB, games, aiTypeA, aiTypeB } = ctx.request.body as any;
     if (!deckA || !deckB) { ctx.status = 400; ctx.body = { error: 'deckA and deckB required' }; return; }
-    const numGames = Math.min(games || 1, 10);
+    // Claude costs real money per move and a full game is dozens of calls — cap batches
+    // involving it well below the normal 10-game ceiling so a user can't accidentally burn a
+    // large amount of API spend from one BattleLab click.
+    const involvesClaude = aiTypeA === 'claude' || aiTypeB === 'claude';
+    const numGames = Math.min(games || 1, involvesClaude ? 3 : 10);
     const matchId = randomUUID();
     const results: any[] = [];
     const aggregated: Record<number, number> = { 0: 0, 1: 0 };
     for (let i = 0; i < numGames; i++) {
-      const result = await simulateBattle([deckA, deckB], Date.now() + i);
+      const result = await simulateBattle([deckA, deckB], Date.now() + i, aiTypeA, aiTypeB);
       results.push(result);
       aggregated[result.winner] = (aggregated[result.winner] || 0) + 1;
     }

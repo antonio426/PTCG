@@ -42,6 +42,9 @@ export interface TimedEffectDescriptor {
 export interface GenericAttackOutcome {
   /** Replaces `parseInt(attack.damage)` as the pre-weakness/passive base damage for this use. */
   baseDamage: number;
+  /** Human-readable coin-flip result for the battle log (only set for the highest-traffic
+   * coin-flip templates — not every template resolved by this module populates it). */
+  coinFlipNote?: string;
   /** Applied to the defender only if final damage > 0, matching real rules for on-hit effects. */
   statusToInflict?: StatusCondition[];
   /** Applied to the attacker itself, unconditional (no damage gate). */
@@ -446,7 +449,7 @@ export function resolveGenericAttackEffect(text: string, damageField: string, bo
     const per = parseInt(m[2], 10);
     const heads = flipCoins(flips);
     const base = parseBaseNumber(damageField); // "N+" style bases add on; "Nx" style bases are 0 here
-    const outcome: GenericAttackOutcome = { baseDamage: base + heads * per };
+    const outcome: GenericAttackOutcome = { baseDamage: base + heads * per, coinFlipNote: `擲${flips}次硬幣，${heads}次正面` };
     if (m[3] && m[4] && heads >= parseInt(m[3], 10)) outcome.statusToInflict = [STATUS_ZH[m[4]]];
     return outcome;
   }
@@ -457,7 +460,7 @@ export function resolveGenericAttackEffect(text: string, damageField: string, bo
     const per = parseInt(m[1], 10);
     let heads = 0;
     while (Math.random() < 0.5) heads++;
-    return { baseDamage: parseBaseNumber(damageField) + heads * per };
+    return { baseDamage: parseBaseNumber(damageField) + heads * per, coinFlipNote: `擲硬幣直到反面，共${heads}次正面` };
   }
 
   // 擲1次硬幣若為正面，則增加N點傷害。
@@ -465,14 +468,14 @@ export function resolveGenericAttackEffect(text: string, damageField: string, bo
   if (m) {
     const bonus = parseInt(m[1], 10);
     const heads = Math.random() < 0.5;
-    return { baseDamage: parseBaseNumber(damageField) + (heads ? bonus : 0) };
+    return { baseDamage: parseBaseNumber(damageField) + (heads ? bonus : 0), coinFlipNote: heads ? '正面' : '反面' };
   }
 
   // 擲1次硬幣若為正面，則將對手的戰鬥寶可夢【狀態】。
   m = t.match(new RegExp(`^擲1次硬幣[，,]?若為正面，則將對手的戰鬥寶可夢【(${STATUS_ALT})】。$`));
   if (m) {
     const heads = Math.random() < 0.5;
-    const outcome: GenericAttackOutcome = { baseDamage: parseBaseNumber(damageField) };
+    const outcome: GenericAttackOutcome = { baseDamage: parseBaseNumber(damageField), coinFlipNote: heads ? '正面' : '反面' };
     if (heads) outcome.statusToInflict = [STATUS_ZH[m[1]]];
     return outcome;
   }
@@ -480,7 +483,7 @@ export function resolveGenericAttackEffect(text: string, damageField: string, bo
   // 擲1次硬幣若為反面，則這個招式失敗。
   if (/^擲1次硬幣[，,]?若為反面，則這個招式失敗。$/.test(t)) {
     const heads = Math.random() < 0.5;
-    return { baseDamage: heads ? parseBaseNumber(damageField) : 0 };
+    return { baseDamage: heads ? parseBaseNumber(damageField) : 0, coinFlipNote: heads ? '正面' : '反面，招式失敗' };
   }
 
   // 選擇1/2個對手的戰鬥寶可夢身上附加的能量，將其丟棄。(可選：先擲1次硬幣。)

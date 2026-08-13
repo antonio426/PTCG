@@ -47,7 +47,7 @@ function placeNextBenchCounter(ctx: EffectContext, remaining: number): EffectSte
   if (targets.length === 0) return 'done';
   return {
     prompt: `幻影奇襲：將傷害指示物自由分配到對手備戰寶可夢（剩餘 ${remaining} 個）`,
-    choiceType: 'select_from_list',
+    choiceType: 'select_pokemon',
     count: 1,
     options: targets.map(t => ({ id: t.id, label: `${t.cardData.name}（${t.damage} 傷害）` })),
     context: { remaining },

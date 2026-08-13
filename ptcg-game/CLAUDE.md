@@ -51,13 +51,19 @@ npm run preview              # 僅 client — 預覽 production build
 
 修改回合/出牌相關邏輯時，務必確認是否也要同步修改 `humanBattle.ts` 的 `executeGameAction`/`applyTurnBegin`，以及 `battleRunner.ts` 的 `executeMove`/`applyTurnBegin` — 因為它們是各自複製（而非共用）boardgame.io 的回合生命週期邏輯。
 
-### AI 玩家（`server/src/ai/aiPlayer.ts`）
+### AI 玩家
 共同介面為 `IAIPlayer.decide(gameState, playerIndex, legalMoves)`。目前實作：
-- `RandomAI` — 從合法行動中隨機選一個。
-- `MockAI` — 依優先順序的啟發式策略（攻擊 > 進化 > 附能量 > 出寶可夢 > ...）。目前是人類對戰的預設對手（`humanBattle.ts`）。
-- `ClaudeAI` — 直接呼叫 Anthropic Messages API（`fetch` 到 `api.anthropic.com`，使用 `select_action` 這個 tool），傳入完整渲染成繁體中文的遊戲狀態 prompt，再把 tool call 結果解析回 `LegalAction`。需要 `config.apiKey`；目前尚未被任何路由設為預設值。
+- `RandomAI`（`server/src/ai/aiPlayer.ts`）— 從合法行動中隨機選一個。對應難度 `easy`。
+- `MockAI`（`server/src/ai/aiPlayer.ts`）— 依優先順序的簡單啟發式策略（攻擊 > 進化 > 附能量 > 出寶可夢 > ...）。已不是預設對手，僅供比較用。
+- `HeuristicAI`（`server/src/ai/heuristicAI.ts`）— 對每個合法行動評分後選最高分，會讀卡片實際內容（訓練家/特性效果文字關鍵字、可付的攻擊傷害等）計分，也有主動撤退換更強攻擊手等戰術判斷。**目前是人類對戰的預設對手**（`humanBattle.ts` 的 `resolveAiPlayer`，難度 `normal` 或未指定時使用）。
+- `ClaudeAI`（`server/src/ai/aiPlayer.ts`）— 直接呼叫 Anthropic Messages API（`fetch` 到 `api.anthropic.com`，使用 `select_action` 這個 tool），傳入完整渲染成繁體中文的遊戲狀態 prompt，再把 tool call 結果解析回 `LegalAction`。對應難度 `hard`；需要環境變數 `ANTHROPIC_API_KEY`（`ANTHROPIC_MODEL` 可選），沒設定時 `resolveAiPlayer` 會回傳錯誤而不是靜默降級成別的 AI。
 
-合法行動的產生邏輯集中在 `server/src/game/validation.ts`（`getLegalMoves`）— 這是「玩家 X 現在能做什麼」的唯一真實來源，上述三套對戰路徑都會用到它。
+`humanBattle.ts` 的 `resolveAiPlayer(difficulty?)` 是難度 → AI 類型的唯一對照表。`BattleLab`／`battles.ts` 的 `/api/battles/ai-vs-ai` 則是另一套獨立的對照（`aiTypeA`/`aiTypeB` 參數，接受 `random`/`mock`/`heuristic`/`claude`），用來讓兩種 AI 策略互相比賽測勝率——修改難度或 AI 選型邏輯時，這兩處要分別確認是否要同步調整。
+
+合法行動的產生邏輯集中在 `server/src/game/validation.ts`（`getLegalMoves`）— 這是「玩家 X 現在能做什麼」的唯一真實來源，前面三套對戰路徑都會用到它。
+
+### 進化史堆疊（`GameCard.preEvolutions`）
+真實規則：進化不會立刻把進化前的卡丟進棄牌堆——它會疊在新卡底下，直到這隻寶可夢整疊被擊倒（或以其他方式永久離場）時才一起進棄牌堆。`shared/types/game.ts` 的 `GameCard.preEvolutions?: GameCard[]`（舊到新排序）就是這疊歷史。`server/src/game/damage.ts` 匯出兩個共用 helper：`stackAsPreEvolution(newTop, oldCard)`（進化時呼叫，取代直接 push 進棄牌堆）與 `flushPreEvolutionsToDiscard(card, discardPile)`（KO、彈回手牌、洗回牌庫等任何「這張卡永久離開目前這疊」的時機都要呼叫，避免整疊歷史卡憑空消失）。新增任何會讓寶可夢進化/降階/離場的效果時，記得檢查是否也要處理這疊歷史。
 
 ### 卡片資料流程（`server/src/card-api/tcgdex.ts`）
 - 從 TCGdex v2 抓取資料（預設語系 `zh-tw`），轉換成專案共用的 `Card`/`MapCard` 格式（參見 `CATEGORY_MAP`、`ENERGY_MAP`、`TRAINER_TYPE_MAP`、`STAGE_MAP` 等對照表 — TCGdex 的用詞與本專案的 `Subtype`/`EnergyType` 型別並不完全一致）。
@@ -72,7 +78,7 @@ npm run preview              # 僅 client — 預覽 production build
 - `deckStore.validateDeck` 遇到目前卡片目錄中找不到的 ID 會直接跳過該卡，而不是報錯失敗 — 這是刻意設計，用來容忍上述的舊版 ID 牌組，不要把它「修正」成會 throw 的版本。
 
 ### 一次性資料腳本
-`server/src/scripts/` 存放匯入/爬取/合併/修補用的腳本（例如 `scrape-official-standard.ts`、`merge-all-official.ts`、`patch-ace-spec.ts`），用來建立/修復 `server/data/*.json` 的資料快照。這些腳本是用 `tsx` 手動執行的，不屬於日常開發流程的一部分 — 執行前請先讀過該腳本的內容，因為有些會直接就地修改 `server/data/*.json`。
+`server/src/scripts/` 存放匯入/爬取/合併/修補用的腳本（例如 `scrape-official-standard.ts`、`merge-all-official.ts`、`patch-ace-spec.ts`），用來建立/修復 `server/data/*.json` 的資料快照。這些腳本是用 `tsx` 手動執行的，不屬於日常開發流程的一部分 — 執行前請先讀過該腳本的內容，因為有些會直接就地修改 `server/data/*.json`。臨時的一次性驗證/稽核腳本用完即刪（慣例用 `_` 前綴命名，例如 `_verify-xxx.ts`），不要留在 repo 裡。
 
 ## 成本 /情境使用紀律
 
@@ -81,3 +87,4 @@ npm run preview              # 僅 client — 預覽 production build
 - 避免重新讀取已經在上下文中的檔案；需要引用時直接用 `file:line` 標記即可。
 - 對話變長時（尤其是連續多輪工具呼叫之後），主動建議使用者執行 `/compact`，不要等到被 `.claude/hooks/context-guard.js` 這個 PreToolUse hook 擋下來才處理（該 hook 會在 transcript 超過約 10 萬 token 時警告、超過約 18 萬 token 時直接封鎖 Bash/Edit/Write，並要求先 `/compact`）。
 - 大型一次性稽核/爬蟲腳本盡量寫在 scratchpad 或 `server/src/scripts/` 裡執行完就刪除（如既有慣例），不要把大量中間產出貼回對話內容。
+- AI 對戰壓力測試（`battleRunner.ts`/BattleLab）的場數要跟改動的影響範圍成比例：單純新增、不牽動既有程式路徑的小改動（新特性 handler、資料回填）抽測幾副牌即可，不必每次都跑滿 56 副預組牌組；牽動共用邏輯（進化系統、AI 評分等）的改動才需要全套跑一輪。用 `HeuristicAI`/`RandomAI`/`MockAI` 互打不會呼叫 Anthropic API、不花真正的 token，但終端機輸出仍會佔用對話上下文，保持輸出精簡（進度列 + 摘要）。

@@ -48,3 +48,26 @@ export function evolvesFromMatches(cardData: { name: string; evolvesFrom?: strin
   const inferred = inferEvolvesFromSpecies(cardData.name);
   return !!inferred && inferred === extractSpeciesName(targetName);
 }
+
+/** Ordered species chain from `cardName` back to its root Basic, e.g. "噴火龍" -> ["火恐龍", "小火龍"]. */
+export function getEvolutionLineage(cardName: string): string[] {
+  const start = extractSpeciesName(cardName);
+  if (!start) return [];
+  const lineage: string[] = [];
+  let current = start;
+  const seen = new Set([current]);
+  while (CHAINS[current]) {
+    current = CHAINS[current];
+    if (seen.has(current)) break; // guard malformed/cyclic data
+    seen.add(current);
+    lineage.push(current);
+  }
+  return lineage;
+}
+
+/** True if `basicName`'s species is somewhere in cardData's evolution lineage — for effects
+ * (Rare Candy) that skip intermediate stages and must validate the whole chain, not one hop. */
+export function chainTracesBackTo(cardData: { name: string }, basicName: string): boolean {
+  const basicSpecies = extractSpeciesName(basicName);
+  return !!basicSpecies && getEvolutionLineage(cardData.name).includes(basicSpecies);
+}

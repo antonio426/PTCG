@@ -9,7 +9,23 @@ import { moves } from '../game/moves';
 import { processBetweenTurns, processWakeUpCheck } from '../game/statusConditions';
 import { promoteActiveIfNeeded } from '../game/damage';
 import { fetchCardsByIds } from '../card-api/tcgdex';
-import { MockAI, IAIPlayer } from '../ai/aiPlayer';
+import { RandomAI, ClaudeAI, IAIPlayer } from '../ai/aiPlayer';
+import { HeuristicAI } from '../ai/heuristicAI';
+
+export type Difficulty = 'easy' | 'normal' | 'hard';
+
+/** easy = RandomAI, hard = ClaudeAI (only if a real API key is configured — never silently
+ * downgraded to something else, since that would surprise a player expecting to face Claude),
+ * anything else (including 'normal'/unspecified) = HeuristicAI, the new default. */
+export function resolveAiPlayer(difficulty?: string): { ai: IAIPlayer } | { error: string } {
+  if (difficulty === 'easy') return { ai: new RandomAI() };
+  if (difficulty === 'hard') {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) return { error: 'Hard mode (Claude) is not configured on this server — no ANTHROPIC_API_KEY set.' };
+    return { ai: new ClaudeAI({ apiKey, model: process.env.ANTHROPIC_MODEL }) };
+  }
+  return { ai: new HeuristicAI() };
+}
 
 /* ------------------------------------------------------- */
 /*  Types                                                  */
@@ -164,12 +180,33 @@ function buildResponse(session: BattleSession): BattleStateResponse {
   };
 }
 
+/**
+ * Structural (not effectKey-based) detection of "this pendingChoice's options are all drawn from
+ * the searching player's own deck" — e.g. Ultra Ball, Strategic Command. Deliberately not a list
+ * of hardcoded effectKeys: matching against the actual deck contents stays correct automatically
+ * as new deck-search effects get added, and can never misfire on choices whose options are board
+ * Pokémon or hand cards (those ids never collide with deck card ids). Callers must already have
+ * confirmed `choice.player === 0` (never expose the AI opponent's deck) before calling this.
+ */
+function isDeckSearchChoice(G: PtcgGameState, choice: PendingChoice): boolean {
+  if (!choice.options || choice.options.length === 0) return false;
+  const deckIds = new Set(G.players[choice.player].deck.map(c => c.id));
+  return choice.options.every(o => deckIds.has(o.id));
+}
+
 function enrichPendingChoice(G: PtcgGameState, choice: PendingChoice | null): PendingChoice | null {
   if (!choice?.options) return choice;
-  return {
+  const enriched: PendingChoice = {
     ...choice,
     options: choice.options.map(o => ({ ...o, cardData: findCardDataById(G, choice.player, o.id) })),
   };
+  if (isDeckSearchChoice(G, choice)) {
+    const optionIds = new Set(choice.options.map(o => o.id));
+    enriched.remainingDeckPreview = G.players[choice.player].deck
+      .filter(c => !optionIds.has(c.id))
+      .map(c => c.cardData);
+  }
+  return enriched;
 }
 
 function checkAndApplyWin(G: PtcgGameState): boolean {
@@ -285,10 +322,16 @@ const router = new Router();
 /** Create a new human-vs-AI battle */
 router.post('/', async (ctx) => {
   try {
-    const { deckA, deckB } = ctx.request.body as { deckA: string[]; deckB?: string[] };
+    const { deckA, deckB, difficulty } = ctx.request.body as { deckA: string[]; deckB?: string[]; difficulty?: Difficulty };
     if (!deckA || !Array.isArray(deckA) || deckA.length === 0) {
       ctx.status = 400;
       ctx.body = { error: 'deckA required (array of card IDs)' };
+      return;
+    }
+    const resolved = resolveAiPlayer(difficulty);
+    if ('error' in resolved) {
+      ctx.status = 400;
+      ctx.body = { error: resolved.error };
       return;
     }
     const opponentDeck = deckB || [...deckA].sort(() => Math.random() - 0.5);
@@ -301,7 +344,7 @@ router.post('/', async (ctx) => {
       gameState: G,
       playerDeck: deckA,
       aiDeck: opponentDeck,
-      aiPlayer: new MockAI(),
+      aiPlayer: resolved.ai,
       createdAt: Date.now(),
     };
     sessions.set(session.id, session);

@@ -1,4 +1,4 @@
-import { Attack, GameCard } from '@ptcg/shared';
+import { Attack, DamageDetail, GameCard } from '@ptcg/shared';
 import { PtcgGameState } from './GameState';
 import { getOutgoingDamageReduction, getPassiveDamageBonus, getPassiveDamageReduction, getPassiveMaxHpBonus, getPrizeReduction, getWeaknessTypeOverride, hasPassiveAbilityNamed, isDamageBlocked, rollBonusPrizeOnActiveKo, shouldExilePrizes } from './effects/passiveAbilities';
 import { getToolDamageBonus, getToolHpBonus } from './effects/tools';
@@ -18,6 +18,42 @@ function isBigPokemon(card: GameCard): boolean {
 export function effectiveMaxHp(G: PtcgGameState, card: GameCard): number {
   const base = parseInt(card.cardData.hp || '0', 10);
   return base > 0 ? base + getPassiveMaxHpBonus(G, card) + getToolHpBonus(G, card) : 0;
+}
+
+/**
+ * Call whenever `oldCard` stops being the in-play top card because `newTop` is replacing it
+ * (evolving, de-evolving-away, or any other "one card becomes another in the same board slot"
+ * effect) — real rules: the old card does NOT go to the discard pile yet, it stays stacked
+ * underneath until the whole thing is eventually removed from play. `newTop.preEvolutions`
+ * accumulates oldest-first, correctly nesting a Stage-2 evolution's full history.
+ *
+ * Strips `oldCard`'s own attachedEnergy/attachedTool/damage/statusConditions before stacking it
+ * — without this, `oldCard.attachedEnergy` stays the SAME array object as `newTop.attachedEnergy`
+ * (every evolution site does a bare reference assignment, never a clone), so any later
+ * energy-discard effect on the current top card would silently also mutate every stacked
+ * historical entry. Making stacked entries permanently attachment-free (the top card is the sole
+ * "live" owner of attachments) sidesteps that aliasing hazard entirely rather than chasing clones
+ * through every evolution-shaped effect.
+ */
+export function stackAsPreEvolution(newTop: GameCard, oldCard: GameCard): void {
+  oldCard.attachedEnergy = [];
+  oldCard.attachedTool = null;
+  oldCard.damage = 0;
+  oldCard.statusConditions = [];
+  newTop.preEvolutions = [...(oldCard.preEvolutions || []), oldCard];
+  oldCard.preEvolutions = undefined;
+}
+
+/** Flushes `card`'s stacked pre-evolution history (see `stackAsPreEvolution`) into `discardPile`
+ * — call this at every point a top card permanently leaves play into the discard pile (KO'd,
+ * discarded by an effect), or bounces to hand/deck (in which case ONLY the top card moves; its
+ * stacked history is lost/discarded same as real rules, never carried along). No-op if the card
+ * never evolved (`preEvolutions` unset). */
+export function flushPreEvolutionsToDiscard(card: GameCard, discardPile: GameCard[]): void {
+  if (card.preEvolutions) {
+    discardPile.push(...card.preEvolutions);
+    card.preEvolutions = undefined;
+  }
 }
 
 /**
@@ -82,13 +118,20 @@ export function applyWeaknessResistance(baseDamageIn: number, attacker: GameCard
  * bench (e.g. 輝煌聲援), and a weakness override can come from the attacker's whole team
  * (e.g. 妖精領域). Returns 0 if a passive ability blocks the hit outright (e.g. 藏隱, 礎石之勢).
  */
-export function calculateDamage(G: PtcgGameState, attackerIdx: 0 | 1, attacker: GameCard, attack: Attack, defender: GameCard, ignoreResistance?: boolean, ignoreWeakness?: boolean): number {
+/**
+ * Same computation as `calculateDamage`, plus a structured breakdown for battle-log display
+ * (weakness/resistance flags computed independently of the combined `afterWeakness` number,
+ * since `applyWeaknessResistance` applies both effects together internally).
+ */
+export function calculateDamageBreakdown(G: PtcgGameState, attackerIdx: 0 | 1, attacker: GameCard, attack: Attack, defender: GameCard, ignoreResistance?: boolean, ignoreWeakness?: boolean): DamageDetail {
   // Reuses genericAttacks.ts's parser (not a raw parseInt) so an attack whose text goes
   // unrecognized by every generic template — instead of falling through with its damage field
   // substituted by the resolved outcome — doesn't misread a coin-flip "40x" multiplier as a
   // guaranteed flat 40 damage.
   let baseDamage = parseBaseNumber(attack.damage);
-  if (isDamageBlocked(G, attacker, defender, baseDamage)) return 0;
+  if (isDamageBlocked(G, attacker, defender, baseDamage)) {
+    return { baseDamage: 0, afterWeakness: 0, weaknessApplied: false, resistanceApplied: false, finalDamage: 0 };
+  }
   baseDamage += getPassiveDamageBonus(G, attackerIdx, attacker, defender);
   baseDamage += getToolDamageBonus(G, attacker, defender);
   for (const boost of G.players[attackerIdx].turnDamageBoosts) {
@@ -109,7 +152,22 @@ export function calculateDamage(G: PtcgGameState, attackerIdx: 0 | 1, attacker: 
     if (r.typeFilter && !(defender.cardData.types || []).includes(r.typeFilter as any)) continue;
     reduction += r.amount;
   }
-  return Math.max(0, afterWeakness - reduction);
+  const finalDamage = Math.max(0, afterWeakness - reduction);
+
+  const attackerTypes = attacker.cardData.types || [];
+  const weaknessApplied = !ignoreWeakness && attackerTypes.some(t => {
+    const weaknesses = weaknessOverride ? [{ type: weaknessOverride, value: '×2' }] : (defender.cardData.weaknesses || []);
+    return weaknesses.some(w => w.type === t && isDoubleWeakness(w.value));
+  });
+  const resistanceApplied = !ignoreResistance && attackerTypes.some(t =>
+    (defender.cardData.resistances || []).some(r => r.type === t && parseResistanceValue(r.value) !== 0)
+  );
+
+  return { baseDamage, afterWeakness, weaknessApplied, resistanceApplied, finalDamage };
+}
+
+export function calculateDamage(G: PtcgGameState, attackerIdx: 0 | 1, attacker: GameCard, attack: Attack, defender: GameCard, ignoreResistance?: boolean, ignoreWeakness?: boolean): number {
+  return calculateDamageBreakdown(G, attackerIdx, attacker, attack, defender, ignoreResistance, ignoreWeakness).finalDamage;
 }
 
 export function applyDamage(G: PtcgGameState, playerIndex: number, targetId: string, damage: number): void {
@@ -153,8 +211,12 @@ export function handleKo(G: PtcgGameState, koPlayerIndex: number, koCardId: stri
       c.attachedTool = null;
       c.damage = 0;
       c.statusConditions = [];
+      // Only the top card returns to hand — any stacked pre-evolution history is lost same as
+      // real rules (it doesn't ride along into hand as a hidden freebie).
+      flushPreEvolutionsToDiscard(c, koPlayer.discardPile);
       koPlayer.hand.push(c);
     } else {
+      flushPreEvolutionsToDiscard(c, koPlayer.discardPile);
       koPlayer.discardPile.push(c);
     }
   };

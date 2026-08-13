@@ -1,3 +1,8 @@
+// Loads server/.env (ANTHROPIC_API_KEY etc.) into process.env if present — native Node API, no
+// dotenv dependency needed. Must run before anything below reads process.env. Silently no-ops
+// if there's no .env file (Claude "hard" mode just stays unavailable, everything else is fine).
+try { process.loadEnvFile(); } catch { /* no .env — fine */ }
+
 import cors from '@koa/cors';
 import koaBody from 'koa-body';
 import Router from '@koa/router';
@@ -8,6 +13,7 @@ import { battleRoutes } from './routes/battles';
 import { humanBattleRoutes } from './routes/humanBattle';
 import { imageRoutes } from './routes/images';
 import { presetDeckRoutes } from './routes/preset-decks';
+import { aiStatusRoutes } from './routes/aiStatus';
 import { fetchAllCards } from './card-api/tcgdex';
 
 const PORT = parseInt(process.env.PORT || '3001', 10);
@@ -40,6 +46,7 @@ apiRouter.use('/battles', battleRoutes.routes(), battleRoutes.allowedMethods());
 apiRouter.use('/human-battle', humanBattleRoutes.routes(), humanBattleRoutes.allowedMethods());
 apiRouter.use('/images', imageRoutes.routes(), imageRoutes.allowedMethods());
 apiRouter.use('/preset-decks', presetDeckRoutes.routes(), presetDeckRoutes.allowedMethods());
+apiRouter.use('/ai', aiStatusRoutes.routes(), aiStatusRoutes.allowedMethods());
 app.use(apiRouter.routes());
 app.use(apiRouter.allowedMethods());
 

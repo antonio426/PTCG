@@ -75,7 +75,7 @@ function getEnergyCounts(attachedEnergy: { type: string }[]): Record<string, num
   return counts;
 }
 
-function canPayEnergyCost(attachedEnergy: { type: string }[], cost: EnergyType[], colorlessReduction = 0): boolean {
+export function canPayEnergyCost(attachedEnergy: { type: string }[], cost: EnergyType[], colorlessReduction = 0): boolean {
   if (cost.length === 0) return true;
 
   const counts = getEnergyCounts(attachedEnergy);

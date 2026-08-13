@@ -1,8 +1,8 @@
-import { GameCard } from '@ptcg/shared';
+import { DamageDetail, GameCard } from '@ptcg/shared';
 import { PtcgGameState, PendingChoice } from './GameState';
 import { canPlayPokemon, canEvolve, canAttachEnergy, canRetreat, canAttack, effectiveRetreatCost, FIRST_TURN_SUPPORTER_EXCEPTIONS } from './validation';
 import { clearStatusConditionsOnLeaveActive } from './statusConditions';
-import { calculateDamage, effectiveMaxHp, handleKo, prizesForKo } from './damage';
+import { calculateDamageBreakdown, effectiveMaxHp, handleKo, prizesForKo, stackAsPreEvolution } from './damage';
 import { getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasCoinFlipAttackMissDebuff, hasPassiveAbilityNamed, isRetreatBlockedByOpponent, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat, shouldDiscardAttackerEnergy } from './effects/passiveAbilities';
 import { isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
@@ -25,13 +25,15 @@ function applyEffectStep(G: PtcgGameState, player: 0 | 1, effectKey: string, ste
   }
 }
 
-function addLog(G: PtcgGameState, player: number, action: string, details: string) {
+function addLog(G: PtcgGameState, player: number, action: string, details: string, damageDetail?: DamageDetail, coinFlipNote?: string) {
   G.turnLog.push({
     player: player as 0 | 1,
     turn: G.turn,
     action,
     details,
     timestamp: Date.now(),
+    damageDetail,
+    coinFlipNote,
   });
 }
 
@@ -175,7 +177,7 @@ export const moves = {
     const savedTool = oldCard.attachedTool;
     // Note: status conditions (Asleep/Paralyzed/Confused/Poisoned/Burned) are cured on evolution per real rules, not carried over.
 
-    player.discardPile.push(oldCard);
+    stackAsPreEvolution(evolution, oldCard);
 
     if (isActive) {
       player.active = evolution;
@@ -671,10 +673,11 @@ export const moves = {
         genericOutcome.baseDamage = matches * amount;
       }
       const effectiveAttack = genericOutcome ? { ...attack, damage: String(genericOutcome.baseDamage) } : attack;
-      const damage = calculateDamage(G, G.currentPlayer as 0 | 1, attacker, effectiveAttack, defender, genericOutcome?.ignoreResistance, genericOutcome?.ignoreWeakness);
+      const damageBreakdown = calculateDamageBreakdown(G, G.currentPlayer as 0 | 1, attacker, effectiveAttack, defender, genericOutcome?.ignoreResistance, genericOutcome?.ignoreWeakness);
+      const damage = damageBreakdown.finalDamage;
       const defenderWasFullHp = defender.damage === 0;
       defender.damage += damage;
-      addLog(G, G.currentPlayer, 'attack', `${attacker.cardData.name} used ${attack.name} for ${damage} damage to ${defender.cardData.name}`);
+      addLog(G, G.currentPlayer, 'attack', `${attacker.cardData.name} used ${attack.name} for ${damage} damage to ${defender.cardData.name}`, damageBreakdown, genericOutcome?.coinFlipNote);
 
       // 龐克頭盔-style retaliation Tool: damages the attacker back when its holder is hit,
       // regardless of whether the hit also knocked the holder out.
@@ -711,15 +714,20 @@ export const moves = {
       // 堅忍之軀: a coin flip may let a Pokémon that would be KO'd by this attack survive at 10 HP instead.
       if (hasPassiveAbilityNamed(defender, '堅忍之軀') || hasPassiveAbilityNamed(defender, '不朽身軀')) {
         const wouldBeLethal = effectiveMaxHp(G, defender) > 0 && defender.damage >= effectiveMaxHp(G, defender);
-        if (wouldBeLethal && Math.random() < 0.5) {
-          defender.damage = effectiveMaxHp(G, defender) - 10;
+        if (wouldBeLethal) {
+          const survived = Math.random() < 0.5;
+          if (survived) defender.damage = effectiveMaxHp(G, defender) - 10;
+          addLog(G, G.currentPlayer, 'ability', `${defender.cardData.name} 擲硬幣${survived ? '正面，以 10 HP 生還' : '反面，未能生還'}`, undefined, survived ? '正面' : '反面');
         }
       }
       // 勤奮之心 / 結實: unconditionally (no coin flip) survives a would-be-lethal hit at 10 HP,
       // but only if it entered this hit at full HP (same text, different cards).
       if ((hasPassiveAbilityNamed(defender, '勤奮之心') || hasPassiveAbilityNamed(defender, '結實')) && defenderWasFullHp) {
         const wouldBeLethal = effectiveMaxHp(G, defender) > 0 && defender.damage >= effectiveMaxHp(G, defender);
-        if (wouldBeLethal) defender.damage = effectiveMaxHp(G, defender) - 10;
+        if (wouldBeLethal) {
+          defender.damage = effectiveMaxHp(G, defender) - 10;
+          addLog(G, G.currentPlayer, 'ability', `${defender.cardData.name} 特性發動，以 10 HP 生還`);
+        }
       }
 
       const defenderHp = effectiveMaxHp(G, defender);
@@ -946,10 +954,10 @@ export const moves = {
             const benchIdx = isActive ? -1 : player.bench.findIndex(c => c?.id === attacker.id);
             if (deckIdx >= 0 && (isActive || benchIdx >= 0)) {
               const evolution = player.deck.splice(deckIdx, 1)[0];
-              player.discardPile.push(attacker);
               evolution.attachedEnergy = attacker.attachedEnergy;
               evolution.damage = attacker.damage;
               evolution.attachedTool = attacker.attachedTool;
+              stackAsPreEvolution(evolution, attacker);
               if (isActive) player.active = evolution; else player.bench[benchIdx] = evolution;
             }
           }

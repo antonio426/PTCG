@@ -1,6 +1,6 @@
 import { EnergyType, GameCard } from '@ptcg/shared';
 import { EffectContext, EffectHandler, EffectStep, allPokemon, findOwnPokemon, opponent, player } from './types';
-import { handleKo } from '../damage';
+import { handleKo, stackAsPreEvolution, flushPreEvolutionsToDiscard } from '../damage';
 import { applyStatusCondition, discardAttachedEnergy, discardFromHand, drawCards, drawUpTo, flipCoin, flipCoins, moveDeckCardToBench, moveDeckCardToHand, shuffleDeck } from './primitives';
 import { clearStatusConditionsOnLeaveActive } from '../statusConditions';
 import { hasEvolvesFrom, evolvesFromMatches } from '../evolutionChains';
@@ -58,7 +58,7 @@ const curseBomb: EffectHandler = {
     const n = curseBombCounters(ctx);
     return {
       prompt: `咒詛炸彈：選 1 隻對手寶可夢放 ${n} 個傷害指示物`,
-      choiceType: 'select_from_list',
+      choiceType: 'select_pokemon',
       count: 1,
       options: targets.map(t => ({ id: t.id, label: t.cardData.name })),
       context: { n },
@@ -87,7 +87,7 @@ const adrenalineBrain: EffectHandler = {
     if (damaged.length === 0) return 'done';
     return {
       prompt: '腎上腺腦力：選 1 隻受傷（≥10 傷害）的己方寶可夢',
-      choiceType: 'select_from_list',
+      choiceType: 'select_pokemon',
       count: 1,
       options: damaged.map(c => ({ id: c.id, label: `${c.cardData.name}（${c.damage} 傷害）` })),
       context: { step: 'pick_source' },
@@ -116,7 +116,7 @@ const adrenalineBrain: EffectHandler = {
       if (targets.length === 0) return 'done';
       return {
         prompt: '腎上腺腦力：選對手 1 隻寶可夢 +傷害',
-        choiceType: 'select_from_list',
+        choiceType: 'select_pokemon',
         count: 1,
         options: targets.map(t => ({ id: t.id, label: t.cardData.name })),
         context: { step: 'pick_opponent_target', count },
@@ -183,7 +183,7 @@ const wildBite: EffectHandler = {
     const opp = opponent(ctx.G, ctx.playerIndex);
     const targets = [opp.active, ...opp.bench].filter((c): c is GameCard => c !== null);
     if (targets.length === 0) return 'done';
-    return { prompt: '亂咬：選最多 2 隻對手寶可夢各放置 2 個傷害指示物', choiceType: 'select_from_list', maxCount: Math.min(2, targets.length), options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: {} };
+    return { prompt: '亂咬：選最多 2 隻對手寶可夢各放置 2 個傷害指示物', choiceType: 'select_pokemon', maxCount: Math.min(2, targets.length), options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: {} };
   },
   resume(ctx, _context, selection) {
     const opp = opponent(ctx.G, ctx.playerIndex);
@@ -459,6 +459,7 @@ const teleporter: EffectHandler = {
     if (self.attachedTool) { p.discardPile.push(self.attachedTool); self.attachedTool = null; }
     self.damage = 0;
     self.statusConditions = [];
+    flushPreEvolutionsToDiscard(self, p.discardPile);
     p.deck.push(self);
     const promo = p.bench.find(c => c !== null);
     p.active = promo || null;
@@ -645,7 +646,7 @@ const electricGenerator: EffectHandler = {
     const p = player(ctx.G, ctx.playerIndex);
     if (context.step === 'pick_energy') {
       const targets = p.bench.filter((c): c is GameCard => c !== null);
-      return { prompt: '電氣發電機：選擇要附加能量的備戰寶可夢', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: { step: 'pick_target', energyId: selection[0] } };
+      return { prompt: '電氣發電機：選擇要附加能量的備戰寶可夢', choiceType: 'select_pokemon', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: { step: 'pick_target', energyId: selection[0] } };
     }
     const energyId = context.energyId as string;
     const target = p.bench.find(c => c?.id === selection[0]);
@@ -698,7 +699,7 @@ const finishingShuriken: EffectHandler = {
       const i = p.hand.findIndex(c => c.id === selection[0]);
       if (i >= 0) p.discardPile.push(p.hand.splice(i, 1)[0]);
       const targets = allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1);
-      return { prompt: '必殺手裡劍：選擇要放置 6 個傷害指示物的對手寶可夢', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: { step: 'pick_target' } };
+      return { prompt: '必殺手裡劍：選擇要放置 6 個傷害指示物的對手寶可夢', choiceType: 'select_pokemon', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: { step: 'pick_target' } };
     }
     const opp = opponent(ctx.G, ctx.playerIndex);
     const target = opp.active?.id === selection[0] ? opp.active : opp.bench.find(c => c?.id === selection[0]);
@@ -725,7 +726,7 @@ const flameDance: EffectHandler = {
     const p = player(ctx.G, ctx.playerIndex);
     if (context.step === 'pick_energy') {
       const targets = allPokemon(ctx.G, ctx.playerIndex);
-      return { prompt: '烈火亂舞：選擇要附加能量的寶可夢', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: { step: 'pick_target', energyId: selection[0] } };
+      return { prompt: '烈火亂舞：選擇要附加能量的寶可夢', choiceType: 'select_pokemon', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: { step: 'pick_target', energyId: selection[0] } };
     }
     const energyId = context.energyId as string;
     const target = p.active?.id === selection[0] ? p.active : p.bench.find(c => c?.id === selection[0]);
@@ -770,7 +771,7 @@ const dominationChain: EffectHandler = {
     const p = player(ctx.G, ctx.playerIndex);
     const targets = p.bench.filter((c): c is GameCard => c !== null && c.id !== ctx.sourceCardId && (c.cardData.types || []).includes('Darkness'));
     if (!p.active || targets.length === 0) return 'done';
-    return { prompt: '支配鎖鏈：選擇要換上場的惡寶可夢', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: {} };
+    return { prompt: '支配鎖鏈：選擇要換上場的惡寶可夢', choiceType: 'select_pokemon', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: {} };
   },
   resume(ctx, _context, selection) {
     const p = player(ctx.G, ctx.playerIndex);
@@ -824,7 +825,7 @@ const flameStepDance: EffectHandler = {
     if (context.step === 'pick_energy') {
       if (selection.length === 0) return 'done';
       const targets = allPokemon(ctx.G, ctx.playerIndex);
-      return { prompt: '火焰蹈舞：選擇要附加能量的寶可夢', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: { step: 'pick_target', energyIds: selection } };
+      return { prompt: '火焰蹈舞：選擇要附加能量的寶可夢', choiceType: 'select_pokemon', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: { step: 'pick_target', energyIds: selection } };
     }
     const target = p.active?.id === selection[0] ? p.active : p.bench.find(c => c?.id === selection[0]);
     const energyIds = context.energyIds as string[];
@@ -904,7 +905,7 @@ const metalMaker: EffectHandler = {
         return 'done';
       }
       const targets = allPokemon(ctx.G, ctx.playerIndex);
-      return { prompt: '金屬製造者：選擇要附加能量的寶可夢', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: { step: 'pick_target', energyIds: selection, seenIds } };
+      return { prompt: '金屬製造者：選擇要附加能量的寶可夢', choiceType: 'select_pokemon', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: { step: 'pick_target', energyIds: selection, seenIds } };
     }
     const target = p.active?.id === selection[0] ? p.active : p.bench.find(c => c?.id === selection[0]);
     const energyIds = context.energyIds as string[];
@@ -927,7 +928,7 @@ const stealthBite: EffectHandler = {
     const opp = opponent(ctx.G, ctx.playerIndex);
     const targets = [opp.active, ...opp.bench].filter((c): c is GameCard => c !== null);
     if (targets.length === 0) return 'done';
-    return { prompt: '暗中咬住：選擇對手 1 隻寶可夢放置 2 個傷害指示物', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: {} };
+    return { prompt: '暗中咬住：選擇對手 1 隻寶可夢放置 2 個傷害指示物', choiceType: 'select_pokemon', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: {} };
   },
   resume(ctx, _context, selection) {
     const opp = opponent(ctx.G, ctx.playerIndex);
@@ -956,7 +957,7 @@ const happinessSwitch: EffectHandler = {
       if (!source) return 'done';
       const targets = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.id !== source.id);
       if (targets.length === 0) return 'done';
-      return { prompt: '幸福切換：選擇要轉入的寶可夢', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: { step: 'pick_target', energyId } };
+      return { prompt: '幸福切換：選擇要轉入的寶可夢', choiceType: 'select_pokemon', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: { step: 'pick_target', energyId } };
     }
     const energyId = context.energyId as string;
     const source = allPokemon(ctx.G, ctx.playerIndex).find(c => c.attachedEnergy.some(e => e.id === energyId));
@@ -980,6 +981,7 @@ const escapeDraw: EffectHandler = {
     if (self.attachedTool) { p.discardPile.push(self.attachedTool); self.attachedTool = null; }
     self.damage = 0;
     self.statusConditions = [];
+    flushPreEvolutionsToDiscard(self, p.discardPile);
     p.deck.push(self);
     const promo = p.bench.find(c => c !== null);
     p.active = promo || null;
@@ -1015,7 +1017,7 @@ const fermentedJuice: EffectHandler = {
     if (!self || !self.attachedEnergy.some(e => e.type === 'Grass')) return 'done';
     const targets = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.damage > 0);
     if (targets.length === 0) return 'done';
-    return { prompt: '發酵果汁：選擇要恢復 30 HP 的寶可夢', choiceType: 'select_from_list', count: 1, options: targets.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+    return { prompt: '發酵果汁：選擇要恢復 30 HP 的寶可夢', choiceType: 'select_pokemon', count: 1, options: targets.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
   },
   resume(ctx, _context, selection) {
     const target = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === selection[0]);
@@ -1082,16 +1084,20 @@ const primalWing: EffectHandler = {
     if (p.active?.id !== ctx.sourceCardId) return 'done';
     const targets = allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1).filter(c => hasEvolvesFrom(c.cardData));
     if (targets.length === 0) return 'done';
-    return { prompt: '原始之翼：選擇對手 1 隻進化寶可夢使其退化', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: {} };
+    return { prompt: '原始之翼：選擇對手 1 隻進化寶可夢使其退化', choiceType: 'select_pokemon', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: {} };
   },
   resume(ctx, _context, selection) {
     const oppIdx = (1 - ctx.playerIndex) as 0 | 1;
     const opp = opponent(ctx.G, ctx.playerIndex);
     const target = allPokemon(ctx.G, oppIdx).find(c => c.id === selection[0]);
     if (!target || !hasEvolvesFrom(target.cardData)) return 'done';
-    const priorIdx = opp.discardPile.findIndex(c => evolvesFromMatches(target.cardData, c.cardData.name));
-    if (priorIdx === -1) return 'done';
-    const priorStage = opp.discardPile.splice(priorIdx, 1)[0];
+    // The prior stage is stacked under `target` (see preEvolutions), not sitting in the discard
+    // pile — evolving no longer discards it immediately (real rules: it stays with the Pokémon
+    // until the whole stack is eventually KO'd/discarded together).
+    const stack = target.preEvolutions || [];
+    if (stack.length === 0) return 'done';
+    const priorStage = stack[stack.length - 1];
+    priorStage.preEvolutions = stack.slice(0, -1);
     priorStage.attachedEnergy = target.attachedEnergy;
     priorStage.damage = target.damage;
     priorStage.attachedTool = target.attachedTool;
@@ -1099,7 +1105,8 @@ const primalWing: EffectHandler = {
     const isActive = opp.active?.id === target.id;
     const benchIdx = isActive ? -1 : opp.bench.findIndex(c => c?.id === target.id);
     if (isActive) opp.active = priorStage; else if (benchIdx >= 0) opp.bench[benchIdx] = priorStage;
-    opp.hand.push({ ...target, damage: 0, statusConditions: [], attachedEnergy: [], attachedTool: null });
+    // Only the removed evolution card itself returns to hand — it carries no stacked history.
+    opp.hand.push({ ...target, damage: 0, statusConditions: [], attachedEnergy: [], attachedTool: null, preEvolutions: undefined });
     return 'done';
   },
 };
@@ -1130,7 +1137,7 @@ const starryPattern: EffectHandler = {
       return hp > 0 && hp - c.damage <= 90;
     });
     if (targets.length === 0) return 'done';
-    return { prompt: '繁星花紋：選擇對手備戰區剩餘 HP 90 以下的寶可夢換上場', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: {} };
+    return { prompt: '繁星花紋：選擇對手備戰區剩餘 HP 90 以下的寶可夢換上場', choiceType: 'select_pokemon', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: {} };
   },
   resume(ctx, _context, selection) {
     const opp = opponent(ctx.G, ctx.playerIndex);
@@ -1225,6 +1232,7 @@ const heavyStepJump: EffectHandler = {
     self.attachedTool = null;
     self.damage = 0;
     self.statusConditions = [];
+    flushPreEvolutionsToDiscard(self, p.discardPile);
     p.deck.push(self);
     return 'done';
   },
@@ -1244,7 +1252,7 @@ const villainRise: EffectHandler = {
     const p = player(ctx.G, ctx.playerIndex);
     if (context.step === 'pick_energy') {
       const targets = p.bench.filter((c): c is GameCard => c !== null && (c.cardData.types || []).includes('Darkness'));
-      return { prompt: '惡棍衝天：選擇要附加能量的惡寶可夢', choiceType: 'select_from_list', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: { step: 'pick_target', energyId: selection[0] } };
+      return { prompt: '惡棍衝天：選擇要附加能量的惡寶可夢', choiceType: 'select_pokemon', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: { step: 'pick_target', energyId: selection[0] } };
     }
     const target = p.bench.find(c => c?.id === selection[0]);
     const energyId = context.energyId as string;
@@ -1367,7 +1375,7 @@ const enticingLure: EffectHandler = {
     if (!opp.active || benched.length === 0) return 'done';
     return {
       prompt: '媚惑引誘：擲硬幣結果為正面，選 1 隻對手備戰寶可夢換上場',
-      choiceType: 'select_from_list',
+      choiceType: 'select_pokemon',
       count: 1,
       options: benched.map(c => ({ id: c.id, label: c.cardData.name })),
       context: {},
@@ -1440,7 +1448,7 @@ const rocketBrainpower: EffectHandler = {
     if (sources.length === 0) return 'done';
     return {
       prompt: '火箭腦力：選 1 隻己方受傷的「火箭隊的寶可夢」搬走 1 個傷害指示物',
-      choiceType: 'select_from_list',
+      choiceType: 'select_pokemon',
       count: 1,
       options: sources.map(c => ({ id: c.id, label: `${c.cardData.name}（${c.damage} 傷害）` })),
       context: { step: 'pick_source' },
@@ -1452,7 +1460,7 @@ const rocketBrainpower: EffectHandler = {
       if (targets.length === 0) return 'done';
       return {
         prompt: '火箭腦力：選擇要移入 1 個傷害指示物的己方寶可夢',
-        choiceType: 'select_from_list',
+        choiceType: 'select_pokemon',
         count: 1,
         options: targets.map(c => ({ id: c.id, label: c.cardData.name })),
         context: { step: 'pick_target', sourceId: selection[0] },
@@ -1511,7 +1519,7 @@ const luringTail: EffectHandler = {
     if (!costCard || !opp.active || benched.length === 0) return 'done';
     return {
       prompt: '誘導之尾：丟棄 1 張「悠哉尾草棒」，選 1 隻對手備戰寶可夢換上場',
-      choiceType: 'select_from_list',
+      choiceType: 'select_pokemon',
       count: 1,
       options: benched.map(c => ({ id: c.id, label: c.cardData.name })),
       context: { costCardId: costCard.id },
@@ -1727,7 +1735,7 @@ const challengeHornAttack: EffectHandler = {
     const opp = opponent(ctx.G, ctx.playerIndex);
     const benched = opp.bench.filter((c): c is GameCard => c !== null);
     if (!opp.active || benched.length === 0) return 'done';
-    return { prompt: '挑戰角擊：選 1 隻對手備戰寶可夢換上場', choiceType: 'select_from_list', count: 1, options: benched.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+    return { prompt: '挑戰角擊：選 1 隻對手備戰寶可夢換上場', choiceType: 'select_pokemon', count: 1, options: benched.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
   },
   resume(ctx, _context, selection) {
     const opp = opponent(ctx.G, ctx.playerIndex);
@@ -1810,7 +1818,7 @@ const fullMelody: EffectHandler = {
   start(ctx) {
     const targets = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.damage > 0);
     if (targets.length === 0) return 'done';
-    return { prompt: '全滿旋律：選 1 隻己方寶可夢全部回復 HP', choiceType: 'select_from_list', count: 1, options: targets.map(c => ({ id: c.id, label: `${c.cardData.name}（${c.damage} 傷害）` })), context: {} };
+    return { prompt: '全滿旋律：選 1 隻己方寶可夢全部回復 HP', choiceType: 'select_pokemon', count: 1, options: targets.map(c => ({ id: c.id, label: `${c.cardData.name}（${c.damage} 傷害）` })), context: {} };
   },
   resume(ctx, _context, selection) {
     const target = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === selection[0]);
@@ -1924,7 +1932,7 @@ const metalRoad: EffectHandler = {
     if (!self) return 'done';
     const sources = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.id !== self.id && c.attachedEnergy.some(e => e.type === 'Metal'));
     if (sources.length === 0) return 'done';
-    return { prompt: '金屬之路：選 1 隻己方寶可夢，將其身上所有鋼能量移到這隻寶可夢身上', choiceType: 'select_from_list', count: 1, options: sources.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+    return { prompt: '金屬之路：選 1 隻己方寶可夢，將其身上所有鋼能量移到這隻寶可夢身上', choiceType: 'select_pokemon', count: 1, options: sources.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
   },
   resume(ctx, _context, selection) {
     const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
@@ -2227,6 +2235,17 @@ const leafHealing: EffectHandler = {
   resume() { return 'done'; },
 };
 
+/** 熱情舞: once per turn, heal your own Active 20 HP — but only if it's an evolved Pokémon
+ * (i.e. not a Basic). */
+const floralDance: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.active && !p.active.cardData.subtypes.includes('Basic')) p.active.damage = Math.max(0, p.active.damage - 20);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
 /** 激流旋渦: once per turn, swap your own Active <-> a chosen Bench Pokémon, then also
  * force-swap the opponent's Active <-> a chosen Benched Pokémon (the ability's controller picks
  * the opponent's replacement too — the same simplification used by every other force-switch
@@ -2245,7 +2264,7 @@ const torrentVortex: EffectHandler = {
       const opp = opponent(ctx.G, ctx.playerIndex);
       const oppBenched = opp.bench.filter((c): c is GameCard => c !== null);
       if (!opp.active || oppBenched.length === 0) return 'done';
-      return { prompt: '激流旋渦：選擇對手要換上場的備戰寶可夢', choiceType: 'select_from_list', count: 1, options: oppBenched.map(c => ({ id: c.id, label: c.cardData.name })), context: { step: 'opp_switch' } };
+      return { prompt: '激流旋渦：選擇對手要換上場的備戰寶可夢', choiceType: 'select_pokemon', count: 1, options: oppBenched.map(c => ({ id: c.id, label: c.cardData.name })), context: { step: 'opp_switch' } };
     }
     const opp = opponent(ctx.G, ctx.playerIndex);
     const idx = opp.bench.findIndex(c => c?.id === selection[0]);
@@ -2285,7 +2304,7 @@ const excitedHealing: EffectHandler = {
     if (!hasGate) return 'done';
     const targets = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.damage > 0);
     if (targets.length === 0) return 'done';
-    return { prompt: '激動治癒：選 1 隻己方寶可夢回復 60 HP', choiceType: 'select_from_list', count: 1, options: targets.map(c => ({ id: c.id, label: `${c.cardData.name}（${c.damage} 傷害）` })), context: {} };
+    return { prompt: '激動治癒：選 1 隻己方寶可夢回復 60 HP', choiceType: 'select_pokemon', count: 1, options: targets.map(c => ({ id: c.id, label: `${c.cardData.name}（${c.damage} 傷害）` })), context: {} };
   },
   resume(ctx, _context, selection) {
     const target = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === selection[0]);
@@ -2474,10 +2493,10 @@ const emergencyEvolution: EffectHandler = {
     const isActive = p.active?.id === self.id;
     const benchIdx = isActive ? -1 : p.bench.findIndex(c => c?.id === self.id);
     if (!isActive && benchIdx === -1) { p.discardPile.push(evolution); return 'done'; }
-    p.discardPile.push(self);
     evolution.attachedEnergy = self.attachedEnergy;
     evolution.damage = self.damage;
     evolution.attachedTool = self.attachedTool;
+    stackAsPreEvolution(evolution, self);
     if (isActive) p.active = evolution; else p.bench[benchIdx] = evolution;
     return 'done';
   },
@@ -2521,7 +2540,7 @@ const mothersLure: EffectHandler = {
     const opp = opponent(ctx.G, ctx.playerIndex);
     const benched = opp.bench.filter((c): c is GameCard => c !== null);
     if (!opp.active || benched.length === 0) return 'done';
-    return { prompt: '母親的誘引：擲硬幣結果為正面，選 1 隻對手備戰寶可夢換上場', choiceType: 'select_from_list', count: 1, options: benched.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+    return { prompt: '母親的誘引：擲硬幣結果為正面，選 1 隻對手備戰寶可夢換上場', choiceType: 'select_pokemon', count: 1, options: benched.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
   },
   resume(ctx, _context, selection) {
     const opp = opponent(ctx.G, ctx.playerIndex);
@@ -2760,7 +2779,7 @@ const heavyDutyGrabber: EffectHandler = {
     const opp = opponent(ctx.G, ctx.playerIndex);
     const benched = opp.bench.filter((c): c is GameCard => c !== null);
     if (!opp.active || benched.length === 0) return 'done';
-    return { prompt: '大力捕捉器：選 1 隻對手備戰寶可夢換上場', choiceType: 'select_from_list', count: 1, options: benched.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+    return { prompt: '大力捕捉器：選 1 隻對手備戰寶可夢換上場', choiceType: 'select_pokemon', count: 1, options: benched.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
   },
   resume(ctx, _context, selection) {
     const opp = opponent(ctx.G, ctx.playerIndex);
@@ -2785,7 +2804,7 @@ const cleansingSupport: EffectHandler = {
     if (!p.active || p.active.cardData.name !== '超級拉帝亞斯ex') return 'done';
     const sources = p.bench.filter((c): c is GameCard => c !== null && c.attachedEnergy.length > 0);
     if (sources.length === 0) return 'done';
-    return { prompt: '潔淨支援：選 1 隻備戰寶可夢，將其身上所有能量移到戰鬥寶可夢身上', choiceType: 'select_from_list', count: 1, options: sources.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+    return { prompt: '潔淨支援：選 1 隻備戰寶可夢，將其身上所有能量移到戰鬥寶可夢身上', choiceType: 'select_pokemon', count: 1, options: sources.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
   },
   resume(ctx, _context, selection) {
     const p = player(ctx.G, ctx.playerIndex);
@@ -2803,7 +2822,7 @@ const sweetGift: EffectHandler = {
   start(ctx) {
     const targets = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.damage > 0);
     if (targets.length === 0) return 'done';
-    return { prompt: '甜點之禮：選 1 隻己方寶可夢回復 30 HP', choiceType: 'select_from_list', count: 1, options: targets.map(c => ({ id: c.id, label: `${c.cardData.name}（${c.damage} 傷害）` })), context: {} };
+    return { prompt: '甜點之禮：選 1 隻己方寶可夢回復 30 HP', choiceType: 'select_pokemon', count: 1, options: targets.map(c => ({ id: c.id, label: `${c.cardData.name}（${c.damage} 傷害）` })), context: {} };
   },
   resume(ctx, _context, selection) {
     const target = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === selection[0]);
@@ -2945,6 +2964,7 @@ export const abilityEffects: Record<string, EffectHandler> = {
   '溫柔鰭': gentleFin,
   '瞄準獵物': targetPrey,
   '飛葉治癒': leafHealing,
+  '熱情舞': floralDance,
   '激流旋渦': torrentVortex,
   '任選黏液': pickAnyMucus,
   '激動治癒': excitedHealing,
