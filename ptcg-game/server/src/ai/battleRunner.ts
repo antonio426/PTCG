@@ -55,7 +55,14 @@ function checkEndCondition(G: PtcgGameState): void {
 function applyTurnBegin(G: PtcgGameState): void {
   promoteActiveIfNeeded(G, G.currentPlayer as 0 | 1);
   if (G.turn > 1) processBetweenTurns(G);
-  G.phase = G.turn === 1 ? 'main' : 'draw';
+  // Every turn starts with a draw, INCLUDING the first player's first turn — going first is
+  // paid for by the no-attack/no-evolve/no-Supporter restrictions (see isFirstTurnOfGame in
+  // validation.ts), not by skipping the draw. Verified against ptcg-tw-sim.com, whose log reads
+  // "Setup 完成！<先手> 行動中。" immediately followed by "<先手> 抽了 1 張牌（手牌 7 張）".
+  // This used to read `G.turn === 1 ? 'main' : 'draw'`, which silently clobbered the 'draw' that
+  // setup() itself had already set — so the first player never drew, and AI-vs-AI disagreed with
+  // human battles (whose chooseActive sets phase='draw' and therefore did draw) on the same rule.
+  G.phase = 'draw';
   processWakeUpCheck(G, G.currentPlayer as 0 | 1);
   const player = G.players[G.currentPlayer];
   player.energyAttachedThisTurn = 0;

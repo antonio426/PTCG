@@ -24,7 +24,8 @@ export const PtcgGame: Game<PtcgGameState> = {
       G.turn = ctx.turn;
       G.currentPlayer = parseInt(ctx.currentPlayer) as 0 | 1;
       promoteActiveIfNeeded(G, G.currentPlayer as 0 | 1);
-      G.phase = ctx.turn === 1 ? 'main' : 'draw';
+      // Always 'draw' — see battleRunner.ts's applyTurnBegin for why the first turn draws too.
+      G.phase = 'draw';
       processWakeUpCheck(G, G.currentPlayer as 0 | 1);
       const player = G.players[G.currentPlayer];
       player.energyAttachedThisTurn = 0;

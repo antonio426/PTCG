@@ -247,7 +247,11 @@ function applyTurnBegin(G: PtcgGameState): void {
   // promoteActiveIfNeeded's own comment for why this timing is always safe.
   promoteActiveIfNeeded(G, G.currentPlayer as 0 | 1);
   if (G.turn > 1) processBetweenTurns(G);
-  G.phase = G.turn === 1 ? 'main' : 'draw';
+  // Always 'draw' — see battleRunner.ts's applyTurnBegin for why the first turn draws too.
+  // Latent here today (this function is only reached from turn 2 onward, since turn 1 comes in
+  // via setup()'s 'choose_active' -> chooseActive's phase='draw'), but kept identical so the two
+  // hand-copied turn-lifecycle implementations can't drift apart on the rule.
+  G.phase = 'draw';
   processWakeUpCheck(G, G.currentPlayer as 0 | 1);
   const player = G.players[G.currentPlayer];
   player.energyAttachedThisTurn = 0;
