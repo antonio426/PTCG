@@ -1,6 +1,6 @@
 import { GameCard, EnergyType, LegalAction } from '@ptcg/shared';
 import { PtcgGameState, GamePhase, PendingChoice } from './GameState';
-import { hasAbilityEffect, isAbilityUnlimitedUse } from './effects/abilities';
+import { hasAbilityEffect } from './effects/abilities';
 import { getRetreatCostReduction, getColorlessCostReduction } from './effects/tools';
 import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatCostReduction, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, isAttackLockedByTimedEffect, isItemAndToolPlayBlocked, isItemLockedByTimedEffect, isItemPlayBlocked, isNamedAttackLockedByTimedEffect, isRetreatLockedByTimedEffect } from './effects/passiveAbilities';
 import { normalizeAbilityName } from './effects/types';
@@ -256,7 +256,11 @@ export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalActio
       const ability = pokemon.cardData.abilities?.find(a => hasAbilityEffect(normalizeAbilityName(a.name)));
       if (ability) {
         const name = normalizeAbilityName(ability.name);
-        const alreadyUsed = player.abilitiesUsedThisTurn.includes(pokemon.id) && !isAbilityUnlimitedUse(name);
+        // abilitiesUsedThisTurn is only ever populated for an unlimited-use ability when a use
+        // resolved to an immediate no-op (see moves.ts's useAbility) — a genuinely successful
+        // multi-step use never adds it, so it's safe to respect the flag uniformly here rather
+        // than exempting unlimited-use abilities from it entirely.
+        const alreadyUsed = player.abilitiesUsedThisTurn.includes(pokemon.id);
         if (!alreadyUsed) {
           legalMoves.push({
             type: 'use_ability',

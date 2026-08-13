@@ -332,7 +332,14 @@ export const moves = {
     const ctxInfo: EffectContext = { G, playerIndex: G.currentPlayer as 0 | 1, sourceCardId: source.id };
     const step = startAbilityEffect(name, ctxInfo);
     applyEffectStep(G, G.currentPlayer as 0 | 1, `ability:${name}`, step, source.id);
-    if (!isAbilityUnlimitedUse(name)) player.abilitiesUsedThisTurn.push(source.id);
+    // An unlimited-use ability that immediately resolves to 'done' (no interactive step at all)
+    // had nothing left to do this call — e.g. excitedTurbine with no energy/targets left. Without
+    // marking it used here too, getLegalMoves keeps offering the same always-legal no-op move
+    // forever, since alreadyUsed is never true for unlimited-use abilities otherwise. Left
+    // unguarded, an AI whose heuristic keeps re-picking that no-op spins until the turn-level
+    // safety cap in humanBattle.ts/battleRunner.ts — for ClaudeAI that's hundreds of sequential
+    // API calls, which reads to the human opponent as the game just hanging/timing out.
+    if (!isAbilityUnlimitedUse(name) || step === 'done') player.abilitiesUsedThisTurn.push(source.id);
     addLog(G, G.currentPlayer, 'use_ability', `Used ability "${ability.name}" on ${source.cardData.name}`);
   },
 
