@@ -170,17 +170,41 @@ function parseCardHtml(id: number, html: string, baseOfficial: OfficialCard): Pa
     card.types = [ENERGY_MAP[typeMatch[1] + '.png']!];
   }
 
-  // ── Attacks ──
+  // ── Attacks / Abilities ──
+  // Both live in the same .skill blocks on this site (there is no separate .abilityBlock —
+  // that selector never matched anything, so abilities were silently dropped every run). An
+  // ability is distinguished only by its .skillName being prefixed "[特性] ". Trainer "rule
+  // reminder" blocks (e.g. "[支援者規則]") use the same bracket convention but aren't real card
+  // data — skip those specifically, and log (not silently drop) anything else bracket-prefixed
+  // so a genuinely new category doesn't get misfiled unnoticed.
+  const REMINDER_PREFIXES = ['[物品規則]', '[支援者規則]', '[競技場規則]', '[寶可夢道具規則]', '[ACE SPEC規則]'];
   const attacks: Attack[] = [];
+  const abilities: Ability[] = [];
   $('.skill').each((_i, el) => {
     const $el = $(el);
-    const name = $el.find('.skillName').text().trim();
+    let name = $el.find('.skillName').text().trim();
     if (!name) return;
-    // Skip rules text like [支援者規則]
-    if (name.startsWith('[')) return;
 
     const damage = $el.find('.skillDamage').text().trim();
     const effect = $el.find('.skillEffect').text().trim();
+
+    let isAbility = false;
+    if (name.startsWith('[')) {
+      if (name.startsWith('[特性]')) {
+        isAbility = true;
+        name = name.replace(/^\[特性\]\s*/, '');
+      } else if (REMINDER_PREFIXES.some(p => name.startsWith(p))) {
+        return;
+      } else {
+        console.warn(`  [unrecognized bracket-prefixed skill block, skipped] "${name}"`);
+        return;
+      }
+    }
+
+    if (isAbility) {
+      abilities.push({ name, text: effect || '', type: 'Ability' });
+      return;
+    }
 
     // Energy costs from images inside .skillCost
     const cost: EnergyType[] = [];
@@ -199,17 +223,6 @@ function parseCardHtml(id: number, html: string, baseOfficial: OfficialCard): Pa
     });
   });
   if (attacks.length > 0) card.attacks = attacks;
-
-  // ── Abilities ──
-  const abilities: Ability[] = [];
-  $('.abilityBlock').each((_i, el) => {
-    const $el = $(el);
-    const name = $el.find('.abilityName').text().trim();
-    const text = $el.find('.abilityEffect').text().trim();
-    if (name) {
-      abilities.push({ name, text, type: 'Ability' });
-    }
-  });
   if (abilities.length > 0) card.abilities = abilities;
 
   // ── Weakness / Resistance / Retreat ──

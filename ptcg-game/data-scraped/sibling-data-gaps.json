@@ -1,37 +1,5 @@
 [
   {
-    "name": "大吾的巨金怪ex",
-    "field": "abilities",
-    "missingId": "SVOD-008",
-    "missingStandardLegal": true,
-    "sourceId": "M2a-245",
-    "confidence": "high"
-  },
-  {
-    "name": "火箭隊的超夢ex",
-    "field": "abilities",
-    "missingId": "MC-290",
-    "missingStandardLegal": true,
-    "sourceId": "M2a-063",
-    "confidence": "high"
-  },
-  {
-    "name": "火箭隊的操陷蛛",
-    "field": "abilities",
-    "missingId": "M2a-016",
-    "missingStandardLegal": true,
-    "sourceId": "SV10-099",
-    "confidence": "high"
-  },
-  {
-    "name": "竹蘭的尖牙陸鯊",
-    "field": "abilities",
-    "missingId": "M2a-089",
-    "missingStandardLegal": true,
-    "sourceId": "MC-377",
-    "confidence": "high"
-  },
-  {
     "name": "彷徨夜靈",
     "field": "abilities",
     "missingId": "SV6a-019",
@@ -40,67 +8,11 @@
     "confidence": "high"
   },
   {
-    "name": "帝王拿波ex",
-    "field": "abilities",
-    "missingId": "M2-058",
-    "missingStandardLegal": true,
-    "sourceId": "M2-099",
-    "confidence": "high"
-  },
-  {
-    "name": "超級甲賀忍蛙ex",
-    "field": "abilities",
-    "missingId": "M4-022",
-    "missingStandardLegal": true,
-    "sourceId": "M4-098",
-    "confidence": "high"
-  },
-  {
-    "name": "超級妙蛙花ex",
-    "field": "abilities",
-    "missingId": "M1L-003",
-    "missingStandardLegal": true,
-    "sourceId": "M1L-076",
-    "confidence": "high"
-  },
-  {
-    "name": "超級耿鬼ex",
-    "field": "abilities",
-    "missingId": "MBG-003",
-    "missingStandardLegal": true,
-    "sourceId": "M2a-230",
-    "confidence": "high"
-  },
-  {
     "name": "黑夜魔靈",
     "field": "abilities",
     "missingId": "SV6a-020",
     "missingStandardLegal": true,
     "sourceId": "SV6a-070",
-    "confidence": "high"
-  },
-  {
-    "name": "瑪俐的長毛巨魔ex",
-    "field": "abilities",
-    "missingId": "SVOM-007",
-    "missingStandardLegal": true,
-    "sourceId": "M2a-243",
-    "confidence": "high"
-  },
-  {
-    "name": "蓋諾賽克特ex",
-    "field": "abilities",
-    "missingId": "M2a-119",
-    "missingStandardLegal": true,
-    "sourceId": "MC-512",
-    "confidence": "high"
-  },
-  {
-    "name": "蓋諾賽克特ex",
-    "field": "abilities",
-    "missingId": "SV11B-069",
-    "missingStandardLegal": true,
-    "sourceId": "MC-512",
     "confidence": "high"
   },
   {
@@ -136,14 +48,6 @@
     "confidence": "medium"
   },
   {
-    "name": "花舞鳥ex",
-    "field": "abilities",
-    "missingId": "M2-018",
-    "missingStandardLegal": true,
-    "sourceId": "EXT03-007",
-    "confidence": "medium"
-  },
-  {
     "name": "金屬怪",
     "field": "abilities",
     "missingId": "SV9-038",
@@ -168,14 +72,6 @@
     "confidence": "medium"
   },
   {
-    "name": "胖嘟嘟ex",
-    "field": "abilities",
-    "missingId": "SV11W-042",
-    "missingStandardLegal": true,
-    "sourceId": "EXT04-007",
-    "confidence": "medium"
-  },
-  {
     "name": "席多藍恩",
     "field": "abilities",
     "missingId": "M5-007",
@@ -197,46 +93,6 @@
     "missingId": "MC-354",
     "missingStandardLegal": true,
     "sourceId": "SV-P-225",
-    "confidence": "medium"
-  },
-  {
-    "name": "喵喵ex",
-    "field": "abilities",
-    "missingId": "M3-061",
-    "missingStandardLegal": true,
-    "sourceId": "EXT02-010",
-    "confidence": "medium"
-  },
-  {
-    "name": "超級快龍ex",
-    "field": "abilities",
-    "missingId": "M2a-126",
-    "missingStandardLegal": true,
-    "sourceId": "EXT02-008",
-    "confidence": "medium"
-  },
-  {
-    "name": "超級袋獸ex",
-    "field": "abilities",
-    "missingId": "M1S-051",
-    "missingStandardLegal": true,
-    "sourceId": "EXT02-011",
-    "confidence": "medium"
-  },
-  {
-    "name": "超級蒂安希ex",
-    "field": "abilities",
-    "missingId": "MBD-006",
-    "missingStandardLegal": true,
-    "sourceId": "EXT04-008",
-    "confidence": "medium"
-  },
-  {
-    "name": "超級蒂安希ex",
-    "field": "abilities",
-    "missingId": "M2a-227",
-    "missingStandardLegal": true,
-    "sourceId": "EXT04-008",
     "confidence": "medium"
   },
   {

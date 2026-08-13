@@ -1,5 +1,5 @@
 {
-  "timestamp": 1786604546773,
+  "timestamp": 1786604850921,
   "data": [
     {
       "id": "SVD-001",
@@ -435975,7 +435975,14 @@
       "regulationMark": "I",
       "localId": "003",
       "_enriched": true,
-      "rarity": "無標記"
+      "rarity": "無標記",
+      "abilities": [
+        {
+          "name": "影藏",
+          "text": "只要這隻寶可夢在場上，自己的【惡】寶可夢受到對手的「寶可夢【ex】」招式的傷害而【昏厥】時，被獲得的獎賞卡減少1張。這個特性的效果不會重複。",
+          "type": "Ability"
+        }
+      ]
     },
     {
       "id": "MBG-016",
@@ -436127,7 +436134,14 @@
       "regulationMark": "I",
       "localId": "006",
       "_enriched": true,
-      "rarity": "無標記"
+      "rarity": "無標記",
+      "abilities": [
+        {
+          "name": "鑽石膜",
+          "text": "這隻寶可夢受到招式的傷害「-30」點。",
+          "type": "Ability"
+        }
+      ]
     },
     {
       "id": "MBD-007",
@@ -436372,7 +436386,14 @@
       "regulationMark": "I",
       "localId": "089",
       "_enriched": true,
-      "rarity": "無標記"
+      "rarity": "無標記",
+      "abilities": [
+        {
+          "name": "王者呼聲",
+          "text": "在自己的回合時可使用1次。從自己的牌庫選擇1張「竹蘭的寶可夢」，在給對手看過後加入手牌。並且重洗牌庫。",
+          "type": "Ability"
+        }
+      ]
     },
     {
       "id": "M2a-088",
@@ -436696,7 +436717,14 @@
       "regulationMark": "J",
       "localId": "061",
       "_enriched": true,
-      "rarity": "RR"
+      "rarity": "RR",
+      "abilities": [
+        {
+          "name": "殺手鐧捕捉",
+          "text": "在自己的回合，從手牌將這張卡放置於備戰區時，可使用1次。從自己的牌庫選擇1張支援者卡，在給對手看過後加入手牌。並且重洗牌庫。在這個回合，若已經使出了名稱中有「殺手鐧」的特性，則這個特性無法使用。",
+          "type": "Ability"
+        }
+      ]
     },
     {
       "id": "M4-072",
@@ -436976,7 +437004,14 @@
       "regulationMark": "I",
       "localId": "007",
       "_enriched": true,
-      "rarity": "無標記"
+      "rarity": "無標記",
+      "abilities": [
+        {
+          "name": "龐克練肌",
+          "text": "在自己的回合，從手牌使出這張卡並完成進化時，可使用1次。從自己的牌庫選擇最多5張「基本【惡】能量」卡，以任意方式附於自己的「瑪俐的寶可夢」身上。並且重洗牌庫。",
+          "type": "Ability"
+        }
+      ]
     },
     {
       "id": "SVOM-006",
@@ -437191,7 +437226,14 @@
       "regulationMark": "I",
       "localId": "290",
       "_enriched": true,
-      "rarity": "無標記"
+      "rarity": "無標記",
+      "abilities": [
+        {
+          "name": "力量抑制者",
+          "text": "只有在自己的場上的「火箭隊的寶可夢」數量為4隻以上時，這隻寶可夢才可使用招式。",
+          "type": "Ability"
+        }
+      ]
     },
     {
       "id": "M2a-015",
@@ -437301,7 +437343,14 @@
       "regulationMark": "I",
       "localId": "016",
       "_enriched": true,
-      "rarity": "無標記"
+      "rarity": "無標記",
+      "abilities": [
+        {
+          "name": "充能",
+          "text": "在自己的回合時可使用1次。從自己的棄牌區選擇1張基本能量卡，附於這隻寶可夢身上。",
+          "type": "Ability"
+        }
+      ]
     },
     {
       "id": "MC-341",
@@ -437511,7 +437560,14 @@
       "regulationMark": "I",
       "localId": "051",
       "_enriched": true,
-      "rarity": "RR"
+      "rarity": "RR",
+      "abilities": [
+        {
+          "name": "使者衝刺",
+          "text": "若這隻寶可夢在戰鬥場上，則在自己的回合時可使用1次。從自己的牌庫抽出2張卡。在使用了其他的「使者衝刺」的回合，這個特性無法使用。",
+          "type": "Ability"
+        }
+      ]
     },
     {
       "id": "M2a-092",
@@ -438678,7 +438734,14 @@
       "regulationMark": "J",
       "localId": "022",
       "_enriched": true,
-      "rarity": "RR"
+      "rarity": "RR",
+      "abilities": [
+        {
+          "name": "必殺手裡劍",
+          "text": "若這隻寶可夢在戰鬥場，且在自己的回合，從自己的手牌將1張「基本【水】能量」卡丟棄，則可使用1次。在對手的1隻寶可夢身上放置6個傷害指示物。",
+          "type": "Ability"
+        }
+      ]
     },
     {
       "id": "M4-075",
@@ -439337,7 +439400,14 @@
       "regulationMark": "I",
       "localId": "119",
       "_enriched": true,
-      "rarity": "RR"
+      "rarity": "RR",
+      "abilities": [
+        {
+          "name": "金屬信號",
+          "text": "在自己的回合時可使用1次。從自己的牌庫選擇最多2張【鋼】屬性的進化寶可夢卡，在給對手看過後加入手牌。並且重洗牌庫。",
+          "type": "Ability"
+        }
+      ]
     },
     {
       "id": "SV-226",
@@ -439620,7 +439690,14 @@
       "regulationMark": "I",
       "localId": "003",
       "_enriched": true,
-      "rarity": "RR"
+      "rarity": "RR",
+      "abilities": [
+        {
+          "name": "日光轉移",
+          "text": "在自己的回合時，可不限次數使用。選擇1個自己的場上寶可夢身上附加的「基本【草】能量」，改附於自己的其他寶可夢身上。",
+          "type": "Ability"
+        }
+      ]
     },
     {
       "id": "SVOD-006",
@@ -439808,7 +439885,14 @@
       "regulationMark": "I",
       "localId": "008",
       "_enriched": true,
-      "rarity": "無標記"
+      "rarity": "無標記",
+      "abilities": [
+        {
+          "name": "X啟動",
+          "text": "在自己的回合時可使用1次。從自己的牌庫選擇「基本【超】能量」卡與「基本【鋼】能量」卡最多各1張，以任意方式附於自己的【超】或者【鋼】寶可夢身上。並且重洗牌庫。",
+          "type": "Ability"
+        }
+      ]
     },
     {
       "id": "M2-058",
@@ -439872,7 +439956,14 @@
       "regulationMark": "I",
       "localId": "058",
       "_enriched": true,
-      "rarity": "RR"
+      "rarity": "RR",
+      "abilities": [
+        {
+          "name": "皇帝之勢",
+          "text": "這隻寶可夢不會受到對手的寶可夢使用招式的效果的影響。",
+          "type": "Ability"
+        }
+      ]
     },
     {
       "id": "M3-054",
@@ -439987,7 +440078,14 @@
       "regulationMark": "I",
       "localId": "227",
       "_enriched": true,
-      "rarity": "MA"
+      "rarity": "MA",
+      "abilities": [
+        {
+          "name": "鑽石膜",
+          "text": "這隻寶可夢受到招式的傷害「-30」點。",
+          "type": "Ability"
+        }
+      ]
     },
     {
       "id": "M2a-187",
@@ -440369,7 +440467,14 @@
       "regulationMark": "I",
       "localId": "069",
       "_enriched": true,
-      "rarity": "RR"
+      "rarity": "RR",
+      "abilities": [
+        {
+          "name": "金屬信號",
+          "text": "在自己的回合時可使用1次。從自己的牌庫選擇最多2張【鋼】屬性的進化寶可夢卡，在給對手看過後加入手牌。並且重洗牌庫。",
+          "type": "Ability"
+        }
+      ]
     },
     {
       "id": "M1L-062",
@@ -440845,7 +440950,14 @@
       "regulationMark": "I",
       "localId": "126",
       "_enriched": true,
-      "rarity": "RR"
+      "rarity": "RR",
+      "abilities": [
+        {
+          "name": "天空搬運",
+          "text": "在自己的回合時可使用1次。將自己的戰鬥寶可夢與備戰寶可夢互換。",
+          "type": "Ability"
+        }
+      ]
     },
     {
       "id": "SVM-143",
@@ -440998,7 +441110,14 @@
       "regulationMark": "I",
       "localId": "018",
       "_enriched": true,
-      "rarity": "RR"
+      "rarity": "RR",
+      "abilities": [
+        {
+          "name": "激動渦輪",
+          "text": "若自己的場上有【火】屬性的「超級進化寶可夢【ex】」，則在自己的回合時，可不限次數使用。從自己的手牌選擇1張「基本【火】能量」卡，附於備戰區的【火】寶可夢身上。",
+          "type": "Ability"
+        }
+      ]
     },
     {
       "id": "M2-013",
@@ -441151,7 +441270,14 @@
       "regulationMark": "I",
       "localId": "042",
       "_enriched": true,
-      "rarity": "RR"
+      "rarity": "RR",
+      "abilities": [
+        {
+          "name": "海之詛咒",
+          "text": "只要這隻寶可夢在戰鬥場上，對手無法從手牌使出「物品」卡，也無法附上「寶可夢道具」卡。",
+          "type": "Ability"
+        }
+      ]
     },
     {
       "id": "M1S-042",
