@@ -1,98 +1,118 @@
 # CLAUDE.md
 
-本檔案為 Claude Code（claude.ai/code）在此專案中工作時的操作指南。
+This file is the operating guide for Claude Code (claude.ai/code) when working in this project.
 
-## 語言
+## Language
 
-以後都用繁體中文回答。
+Always respond to the user in Traditional Chinese (繁體中文) from now on. (This file itself is in English to save tokens — CJK text tokenizes less efficiently than English for the same content. See `claude_chinese.md` for a Traditional Chinese reference copy of this file, kept for the human maintainer's convenience; it is not auto-loaded and may drift out of sync — update it manually alongside this file when they diverge.)
 
-## 專案概述
+## Project overview
 
-PTCG Game 是一個 Pokémon TCG 風格的卡牌對戰專案：React 前端、Koa/boardgame.io 遊戲伺服器，以及共用的 TypeScript 套件。卡片資料即時來自 TCGdex v2 API（`https://api.tcgdex.net/v2/`），並會快取到硬碟。專案採用 npm workspaces monorepo 架構（`shared`、`server`、`client`）。
+PTCG Game is a Pokémon TCG-style card battle project: a React frontend, a Koa/boardgame.io game server, and a shared TypeScript package. The project uses an npm workspaces monorepo layout (`shared`, `server`, `client`).
 
-## 常用指令
+Card data comes from three independent sources — don't assume they agree with each other:
+- **TCGdex v2 API** (`https://api.tcgdex.net/v2/`) — the primary, structured source; cached to disk (see "Card data pipeline" below). Individual prints can be missing fields (see "Recurring pitfalls").
+- **Official Traditional-Chinese card search site** (`https://asia.pokemon-card.com/tw/card-search/list/`) — scraped as HTML for text asset can't get from TCGdex (see "Official-site text scraper" below); richer/more accurate effect text but needs parsing.
+- **A third-party reference implementation of the same game** (`https://www.ptcg-tw-sim.com/game`) — not a data source but a live parity target. Past sessions found real bugs (dead code that was never wired in, wrong UI-flow assumptions) only by playing an actual match there and comparing turn-by-turn against this codebase — bugs that scraped text alone couldn't surface (see commits `128b755`, `bfc6c70`). When an effect's correctness is in doubt and coverage tooling alone isn't conclusive, prefer a live check against this site over re-reading scraped text.
 
-以下指令請在 `ptcg-game/`（workspace 根目錄，而非上一層的 repo 根目錄）執行。
+## Common commands
+
+Run the following from `ptcg-game/` (the workspace root, not the repo root one level up).
 
 ```bash
-npm install                # 安裝所有 workspace 的依賴
-npm run dev                # 同時啟動 server + client（concurrently）
-npm run dev:server         # 僅啟動 server — tsx watch src/index.ts（port 3001）
-npm run dev:client         # 僅啟動 client — vite（port 5173）
-npm run build               # 依序 build shared -> server -> client
+npm install                # install dependencies for all workspaces
+npm run dev                # start server + client together (concurrently)
+npm run dev:server         # server only — tsx watch src/index.ts (port 3001)
+npm run dev:client         # client only — vite (port 5173)
+npm run build               # build shared -> server -> client in order
 ```
 
-Windows 替代方案：在 `ptcg-game/` 執行 `./start-dev.ps1`（會以 PowerShell background job 啟動前後端；可帶 `-ServerPort` / `-ClientPort` 參數）。
+Windows alternative: run `./start-dev.ps1` from `ptcg-game/` (starts server+client as PowerShell background jobs; accepts `-ServerPort` / `-ClientPort`).
 
-各 workspace 內部指令（在 `server/` 或 `client/` 目錄下執行）：
+Per-workspace commands (run from `server/` or `client/`):
 ```bash
-npm run dev                # server：tsx watch；client：vite
-npm run build               # server：tsc；client：tsc -b && vite build
-npm run start                # 僅 server — 執行 dist/index.js（build 之後）
-npm run preview              # 僅 client — 預覽 production build
+npm run dev                # server: tsx watch; client: vite
+npm run build               # server: tsc; client: tsc -b && vite build
+npm run start                # server only — runs dist/index.js (after build)
+npm run preview              # client only — preview the production build
 ```
 
-目前任何 workspace 都沒有設定測試套件或 lint 指令 — 不要自行捏造 `npm test` 或 `npm run lint`。
+No workspace currently has a test suite or lint command configured — don't invent `npm test` or `npm run lint`.
 
-型別檢查：server 使用 `tsc`（輸出到 `dist/`），client 使用 `tsc -b`（project references，透過 build mode 達到類似 `noEmit` 的效果）。`shared` 沒有 build 步驟 — 它是以 TypeScript 原始碼直接被引用的（`"main": "index.ts"`），透過 workspace symlink 提供給 client/server，因此修改後 client 與 server 會立即讀到最新內容，不需要重新 build。
+Type checking: server uses `tsc` (emits to `dist/`), client uses `tsc -b` (project references, achieving a `noEmit`-like effect via build mode). `shared` has no build step — it's referenced directly as TypeScript source (`"main": "index.ts"`), linked into client/server via workspace symlink, so edits are picked up immediately by both without a rebuild.
 
-## 架構
+## Architecture
 
-### Workspace 結構
-- `shared/` — 前後端共用的 TypeScript 型別/常數，以 `@ptcg/shared` 匯入（`shared/types/{card,game,action}.ts`）。純原始碼套件，無 build 步驟。
-- `server/` — 包裹 `boardgame.io` `Server` 的 Koa 應用程式，另外還有一套獨立於 boardgame.io 的純 REST 對戰實作（見下方說明）。
-- `client/` — React 19 + Vite + Tailwind + Zustand + React Router。Vite dev server 會將 `/api` 與 `/ws` 代理到 `http://localhost:3001`（`client/vite.config.ts`）。
+### Workspace layout
+- `shared/` — TypeScript types/constants shared between frontend and backend, imported as `@ptcg/shared` (`shared/types/{card,game,action}.ts`). Source-only package, no build step.
+- `server/` — A Koa app wrapping a `boardgame.io` `Server`, plus a separate pure-REST battle implementation independent of boardgame.io (see below).
+- `client/` — React 19 + Vite + Tailwind + Zustand + React Router. The Vite dev server proxies `/api` and `/ws` to `http://localhost:3001` (`client/vite.config.ts`).
 
-### 兩套並行的對戰引擎
-遊戲邏輯（`server/src/game/{moves,validation,damage,setup}.ts`，狀態結構定義於 `GameState.ts`）是共用的，但實際上有兩種不同的驅動方式：
-1. **`boardgame.io` 遊戲**（`server/src/game/PtcgGame.ts`）— 在 `index.ts` 中註冊到 `boardgame.io/server`，透過 boardgame.io 的 lobby/match API 對外提供服務。將 `moves` 接到 boardgame.io 的 `Game` 定義中（`turn.onBegin`、`endIf`）。
-2. **自訂的人類對 AI REST 迴圈**（`server/src/routes/humanBattle.ts`）— 重新實作了一個簡化版、模仿 boardgame.io 的 `ctx`（`{ currentPlayer, events.endTurn }`），手動推進回合、檢查勝利條件，並以記憶體中的 `Map` 儲存對戰 session。`client/src/pages/Battle.tsx` 實際溝通的就是這一套（`POST /api/human-battle`、`POST /api/human-battle/:id/move`）。
-3. 第三種變體 `server/src/ai/battleRunner.ts`，以無介面（headless）迴圈驅動同一套 `moves`/`validation` 邏輯來做 AI 對 AI 的模擬（`runBattles`），供 `BattleLab.tsx` 透過 `server/src/routes/battles.ts` 用來測試不同 AI 策略之間的勝率。
+### Two parallel battle engines
+The game logic (`server/src/game/{moves,validation,damage,setup}.ts`, state shape defined in `GameState.ts`) is shared, but is actually driven two different ways:
+1. **The `boardgame.io` game** (`server/src/game/PtcgGame.ts`) — registered with `boardgame.io/server` in `index.ts`, served via boardgame.io's lobby/match API. Wires `moves` into boardgame.io's `Game` definition (`turn.onBegin`, `endIf`).
+2. **A custom human-vs-AI REST loop** (`server/src/routes/humanBattle.ts`) — reimplements a simplified boardgame.io-style `ctx` (`{ currentPlayer, events.endTurn }`), manually advances turns, checks win conditions, and stores battle sessions in an in-memory `Map`. `client/src/pages/Battle.tsx` talks to this one (`POST /api/human-battle`, `POST /api/human-battle/:id/move`).
+3. A third variant, `server/src/ai/battleRunner.ts`, drives the same `moves`/`validation` logic in a headless loop to simulate AI-vs-AI games (`runBattles`), used by `BattleLab.tsx` via `server/src/routes/battles.ts` to measure win rates between AI strategies.
 
-修改回合/出牌相關邏輯時，務必確認是否也要同步修改 `humanBattle.ts` 的 `executeGameAction`/`applyTurnBegin`，以及 `battleRunner.ts` 的 `executeMove`/`applyTurnBegin` — 因為它們是各自複製（而非共用）boardgame.io 的回合生命週期邏輯。
+When changing turn/play logic, make sure to check whether `humanBattle.ts`'s `executeGameAction`/`applyTurnBegin` and `battleRunner.ts`'s `executeMove`/`applyTurnBegin` also need updating — they each duplicate (rather than share) boardgame.io's turn-lifecycle logic.
 
-### AI 玩家
-共同介面為 `IAIPlayer.decide(gameState, playerIndex, legalMoves)`。目前實作：
-- `RandomAI`（`server/src/ai/aiPlayer.ts`）— 從合法行動中隨機選一個。對應難度 `easy`。
-- `MockAI`（`server/src/ai/aiPlayer.ts`）— 依優先順序的簡單啟發式策略（攻擊 > 進化 > 附能量 > 出寶可夢 > ...）。已不是預設對手，僅供比較用。
-- `HeuristicAI`（`server/src/ai/heuristicAI.ts`）— 對每個合法行動評分後選最高分，會讀卡片實際內容（訓練家/特性效果文字關鍵字、可付的攻擊傷害等）計分，也有主動撤退換更強攻擊手等戰術判斷。**目前是人類對戰的預設對手**（`humanBattle.ts` 的 `resolveAiPlayer`，難度 `normal` 或未指定時使用）。
-- `ClaudeAI`（`server/src/ai/aiPlayer.ts`）— 直接呼叫 Anthropic Messages API（`fetch` 到 `api.anthropic.com`，使用 `select_action` 這個 tool），傳入完整渲染成繁體中文的遊戲狀態 prompt，再把 tool call 結果解析回 `LegalAction`。對應難度 `hard`；需要環境變數 `ANTHROPIC_API_KEY`（`ANTHROPIC_MODEL` 可選），沒設定時 `resolveAiPlayer` 會回傳錯誤而不是靜默降級成別的 AI。
+### AI players
+Common interface: `IAIPlayer.decide(gameState, playerIndex, legalMoves)`. Current implementations:
+- `RandomAI` (`server/src/ai/aiPlayer.ts`) — picks a random legal move. Maps to difficulty `easy`.
+- `MockAI` (`server/src/ai/aiPlayer.ts`) — a simple move-type priority list (attack > evolve > attach energy > play Pokémon > ...). No longer the default opponent, kept only for comparison.
+- `HeuristicAI` (`server/src/ai/heuristicAI.ts`) — scores every legal move and picks the best, reading real card content (Trainer/ability effect-text keywords, payable attack damage, etc.) to score, including tactical judgment like proactively retreating for a stronger attacker. **Currently the default human-battle opponent** (`humanBattle.ts`'s `resolveAiPlayer`, used for difficulty `normal` or when unspecified).
+- `ClaudeAI` (`server/src/ai/aiPlayer.ts`) — calls the Anthropic Messages API directly (`fetch` to `api.anthropic.com`, using a `select_action` tool), passing a full game-state prompt rendered in Traditional Chinese, then parses the tool-call result back into a `LegalAction`. Maps to difficulty `hard`; needs the `ANTHROPIC_API_KEY` env var (`ANTHROPIC_MODEL` optional) — when unset, `resolveAiPlayer` returns an error rather than silently downgrading to a different AI.
 
-`humanBattle.ts` 的 `resolveAiPlayer(difficulty?)` 是難度 → AI 類型的唯一對照表。`BattleLab`／`battles.ts` 的 `/api/battles/ai-vs-ai` 則是另一套獨立的對照（`aiTypeA`/`aiTypeB` 參數，接受 `random`/`mock`/`heuristic`/`claude`），用來讓兩種 AI 策略互相比賽測勝率——修改難度或 AI 選型邏輯時，這兩處要分別確認是否要同步調整。
+`humanBattle.ts`'s `resolveAiPlayer(difficulty?)` is the single difficulty → AI-type mapping. `BattleLab`/`battles.ts`'s `/api/battles/ai-vs-ai` has a separate, independent mapping (`aiTypeA`/`aiTypeB` params, accepting `random`/`mock`/`heuristic`/`claude`), used to pit two AI strategies against each other to measure win rate — when changing difficulty or AI-selection logic, check both places separately for whether they need to stay in sync.
 
-合法行動的產生邏輯集中在 `server/src/game/validation.ts`（`getLegalMoves`）— 這是「玩家 X 現在能做什麼」的唯一真實來源，前面三套對戰路徑都會用到它。
+Legal-move generation is centralized in `server/src/game/validation.ts` (`getLegalMoves`) — the single source of truth for "what can player X do right now," used by all three battle paths above.
 
-### 進化史堆疊（`GameCard.preEvolutions`）
-真實規則：進化不會立刻把進化前的卡丟進棄牌堆——它會疊在新卡底下，直到這隻寶可夢整疊被擊倒（或以其他方式永久離場）時才一起進棄牌堆。`shared/types/game.ts` 的 `GameCard.preEvolutions?: GameCard[]`（舊到新排序）就是這疊歷史。`server/src/game/damage.ts` 匯出兩個共用 helper：`stackAsPreEvolution(newTop, oldCard)`（進化時呼叫，取代直接 push 進棄牌堆）與 `flushPreEvolutionsToDiscard(card, discardPile)`（KO、彈回手牌、洗回牌庫等任何「這張卡永久離開目前這疊」的時機都要呼叫，避免整疊歷史卡憑空消失）。新增任何會讓寶可夢進化/降階/離場的效果時，記得檢查是否也要處理這疊歷史。
+### Pre-evolution stacking (`GameCard.preEvolutions`)
+Real rules: evolving does NOT immediately discard the pre-evolution card — it stays stacked underneath the new card until the whole stack is later Knocked Out (or otherwise permanently leaves play). `shared/types/game.ts`'s `GameCard.preEvolutions?: GameCard[]` (oldest-to-newest order) holds that stack. `server/src/game/damage.ts` exports two shared helpers: `stackAsPreEvolution(newTop, oldCard)` (call on evolving, instead of pushing straight to the discard pile) and `flushPreEvolutionsToDiscard(card, discardPile)` (call at any moment this Pokémon permanently leaves play for good — KO, bounced to hand, shuffled into deck, etc. — so the whole stacked history doesn't vanish). When adding any effect that evolves/de-evolves/removes a Pokémon from play, check whether this stack needs handling too.
 
-### 卡片資料流程（`server/src/card-api/tcgdex.ts`）
-- 從 TCGdex v2 抓取資料（預設語系 `zh-tw`），轉換成專案共用的 `Card`/`MapCard` 格式（參見 `CATEGORY_MAP`、`ENERGY_MAP`、`TRAINER_TYPE_MAP`、`STAGE_MAP` 等對照表 — TCGdex 的用詞與本專案的 `Subtype`/`EnergyType` 型別並不完全一致）。
-- 兩階段載入：`fetchAllCards()` 先載入成本較低的分類摘要資料（僅 id/name/image，沒有招式/HP 等），接著 `enrichAllCardsInBackground()` 以每批 5 張的方式抓取每張卡的完整詳細資料，並就地更新記憶體中的陣列。一張卡只要有 `artist` 欄位或 `_enriched: true` 就視為「已補完（enriched）」；需要招式/HP/弱點等資料的 UI 程式碼，應該能容忍卡片仍是摘要版本、尚未補完的狀態（完整補完約 6000 張卡需要 10–15 秒）。
-- 硬碟快取：`server/src/card-api/cache.ts` 會把資料存到 `server/data/cards.json` / `server/data/sets.json`，並包一層 24 小時 TTL（`{ timestamp, data }`）。`server/data/cards-final.json` 是另一份由 `server/src/scripts/` 內的一次性腳本合併/修補產生的、規模更大的資料集 — 使用前務必確認某個 script 或 route 實際讀的是哪一份檔案，不要假設它們可以互換。
-- 圖片絕不會直接把 TCGdex CDN 網址回傳給前端；`buildImageUrl` 一律指向 `/api/images/{serie}/{setId}/{localId}/{high|low}`（`server/src/routes/images.ts`），由該路由代理到本地快取，找不到才 fallback 到 CDN。
-- 卡片 ID 格式為 `{SetCode}-{Number}`（例如 `SV1V-001`）。**已知未解決問題**：`server/data/preset-decks*.json` 以及部分較舊、存在 `localStorage` 的使用者牌組，使用的是舊版爬蟲 ID 格式（例如 `scr-14129`），與目前 TCGdex 的 ID 對不上，導致這些牌組在 `fetchCardsByIds` 查詢時失敗（完整說明與候選解法見 `ptcg-game/AGENTS.md`）。
-- **已知未解決問題**：`cards.json`/`cards-final.json` 裡個別卡片印刷版本會漏掉 `abilities`/`attacks` 欄位——即使同一張卡的其他印刷版本（同名同副屬性同 HP）有完整資料，UI 仍會照 `cardData.abilities` 顯示效果文字，但遊戲邏輯查不到資料就等於該效果被無聲跳過。不是全部同名卡都能直接互相回填：同名卡在不同印刷版本有時是完全不同的設計（招式/特性都不同），回填前務必用 `find-sibling-data-gaps.ts`（見下方）比對招式簽章，不要只憑同名同 HP 就假設是同一張卡。
+### Card data pipeline (`server/src/card-api/tcgdex.ts`)
+- Fetches from TCGdex v2 (default locale `zh-tw`), converts to the project's shared `Card`/`MapCard` format (see the `CATEGORY_MAP`, `ENERGY_MAP`, `TRAINER_TYPE_MAP`, `STAGE_MAP` lookup tables — TCGdex's terminology doesn't fully match this project's `Subtype`/`EnergyType` types).
+- Two-phase loading: `fetchAllCards()` first loads cheaper category-summary data (id/name/image only, no attacks/HP/etc.), then `enrichAllCardsInBackground()` fetches each card's full detail in batches of 5 and updates the in-memory array in place. A card counts as "enriched" once it has an `artist` field or `_enriched: true`; UI code that needs attacks/HP/weakness/etc. should tolerate a card still being summary-only, not-yet-enriched (full enrichment of ~6000 cards takes 10-15 seconds).
+- Disk cache: `server/src/card-api/cache.ts` saves data to `server/data/cards.json` / `server/data/sets.json`, wrapped with a 24-hour TTL (`{ timestamp, data }`). `server/data/cards-final.json` is a separate, larger merged/patched dataset produced by one-off scripts under `server/src/scripts/` — before using either file, confirm which one a given script/route actually reads; don't assume they're interchangeable. Note the running server only ever reads/writes `cards.json` (via `cache.ts`) — `cards-final.json` isn't wired into any route, only into a couple of one-off scripts.
+- Images are never returned to the frontend as raw TCGdex CDN URLs; `buildImageUrl` always points at `/api/images/{serie}/{setId}/{localId}/{high|low}` (`server/src/routes/images.ts`), which proxies to the local cache and falls back to the CDN only on a cache miss.
+- Card IDs are formatted `{SetCode}-{Number}` (e.g. `SV1V-001`). **Mostly resolved**: `server/data/preset-decks.json` used to reference the old scraper's ID format (e.g. `scr-14129`), which doesn't match current TCGdex IDs; all 56 preset decks were repointed to Standard-legal, current-format prints (commit `819a278`) and now contain zero legacy IDs. What's left: some pre-existing *user* decks saved in `localStorage` before that fix may still carry old-format IDs — `deckStore.validateDeck` already tolerates this (see "Frontend structure" below), so it degrades to silently-skipped cards rather than a crash. Background/candidate-fix writeup: `ptcg-game/AGENTS.md` (its "已知問題 & Backlog" section is still accurate; its architecture description at the top predates the current Koa/boardgame.io/HeuristicAI setup and shouldn't be trusted).
+- **Data gaps across sibling prints**: individual print versions in `cards.json` can be missing the `abilities`/`attacks` fields even when another print of the same card (same name/subtypes/HP) has the full data — the UI still displays effect text straight from `cardData.abilities`, so game logic silently no-ops if it can't find the data. Not every same-named card can be safely backfilled from a sibling print — different print years sometimes really are different designs. `find-sibling-data-gaps.ts` (see "Card-logic coverage audit tools" below) flags candidates by matching HP + attack signature, but its own confidence label isn't the last word — **the reliable verification is checking for a reciprocal gap**: if print A is missing `abilities` and print B (the proposed source) is missing `attacks`, and A has the corresponding `attacks` that B is missing, that cross-confirms both prints are the same real design split across two incomplete scrapes (worked example: this session backfilled 小火龍 `MC-083`, 金屬怪 `SV9-038`, 振翼髮 `SV8-059` this way — each only had a "medium confidence" attack-signature match alone, but the reciprocal gap on the source print made it safe). A same-HP match with *no* reciprocal signal and no attack-signature match is not safe to auto-apply — treat it as a lead to look up manually, not a backfill.
 
-### 前端結構
-- `client/src/stores/` — Zustand stores：`cardStore`（卡片目錄/搜尋狀態）、`deckStore`（牌組編輯器：`addCard`、`validateDeck` — 60 張牌 / 同名卡最多 4 張規則，一般能量除外、`saveDeck`/`loadDeck` 存取 `localStorage`）、`gameStore`（對戰 session 狀態）。
-- `client/src/pages/` — `Home`、`CardBrowser`、`DeckBuilder`、`Battle`（人類對 AI，溝通對象為 `humanBattle.ts`）、`BattleLab`（AI 對 AI 模擬測試介面，溝通對象為 `battles.ts`）。
-- `deckStore.validateDeck` 遇到目前卡片目錄中找不到的 ID 會直接跳過該卡，而不是報錯失敗 — 這是刻意設計，用來容忍上述的舊版 ID 牌組，不要把它「修正」成會 throw 的版本。
+### Recurring pitfalls (explicit rules — each caused a real, previously-shipped bug)
+- **Scraped Chinese names can carry a stray leading zero-width character** (e.g. `‌寶可夢中心的姐姐` vs `寶可夢中心的姐姐`) and ability names can carry a literal `[特性] ` prefix baked into the text. Any code that compares or looks up a card/ability name against a registry key **must** go through `normalizeCardName`/`normalizeAbilityName` (`server/src/game/effects/types.ts`) first. Skipping this makes lookups silently fail — invisible in testing since the stray character doesn't print — and previously made `coverage-report.ts` undercount real coverage (37/287 abilities were actually covered but reported as 18/287, commit `a0cde71`) purely because it compared raw names. When writing a new script that groups/matches/dedupes by card or ability name, normalize through this helper rather than comparing raw strings.
+- **Before trusting an "uncovered" report, confirm the tool is checking every relevant registry.** Abilities are split across two registries — triggered (`abilityEffects` in `abilities.ts`) and passive (`PASSIVE_ABILITY_NAMES` in `passiveAbilities.ts`) — and `coverage-report.ts` already checks both (`isAbilityCovered()`) plus normalizes names; if a future coverage script is added or this one is modified, keep checking both registries through the normalizer, or numbers will regress to the undercounting bug above.
+- **A dead-code wiring bug can sit invisibly even in "covered" code**: `getToolHpBonus()` had existed and been queryable for a while before anything actually called it from `effectiveMaxHp()` — the field was registered, the query function worked in isolation, but nothing connected them, so the effect silently did nothing in real games (commit `128b755`). Coverage percentage only proves a handler *exists*, not that it's wired into the code path that actually runs during a battle — when adding a new effect hook, trace the call site that's supposed to invoke it, don't just add the registration and assume coverage tooling would have caught a missing wire-up (it can't).
 
-### 一次性資料腳本
-`server/src/scripts/` 存放匯入/爬取/合併/修補用的腳本（例如 `scrape-official-standard.ts`、`merge-all-official.ts`、`patch-ace-spec.ts`），用來建立/修復 `server/data/*.json` 的資料快照。這些腳本是用 `tsx` 手動執行的，不屬於日常開發流程的一部分 — 執行前請先讀過該腳本的內容，因為有些會直接就地修改 `server/data/*.json`。臨時的一次性驗證/稽核腳本用完即刪（慣例用 `_` 前綴命名，例如 `_verify-xxx.ts`），不要留在 repo 裡。
+### Frontend structure
+- `client/src/stores/` — Zustand stores: `cardStore` (card catalog/search state), `deckStore` (deck editor: `addCard`, `validateDeck` — 60-card / max-4-of-a-name rule except basic energy, `saveDeck`/`loadDeck` via `localStorage`), `gameStore` (battle session state).
+- `client/src/pages/` — `Home`, `CardBrowser`, `DeckBuilder`, `Battle` (human vs AI, talks to `humanBattle.ts`), `BattleLab` (AI-vs-AI simulation testing UI, talks to `battles.ts`).
+- `deckStore.validateDeck` silently skips any card ID not found in the current catalog rather than throwing — this is deliberate, to tolerate the legacy-ID decks noted above; don't "fix" it into a throwing version.
 
-### 卡片邏輯覆蓋率稽核工具
-用來找「卡片文字寫了效果、但遊戲裡沒有真的執行」這類不會讓遊戲崩潰、也不會被一般測試發現的隱藏漏洞，分兩支互補的腳本（都用 `npx tsx src/scripts/<name>.ts` 執行，在 `server/` 目錄下）：
-- `coverage-report.ts` — 找「資料有寫、程式沒接」：比對 `abilityEffects`/`trainerEffects`/`attackEffects`（`server/src/game/effects/{abilities,trainers,attacks}.ts`）的 key 是否涵蓋 `cards.json` 裡實際出現過的特性/訓練家/攻擊名稱，依重印次數排序輸出，結果存到 `data-scraped/coverage-uncovered-*.json`。
-- `find-sibling-data-gaps.ts` — 找「資料本身就漏寫」：把同名卡分組，比對是否有印刷版本缺 `abilities`/`attacks` 而其他印刷版本（招式簽章相符）有，輸出候選清單到 `data-scraped/sibling-data-gaps.json`。**這支工具只能抓到「有姊妹版本可比對」的缺口**，孤例卡片抓不到，且比對出的候選仍需人工核對招式/HP 是否真的是同一張卡才能回填，不要盲目自動套用。
+### One-off data scripts
+`server/src/scripts/` holds import/scrape/merge/patch scripts (e.g. `scrape-official-standard.ts`, `merge-all-official.ts`, `patch-ace-spec.ts`) used to build/repair `server/data/*.json` snapshots. These are run manually via `tsx` and aren't part of the normal dev workflow — read a script's contents before running it, since some patch `server/data/*.json` in place. Temporary one-off verification/audit scripts get deleted once done (convention: `_`-prefixed names, e.g. `_verify-xxx.ts`) — don't leave them in the repo.
 
-`cards.json` 每次重新抓取/enrich 後這兩份報告就可能過期，改動卡片效果實作或懷疑有資料缺口時應該重跑一次。
+### Card-logic coverage audit tools
+Used to find "the card text says there's an effect, but the game doesn't actually implement it" — the kind of hidden bug that neither crashes the game nor gets caught by ordinary testing. Two complementary scripts (both run via `npx tsx src/scripts/<name>.ts` from `server/`):
+- `coverage-report.ts` — finds "data exists, code doesn't handle it": checks whether `abilityEffects`/`PASSIVE_ABILITY_NAMES`/`trainerEffects`/`attackEffects` (`server/src/game/effects/{abilities,passiveAbilities,trainers,attacks}.ts`) cover every ability/Trainer/attack name that actually appears in `cards.json` (through `normalizeCardName`/`normalizeAbilityName` — see "Recurring pitfalls"), sorted by reprint count, output to `data-scraped/coverage-uncovered-*.json`.
+- `find-sibling-data-gaps.ts` — finds "the data itself is missing": groups same-named cards, flags print versions missing `abilities`/`attacks` where another print (matching HP, and attack signature when both sides have one) has them, output to `data-scraped/sibling-data-gaps.json`. **This tool can only catch gaps with a comparable sibling print** — it can't catch singleton cards. Its `confidence: 'high'` label means the attack signatures matched exactly; `'medium'` means they couldn't be cross-checked that way — for `'medium'` candidates, manually verify via the reciprocal-gap check described in "Card data pipeline" above before backfilling.
 
-## 成本 /情境使用紀律
+Both reports can go stale after `cards.json` is re-fetched/re-enriched — re-run them whenever card-effect implementations change or a data gap is suspected. After backfilling from either report, spot-check with a small `battleRunner.ts` run using decks that actually contain the changed cards (see "Cost / context discipline" for sizing) rather than trusting the report alone — it confirms the data doesn't crash the engine, though it won't prove a *newly implemented* effect fires the way the reference site does (use the reference site for that).
 
-此專案的使用者對 token 用量敏感，長時間 session 容易不知不覺耗盡額度。請遵守：
-- 回覆盡量精簡，不要重複輸出已經在對話中出現過的內容（例如剛編輯過的檔案，Edit 成功後不需要再 Read 一次確認）。
-- 避免重新讀取已經在上下文中的檔案；需要引用時直接用 `file:line` 標記即可。
-- 對話變長時（尤其是連續多輪工具呼叫之後），主動建議使用者執行 `/compact`，不要等到被 `.claude/hooks/context-guard.js` 這個 PreToolUse hook 擋下來才處理（該 hook 會在 transcript 超過約 10 萬 token 時警告、超過約 18 萬 token 時直接封鎖 Bash/Edit/Write，並要求先 `/compact`）。
-- 大型一次性稽核/爬蟲腳本盡量寫在 scratchpad 或 `server/src/scripts/` 裡執行完就刪除（如既有慣例），不要把大量中間產出貼回對話內容。
-- AI 對戰壓力測試（`battleRunner.ts`/BattleLab）的場數要跟改動的影響範圍成比例：單純新增、不牽動既有程式路徑的小改動（新特性 handler、資料回填）抽測幾副牌即可，不必每次都跑滿 56 副預組牌組；牽動共用邏輯（進化系統、AI 評分等）的改動才需要全套跑一輪。用 `HeuristicAI`/`RandomAI`/`MockAI` 互打不會呼叫 Anthropic API、不花真正的 token，但終端機輸出仍會佔用對話上下文，保持輸出精簡（進度列 + 摘要）。
+### Official-site text scraper (`scrape-all-official-data.ts` / `scrape-missing-card-data.ts`)
+A second card-data source independent of TCGdex: fetches HTML directly from `asia.pokemon-card.com/tw/card-search` per card (parsed with `cheerio`), writing to `server/data/scraped-cards-all.json`. This has never involved image recognition/OCR — pure text HTML parsing. Abilities and attacks live in the same `.skill` block on the official page; an ability's `.skillName` just carries an extra `[特性] ` prefix (see "Recurring pitfalls" for the shared `normalizeCardName` fix — an earlier, over-broad `[`-prefix filter here once discarded all ability data along with the Trainer "rule reminder" blocks it was meant to skip; now fixed). `reconcile-official-data.ts` merges this scrape's `rarity`/`legalities.standard` back into `cards.json`; `backfill-attacks-from-official.ts`/`refetch-abilities-from-official.ts` backfill `attacks`/`abilities` the same way — all of them reuse the same cautious matching strategy (set+number as the primary key, falling back to unambiguous-name-only, skipping rather than guessing on a miss or ambiguous match). When changing the matching logic or adding a similar backfill script, reuse this `key()`/`parseNumerator()`/`parseTcgdexNumber()` pattern rather than reinventing it.
+
+## Git workflow
+
+This repo's history is made of many small, scoped commits (check `git log` — e.g. each ability-coverage batch or bug fix is its own commit). Keep following that pattern:
+- Commit locally after finishing and verifying a discrete unit of work (a script-driven data fix plus its verification run, a bug fix plus confirmation it works) rather than leaving completed, verified work uncommitted while moving on to the next task. This is a standing, project-scoped exception to the default "only commit when asked" rule.
+- The exception covers **local commits only**. Pushing, and anything else that touches shared/remote state, still needs the user's go-ahead each time — this file doesn't pre-authorize that.
+- Normal hygiene still applies: a real commit message explaining *why*, review `git status`/`git diff` before staging, never `--no-verify` or bypass signing, and check file contents before staging anything that might hold secrets.
+
+## Cost / context discipline
+
+This project's user is sensitive to token usage — long sessions can burn through quota without anyone noticing. Follow these rules:
+- Keep replies concise; don't re-output content already visible in the conversation (e.g. no need to Read a file again right after a successful Edit just to confirm it).
+- Avoid re-reading files already in context; cite with `file:line` instead.
+- As the conversation grows (especially after several rounds of tool calls), proactively suggest the user run `/compact` — don't wait to be blocked by the `.claude/hooks/context-guard.js` PreToolUse hook (it warns above ~100k tokens of transcript and hard-blocks Bash/Edit/Write above ~180k, requiring `/compact` first).
+- Write large one-off audit/scraping scripts in a scratchpad or `server/src/scripts/` and delete them once done (existing convention) rather than pasting large intermediate output back into the conversation.
+- Scale AI-vs-AI stress-test batch sizes (`battleRunner.ts`/BattleLab) to the blast radius of the change: a handful of decks is enough for a narrow, purely-additive change (new ability handler, data backfill) that doesn't touch shared code paths — don't run all 56 preset decks by default. Reserve full-scale runs for changes that touch shared logic (evolution system, AI scoring, etc.). `HeuristicAI`/`RandomAI`/`MockAI` matches don't call the Anthropic API and cost no real tokens, but terminal output still consumes conversation context — keep it terse (progress lines + summary).
