@@ -1,259 +1,107 @@
 [
   {
-    "name": "七夕青鳥",
-    "field": "attacks",
-    "missingId": "M6-056",
-    "missingStandardLegal": true,
-    "sourceId": "S11a-057",
-    "confidence": "medium"
-  },
-  {
-    "name": "三合一磁怪",
-    "field": "attacks",
-    "missingId": "MC-232",
-    "missingStandardLegal": true,
-    "sourceId": "SV8-035",
-    "confidence": "medium"
-  },
-  {
-    "name": "三合一磁怪",
-    "field": "attacks",
-    "missingId": "M2a-046",
-    "missingStandardLegal": true,
-    "sourceId": "SV8-035",
-    "confidence": "medium"
-  },
-  {
-    "name": "三合一磁怪",
-    "field": "attacks",
-    "missingId": "SV8-112",
-    "missingStandardLegal": true,
-    "sourceId": "SV8-035",
-    "confidence": "medium"
-  },
-  {
-    "name": "三首惡龍ex",
-    "field": "abilities",
-    "missingId": "SV8-124",
-    "missingStandardLegal": true,
-    "sourceId": "MC-478",
-    "confidence": "medium"
-  },
-  {
-    "name": "三首惡龍ex",
-    "field": "abilities",
-    "missingId": "SV8-133",
-    "missingStandardLegal": true,
-    "sourceId": "MC-478",
-    "confidence": "medium"
-  },
-  {
-    "name": "三首惡龍ex",
-    "field": "attacks",
-    "missingId": "MC-478",
-    "missingStandardLegal": true,
-    "sourceId": "SV8-124",
-    "confidence": "medium"
-  },
-  {
-    "name": "三首惡龍ex",
-    "field": "attacks",
-    "missingId": "SV11W-062",
-    "missingStandardLegal": true,
-    "sourceId": "SV8-124",
-    "confidence": "medium"
-  },
-  {
-    "name": "三首惡龍ex",
-    "field": "attacks",
-    "missingId": "SV11W-163",
-    "missingStandardLegal": true,
-    "sourceId": "SV8-124",
-    "confidence": "medium"
-  },
-  {
-    "name": "三首惡龍ex",
-    "field": "attacks",
-    "missingId": "SV11W-171",
-    "missingStandardLegal": true,
-    "sourceId": "SV8-124",
-    "confidence": "medium"
-  },
-  {
-    "name": "千針魚",
-    "field": "attacks",
-    "missingId": "M4-051",
-    "missingStandardLegal": true,
-    "sourceId": "S6H-046",
-    "confidence": "medium"
-  },
-  {
-    "name": "叉字蝠",
-    "field": "attacks",
-    "missingId": "M4-050",
-    "missingStandardLegal": true,
-    "sourceId": "SV6a-029",
-    "confidence": "medium"
-  },
-  {
-    "name": "叉字蝠",
-    "field": "attacks",
-    "missingId": "M4-091",
-    "missingStandardLegal": true,
-    "sourceId": "SV6a-029",
-    "confidence": "medium"
-  },
-  {
-    "name": "叉字蝠",
-    "field": "attacks",
-    "missingId": "M-100",
-    "missingStandardLegal": true,
-    "sourceId": "SV6a-029",
-    "confidence": "medium"
-  },
-  {
-    "name": "土地雲",
-    "field": "abilities",
-    "missingId": "SV7a-030",
-    "missingStandardLegal": true,
-    "sourceId": "M6-040",
-    "confidence": "medium"
-  },
-  {
-    "name": "土地雲",
-    "field": "abilities",
-    "missingId": "MC-397",
-    "missingStandardLegal": true,
-    "sourceId": "M6-040",
-    "confidence": "medium"
-  },
-  {
-    "name": "土地雲",
-    "field": "abilities",
-    "missingId": "MC-398",
-    "missingStandardLegal": true,
-    "sourceId": "M6-040",
-    "confidence": "medium"
-  },
-  {
-    "name": "土地雲",
-    "field": "abilities",
-    "missingId": "SV11B-056",
-    "missingStandardLegal": true,
-    "sourceId": "M6-040",
-    "confidence": "medium"
-  },
-  {
-    "name": "土地雲",
-    "field": "abilities",
-    "missingId": "SV11B-137",
-    "missingStandardLegal": true,
-    "sourceId": "M6-040",
-    "confidence": "medium"
-  },
-  {
-    "name": "土地雲",
-    "field": "attacks",
-    "missingId": "M6-040",
-    "missingStandardLegal": true,
-    "sourceId": "SV7a-030",
-    "confidence": "medium"
-  },
-  {
-    "name": "土龍節節",
-    "field": "attacks",
-    "missingId": "M-045",
-    "missingStandardLegal": true,
-    "sourceId": "SV2P-057",
-    "confidence": "medium"
-  },
-  {
-    "name": "土龍節節",
-    "field": "attacks",
-    "missingId": "SV5K-057",
-    "missingStandardLegal": true,
-    "sourceId": "SV2P-057",
-    "confidence": "medium"
-  },
-  {
-    "name": "大力鱷",
-    "field": "attacks",
-    "missingId": "MC-168",
-    "missingStandardLegal": true,
-    "sourceId": "SV5K-015",
-    "confidence": "medium"
-  },
-  {
     "name": "大吾的巨金怪ex",
     "field": "abilities",
     "missingId": "SVOD-008",
     "missingStandardLegal": true,
     "sourceId": "M2a-245",
-    "confidence": "medium"
+    "confidence": "high"
   },
   {
-    "name": "大吾的巨金怪ex",
-    "field": "attacks",
-    "missingId": "M2a-245",
-    "missingStandardLegal": true,
-    "sourceId": "SVOD-008",
-    "confidence": "medium"
-  },
-  {
-    "name": "大劍鬼",
-    "field": "attacks",
-    "missingId": "SV11W-020",
-    "missingStandardLegal": true,
-    "sourceId": "S4-022",
-    "confidence": "medium"
-  },
-  {
-    "name": "大劍鬼",
-    "field": "attacks",
-    "missingId": "SV11W-104",
-    "missingStandardLegal": true,
-    "sourceId": "S4-022",
-    "confidence": "medium"
-  },
-  {
-    "name": "大鋼蛇",
-    "field": "attacks",
-    "missingId": "M6-038",
-    "missingStandardLegal": true,
-    "sourceId": "S5R-052",
-    "confidence": "medium"
-  },
-  {
-    "name": "小木靈",
+    "name": "火箭隊的超夢ex",
     "field": "abilities",
-    "missingId": "SV6-006",
+    "missingId": "MC-290",
     "missingStandardLegal": true,
-    "sourceId": "M4-038",
-    "confidence": "medium"
+    "sourceId": "M2a-063",
+    "confidence": "high"
   },
   {
-    "name": "小木靈",
+    "name": "火箭隊的操陷蛛",
     "field": "abilities",
-    "missingId": "MC-055",
+    "missingId": "M2a-016",
     "missingStandardLegal": true,
-    "sourceId": "M4-038",
-    "confidence": "medium"
+    "sourceId": "SV10-099",
+    "confidence": "high"
   },
   {
-    "name": "小木靈",
-    "field": "attacks",
-    "missingId": "M4-038",
+    "name": "竹蘭的尖牙陸鯊",
+    "field": "abilities",
+    "missingId": "M2a-089",
     "missingStandardLegal": true,
-    "sourceId": "SV6-006",
-    "confidence": "medium"
+    "sourceId": "MC-377",
+    "confidence": "high"
   },
   {
-    "name": "小木靈",
-    "field": "attacks",
-    "missingId": "M-092",
+    "name": "彷徨夜靈",
+    "field": "abilities",
+    "missingId": "SV6a-019",
     "missingStandardLegal": true,
-    "sourceId": "SV6-006",
-    "confidence": "medium"
+    "sourceId": "SV6a-069",
+    "confidence": "high"
+  },
+  {
+    "name": "帝王拿波ex",
+    "field": "abilities",
+    "missingId": "M2-058",
+    "missingStandardLegal": true,
+    "sourceId": "M2-099",
+    "confidence": "high"
+  },
+  {
+    "name": "超級甲賀忍蛙ex",
+    "field": "abilities",
+    "missingId": "M4-022",
+    "missingStandardLegal": true,
+    "sourceId": "M4-098",
+    "confidence": "high"
+  },
+  {
+    "name": "超級妙蛙花ex",
+    "field": "abilities",
+    "missingId": "M1L-003",
+    "missingStandardLegal": true,
+    "sourceId": "M1L-076",
+    "confidence": "high"
+  },
+  {
+    "name": "超級耿鬼ex",
+    "field": "abilities",
+    "missingId": "MBG-003",
+    "missingStandardLegal": true,
+    "sourceId": "M2a-230",
+    "confidence": "high"
+  },
+  {
+    "name": "黑夜魔靈",
+    "field": "abilities",
+    "missingId": "SV6a-020",
+    "missingStandardLegal": true,
+    "sourceId": "SV6a-070",
+    "confidence": "high"
+  },
+  {
+    "name": "瑪俐的長毛巨魔ex",
+    "field": "abilities",
+    "missingId": "SVOM-007",
+    "missingStandardLegal": true,
+    "sourceId": "M2a-243",
+    "confidence": "high"
+  },
+  {
+    "name": "蓋諾賽克特ex",
+    "field": "abilities",
+    "missingId": "M2a-119",
+    "missingStandardLegal": true,
+    "sourceId": "MC-512",
+    "confidence": "high"
+  },
+  {
+    "name": "蓋諾賽克特ex",
+    "field": "abilities",
+    "missingId": "SV11B-069",
+    "missingStandardLegal": true,
+    "sourceId": "MC-512",
+    "confidence": "high"
   },
   {
     "name": "小火龍",
@@ -264,299 +112,11 @@
     "confidence": "medium"
   },
   {
-    "name": "小火龍",
-    "field": "attacks",
-    "missingId": "M2-011",
-    "missingStandardLegal": true,
-    "sourceId": "MC-083",
-    "confidence": "medium"
-  },
-  {
-    "name": "小火龍",
-    "field": "attacks",
-    "missingId": "M-020",
-    "missingStandardLegal": true,
-    "sourceId": "MC-083",
-    "confidence": "medium"
-  },
-  {
-    "name": "小碎鑽",
-    "field": "attacks",
-    "missingId": "MC-400",
-    "missingStandardLegal": true,
-    "sourceId": "S10P-038",
-    "confidence": "medium"
-  },
-  {
-    "name": "小碎鑽",
-    "field": "attacks",
-    "missingId": "MC-752",
-    "missingStandardLegal": true,
-    "sourceId": "S10P-038",
-    "confidence": "medium"
-  },
-  {
-    "name": "仆斬將軍",
-    "field": "abilities",
-    "missingId": "MC-473",
-    "missingStandardLegal": true,
-    "sourceId": "M2a-118",
-    "confidence": "medium"
-  },
-  {
-    "name": "仆斬將軍",
-    "field": "attacks",
-    "missingId": "M2a-118",
-    "missingStandardLegal": true,
-    "sourceId": "SV1S-058",
-    "confidence": "medium"
-  },
-  {
-    "name": "月月熊 赫月",
-    "field": "attacks",
-    "missingId": "MC-415",
-    "missingStandardLegal": true,
-    "sourceId": "SV6a-025",
-    "confidence": "medium"
-  },
-  {
-    "name": "火炎獅",
-    "field": "attacks",
-    "missingId": "M1S-011",
-    "missingStandardLegal": true,
-    "sourceId": "S6H-013",
-    "confidence": "medium"
-  },
-  {
-    "name": "火神蛾",
-    "field": "attacks",
-    "missingId": "MC-124",
-    "missingStandardLegal": true,
-    "sourceId": "SC2b-016",
-    "confidence": "medium"
-  },
-  {
-    "name": "火神蛾",
-    "field": "attacks",
-    "missingId": "SV11B-104",
-    "missingStandardLegal": true,
-    "sourceId": "SC2b-016",
-    "confidence": "medium"
-  },
-  {
-    "name": "火神蛾",
-    "field": "attacks",
-    "missingId": "SV11B-019",
-    "missingStandardLegal": true,
-    "sourceId": "SC2b-016",
-    "confidence": "medium"
-  },
-  {
-    "name": "火箭隊的超夢ex",
-    "field": "abilities",
-    "missingId": "MC-290",
-    "missingStandardLegal": true,
-    "sourceId": "M2a-063",
-    "confidence": "medium"
-  },
-  {
-    "name": "火箭隊的超夢ex",
-    "field": "attacks",
-    "missingId": "M2a-063",
-    "missingStandardLegal": true,
-    "sourceId": "MC-290",
-    "confidence": "medium"
-  },
-  {
-    "name": "火箭隊的超夢ex",
-    "field": "attacks",
-    "missingId": "M2a-237",
-    "missingStandardLegal": true,
-    "sourceId": "MC-290",
-    "confidence": "medium"
-  },
-  {
-    "name": "火箭隊的超夢ex",
-    "field": "attacks",
-    "missingId": "SV10-114",
-    "missingStandardLegal": true,
-    "sourceId": "MC-290",
-    "confidence": "medium"
-  },
-  {
-    "name": "火箭隊的超夢ex",
-    "field": "attacks",
-    "missingId": "SV10-125",
-    "missingStandardLegal": true,
-    "sourceId": "MC-290",
-    "confidence": "medium"
-  },
-  {
-    "name": "火箭隊的超夢ex",
-    "field": "attacks",
-    "missingId": "SV10-130",
-    "missingStandardLegal": true,
-    "sourceId": "MC-290",
-    "confidence": "medium"
-  },
-  {
-    "name": "火箭隊的操陷蛛",
-    "field": "abilities",
-    "missingId": "M2a-016",
-    "missingStandardLegal": true,
-    "sourceId": "SV10-099",
-    "confidence": "medium"
-  },
-  {
-    "name": "火箭隊的操陷蛛",
-    "field": "attacks",
-    "missingId": "SV10-099",
-    "missingStandardLegal": true,
-    "sourceId": "M2a-016",
-    "confidence": "medium"
-  },
-  {
-    "name": "仙子伊布",
-    "field": "abilities",
-    "missingId": "SV6a-022",
-    "missingStandardLegal": true,
-    "sourceId": "SVM-050",
-    "confidence": "medium"
-  },
-  {
-    "name": "仙子伊布",
-    "field": "abilities",
-    "missingId": "SV8a-068",
-    "missingStandardLegal": true,
-    "sourceId": "SVM-050",
-    "confidence": "medium"
-  },
-  {
-    "name": "仙子伊布",
-    "field": "attacks",
-    "missingId": "SVM-050",
-    "missingStandardLegal": true,
-    "sourceId": "SV6a-022",
-    "confidence": "medium"
-  },
-  {
-    "name": "古空棘魚",
-    "field": "abilities",
-    "missingId": "M5-016",
-    "missingStandardLegal": true,
-    "sourceId": "M-078",
-    "confidence": "medium"
-  },
-  {
-    "name": "古空棘魚",
-    "field": "attacks",
-    "missingId": "M-078",
-    "missingStandardLegal": true,
-    "sourceId": "SV5K-077",
-    "confidence": "medium"
-  },
-  {
-    "name": "古空棘魚",
-    "field": "attacks",
-    "missingId": "SV5K-034",
-    "missingStandardLegal": true,
-    "sourceId": "SV5K-077",
-    "confidence": "medium"
-  },
-  {
     "name": "古劍豹",
     "field": "abilities",
     "missingId": "M3-053",
     "missingStandardLegal": true,
-    "sourceId": "M2a-043",
-    "confidence": "medium"
-  },
-  {
-    "name": "古劍豹",
-    "field": "attacks",
-    "missingId": "M2a-043",
-    "missingStandardLegal": true,
-    "sourceId": "SV4M-021",
-    "confidence": "medium"
-  },
-  {
-    "name": "可達鴨",
-    "field": "attacks",
-    "missingId": "M2a-032",
-    "missingStandardLegal": true,
-    "sourceId": "S6K-009",
-    "confidence": "medium"
-  },
-  {
-    "name": "可達鴨",
-    "field": "attacks",
-    "missingId": "M2a-199",
-    "missingStandardLegal": true,
-    "sourceId": "S6K-009",
-    "confidence": "medium"
-  },
-  {
-    "name": "尼多后",
-    "field": "attacks",
-    "missingId": "M6-043",
-    "missingStandardLegal": true,
-    "sourceId": "SV2a-031",
-    "confidence": "medium"
-  },
-  {
-    "name": "巧鍛匠",
-    "field": "attacks",
-    "missingId": "MC-529",
-    "missingStandardLegal": true,
-    "sourceId": "SV2D-034",
-    "confidence": "medium"
-  },
-  {
-    "name": "巧鍛匠",
-    "field": "attacks",
-    "missingId": "M1L-049",
-    "missingStandardLegal": true,
-    "sourceId": "SV2D-034",
-    "confidence": "medium"
-  },
-  {
-    "name": "巨蔓藤",
-    "field": "abilities",
-    "missingId": "M1S-002",
-    "missingStandardLegal": true,
-    "sourceId": "MC-013",
-    "confidence": "medium"
-  },
-  {
-    "name": "巨蔓藤",
-    "field": "attacks",
-    "missingId": "MC-013",
-    "missingStandardLegal": true,
-    "sourceId": "SV5a-002",
-    "confidence": "medium"
-  },
-  {
-    "name": "白海獅",
-    "field": "attacks",
-    "missingId": "M3-019",
-    "missingStandardLegal": true,
-    "sourceId": "SV2a-087",
-    "confidence": "medium"
-  },
-  {
-    "name": "白海獅",
-    "field": "attacks",
-    "missingId": "M2-022",
-    "missingStandardLegal": true,
-    "sourceId": "SV2a-087",
-    "confidence": "medium"
-  },
-  {
-    "name": "白海獅",
-    "field": "attacks",
-    "missingId": "M2-084",
-    "missingStandardLegal": true,
-    "sourceId": "SV2a-087",
+    "sourceId": "SV-P-190",
     "confidence": "medium"
   },
   {
@@ -564,7 +124,7 @@
     "field": "abilities",
     "missingId": "SV5a-050",
     "missingStandardLegal": true,
-    "sourceId": "MC-565",
+    "sourceId": "EXT18-008",
     "confidence": "medium"
   },
   {
@@ -572,495 +132,7 @@
     "field": "abilities",
     "missingId": "SV5a-078",
     "missingStandardLegal": true,
-    "sourceId": "MC-565",
-    "confidence": "medium"
-  },
-  {
-    "name": "伊布",
-    "field": "attacks",
-    "missingId": "MC-565",
-    "missingStandardLegal": true,
-    "sourceId": "SDP-011",
-    "confidence": "medium"
-  },
-  {
-    "name": "伊布",
-    "field": "attacks",
-    "missingId": "MC-755",
-    "missingStandardLegal": true,
-    "sourceId": "SDP-011",
-    "confidence": "medium"
-  },
-  {
-    "name": "光電傘蜥",
-    "field": "abilities",
-    "missingId": "M1S-035",
-    "missingStandardLegal": true,
-    "sourceId": "M2a-053",
-    "confidence": "medium"
-  },
-  {
-    "name": "光電傘蜥",
-    "field": "attacks",
-    "missingId": "M2a-053",
-    "missingStandardLegal": true,
-    "sourceId": "S12-031",
-    "confidence": "medium"
-  },
-  {
-    "name": "光電傘蜥",
-    "field": "attacks",
-    "missingId": "M2a-201",
-    "missingStandardLegal": true,
-    "sourceId": "S12-031",
-    "confidence": "medium"
-  },
-  {
-    "name": "吉雉雞",
-    "field": "attacks",
-    "missingId": "MC-359",
-    "missingStandardLegal": true,
-    "sourceId": "SV6-056",
-    "confidence": "medium"
-  },
-  {
-    "name": "多龍奇",
-    "field": "attacks",
-    "missingId": "MC-547",
-    "missingStandardLegal": true,
-    "sourceId": "S8-050",
-    "confidence": "medium"
-  },
-  {
-    "name": "多龍奇",
-    "field": "attacks",
-    "missingId": "M2a-133",
-    "missingStandardLegal": true,
-    "sourceId": "S8-050",
-    "confidence": "medium"
-  },
-  {
-    "name": "多龍奇",
-    "field": "attacks",
-    "missingId": "M2a-212",
-    "missingStandardLegal": true,
-    "sourceId": "S8-050",
-    "confidence": "medium"
-  },
-  {
-    "name": "多麗米亞",
-    "field": "abilities",
-    "missingId": "SV6a-051",
-    "missingStandardLegal": true,
-    "sourceId": "MC-612",
-    "confidence": "medium"
-  },
-  {
-    "name": "多麗米亞",
-    "field": "abilities",
-    "missingId": "MC-611",
-    "missingStandardLegal": true,
-    "sourceId": "MC-612",
-    "confidence": "medium"
-  },
-  {
-    "name": "多麗米亞",
-    "field": "attacks",
-    "missingId": "MC-612",
-    "missingStandardLegal": true,
-    "sourceId": "SV6a-051",
-    "confidence": "medium"
-  },
-  {
-    "name": "多麗米亞",
-    "field": "attacks",
-    "missingId": "SVM-110",
-    "missingStandardLegal": true,
-    "sourceId": "SV6a-051",
-    "confidence": "medium"
-  },
-  {
-    "name": "好勝毛蟹",
-    "field": "attacks",
-    "missingId": "MC-209",
-    "missingStandardLegal": true,
-    "sourceId": "SV7-024",
-    "confidence": "medium"
-  },
-  {
-    "name": "安瓢蟲",
-    "field": "attacks",
-    "missingId": "MC-020",
-    "missingStandardLegal": true,
-    "sourceId": "SV7-002",
-    "confidence": "medium"
-  },
-  {
-    "name": "灰塵山",
-    "field": "abilities",
-    "missingId": "MC-466",
-    "missingStandardLegal": true,
-    "sourceId": "M4-055",
-    "confidence": "medium"
-  },
-  {
-    "name": "灰塵山",
-    "field": "abilities",
-    "missingId": "SV11W-057",
-    "missingStandardLegal": true,
-    "sourceId": "M4-055",
-    "confidence": "medium"
-  },
-  {
-    "name": "灰塵山",
-    "field": "abilities",
-    "missingId": "SV11W-139",
-    "missingStandardLegal": true,
-    "sourceId": "M4-055",
-    "confidence": "medium"
-  },
-  {
-    "name": "灰塵山",
-    "field": "attacks",
-    "missingId": "M4-055",
-    "missingStandardLegal": true,
-    "sourceId": "MC-466",
-    "confidence": "medium"
-  },
-  {
-    "name": "竹蘭的尖牙陸鯊",
-    "field": "abilities",
-    "missingId": "M2a-089",
-    "missingStandardLegal": true,
-    "sourceId": "MC-377",
-    "confidence": "medium"
-  },
-  {
-    "name": "竹蘭的尖牙陸鯊",
-    "field": "attacks",
-    "missingId": "MC-377",
-    "missingStandardLegal": true,
-    "sourceId": "M2a-089",
-    "confidence": "medium"
-  },
-  {
-    "name": "米立龍",
-    "field": "attacks",
-    "missingId": "MC-549",
-    "missingStandardLegal": true,
-    "sourceId": "SV1S-022",
-    "confidence": "medium"
-  },
-  {
-    "name": "米立龍",
-    "field": "attacks",
-    "missingId": "M2a-135",
-    "missingStandardLegal": true,
-    "sourceId": "SV1S-022",
-    "confidence": "medium"
-  },
-  {
-    "name": "米立龍",
-    "field": "attacks",
-    "missingId": "MBD-010",
-    "missingStandardLegal": true,
-    "sourceId": "SV1S-022",
-    "confidence": "medium"
-  },
-  {
-    "name": "米立龍",
-    "field": "attacks",
-    "missingId": "MBG-010",
-    "missingStandardLegal": true,
-    "sourceId": "SV1S-022",
-    "confidence": "medium"
-  },
-  {
-    "name": "米立龍",
-    "field": "attacks",
-    "missingId": "SVK-002",
-    "missingStandardLegal": true,
-    "sourceId": "SV1S-022",
-    "confidence": "medium"
-  },
-  {
-    "name": "呆火駝",
-    "field": "abilities",
-    "missingId": "M1L-012",
-    "missingStandardLegal": true,
-    "sourceId": "M2a-022",
-    "confidence": "medium"
-  },
-  {
-    "name": "呆火駝",
-    "field": "attacks",
-    "missingId": "M2a-022",
-    "missingStandardLegal": true,
-    "sourceId": "SV4K-011",
-    "confidence": "medium"
-  },
-  {
-    "name": "呆火駝",
-    "field": "attacks",
-    "missingId": "M2a-198",
-    "missingStandardLegal": true,
-    "sourceId": "SV4K-011",
-    "confidence": "medium"
-  },
-  {
-    "name": "呆呆獸",
-    "field": "abilities",
-    "missingId": "SV7-038",
-    "missingStandardLegal": true,
-    "sourceId": "M-076",
-    "confidence": "medium"
-  },
-  {
-    "name": "呆呆獸",
-    "field": "attacks",
-    "missingId": "M-076",
-    "missingStandardLegal": true,
-    "sourceId": "SV2P-029",
-    "confidence": "medium"
-  },
-  {
-    "name": "彷徨夜靈",
-    "field": "abilities",
-    "missingId": "SV6a-019",
-    "missingStandardLegal": true,
-    "sourceId": "MC-309",
-    "confidence": "medium"
-  },
-  {
-    "name": "彷徨夜靈",
-    "field": "attacks",
-    "missingId": "MC-309",
-    "missingStandardLegal": true,
-    "sourceId": "SV6a-019",
-    "confidence": "medium"
-  },
-  {
-    "name": "彷徨夜靈",
-    "field": "attacks",
-    "missingId": "M2a-073",
-    "missingStandardLegal": true,
-    "sourceId": "SV6a-019",
-    "confidence": "medium"
-  },
-  {
-    "name": "彷徨夜靈",
-    "field": "attacks",
-    "missingId": "SV6a-069",
-    "missingStandardLegal": true,
-    "sourceId": "SV6a-019",
-    "confidence": "medium"
-  },
-  {
-    "name": "沙鈴仙人掌",
-    "field": "attacks",
-    "missingId": "SV9-101",
-    "missingStandardLegal": true,
-    "sourceId": "SV4K-003",
-    "confidence": "medium"
-  },
-  {
-    "name": "沙漠蜻蜓",
-    "field": "attacks",
-    "missingId": "M2-047",
-    "missingStandardLegal": true,
-    "sourceId": "SC2b-057",
-    "confidence": "medium"
-  },
-  {
-    "name": "沙漠蜻蜓",
-    "field": "attacks",
-    "missingId": "M2-088",
-    "missingStandardLegal": true,
-    "sourceId": "SC2b-057",
-    "confidence": "medium"
-  },
-  {
-    "name": "沙漠蜻蜓",
-    "field": "attacks",
-    "missingId": "M-036",
-    "missingStandardLegal": true,
-    "sourceId": "SC2b-057",
-    "confidence": "medium"
-  },
-  {
-    "name": "狂歡浪舞鴨",
-    "field": "attacks",
-    "missingId": "MC-213",
-    "missingStandardLegal": true,
-    "sourceId": "SVAW-004",
-    "confidence": "medium"
-  },
-  {
-    "name": "奇樹的大電海燕",
-    "field": "attacks",
-    "missingId": "MC-279",
-    "missingStandardLegal": true,
-    "sourceId": "SV9-032",
-    "confidence": "medium"
-  },
-  {
-    "name": "奇樹的大電海燕",
-    "field": "attacks",
-    "missingId": "M2a-059",
-    "missingStandardLegal": true,
-    "sourceId": "SV9-032",
-    "confidence": "medium"
-  },
-  {
-    "name": "奇樹的大電海燕",
-    "field": "attacks",
-    "missingId": "SV9-104",
-    "missingStandardLegal": true,
-    "sourceId": "SV9-032",
-    "confidence": "medium"
-  },
-  {
-    "name": "岩殿居蟹",
-    "field": "attacks",
-    "missingId": "MC-046",
-    "missingStandardLegal": true,
-    "sourceId": "SV9a-008",
-    "confidence": "medium"
-  },
-  {
-    "name": "岩殿居蟹",
-    "field": "attacks",
-    "missingId": "M2a-014",
-    "missingStandardLegal": true,
-    "sourceId": "SV9a-008",
-    "confidence": "medium"
-  },
-  {
-    "name": "岩殿居蟹",
-    "field": "attacks",
-    "missingId": "SV11B-055",
-    "missingStandardLegal": true,
-    "sourceId": "SV9a-008",
-    "confidence": "medium"
-  },
-  {
-    "name": "岩殿居蟹",
-    "field": "attacks",
-    "missingId": "SV11B-136",
-    "missingStandardLegal": true,
-    "sourceId": "SV9a-008",
-    "confidence": "medium"
-  },
-  {
-    "name": "怖納噬草",
-    "field": "attacks",
-    "missingId": "MC-073",
-    "missingStandardLegal": true,
-    "sourceId": "SV8a-012",
-    "confidence": "medium"
-  },
-  {
-    "name": "怖納噬草",
-    "field": "attacks",
-    "missingId": "M2-041",
-    "missingStandardLegal": true,
-    "sourceId": "SV8a-012",
-    "confidence": "medium"
-  },
-  {
-    "name": "拉帝歐斯",
-    "field": "attacks",
-    "missingId": "M1S-050",
-    "missingStandardLegal": true,
-    "sourceId": "S8-075",
-    "confidence": "medium"
-  },
-  {
-    "name": "斧牙龍",
-    "field": "abilities",
-    "missingId": "SV11B-071",
-    "missingStandardLegal": true,
-    "sourceId": "MC-542",
-    "confidence": "medium"
-  },
-  {
-    "name": "斧牙龍",
-    "field": "abilities",
-    "missingId": "SV11B-151",
-    "missingStandardLegal": true,
-    "sourceId": "MC-542",
-    "confidence": "medium"
-  },
-  {
-    "name": "斧牙龍",
-    "field": "attacks",
-    "missingId": "MC-542",
-    "missingStandardLegal": true,
-    "sourceId": "SV6a-045",
-    "confidence": "medium"
-  },
-  {
-    "name": "斧牙龍",
-    "field": "attacks",
-    "missingId": "SV6a-074",
-    "missingStandardLegal": true,
-    "sourceId": "SV6a-045",
-    "confidence": "medium"
-  },
-  {
-    "name": "波克基斯",
-    "field": "attacks",
-    "missingId": "MC-293",
-    "missingStandardLegal": true,
-    "sourceId": "SV8-047",
-    "confidence": "medium"
-  },
-  {
-    "name": "波克基斯",
-    "field": "attacks",
-    "missingId": "M2a-066",
-    "missingStandardLegal": true,
-    "sourceId": "SV8-047",
-    "confidence": "medium"
-  },
-  {
-    "name": "波克基斯",
-    "field": "attacks",
-    "missingId": "M2a-203",
-    "missingStandardLegal": true,
-    "sourceId": "SV8-047",
-    "confidence": "medium"
-  },
-  {
-    "name": "炎武王",
-    "field": "attacks",
-    "missingId": "MC-112",
-    "missingStandardLegal": true,
-    "sourceId": "S5I-012",
-    "confidence": "medium"
-  },
-  {
-    "name": "炎武王",
-    "field": "attacks",
-    "missingId": "M2a-026",
-    "missingStandardLegal": true,
-    "sourceId": "S5I-012",
-    "confidence": "medium"
-  },
-  {
-    "name": "炎武王",
-    "field": "attacks",
-    "missingId": "SV11W-013",
-    "missingStandardLegal": true,
-    "sourceId": "S5I-012",
-    "confidence": "medium"
-  },
-  {
-    "name": "炎武王",
-    "field": "attacks",
-    "missingId": "SV11W-098",
-    "missingStandardLegal": true,
-    "sourceId": "S5I-012",
+    "sourceId": "EXT18-008",
     "confidence": "medium"
   },
   {
@@ -1072,51 +144,11 @@
     "confidence": "medium"
   },
   {
-    "name": "花舞鳥ex",
-    "field": "attacks",
-    "missingId": "M2-095",
-    "missingStandardLegal": true,
-    "sourceId": "M2-018",
-    "confidence": "medium"
-  },
-  {
-    "name": "花舞鳥ex",
-    "field": "attacks",
-    "missingId": "M2-111",
-    "missingStandardLegal": true,
-    "sourceId": "M2-018",
-    "confidence": "medium"
-  },
-  {
-    "name": "花潔夫人",
-    "field": "attacks",
-    "missingId": "MC-330",
-    "missingStandardLegal": true,
-    "sourceId": "SV5a-038",
-    "confidence": "medium"
-  },
-  {
-    "name": "芳香精",
-    "field": "abilities",
-    "missingId": "SVM-049",
-    "missingStandardLegal": true,
-    "sourceId": "M3-035",
-    "confidence": "medium"
-  },
-  {
-    "name": "芳香精",
-    "field": "attacks",
-    "missingId": "M3-035",
-    "missingStandardLegal": true,
-    "sourceId": "SVM-049",
-    "confidence": "medium"
-  },
-  {
     "name": "金屬怪",
     "field": "abilities",
     "missingId": "SV9-038",
     "missingStandardLegal": true,
-    "sourceId": "MC-497",
+    "sourceId": "EXT13-004",
     "confidence": "medium"
   },
   {
@@ -1124,7 +156,7 @@
     "field": "abilities",
     "missingId": "M4-058",
     "missingStandardLegal": true,
-    "sourceId": "MC-497",
+    "sourceId": "EXT13-004",
     "confidence": "medium"
   },
   {
@@ -1132,135 +164,7 @@
     "field": "abilities",
     "missingId": "M4-092",
     "missingStandardLegal": true,
-    "sourceId": "MC-497",
-    "confidence": "medium"
-  },
-  {
-    "name": "金屬怪",
-    "field": "attacks",
-    "missingId": "MC-497",
-    "missingStandardLegal": true,
-    "sourceId": "SV9-038",
-    "confidence": "medium"
-  },
-  {
-    "name": "青銅鐘",
-    "field": "abilities",
-    "missingId": "SV8-079",
-    "missingStandardLegal": true,
-    "sourceId": "SVM-082",
-    "confidence": "medium"
-  },
-  {
-    "name": "青銅鐘",
-    "field": "abilities",
-    "missingId": "M5-062",
-    "missingStandardLegal": true,
-    "sourceId": "SVM-082",
-    "confidence": "medium"
-  },
-  {
-    "name": "青銅鐘",
-    "field": "abilities",
-    "missingId": "MC-501",
-    "missingStandardLegal": true,
-    "sourceId": "SVM-082",
-    "confidence": "medium"
-  },
-  {
-    "name": "青銅鐘",
-    "field": "attacks",
-    "missingId": "SVM-082",
-    "missingStandardLegal": true,
-    "sourceId": "S10P-049",
-    "confidence": "medium"
-  },
-  {
-    "name": "勇基拉",
-    "field": "abilities",
-    "missingId": "SV6-048",
-    "missingStandardLegal": true,
-    "sourceId": "M1S-037",
-    "confidence": "medium"
-  },
-  {
-    "name": "勇基拉",
-    "field": "abilities",
-    "missingId": "SV8a-058",
-    "missingStandardLegal": true,
-    "sourceId": "M1S-037",
-    "confidence": "medium"
-  },
-  {
-    "name": "勇基拉",
-    "field": "attacks",
-    "missingId": "M1S-037",
-    "missingStandardLegal": true,
-    "sourceId": "SV6-048",
-    "confidence": "medium"
-  },
-  {
-    "name": "哈克龍",
-    "field": "attacks",
-    "missingId": "M2a-125",
-    "missingStandardLegal": true,
-    "sourceId": "S12-071",
-    "confidence": "medium"
-  },
-  {
-    "name": "帝王拿波ex",
-    "field": "abilities",
-    "missingId": "M2-058",
-    "missingStandardLegal": true,
-    "sourceId": "M2-099",
-    "confidence": "medium"
-  },
-  {
-    "name": "帝王拿波ex",
-    "field": "attacks",
-    "missingId": "M2-099",
-    "missingStandardLegal": true,
-    "sourceId": "M2-058",
-    "confidence": "medium"
-  },
-  {
-    "name": "怨影娃娃",
-    "field": "attacks",
-    "missingId": "M5-031",
-    "missingStandardLegal": true,
-    "sourceId": "S8b-064",
-    "confidence": "medium"
-  },
-  {
-    "name": "毒粉蛾",
-    "field": "attacks",
-    "missingId": "M2a-195",
-    "missingStandardLegal": true,
-    "sourceId": "S10a-008",
-    "confidence": "medium"
-  },
-  {
-    "name": "毒粉蛾",
-    "field": "attacks",
-    "missingId": "M2a-008",
-    "missingStandardLegal": true,
-    "sourceId": "S10a-008",
-    "confidence": "medium"
-  },
-  {
-    "name": "毒薔薇",
-    "field": "attacks",
-    "missingId": "MC-030",
-    "missingStandardLegal": true,
-    "sourceId": "SV5K-001",
-    "confidence": "medium"
-  },
-  {
-    "name": "胖嘟嘟",
-    "field": "attacks",
-    "missingId": "M6-020",
-    "missingStandardLegal": true,
-    "sourceId": "S5R-028",
+    "sourceId": "EXT13-004",
     "confidence": "medium"
   },
   {
@@ -1269,134 +173,6 @@
     "missingId": "SV11W-042",
     "missingStandardLegal": true,
     "sourceId": "EXT04-007",
-    "confidence": "medium"
-  },
-  {
-    "name": "胖嘟嘟ex",
-    "field": "attacks",
-    "missingId": "SV11W-162",
-    "missingStandardLegal": true,
-    "sourceId": "SV11W-042",
-    "confidence": "medium"
-  },
-  {
-    "name": "胖嘟嘟ex",
-    "field": "attacks",
-    "missingId": "SV11W-170",
-    "missingStandardLegal": true,
-    "sourceId": "SV11W-042",
-    "confidence": "medium"
-  },
-  {
-    "name": "胡地",
-    "field": "abilities",
-    "missingId": "SV6-049",
-    "missingStandardLegal": true,
-    "sourceId": "M1S-038",
-    "confidence": "medium"
-  },
-  {
-    "name": "胡地",
-    "field": "abilities",
-    "missingId": "SV8a-059",
-    "missingStandardLegal": true,
-    "sourceId": "M1S-038",
-    "confidence": "medium"
-  },
-  {
-    "name": "胡地",
-    "field": "attacks",
-    "missingId": "M1S-038",
-    "missingStandardLegal": true,
-    "sourceId": "SV6-049",
-    "confidence": "medium"
-  },
-  {
-    "name": "胡地",
-    "field": "attacks",
-    "missingId": "M1S-071",
-    "missingStandardLegal": true,
-    "sourceId": "SV6-049",
-    "confidence": "medium"
-  },
-  {
-    "name": "胡地",
-    "field": "attacks",
-    "missingId": "M-058",
-    "missingStandardLegal": true,
-    "sourceId": "SV6-049",
-    "confidence": "medium"
-  },
-  {
-    "name": "重泥挽馬",
-    "field": "abilities",
-    "missingId": "SV5K-078",
-    "missingStandardLegal": true,
-    "sourceId": "MC-406",
-    "confidence": "medium"
-  },
-  {
-    "name": "重泥挽馬",
-    "field": "abilities",
-    "missingId": "MC-405",
-    "missingStandardLegal": true,
-    "sourceId": "MC-406",
-    "confidence": "medium"
-  },
-  {
-    "name": "重泥挽馬",
-    "field": "abilities",
-    "missingId": "SV5K-038",
-    "missingStandardLegal": true,
-    "sourceId": "MC-406",
-    "confidence": "medium"
-  },
-  {
-    "name": "重泥挽馬",
-    "field": "attacks",
-    "missingId": "MC-406",
-    "missingStandardLegal": true,
-    "sourceId": "SV9a-046",
-    "confidence": "medium"
-  },
-  {
-    "name": "音波龍",
-    "field": "attacks",
-    "missingId": "MC-615",
-    "missingStandardLegal": true,
-    "sourceId": "S12-074",
-    "confidence": "medium"
-  },
-  {
-    "name": "哥達鴨",
-    "field": "attacks",
-    "missingId": "M2a-033",
-    "missingStandardLegal": true,
-    "sourceId": "S6K-010",
-    "confidence": "medium"
-  },
-  {
-    "name": "哥德小姐",
-    "field": "attacks",
-    "missingId": "MC-325",
-    "missingStandardLegal": true,
-    "sourceId": "SV2P-033",
-    "confidence": "medium"
-  },
-  {
-    "name": "哥德小姐",
-    "field": "attacks",
-    "missingId": "SV11W-040",
-    "missingStandardLegal": true,
-    "sourceId": "SV2P-033",
-    "confidence": "medium"
-  },
-  {
-    "name": "哥德小姐",
-    "field": "attacks",
-    "missingId": "SV11W-123",
-    "missingStandardLegal": true,
-    "sourceId": "SV2P-033",
     "confidence": "medium"
   },
   {
@@ -1412,7 +188,7 @@
     "field": "abilities",
     "missingId": "SV8-059",
     "missingStandardLegal": true,
-    "sourceId": "MC-355",
+    "sourceId": "SV-P-225",
     "confidence": "medium"
   },
   {
@@ -1420,367 +196,7 @@
     "field": "abilities",
     "missingId": "MC-354",
     "missingStandardLegal": true,
-    "sourceId": "MC-355",
-    "confidence": "medium"
-  },
-  {
-    "name": "振翼髮",
-    "field": "attacks",
-    "missingId": "MC-355",
-    "missingStandardLegal": true,
-    "sourceId": "SV8-059",
-    "confidence": "medium"
-  },
-  {
-    "name": "振翼髮",
-    "field": "attacks",
-    "missingId": "SV5K-033",
-    "missingStandardLegal": true,
-    "sourceId": "SV8-059",
-    "confidence": "medium"
-  },
-  {
-    "name": "桃歹郎",
-    "field": "attacks",
-    "missingId": "MC-490",
-    "missingStandardLegal": true,
-    "sourceId": "SV8-075",
-    "confidence": "medium"
-  },
-  {
-    "name": "桃歹郎",
-    "field": "attacks",
-    "missingId": "M2a-115",
-    "missingStandardLegal": true,
-    "sourceId": "SV8-075",
-    "confidence": "medium"
-  },
-  {
-    "name": "浩大鯨",
-    "field": "attacks",
-    "missingId": "MC-218",
-    "missingStandardLegal": true,
-    "sourceId": "SV7a-017",
-    "confidence": "medium"
-  },
-  {
-    "name": "浩大鯨",
-    "field": "attacks",
-    "missingId": "SV7a-069",
-    "missingStandardLegal": true,
-    "sourceId": "SV7a-017",
-    "confidence": "medium"
-  },
-  {
-    "name": "海豚俠",
-    "field": "attacks",
-    "missingId": "MC-215",
-    "missingStandardLegal": true,
-    "sourceId": "SV6-035",
-    "confidence": "medium"
-  },
-  {
-    "name": "烈焰馬",
-    "field": "abilities",
-    "missingId": "SVHK-002",
-    "missingStandardLegal": true,
-    "sourceId": "MC-090",
-    "confidence": "medium"
-  },
-  {
-    "name": "烈焰馬",
-    "field": "abilities",
-    "missingId": "MC-088",
-    "missingStandardLegal": true,
-    "sourceId": "MC-090",
-    "confidence": "medium"
-  },
-  {
-    "name": "烈焰馬",
-    "field": "attacks",
-    "missingId": "MC-090",
-    "missingStandardLegal": true,
-    "sourceId": "SVHK-002",
-    "confidence": "medium"
-  },
-  {
-    "name": "烈焰猴",
-    "field": "attacks",
-    "missingId": "MC-105",
-    "missingStandardLegal": true,
-    "sourceId": "SV5a-017",
-    "confidence": "medium"
-  },
-  {
-    "name": "烈焰猴",
-    "field": "attacks",
-    "missingId": "SV5a-070",
-    "missingStandardLegal": true,
-    "sourceId": "SV5a-017",
-    "confidence": "medium"
-  },
-  {
-    "name": "烈箭鷹",
-    "field": "attacks",
-    "missingId": "M3-014",
-    "missingStandardLegal": true,
-    "sourceId": "SV2D-013",
-    "confidence": "medium"
-  },
-  {
-    "name": "烈箭鷹",
-    "field": "attacks",
-    "missingId": "M3-083",
-    "missingStandardLegal": true,
-    "sourceId": "SV2D-013",
-    "confidence": "medium"
-  },
-  {
-    "name": "耿鬼",
-    "field": "attacks",
-    "missingId": "M3-049",
-    "missingStandardLegal": true,
-    "sourceId": "S6K-027",
-    "confidence": "medium"
-  },
-  {
-    "name": "草苗龜",
-    "field": "attacks",
-    "missingId": "MC-034",
-    "missingStandardLegal": true,
-    "sourceId": "SV5K-003",
-    "confidence": "medium"
-  },
-  {
-    "name": "勒克貓",
-    "field": "abilities",
-    "missingId": "SV6-040",
-    "missingStandardLegal": true,
-    "sourceId": "M3-026",
-    "confidence": "medium"
-  },
-  {
-    "name": "勒克貓",
-    "field": "abilities",
-    "missingId": "MC-245",
-    "missingStandardLegal": true,
-    "sourceId": "M3-026",
-    "confidence": "medium"
-  },
-  {
-    "name": "勒克貓",
-    "field": "attacks",
-    "missingId": "M3-026",
-    "missingStandardLegal": true,
-    "sourceId": "SDP-003",
-    "confidence": "medium"
-  },
-  {
-    "name": "堅果啞鈴",
-    "field": "attacks",
-    "missingId": "M4-061",
-    "missingStandardLegal": true,
-    "sourceId": "S11-077",
-    "confidence": "medium"
-  },
-  {
-    "name": "夠讚狗",
-    "field": "attacks",
-    "missingId": "MC-426",
-    "missingStandardLegal": true,
-    "sourceId": "SV6-064",
-    "confidence": "medium"
-  },
-  {
-    "name": "密勒頓",
-    "field": "abilities",
-    "missingId": "SV8-044",
-    "missingStandardLegal": true,
-    "sourceId": "M5-027",
-    "confidence": "medium"
-  },
-  {
-    "name": "密勒頓",
-    "field": "abilities",
-    "missingId": "MC-283",
-    "missingStandardLegal": true,
-    "sourceId": "M5-027",
-    "confidence": "medium"
-  },
-  {
-    "name": "密勒頓",
-    "field": "attacks",
-    "missingId": "M5-027",
-    "missingStandardLegal": true,
-    "sourceId": "SV-P-008",
-    "confidence": "medium"
-  },
-  {
-    "name": "密勒頓",
-    "field": "attacks",
-    "missingId": "M-138",
-    "missingStandardLegal": true,
-    "sourceId": "SV-P-008",
-    "confidence": "medium"
-  },
-  {
-    "name": "彩粉蝶",
-    "field": "abilities",
-    "missingId": "SV8-006",
-    "missingStandardLegal": true,
-    "sourceId": "M3-009",
-    "confidence": "medium"
-  },
-  {
-    "name": "彩粉蝶",
-    "field": "abilities",
-    "missingId": "SV8-107",
-    "missingStandardLegal": true,
-    "sourceId": "M3-009",
-    "confidence": "medium"
-  },
-  {
-    "name": "彩粉蝶",
-    "field": "attacks",
-    "missingId": "M3-009",
-    "missingStandardLegal": true,
-    "sourceId": "SV1V-005",
-    "confidence": "medium"
-  },
-  {
-    "name": "旋轉洛托姆",
-    "field": "attacks",
-    "missingId": "M2a-139",
-    "missingStandardLegal": true,
-    "sourceId": "SV7-080",
-    "confidence": "medium"
-  },
-  {
-    "name": "旋轉洛托姆",
-    "field": "attacks",
-    "missingId": "M2a-213",
-    "missingStandardLegal": true,
-    "sourceId": "SV7-080",
-    "confidence": "medium"
-  },
-  {
-    "name": "眷戀雲",
-    "field": "abilities",
-    "missingId": "SV5a-039",
-    "missingStandardLegal": true,
-    "sourceId": "M6-034",
-    "confidence": "medium"
-  },
-  {
-    "name": "眷戀雲",
-    "field": "abilities",
-    "missingId": "MC-346",
-    "missingStandardLegal": true,
-    "sourceId": "M6-034",
-    "confidence": "medium"
-  },
-  {
-    "name": "眷戀雲",
-    "field": "abilities",
-    "missingId": "SV5a-074",
-    "missingStandardLegal": true,
-    "sourceId": "M6-034",
-    "confidence": "medium"
-  },
-  {
-    "name": "眷戀雲",
-    "field": "attacks",
-    "missingId": "M6-034",
-    "missingStandardLegal": true,
-    "sourceId": "SV5a-039",
-    "confidence": "medium"
-  },
-  {
-    "name": "莉莉艾的蝶結萌虻",
-    "field": "attacks",
-    "missingId": "MC-339",
-    "missingStandardLegal": true,
-    "sourceId": "SV9-042",
-    "confidence": "medium"
-  },
-  {
-    "name": "莉莉艾的蝶結萌虻",
-    "field": "attacks",
-    "missingId": "SV9-105",
-    "missingStandardLegal": true,
-    "sourceId": "SV9-042",
-    "confidence": "medium"
-  },
-  {
-    "name": "莫魯貝可",
-    "field": "attacks",
-    "missingId": "MC-270",
-    "missingStandardLegal": true,
-    "sourceId": "SV5a-030",
-    "confidence": "medium"
-  },
-  {
-    "name": "陸地水母",
-    "field": "attacks",
-    "missingId": "SVM-071",
-    "missingStandardLegal": true,
-    "sourceId": "SVD-066",
-    "confidence": "medium"
-  },
-  {
-    "name": "雪絨蛾",
-    "field": "abilities",
-    "missingId": "SV5K-020",
-    "missingStandardLegal": true,
-    "sourceId": "M2a-041",
-    "confidence": "medium"
-  },
-  {
-    "name": "雪絨蛾",
-    "field": "abilities",
-    "missingId": "M1S-025",
-    "missingStandardLegal": true,
-    "sourceId": "M2a-041",
-    "confidence": "medium"
-  },
-  {
-    "name": "雪絨蛾",
-    "field": "attacks",
-    "missingId": "M2a-041",
-    "missingStandardLegal": true,
-    "sourceId": "SV5K-020",
-    "confidence": "medium"
-  },
-  {
-    "name": "麻麻鰻",
-    "field": "attacks",
-    "missingId": "MC-257",
-    "missingStandardLegal": true,
-    "sourceId": "S6a-033",
-    "confidence": "medium"
-  },
-  {
-    "name": "麻麻鰻",
-    "field": "attacks",
-    "missingId": "M2a-048",
-    "missingStandardLegal": true,
-    "sourceId": "S6a-033",
-    "confidence": "medium"
-  },
-  {
-    "name": "麻麻鰻",
-    "field": "attacks",
-    "missingId": "SV11B-118",
-    "missingStandardLegal": true,
-    "sourceId": "S6a-033",
-    "confidence": "medium"
-  },
-  {
-    "name": "麻麻鰻",
-    "field": "attacks",
-    "missingId": "SV11B-034",
-    "missingStandardLegal": true,
-    "sourceId": "S6a-033",
+    "sourceId": "SV-P-225",
     "confidence": "medium"
   },
   {
@@ -1792,142 +208,6 @@
     "confidence": "medium"
   },
   {
-    "name": "喵喵ex",
-    "field": "attacks",
-    "missingId": "M3-100",
-    "missingStandardLegal": true,
-    "sourceId": "M3-061",
-    "confidence": "medium"
-  },
-  {
-    "name": "喵喵ex",
-    "field": "attacks",
-    "missingId": "M3-114",
-    "missingStandardLegal": true,
-    "sourceId": "M3-061",
-    "confidence": "medium"
-  },
-  {
-    "name": "壺壺",
-    "field": "attacks",
-    "missingId": "MC-023",
-    "missingStandardLegal": true,
-    "sourceId": "SC1b-004",
-    "confidence": "medium"
-  },
-  {
-    "name": "壺壺",
-    "field": "attacks",
-    "missingId": "M1S-006",
-    "missingStandardLegal": true,
-    "sourceId": "SC1b-004",
-    "confidence": "medium"
-  },
-  {
-    "name": "壺壺",
-    "field": "attacks",
-    "missingId": "M1S-064",
-    "missingStandardLegal": true,
-    "sourceId": "SC1b-004",
-    "confidence": "medium"
-  },
-  {
-    "name": "斯魔茶",
-    "field": "attacks",
-    "missingId": "M5-005",
-    "missingStandardLegal": true,
-    "sourceId": "SV5a-008",
-    "confidence": "medium"
-  },
-  {
-    "name": "斯魔茶",
-    "field": "attacks",
-    "missingId": "SV5a-068",
-    "missingStandardLegal": true,
-    "sourceId": "SV5a-008",
-    "confidence": "medium"
-  },
-  {
-    "name": "棄世猴",
-    "field": "attacks",
-    "missingId": "M5-039",
-    "missingStandardLegal": true,
-    "sourceId": "SV10-047",
-    "confidence": "medium"
-  },
-  {
-    "name": "詛咒娃娃",
-    "field": "attacks",
-    "missingId": "M5-032",
-    "missingStandardLegal": true,
-    "sourceId": "S8b-065",
-    "confidence": "medium"
-  },
-  {
-    "name": "超級甲賀忍蛙ex",
-    "field": "abilities",
-    "missingId": "M4-022",
-    "missingStandardLegal": true,
-    "sourceId": "M4-098",
-    "confidence": "medium"
-  },
-  {
-    "name": "超級甲賀忍蛙ex",
-    "field": "attacks",
-    "missingId": "M4-098",
-    "missingStandardLegal": true,
-    "sourceId": "M4-022",
-    "confidence": "medium"
-  },
-  {
-    "name": "超級甲賀忍蛙ex",
-    "field": "attacks",
-    "missingId": "M4-114",
-    "missingStandardLegal": true,
-    "sourceId": "M4-022",
-    "confidence": "medium"
-  },
-  {
-    "name": "超級甲賀忍蛙ex",
-    "field": "attacks",
-    "missingId": "M4-120",
-    "missingStandardLegal": true,
-    "sourceId": "M4-022",
-    "confidence": "medium"
-  },
-  {
-    "name": "超級甲賀忍蛙ex",
-    "field": "attacks",
-    "missingId": "M-095",
-    "missingStandardLegal": true,
-    "sourceId": "M4-022",
-    "confidence": "medium"
-  },
-  {
-    "name": "超級妙蛙花ex",
-    "field": "abilities",
-    "missingId": "M1L-003",
-    "missingStandardLegal": true,
-    "sourceId": "M1L-076",
-    "confidence": "medium"
-  },
-  {
-    "name": "超級妙蛙花ex",
-    "field": "attacks",
-    "missingId": "M1L-076",
-    "missingStandardLegal": true,
-    "sourceId": "M1L-003",
-    "confidence": "medium"
-  },
-  {
-    "name": "超級妙蛙花ex",
-    "field": "attacks",
-    "missingId": "M1L-087",
-    "missingStandardLegal": true,
-    "sourceId": "M1L-003",
-    "confidence": "medium"
-  },
-  {
     "name": "超級快龍ex",
     "field": "abilities",
     "missingId": "M2a-126",
@@ -1936,75 +216,11 @@
     "confidence": "medium"
   },
   {
-    "name": "超級快龍ex",
-    "field": "attacks",
-    "missingId": "M2a-232",
-    "missingStandardLegal": true,
-    "sourceId": "M2a-126",
-    "confidence": "medium"
-  },
-  {
-    "name": "超級快龍ex",
-    "field": "attacks",
-    "missingId": "M2a-246",
-    "missingStandardLegal": true,
-    "sourceId": "M2a-126",
-    "confidence": "medium"
-  },
-  {
-    "name": "超級快龍ex",
-    "field": "attacks",
-    "missingId": "M2a-250",
-    "missingStandardLegal": true,
-    "sourceId": "M2a-126",
-    "confidence": "medium"
-  },
-  {
-    "name": "超級耿鬼ex",
-    "field": "abilities",
-    "missingId": "MBG-003",
-    "missingStandardLegal": true,
-    "sourceId": "M2a-230",
-    "confidence": "medium"
-  },
-  {
-    "name": "超級耿鬼ex",
-    "field": "attacks",
-    "missingId": "M2a-230",
-    "missingStandardLegal": true,
-    "sourceId": "MBG-003",
-    "confidence": "medium"
-  },
-  {
-    "name": "超級耿鬼ex",
-    "field": "attacks",
-    "missingId": "M2a-240",
-    "missingStandardLegal": true,
-    "sourceId": "MBG-003",
-    "confidence": "medium"
-  },
-  {
     "name": "超級袋獸ex",
     "field": "abilities",
     "missingId": "M1S-051",
     "missingStandardLegal": true,
     "sourceId": "EXT02-011",
-    "confidence": "medium"
-  },
-  {
-    "name": "超級袋獸ex",
-    "field": "attacks",
-    "missingId": "M1S-080",
-    "missingStandardLegal": true,
-    "sourceId": "M1S-051",
-    "confidence": "medium"
-  },
-  {
-    "name": "超級袋獸ex",
-    "field": "attacks",
-    "missingId": "M1S-089",
-    "missingStandardLegal": true,
-    "sourceId": "M1S-051",
     "confidence": "medium"
   },
   {
@@ -2024,286 +240,6 @@
     "confidence": "medium"
   },
   {
-    "name": "超級蒂安希ex",
-    "field": "attacks",
-    "missingId": "M2a-238",
-    "missingStandardLegal": true,
-    "sourceId": "MBD-006",
-    "confidence": "medium"
-  },
-  {
-    "name": "超能妙喵",
-    "field": "attacks",
-    "missingId": "MC-332",
-    "missingStandardLegal": true,
-    "sourceId": "S5I-026",
-    "confidence": "medium"
-  },
-  {
-    "name": "飯匙蛇",
-    "field": "attacks",
-    "missingId": "M2-052",
-    "missingStandardLegal": true,
-    "sourceId": "SV1S-053",
-    "confidence": "medium"
-  },
-  {
-    "name": "黑夜魔靈",
-    "field": "abilities",
-    "missingId": "SV6a-020",
-    "missingStandardLegal": true,
-    "sourceId": "MC-310",
-    "confidence": "medium"
-  },
-  {
-    "name": "黑夜魔靈",
-    "field": "attacks",
-    "missingId": "MC-310",
-    "missingStandardLegal": true,
-    "sourceId": "SV6a-020",
-    "confidence": "medium"
-  },
-  {
-    "name": "黑夜魔靈",
-    "field": "attacks",
-    "missingId": "M2a-074",
-    "missingStandardLegal": true,
-    "sourceId": "SV6a-020",
-    "confidence": "medium"
-  },
-  {
-    "name": "黑夜魔靈",
-    "field": "attacks",
-    "missingId": "SV6a-070",
-    "missingStandardLegal": true,
-    "sourceId": "SV6a-020",
-    "confidence": "medium"
-  },
-  {
-    "name": "蜈蚣王",
-    "field": "attacks",
-    "missingId": "SV11B-059",
-    "missingStandardLegal": true,
-    "sourceId": "S5a-052",
-    "confidence": "medium"
-  },
-  {
-    "name": "蜈蚣王",
-    "field": "attacks",
-    "missingId": "SV11B-140",
-    "missingStandardLegal": true,
-    "sourceId": "S5a-052",
-    "confidence": "medium"
-  },
-  {
-    "name": "雷吉洛克",
-    "field": "attacks",
-    "missingId": "MC-373",
-    "missingStandardLegal": true,
-    "sourceId": "S10P-036",
-    "confidence": "medium"
-  },
-  {
-    "name": "雷電雲",
-    "field": "abilities",
-    "missingId": "MC-258",
-    "missingStandardLegal": true,
-    "sourceId": "M6-025",
-    "confidence": "medium"
-  },
-  {
-    "name": "雷電雲",
-    "field": "abilities",
-    "missingId": "SV11B-120",
-    "missingStandardLegal": true,
-    "sourceId": "M6-025",
-    "confidence": "medium"
-  },
-  {
-    "name": "雷電雲",
-    "field": "abilities",
-    "missingId": "SV11B-036",
-    "missingStandardLegal": true,
-    "sourceId": "M6-025",
-    "confidence": "medium"
-  },
-  {
-    "name": "雷電雲",
-    "field": "attacks",
-    "missingId": "M6-025",
-    "missingStandardLegal": true,
-    "sourceId": "SPZ-004",
-    "confidence": "medium"
-  },
-  {
-    "name": "電蜘蛛",
-    "field": "abilities",
-    "missingId": "SV6a-002",
-    "missingStandardLegal": true,
-    "sourceId": "MC-050",
-    "confidence": "medium"
-  },
-  {
-    "name": "電蜘蛛",
-    "field": "attacks",
-    "missingId": "MC-050",
-    "missingStandardLegal": true,
-    "sourceId": "SV6a-002",
-    "confidence": "medium"
-  },
-  {
-    "name": "電龍",
-    "field": "attacks",
-    "missingId": "M4-029",
-    "missingStandardLegal": true,
-    "sourceId": "S6K-020",
-    "confidence": "medium"
-  },
-  {
-    "name": "電龍",
-    "field": "attacks",
-    "missingId": "M4-088",
-    "missingStandardLegal": true,
-    "sourceId": "S6K-020",
-    "confidence": "medium"
-  },
-  {
-    "name": "電龍",
-    "field": "attacks",
-    "missingId": "M-096",
-    "missingStandardLegal": true,
-    "sourceId": "S6K-020",
-    "confidence": "medium"
-  },
-  {
-    "name": "瑪俐的長毛巨魔ex",
-    "field": "abilities",
-    "missingId": "SVOM-007",
-    "missingStandardLegal": true,
-    "sourceId": "M2a-243",
-    "confidence": "medium"
-  },
-  {
-    "name": "瑪俐的長毛巨魔ex",
-    "field": "attacks",
-    "missingId": "M2a-243",
-    "missingStandardLegal": true,
-    "sourceId": "SVOM-007",
-    "confidence": "medium"
-  },
-  {
-    "name": "瑪機雅娜",
-    "field": "attacks",
-    "missingId": "MC-515",
-    "missingStandardLegal": true,
-    "sourceId": "S10P-050",
-    "confidence": "medium"
-  },
-  {
-    "name": "瑪機雅娜",
-    "field": "attacks",
-    "missingId": "M2a-120",
-    "missingStandardLegal": true,
-    "sourceId": "S10P-050",
-    "confidence": "medium"
-  },
-  {
-    "name": "蓋蓋蟲",
-    "field": "abilities",
-    "missingId": "SV9-007",
-    "missingStandardLegal": true,
-    "sourceId": "SV11B-009",
-    "confidence": "medium"
-  },
-  {
-    "name": "蓋蓋蟲",
-    "field": "abilities",
-    "missingId": "MC-047",
-    "missingStandardLegal": true,
-    "sourceId": "SV11B-009",
-    "confidence": "medium"
-  },
-  {
-    "name": "蓋蓋蟲",
-    "field": "attacks",
-    "missingId": "SV11B-009",
-    "missingStandardLegal": true,
-    "sourceId": "SC2b-002",
-    "confidence": "medium"
-  },
-  {
-    "name": "蓋蓋蟲",
-    "field": "attacks",
-    "missingId": "SV11B-094",
-    "missingStandardLegal": true,
-    "sourceId": "SC2b-002",
-    "confidence": "medium"
-  },
-  {
-    "name": "蓋諾賽克特ex",
-    "field": "abilities",
-    "missingId": "M2a-119",
-    "missingStandardLegal": true,
-    "sourceId": "MC-512",
-    "confidence": "medium"
-  },
-  {
-    "name": "蓋諾賽克特ex",
-    "field": "abilities",
-    "missingId": "SV11B-069",
-    "missingStandardLegal": true,
-    "sourceId": "MC-512",
-    "confidence": "medium"
-  },
-  {
-    "name": "蓋諾賽克特ex",
-    "field": "attacks",
-    "missingId": "MC-512",
-    "missingStandardLegal": true,
-    "sourceId": "M2a-119",
-    "confidence": "medium"
-  },
-  {
-    "name": "蓋諾賽克特ex",
-    "field": "attacks",
-    "missingId": "SV11B-164",
-    "missingStandardLegal": true,
-    "sourceId": "M2a-119",
-    "confidence": "medium"
-  },
-  {
-    "name": "蓋諾賽克特ex",
-    "field": "attacks",
-    "missingId": "SV11B-172",
-    "missingStandardLegal": true,
-    "sourceId": "M2a-119",
-    "confidence": "medium"
-  },
-  {
-    "name": "赫普的毛毛角羊",
-    "field": "attacks",
-    "missingId": "M2a-142",
-    "missingStandardLegal": true,
-    "sourceId": "SV9-086",
-    "confidence": "medium"
-  },
-  {
-    "name": "赫普的卡比獸",
-    "field": "attacks",
-    "missingId": "MC-569",
-    "missingStandardLegal": true,
-    "sourceId": "SV9-075",
-    "confidence": "medium"
-  },
-  {
-    "name": "赫普的卡比獸",
-    "field": "attacks",
-    "missingId": "M2a-136",
-    "missingStandardLegal": true,
-    "sourceId": "SV9-075",
-    "confidence": "medium"
-  },
-  {
     "name": "赫普的啪嚓海膽ex",
     "field": "abilities",
     "missingId": "scr-12567",
@@ -2312,483 +248,11 @@
     "confidence": "medium"
   },
   {
-    "name": "輕身鱈",
-    "field": "attacks",
-    "missingId": "MC-219",
-    "missingStandardLegal": true,
-    "sourceId": "SV2P-023",
-    "confidence": "medium"
-  },
-  {
-    "name": "銃嘴大鳥",
-    "field": "attacks",
-    "missingId": "M5-066",
-    "missingStandardLegal": true,
-    "sourceId": "SCA-091",
-    "confidence": "medium"
-  },
-  {
-    "name": "銃嘴大鳥",
-    "field": "attacks",
-    "missingId": "M5-092",
-    "missingStandardLegal": true,
-    "sourceId": "SCA-091",
-    "confidence": "medium"
-  },
-  {
-    "name": "噗噗豬",
-    "field": "attacks",
-    "missingId": "MC-306",
-    "missingStandardLegal": true,
-    "sourceId": "SV1a-037",
-    "confidence": "medium"
-  },
-  {
-    "name": "噗噗豬",
-    "field": "attacks",
-    "missingId": "M1S-045",
-    "missingStandardLegal": true,
-    "sourceId": "SV1a-037",
-    "confidence": "medium"
-  },
-  {
-    "name": "樂天河童",
-    "field": "attacks",
-    "missingId": "MC-177",
-    "missingStandardLegal": true,
-    "sourceId": "S7D-004",
-    "confidence": "medium"
-  },
-  {
-    "name": "樂天河童",
-    "field": "attacks",
-    "missingId": "M2-007",
-    "missingStandardLegal": true,
-    "sourceId": "SC1b-009",
-    "confidence": "medium"
-  },
-  {
-    "name": "樂天河童",
-    "field": "attacks",
-    "missingId": "M2-081",
-    "missingStandardLegal": true,
-    "sourceId": "SC1b-009",
-    "confidence": "medium"
-  },
-  {
-    "name": "鋁鋼橋龍",
-    "field": "abilities",
-    "missingId": "M2-063",
-    "missingStandardLegal": true,
-    "sourceId": "MC-525",
-    "confidence": "medium"
-  },
-  {
-    "name": "鋁鋼橋龍",
-    "field": "attacks",
-    "missingId": "MC-525",
-    "missingStandardLegal": true,
-    "sourceId": "SV7-073",
-    "confidence": "medium"
-  },
-  {
-    "name": "齒輪怪",
-    "field": "attacks",
-    "missingId": "MC-508",
-    "missingStandardLegal": true,
-    "sourceId": "S9-071",
-    "confidence": "medium"
-  },
-  {
-    "name": "齒輪怪",
-    "field": "attacks",
-    "missingId": "SV11W-067",
-    "missingStandardLegal": true,
-    "sourceId": "S9-071",
-    "confidence": "medium"
-  },
-  {
-    "name": "齒輪怪",
-    "field": "attacks",
-    "missingId": "SV11W-148",
-    "missingStandardLegal": true,
-    "sourceId": "S9-071",
-    "confidence": "medium"
-  },
-  {
-    "name": "燈罩夜菇",
-    "field": "attacks",
-    "missingId": "MC-059",
-    "missingStandardLegal": true,
-    "sourceId": "SV7a-003",
-    "confidence": "medium"
-  },
-  {
-    "name": "燈罩夜菇",
-    "field": "attacks",
-    "missingId": "SV7a-066",
-    "missingStandardLegal": true,
-    "sourceId": "SV7a-003",
-    "confidence": "medium"
-  },
-  {
-    "name": "磨牙彩皮魚",
-    "field": "attacks",
-    "missingId": "SV7a-068",
-    "missingStandardLegal": true,
-    "sourceId": "SV7a-012",
-    "confidence": "medium"
-  },
-  {
-    "name": "貓頭夜鷹",
-    "field": "attacks",
-    "missingId": "MC-573",
-    "missingStandardLegal": true,
-    "sourceId": "S9a-056",
-    "confidence": "medium"
-  },
-  {
-    "name": "貓頭夜鷹",
-    "field": "attacks",
-    "missingId": "M2a-138",
-    "missingStandardLegal": true,
-    "sourceId": "S9a-056",
-    "confidence": "medium"
-  },
-  {
-    "name": "鴨嘴炎獸",
-    "field": "attacks",
-    "missingId": "M6-013",
-    "missingStandardLegal": true,
-    "sourceId": "SVEL-002",
-    "confidence": "medium"
-  },
-  {
-    "name": "鴨嘴炎獸",
-    "field": "attacks",
-    "missingId": "MC-092",
-    "missingStandardLegal": true,
-    "sourceId": "SV9-014",
-    "confidence": "medium"
-  },
-  {
-    "name": "鴨嘴炎獸",
-    "field": "attacks",
-    "missingId": "M-151",
-    "missingStandardLegal": true,
-    "sourceId": "SVEL-002",
-    "confidence": "medium"
-  },
-  {
-    "name": "龍捲雲",
-    "field": "abilities",
-    "missingId": "SV7-082",
-    "missingStandardLegal": true,
-    "sourceId": "M6-059",
-    "confidence": "medium"
-  },
-  {
-    "name": "龍捲雲",
-    "field": "attacks",
-    "missingId": "M6-059",
-    "missingStandardLegal": true,
-    "sourceId": "SV7-082",
-    "confidence": "medium"
-  },
-  {
-    "name": "龜足巨鎧",
-    "field": "attacks",
-    "missingId": "M3-042",
-    "missingStandardLegal": true,
-    "sourceId": "S11-061",
-    "confidence": "medium"
-  },
-  {
-    "name": "龜足巨鎧",
-    "field": "attacks",
-    "missingId": "M-074",
-    "missingStandardLegal": true,
-    "sourceId": "S11-061",
-    "confidence": "medium"
-  },
-  {
-    "name": "膽小蟲",
-    "field": "abilities",
-    "missingId": "M4-025",
-    "missingStandardLegal": true,
-    "sourceId": "M6-008",
-    "confidence": "medium"
-  },
-  {
-    "name": "膽小蟲",
-    "field": "attacks",
-    "missingId": "M6-008",
-    "missingStandardLegal": true,
-    "sourceId": "S4a-004",
-    "confidence": "medium"
-  },
-  {
-    "name": "膽小蟲",
-    "field": "attacks",
-    "missingId": "M-148",
-    "missingStandardLegal": true,
-    "sourceId": "S4a-004",
-    "confidence": "medium"
-  },
-  {
-    "name": "謝米",
-    "field": "attacks",
-    "missingId": "M2a-012",
-    "missingStandardLegal": true,
-    "sourceId": "SV9a-006",
-    "confidence": "medium"
-  },
-  {
-    "name": "謝米",
-    "field": "attacks",
-    "missingId": "M-102",
-    "missingStandardLegal": true,
-    "sourceId": "SV9a-006",
-    "confidence": "medium"
-  },
-  {
-    "name": "黏美龍",
-    "field": "attacks",
-    "missingId": "M4-066",
-    "missingStandardLegal": true,
-    "sourceId": "S8-078",
-    "confidence": "medium"
-  },
-  {
-    "name": "黏美龍",
-    "field": "attacks",
-    "missingId": "M-101",
-    "missingStandardLegal": true,
-    "sourceId": "S8-078",
-    "confidence": "medium"
-  },
-  {
-    "name": "鬃岩狼人",
-    "field": "abilities",
-    "missingId": "SVHK-007",
-    "missingStandardLegal": true,
-    "sourceId": "SV9-107",
-    "confidence": "medium"
-  },
-  {
-    "name": "鬃岩狼人",
-    "field": "abilities",
-    "missingId": "MC-403",
-    "missingStandardLegal": true,
-    "sourceId": "SV9-107",
-    "confidence": "medium"
-  },
-  {
-    "name": "鬃岩狼人",
-    "field": "attacks",
-    "missingId": "SV9-107",
-    "missingStandardLegal": true,
-    "sourceId": "SVHK-007",
-    "confidence": "medium"
-  },
-  {
-    "name": "爆炸頭水牛",
-    "field": "attacks",
-    "missingId": "M2a-140",
-    "missingStandardLegal": true,
-    "sourceId": "SV7-081",
-    "confidence": "medium"
-  },
-  {
-    "name": "爆焰龜獸",
-    "field": "abilities",
-    "missingId": "SVHK-003",
-    "missingStandardLegal": true,
-    "sourceId": "M3-017",
-    "confidence": "medium"
-  },
-  {
-    "name": "爆焰龜獸",
-    "field": "abilities",
-    "missingId": "SV7a-044",
-    "missingStandardLegal": true,
-    "sourceId": "M3-017",
-    "confidence": "medium"
-  },
-  {
-    "name": "爆焰龜獸",
-    "field": "abilities",
-    "missingId": "MC-136",
-    "missingStandardLegal": true,
-    "sourceId": "M3-017",
-    "confidence": "medium"
-  },
-  {
-    "name": "爆焰龜獸",
-    "field": "attacks",
-    "missingId": "M3-017",
-    "missingStandardLegal": true,
-    "sourceId": "SVHK-003",
-    "confidence": "medium"
-  },
-  {
-    "name": "羅絲雷朵",
-    "field": "attacks",
-    "missingId": "MC-031",
-    "missingStandardLegal": true,
-    "sourceId": "SV5K-002",
-    "confidence": "medium"
-  },
-  {
-    "name": "願增猿",
-    "field": "attacks",
-    "missingId": "MC-358",
-    "missingStandardLegal": true,
-    "sourceId": "SV6-055",
-    "confidence": "medium"
-  },
-  {
-    "name": "願增猿",
-    "field": "attacks",
-    "missingId": "M2a-081",
-    "missingStandardLegal": true,
-    "sourceId": "SV6-055",
-    "confidence": "medium"
-  },
-  {
-    "name": "願增猿",
-    "field": "attacks",
-    "missingId": "M-014",
-    "missingStandardLegal": true,
-    "sourceId": "SV6-055",
-    "confidence": "medium"
-  },
-  {
-    "name": "寶包繭",
-    "field": "attacks",
-    "missingId": "SV11W-002",
-    "missingStandardLegal": true,
-    "sourceId": "S6a-005",
-    "confidence": "medium"
-  },
-  {
-    "name": "寶包繭",
-    "field": "attacks",
-    "missingId": "SV11W-088",
-    "missingStandardLegal": true,
-    "sourceId": "S6a-005",
-    "confidence": "medium"
-  },
-  {
-    "name": "護城龍",
-    "field": "attacks",
-    "missingId": "M5-060",
-    "missingStandardLegal": true,
-    "sourceId": "S10P-047",
-    "confidence": "medium"
-  },
-  {
-    "name": "護城龍",
-    "field": "attacks",
-    "missingId": "M5-091",
-    "missingStandardLegal": true,
-    "sourceId": "S10P-047",
-    "confidence": "medium"
-  },
-  {
-    "name": "護城龍",
-    "field": "attacks",
-    "missingId": "M-140",
-    "missingStandardLegal": true,
-    "sourceId": "S10P-047",
-    "confidence": "medium"
-  },
-  {
-    "name": "鐵脖頸",
-    "field": "attacks",
-    "missingId": "MC-628",
-    "missingStandardLegal": true,
-    "sourceId": "SVHM-010",
-    "confidence": "medium"
-  },
-  {
-    "name": "鐵殼蛹",
-    "field": "attacks",
-    "missingId": "M4-002",
-    "missingStandardLegal": true,
-    "sourceId": "S5a-002",
-    "confidence": "medium"
-  },
-  {
     "name": "鐵頭殼ex",
     "field": "attacks",
     "missingId": "SV-P-078",
     "missingStandardLegal": true,
     "sourceId": "SV5M-036",
-    "confidence": "medium"
-  },
-  {
-    "name": "魔幻假面喵",
-    "field": "attacks",
-    "missingId": "MC-067",
-    "missingStandardLegal": true,
-    "sourceId": "SVAM-006",
-    "confidence": "medium"
-  },
-  {
-    "name": "顫弦蠑螈",
-    "field": "attacks",
-    "missingId": "M2-057",
-    "missingStandardLegal": true,
-    "sourceId": "SV3-038",
-    "confidence": "medium"
-  },
-  {
-    "name": "顫弦蠑螈",
-    "field": "attacks",
-    "missingId": "M2-089",
-    "missingStandardLegal": true,
-    "sourceId": "SV3-038",
-    "confidence": "medium"
-  },
-  {
-    "name": "顫弦蠑螈",
-    "field": "attacks",
-    "missingId": "M-031",
-    "missingStandardLegal": true,
-    "sourceId": "SV3-038",
-    "confidence": "medium"
-  },
-  {
-    "name": "變隱龍",
-    "field": "attacks",
-    "missingId": "SV8-118",
-    "missingStandardLegal": true,
-    "sourceId": "SV8-086",
-    "confidence": "medium"
-  },
-  {
-    "name": "鹽石巨靈",
-    "field": "attacks",
-    "missingId": "MC-418",
-    "missingStandardLegal": true,
-    "sourceId": "SV2D-048",
-    "confidence": "medium"
-  },
-  {
-    "name": "鹽石巨靈",
-    "field": "attacks",
-    "missingId": "M1L-036",
-    "missingStandardLegal": true,
-    "sourceId": "SV2D-048",
-    "confidence": "medium"
-  },
-  {
-    "name": "鹽石巨靈",
-    "field": "attacks",
-    "missingId": "M1L-070",
-    "missingStandardLegal": true,
-    "sourceId": "SV2D-048",
     "confidence": "medium"
   },
   {
@@ -2824,107 +288,11 @@
     "confidence": "high"
   },
   {
-    "name": "七夕青鳥",
-    "field": "abilities",
-    "missingId": "S11a-057",
-    "missingStandardLegal": false,
-    "sourceId": "M6-056",
-    "confidence": "medium"
-  },
-  {
     "name": "三合一磁怪",
     "field": "attacks",
     "missingId": "SV-P-191",
     "missingStandardLegal": false,
     "sourceId": "SV8-035",
-    "confidence": "medium"
-  },
-  {
-    "name": "叉字蝠",
-    "field": "abilities",
-    "missingId": "S10a-043",
-    "missingStandardLegal": false,
-    "sourceId": "M4-050",
-    "confidence": "medium"
-  },
-  {
-    "name": "叉字蝠",
-    "field": "abilities",
-    "missingId": "SV4K-046",
-    "missingStandardLegal": false,
-    "sourceId": "M4-050",
-    "confidence": "medium"
-  },
-  {
-    "name": "土龍節節",
-    "field": "abilities",
-    "missingId": "SV2P-057",
-    "missingStandardLegal": false,
-    "sourceId": "M-045",
-    "confidence": "medium"
-  },
-  {
-    "name": "大劍鬼",
-    "field": "abilities",
-    "missingId": "S4-022",
-    "missingStandardLegal": false,
-    "sourceId": "SV11W-020",
-    "confidence": "medium"
-  },
-  {
-    "name": "大劍鬼",
-    "field": "abilities",
-    "missingId": "SCA-023",
-    "missingStandardLegal": false,
-    "sourceId": "SV11W-020",
-    "confidence": "medium"
-  },
-  {
-    "name": "大鋼蛇",
-    "field": "abilities",
-    "missingId": "S5R-052",
-    "missingStandardLegal": false,
-    "sourceId": "M6-038",
-    "confidence": "medium"
-  },
-  {
-    "name": "大鋼蛇",
-    "field": "abilities",
-    "missingId": "S8-056",
-    "missingStandardLegal": false,
-    "sourceId": "M6-038",
-    "confidence": "medium"
-  },
-  {
-    "name": "大鋼蛇",
-    "field": "abilities",
-    "missingId": "SCD-074",
-    "missingStandardLegal": false,
-    "sourceId": "M6-038",
-    "confidence": "medium"
-  },
-  {
-    "name": "大鋼蛇",
-    "field": "abilities",
-    "missingId": "SI-213",
-    "missingStandardLegal": false,
-    "sourceId": "M6-038",
-    "confidence": "medium"
-  },
-  {
-    "name": "大鋼蛇",
-    "field": "abilities",
-    "missingId": "SI-293",
-    "missingStandardLegal": false,
-    "sourceId": "M6-038",
-    "confidence": "medium"
-  },
-  {
-    "name": "小木靈",
-    "field": "abilities",
-    "missingId": "S11-011",
-    "missingStandardLegal": false,
-    "sourceId": "M4-038",
     "confidence": "medium"
   },
   {
@@ -2936,75 +304,11 @@
     "confidence": "medium"
   },
   {
-    "name": "小碎鑽",
-    "field": "abilities",
-    "missingId": "S10P-038",
-    "missingStandardLegal": false,
-    "sourceId": "MC-400",
-    "confidence": "medium"
-  },
-  {
-    "name": "仆斬將軍",
-    "field": "abilities",
-    "missingId": "EXT01-037",
-    "missingStandardLegal": false,
-    "sourceId": "M2a-118",
-    "confidence": "medium"
-  },
-  {
-    "name": "火炎獅",
-    "field": "abilities",
-    "missingId": "S6H-013",
-    "missingStandardLegal": false,
-    "sourceId": "M1S-011",
-    "confidence": "medium"
-  },
-  {
-    "name": "火炎獅",
-    "field": "abilities",
-    "missingId": "SCC-026",
-    "missingStandardLegal": false,
-    "sourceId": "M1S-011",
-    "confidence": "medium"
-  },
-  {
-    "name": "火炎獅",
-    "field": "abilities",
-    "missingId": "SI-067",
-    "missingStandardLegal": false,
-    "sourceId": "M1S-011",
-    "confidence": "medium"
-  },
-  {
-    "name": "火神蛾",
-    "field": "abilities",
-    "missingId": "SC2b-016",
-    "missingStandardLegal": false,
-    "sourceId": "MC-124",
-    "confidence": "medium"
-  },
-  {
-    "name": "火神蛾",
-    "field": "abilities",
-    "missingId": "SC2D-020",
-    "missingStandardLegal": false,
-    "sourceId": "MC-124",
-    "confidence": "medium"
-  },
-  {
-    "name": "仙子伊布",
-    "field": "abilities",
-    "missingId": "S10b-035",
-    "missingStandardLegal": false,
-    "sourceId": "SVM-050",
-    "confidence": "medium"
-  },
-  {
     "name": "古劍豹",
     "field": "abilities",
     "missingId": "SV4M-021",
     "missingStandardLegal": false,
-    "sourceId": "M2a-043",
+    "sourceId": "SV-P-190",
     "confidence": "medium"
   },
   {
@@ -3012,7 +316,7 @@
     "field": "abilities",
     "missingId": "SV8a-048",
     "missingStandardLegal": false,
-    "sourceId": "M2a-043",
+    "sourceId": "SV-P-190",
     "confidence": "medium"
   },
   {
@@ -3028,7 +332,7 @@
     "field": "abilities",
     "missingId": "S6K-009",
     "missingStandardLegal": false,
-    "sourceId": "M2a-032",
+    "sourceId": "SV-P-220",
     "confidence": "medium"
   },
   {
@@ -3036,7 +340,7 @@
     "field": "abilities",
     "missingId": "SCC-031",
     "missingStandardLegal": false,
-    "sourceId": "M2a-032",
+    "sourceId": "SV-P-220",
     "confidence": "medium"
   },
   {
@@ -3044,7 +348,7 @@
     "field": "abilities",
     "missingId": "SV2a-054",
     "missingStandardLegal": false,
-    "sourceId": "M2a-032",
+    "sourceId": "SV-P-220",
     "confidence": "medium"
   },
   {
@@ -3052,7 +356,7 @@
     "field": "abilities",
     "missingId": "SI-076",
     "missingStandardLegal": false,
-    "sourceId": "M2a-032",
+    "sourceId": "SV-P-220",
     "confidence": "medium"
   },
   {
@@ -3060,7 +364,7 @@
     "field": "abilities",
     "missingId": "SV2a-175",
     "missingStandardLegal": false,
-    "sourceId": "M2a-032",
+    "sourceId": "SV-P-220",
     "confidence": "medium"
   },
   {
@@ -3072,59 +376,11 @@
     "confidence": "medium"
   },
   {
-    "name": "尼多后",
-    "field": "abilities",
-    "missingId": "SV2a-031",
-    "missingStandardLegal": false,
-    "sourceId": "M6-043",
-    "confidence": "medium"
-  },
-  {
-    "name": "巧鍛匠",
-    "field": "abilities",
-    "missingId": "SV2D-034",
-    "missingStandardLegal": false,
-    "sourceId": "MC-529",
-    "confidence": "medium"
-  },
-  {
-    "name": "巧鍛匠",
-    "field": "abilities",
-    "missingId": "SV4a-095",
-    "missingStandardLegal": false,
-    "sourceId": "MC-529",
-    "confidence": "medium"
-  },
-  {
-    "name": "巧鍛匠",
-    "field": "abilities",
-    "missingId": "SV4a-272",
-    "missingStandardLegal": false,
-    "sourceId": "MC-529",
-    "confidence": "medium"
-  },
-  {
-    "name": "巨蔓藤",
-    "field": "abilities",
-    "missingId": "S12-005",
-    "missingStandardLegal": false,
-    "sourceId": "MC-013",
-    "confidence": "medium"
-  },
-  {
-    "name": "白海獅",
-    "field": "abilities",
-    "missingId": "SV2a-087",
-    "missingStandardLegal": false,
-    "sourceId": "M3-019",
-    "confidence": "medium"
-  },
-  {
     "name": "伊布",
     "field": "abilities",
     "missingId": "SDP-011",
     "missingStandardLegal": false,
-    "sourceId": "MC-565",
+    "sourceId": "EXT18-008",
     "confidence": "medium"
   },
   {
@@ -3132,7 +388,7 @@
     "field": "abilities",
     "missingId": "SH-037",
     "missingStandardLegal": false,
-    "sourceId": "MC-565",
+    "sourceId": "EXT18-008",
     "confidence": "medium"
   },
   {
@@ -3140,7 +396,7 @@
     "field": "abilities",
     "missingId": "SCD-110",
     "missingStandardLegal": false,
-    "sourceId": "MC-565",
+    "sourceId": "EXT18-008",
     "confidence": "medium"
   },
   {
@@ -3148,7 +404,7 @@
     "field": "abilities",
     "missingId": "SI-337",
     "missingStandardLegal": false,
-    "sourceId": "MC-565",
+    "sourceId": "EXT18-008",
     "confidence": "medium"
   },
   {
@@ -3160,83 +416,19 @@
     "confidence": "medium"
   },
   {
-    "name": "光電傘蜥",
-    "field": "abilities",
-    "missingId": "S12-031",
+    "name": "吉雉雞ex",
+    "field": "attacks",
+    "missingId": "EXT06-007",
     "missingStandardLegal": false,
-    "sourceId": "M2a-053",
+    "sourceId": "MC-489",
     "confidence": "medium"
   },
   {
-    "name": "多龍奇",
-    "field": "abilities",
-    "missingId": "S8-050",
+    "name": "吉雉雞ex",
+    "field": "attacks",
+    "missingId": "EXT03-008",
     "missingStandardLegal": false,
-    "sourceId": "MC-547",
-    "confidence": "medium"
-  },
-  {
-    "name": "多龍奇",
-    "field": "abilities",
-    "missingId": "S11-053",
-    "missingStandardLegal": false,
-    "sourceId": "MC-547",
-    "confidence": "medium"
-  },
-  {
-    "name": "多龍奇",
-    "field": "abilities",
-    "missingId": "SC1a-059",
-    "missingStandardLegal": false,
-    "sourceId": "MC-547",
-    "confidence": "medium"
-  },
-  {
-    "name": "多龍奇",
-    "field": "abilities",
-    "missingId": "SCB-067",
-    "missingStandardLegal": false,
-    "sourceId": "MC-547",
-    "confidence": "medium"
-  },
-  {
-    "name": "多龍奇",
-    "field": "abilities",
-    "missingId": "SC1D-078",
-    "missingStandardLegal": false,
-    "sourceId": "MC-547",
-    "confidence": "medium"
-  },
-  {
-    "name": "多龍奇",
-    "field": "abilities",
-    "missingId": "S4a-086",
-    "missingStandardLegal": false,
-    "sourceId": "MC-547",
-    "confidence": "medium"
-  },
-  {
-    "name": "好勝毛蟹",
-    "field": "abilities",
-    "missingId": "SV2D-043",
-    "missingStandardLegal": false,
-    "sourceId": "MC-209",
-    "confidence": "medium"
-  },
-  {
-    "name": "安瓢蟲",
-    "field": "abilities",
-    "missingId": "SCC-002",
-    "missingStandardLegal": false,
-    "sourceId": "MC-020",
-    "confidence": "medium"
-  },
-  {
-    "name": "安瓢蟲",
-    "field": "abilities",
-    "missingId": "S6K-002",
-    "missingStandardLegal": false,
-    "sourceId": "MC-020",
+    "sourceId": "MC-489",
     "confidence": "medium"
   },
   {
@@ -3312,78 +504,6 @@
     "confidence": "medium"
   },
   {
-    "name": "呆火駝",
-    "field": "abilities",
-    "missingId": "SV4K-011",
-    "missingStandardLegal": false,
-    "sourceId": "M2a-022",
-    "confidence": "medium"
-  },
-  {
-    "name": "呆火駝",
-    "field": "abilities",
-    "missingId": "S10b-013",
-    "missingStandardLegal": false,
-    "sourceId": "M2a-022",
-    "confidence": "medium"
-  },
-  {
-    "name": "呆呆獸",
-    "field": "abilities",
-    "missingId": "SV2P-029",
-    "missingStandardLegal": false,
-    "sourceId": "M-076",
-    "confidence": "medium"
-  },
-  {
-    "name": "呆呆獸",
-    "field": "abilities",
-    "missingId": "SV2a-079",
-    "missingStandardLegal": false,
-    "sourceId": "M-076",
-    "confidence": "medium"
-  },
-  {
-    "name": "呆呆獸",
-    "field": "abilities",
-    "missingId": "SV-P-238",
-    "missingStandardLegal": false,
-    "sourceId": "M-076",
-    "confidence": "medium"
-  },
-  {
-    "name": "彷徨夜靈",
-    "field": "abilities",
-    "missingId": "S4-044",
-    "missingStandardLegal": false,
-    "sourceId": "MC-309",
-    "confidence": "medium"
-  },
-  {
-    "name": "彷徨夜靈",
-    "field": "abilities",
-    "missingId": "S9-046",
-    "missingStandardLegal": false,
-    "sourceId": "MC-309",
-    "confidence": "medium"
-  },
-  {
-    "name": "彷徨夜靈",
-    "field": "abilities",
-    "missingId": "S12a-058",
-    "missingStandardLegal": false,
-    "sourceId": "MC-309",
-    "confidence": "medium"
-  },
-  {
-    "name": "彷徨夜靈",
-    "field": "abilities",
-    "missingId": "S8b-067",
-    "missingStandardLegal": false,
-    "sourceId": "MC-309",
-    "confidence": "medium"
-  },
-  {
     "name": "沙奈朵",
     "field": "abilities",
     "missingId": "S6H-035",
@@ -3405,46 +525,6 @@
     "missingId": "S6H-038",
     "missingStandardLegal": false,
     "sourceId": "S9a-041",
-    "confidence": "medium"
-  },
-  {
-    "name": "沙鈴仙人掌",
-    "field": "abilities",
-    "missingId": "SV4K-003",
-    "missingStandardLegal": false,
-    "sourceId": "SV9-101",
-    "confidence": "medium"
-  },
-  {
-    "name": "沙鈴仙人掌",
-    "field": "abilities",
-    "missingId": "S8-006",
-    "missingStandardLegal": false,
-    "sourceId": "SV9-101",
-    "confidence": "medium"
-  },
-  {
-    "name": "沙鈴仙人掌",
-    "field": "abilities",
-    "missingId": "SC1D-008",
-    "missingStandardLegal": false,
-    "sourceId": "SV9-101",
-    "confidence": "medium"
-  },
-  {
-    "name": "沙鈴仙人掌",
-    "field": "abilities",
-    "missingId": "SC1b-016",
-    "missingStandardLegal": false,
-    "sourceId": "SV9-101",
-    "confidence": "medium"
-  },
-  {
-    "name": "沙漠蜻蜓",
-    "field": "abilities",
-    "missingId": "SI-224",
-    "missingStandardLegal": false,
-    "sourceId": "M2-047",
     "confidence": "medium"
   },
   {
@@ -3488,11 +568,11 @@
     "confidence": "medium"
   },
   {
-    "name": "怖納噬草",
-    "field": "abilities",
-    "missingId": "SV2P-012",
+    "name": "拉帝亞斯ex",
+    "field": "attacks",
+    "missingId": "EXT04-005",
     "missingStandardLegal": false,
-    "sourceId": "MC-073",
+    "sourceId": "MC-312",
     "confidence": "medium"
   },
   {
@@ -3501,14 +581,6 @@
     "missingId": "S6H-033",
     "missingStandardLegal": false,
     "sourceId": "SVF-006",
-    "confidence": "medium"
-  },
-  {
-    "name": "斧牙龍",
-    "field": "abilities",
-    "missingId": "SI-318",
-    "missingStandardLegal": false,
-    "sourceId": "MC-542",
     "confidence": "medium"
   },
   {
@@ -3532,7 +604,7 @@
     "field": "abilities",
     "missingId": "S11-074",
     "missingStandardLegal": false,
-    "sourceId": "MC-497",
+    "sourceId": "EXT13-004",
     "confidence": "medium"
   },
   {
@@ -3540,7 +612,7 @@
     "field": "abilities",
     "missingId": "SCA-074",
     "missingStandardLegal": false,
-    "sourceId": "MC-497",
+    "sourceId": "EXT13-004",
     "confidence": "medium"
   },
   {
@@ -3548,7 +620,7 @@
     "field": "abilities",
     "missingId": "SC2b-086",
     "missingStandardLegal": false,
-    "sourceId": "MC-497",
+    "sourceId": "EXT13-004",
     "confidence": "medium"
   },
   {
@@ -3556,7 +628,7 @@
     "field": "abilities",
     "missingId": "SC2D-105",
     "missingStandardLegal": false,
-    "sourceId": "MC-497",
+    "sourceId": "EXT13-004",
     "confidence": "medium"
   },
   {
@@ -3565,54 +637,6 @@
     "missingId": "EXT13-004",
     "missingStandardLegal": false,
     "sourceId": "SV9-038",
-    "confidence": "medium"
-  },
-  {
-    "name": "青銅鐘",
-    "field": "abilities",
-    "missingId": "S10a-052",
-    "missingStandardLegal": false,
-    "sourceId": "SVM-082",
-    "confidence": "medium"
-  },
-  {
-    "name": "青銅鐘",
-    "field": "abilities",
-    "missingId": "SC1a-103",
-    "missingStandardLegal": false,
-    "sourceId": "SVM-082",
-    "confidence": "medium"
-  },
-  {
-    "name": "青銅鐘",
-    "field": "abilities",
-    "missingId": "SC1D-121",
-    "missingStandardLegal": false,
-    "sourceId": "SVM-082",
-    "confidence": "medium"
-  },
-  {
-    "name": "勇基拉",
-    "field": "abilities",
-    "missingId": "SV2a-064",
-    "missingStandardLegal": false,
-    "sourceId": "M1S-037",
-    "confidence": "medium"
-  },
-  {
-    "name": "勇基拉",
-    "field": "abilities",
-    "missingId": "SV4a-074",
-    "missingStandardLegal": false,
-    "sourceId": "M1S-037",
-    "confidence": "medium"
-  },
-  {
-    "name": "勇基拉",
-    "field": "abilities",
-    "missingId": "SV4a-254",
-    "missingStandardLegal": false,
-    "sourceId": "M1S-037",
     "confidence": "medium"
   },
   {
@@ -3665,42 +689,10 @@
   },
   {
     "name": "怨影娃娃",
-    "field": "abilities",
-    "missingId": "S8b-064",
-    "missingStandardLegal": false,
-    "sourceId": "M5-031",
-    "confidence": "medium"
-  },
-  {
-    "name": "怨影娃娃",
-    "field": "abilities",
-    "missingId": "SCC-075",
-    "missingStandardLegal": false,
-    "sourceId": "M5-031",
-    "confidence": "medium"
-  },
-  {
-    "name": "怨影娃娃",
     "field": "attacks",
     "missingId": "S6H-036",
     "missingStandardLegal": false,
     "sourceId": "S8b-064",
-    "confidence": "medium"
-  },
-  {
-    "name": "毒粉蛾",
-    "field": "abilities",
-    "missingId": "S10a-008",
-    "missingStandardLegal": false,
-    "sourceId": "M2a-195",
-    "confidence": "medium"
-  },
-  {
-    "name": "胖嘟嘟",
-    "field": "abilities",
-    "missingId": "S5R-028",
-    "missingStandardLegal": false,
-    "sourceId": "M6-020",
     "confidence": "medium"
   },
   {
@@ -3712,27 +704,11 @@
     "confidence": "medium"
   },
   {
-    "name": "重泥挽馬",
-    "field": "abilities",
-    "missingId": "SC1D-092",
-    "missingStandardLegal": false,
-    "sourceId": "MC-406",
-    "confidence": "medium"
-  },
-  {
-    "name": "音波龍",
-    "field": "abilities",
-    "missingId": "S12-074",
-    "missingStandardLegal": false,
-    "sourceId": "MC-615",
-    "confidence": "medium"
-  },
-  {
     "name": "哥達鴨",
     "field": "abilities",
     "missingId": "S6K-010",
     "missingStandardLegal": false,
-    "sourceId": "M2a-033",
+    "sourceId": "SV-P-221",
     "confidence": "medium"
   },
   {
@@ -3740,7 +716,7 @@
     "field": "abilities",
     "missingId": "SCC-032",
     "missingStandardLegal": false,
-    "sourceId": "M2a-033",
+    "sourceId": "SV-P-221",
     "confidence": "medium"
   },
   {
@@ -3748,7 +724,7 @@
     "field": "abilities",
     "missingId": "SI-077",
     "missingStandardLegal": false,
-    "sourceId": "M2a-033",
+    "sourceId": "SV-P-221",
     "confidence": "medium"
   },
   {
@@ -3784,203 +760,11 @@
     "confidence": "medium"
   },
   {
-    "name": "浩大鯨",
-    "field": "abilities",
-    "missingId": "SV2P-022",
+    "name": "桃歹郎ex",
+    "field": "attacks",
+    "missingId": "EXT06-008",
     "missingStandardLegal": false,
-    "sourceId": "MC-218",
-    "confidence": "medium"
-  },
-  {
-    "name": "浩大鯨",
-    "field": "abilities",
-    "missingId": "SV1V-025",
-    "missingStandardLegal": false,
-    "sourceId": "MC-218",
-    "confidence": "medium"
-  },
-  {
-    "name": "浩大鯨",
-    "field": "abilities",
-    "missingId": "SVD-033",
-    "missingStandardLegal": false,
-    "sourceId": "MC-218",
-    "confidence": "medium"
-  },
-  {
-    "name": "浩大鯨",
-    "field": "abilities",
-    "missingId": "SV-P-041",
-    "missingStandardLegal": false,
-    "sourceId": "MC-218",
-    "confidence": "medium"
-  },
-  {
-    "name": "烈箭鷹",
-    "field": "abilities",
-    "missingId": "SV2D-013",
-    "missingStandardLegal": false,
-    "sourceId": "M3-014",
-    "confidence": "medium"
-  },
-  {
-    "name": "耿鬼",
-    "field": "abilities",
-    "missingId": "SV2a-094",
-    "missingStandardLegal": false,
-    "sourceId": "M3-049",
-    "confidence": "medium"
-  },
-  {
-    "name": "草苗龜",
-    "field": "abilities",
-    "missingId": "S9-006",
-    "missingStandardLegal": false,
-    "sourceId": "MC-034",
-    "confidence": "medium"
-  },
-  {
-    "name": "草苗龜",
-    "field": "abilities",
-    "missingId": "S12a-006",
-    "missingStandardLegal": false,
-    "sourceId": "MC-034",
-    "confidence": "medium"
-  },
-  {
-    "name": "草苗龜",
-    "field": "abilities",
-    "missingId": "S12a-206",
-    "missingStandardLegal": false,
-    "sourceId": "MC-034",
-    "confidence": "medium"
-  },
-  {
-    "name": "勒克貓",
-    "field": "abilities",
-    "missingId": "SDP-003",
-    "missingStandardLegal": false,
-    "sourceId": "M3-026",
-    "confidence": "medium"
-  },
-  {
-    "name": "勒克貓",
-    "field": "abilities",
-    "missingId": "SV2D-020",
-    "missingStandardLegal": false,
-    "sourceId": "M3-026",
-    "confidence": "medium"
-  },
-  {
-    "name": "勒克貓",
-    "field": "abilities",
-    "missingId": "SH-021",
-    "missingStandardLegal": false,
-    "sourceId": "M3-026",
-    "confidence": "medium"
-  },
-  {
-    "name": "勒克貓",
-    "field": "abilities",
-    "missingId": "S12-027",
-    "missingStandardLegal": false,
-    "sourceId": "M3-026",
-    "confidence": "medium"
-  },
-  {
-    "name": "勒克貓",
-    "field": "abilities",
-    "missingId": "S9-038",
-    "missingStandardLegal": false,
-    "sourceId": "M3-026",
-    "confidence": "medium"
-  },
-  {
-    "name": "勒克貓",
-    "field": "abilities",
-    "missingId": "SV4a-060",
-    "missingStandardLegal": false,
-    "sourceId": "M3-026",
-    "confidence": "medium"
-  },
-  {
-    "name": "勒克貓",
-    "field": "abilities",
-    "missingId": "SV4a-241",
-    "missingStandardLegal": false,
-    "sourceId": "M3-026",
-    "confidence": "medium"
-  },
-  {
-    "name": "堅果啞鈴",
-    "field": "abilities",
-    "missingId": "S11-077",
-    "missingStandardLegal": false,
-    "sourceId": "M4-061",
-    "confidence": "medium"
-  },
-  {
-    "name": "堅果啞鈴",
-    "field": "abilities",
-    "missingId": "SC1a-106",
-    "missingStandardLegal": false,
-    "sourceId": "M4-061",
-    "confidence": "medium"
-  },
-  {
-    "name": "堅果啞鈴",
-    "field": "abilities",
-    "missingId": "SC1D-123",
-    "missingStandardLegal": false,
-    "sourceId": "M4-061",
-    "confidence": "medium"
-  },
-  {
-    "name": "密勒頓",
-    "field": "abilities",
-    "missingId": "SV-P-008",
-    "missingStandardLegal": false,
-    "sourceId": "M5-027",
-    "confidence": "medium"
-  },
-  {
-    "name": "密勒頓",
-    "field": "abilities",
-    "missingId": "SV-P-028",
-    "missingStandardLegal": false,
-    "sourceId": "M5-027",
-    "confidence": "medium"
-  },
-  {
-    "name": "密勒頓",
-    "field": "abilities",
-    "missingId": "EXT05-014",
-    "missingStandardLegal": false,
-    "sourceId": "M5-027",
-    "confidence": "medium"
-  },
-  {
-    "name": "密勒頓",
-    "field": "abilities",
-    "missingId": "EXT01-023",
-    "missingStandardLegal": false,
-    "sourceId": "M5-027",
-    "confidence": "medium"
-  },
-  {
-    "name": "彩粉蝶",
-    "field": "abilities",
-    "missingId": "SV1V-005",
-    "missingStandardLegal": false,
-    "sourceId": "M3-009",
-    "confidence": "medium"
-  },
-  {
-    "name": "彩粉蝶",
-    "field": "abilities",
-    "missingId": "S5I-006",
-    "missingStandardLegal": false,
-    "sourceId": "M3-009",
+    "sourceId": "MC-491",
     "confidence": "medium"
   },
   {
@@ -3992,11 +776,11 @@
     "confidence": "medium"
   },
   {
-    "name": "陸地水母",
-    "field": "abilities",
-    "missingId": "SVD-066",
+    "name": "莉莉艾的皮皮ex",
+    "field": "attacks",
+    "missingId": "EXT04-001",
     "missingStandardLegal": false,
-    "sourceId": "SVM-071",
+    "sourceId": "MC-287",
     "confidence": "medium"
   },
   {
@@ -4056,41 +840,9 @@
     "confidence": "medium"
   },
   {
-    "name": "壺壺",
-    "field": "abilities",
-    "missingId": "SC1b-004",
-    "missingStandardLegal": false,
-    "sourceId": "MC-023",
-    "confidence": "medium"
-  },
-  {
-    "name": "壺壺",
-    "field": "abilities",
-    "missingId": "SV3-005",
-    "missingStandardLegal": false,
-    "sourceId": "MC-023",
-    "confidence": "medium"
-  },
-  {
     "name": "詛咒娃娃",
     "field": "abilities",
     "missingId": "S6H-037",
-    "missingStandardLegal": false,
-    "sourceId": "M5-032",
-    "confidence": "medium"
-  },
-  {
-    "name": "詛咒娃娃",
-    "field": "abilities",
-    "missingId": "S8b-065",
-    "missingStandardLegal": false,
-    "sourceId": "M5-032",
-    "confidence": "medium"
-  },
-  {
-    "name": "詛咒娃娃",
-    "field": "abilities",
-    "missingId": "SCC-076",
     "missingStandardLegal": false,
     "sourceId": "M5-032",
     "confidence": "medium"
@@ -4200,150 +952,6 @@
     "confidence": "medium"
   },
   {
-    "name": "蜈蚣王",
-    "field": "abilities",
-    "missingId": "S5a-052",
-    "missingStandardLegal": false,
-    "sourceId": "SV11B-059",
-    "confidence": "medium"
-  },
-  {
-    "name": "蜈蚣王",
-    "field": "abilities",
-    "missingId": "SI-276",
-    "missingStandardLegal": false,
-    "sourceId": "SV11B-059",
-    "confidence": "medium"
-  },
-  {
-    "name": "雷吉洛克",
-    "field": "abilities",
-    "missingId": "S10P-036",
-    "missingStandardLegal": false,
-    "sourceId": "MC-373",
-    "confidence": "medium"
-  },
-  {
-    "name": "雷吉洛克",
-    "field": "abilities",
-    "missingId": "SC2b-059",
-    "missingStandardLegal": false,
-    "sourceId": "MC-373",
-    "confidence": "medium"
-  },
-  {
-    "name": "雷吉洛克",
-    "field": "abilities",
-    "missingId": "SC2D-070",
-    "missingStandardLegal": false,
-    "sourceId": "MC-373",
-    "confidence": "medium"
-  },
-  {
-    "name": "雷吉洛克",
-    "field": "abilities",
-    "missingId": "S12a-075",
-    "missingStandardLegal": false,
-    "sourceId": "MC-373",
-    "confidence": "medium"
-  },
-  {
-    "name": "雷電雲",
-    "field": "abilities",
-    "missingId": "SPZ-004",
-    "missingStandardLegal": false,
-    "sourceId": "M6-025",
-    "confidence": "medium"
-  },
-  {
-    "name": "雷電雲",
-    "field": "abilities",
-    "missingId": "SDP-006",
-    "missingStandardLegal": false,
-    "sourceId": "M6-025",
-    "confidence": "medium"
-  },
-  {
-    "name": "雷電雲",
-    "field": "abilities",
-    "missingId": "S5a-022",
-    "missingStandardLegal": false,
-    "sourceId": "M6-025",
-    "confidence": "medium"
-  },
-  {
-    "name": "雷電雲",
-    "field": "abilities",
-    "missingId": "SCC-066",
-    "missingStandardLegal": false,
-    "sourceId": "M6-025",
-    "confidence": "medium"
-  },
-  {
-    "name": "雷電雲",
-    "field": "abilities",
-    "missingId": "SI-146",
-    "missingStandardLegal": false,
-    "sourceId": "M6-025",
-    "confidence": "medium"
-  },
-  {
-    "name": "電蜘蛛",
-    "field": "abilities",
-    "missingId": "SV3a-017",
-    "missingStandardLegal": false,
-    "sourceId": "MC-050",
-    "confidence": "medium"
-  },
-  {
-    "name": "電蜘蛛",
-    "field": "abilities",
-    "missingId": "SC1D-053",
-    "missingStandardLegal": false,
-    "sourceId": "MC-050",
-    "confidence": "medium"
-  },
-  {
-    "name": "電龍",
-    "field": "abilities",
-    "missingId": "S6K-020",
-    "missingStandardLegal": false,
-    "sourceId": "M4-029",
-    "confidence": "medium"
-  },
-  {
-    "name": "電龍",
-    "field": "abilities",
-    "missingId": "SCC-064",
-    "missingStandardLegal": false,
-    "sourceId": "M4-029",
-    "confidence": "medium"
-  },
-  {
-    "name": "電龍",
-    "field": "abilities",
-    "missingId": "SI-136",
-    "missingStandardLegal": false,
-    "sourceId": "M4-029",
-    "confidence": "medium"
-  },
-  {
-    "name": "電龍",
-    "field": "abilities",
-    "missingId": "EXT05-011",
-    "missingStandardLegal": false,
-    "sourceId": "M4-029",
-    "confidence": "medium"
-  },
-  {
-    "name": "電龍",
-    "field": "abilities",
-    "missingId": "EXT01-021",
-    "missingStandardLegal": false,
-    "sourceId": "M4-029",
-    "confidence": "medium"
-  },
-  {
     "name": "瑪力露麗",
     "field": "abilities",
     "missingId": "SV2P-017",
@@ -4384,30 +992,6 @@
     "confidence": "medium"
   },
   {
-    "name": "瑪機雅娜",
-    "field": "abilities",
-    "missingId": "S10P-050",
-    "missingStandardLegal": false,
-    "sourceId": "MC-515",
-    "confidence": "medium"
-  },
-  {
-    "name": "瑪機雅娜",
-    "field": "abilities",
-    "missingId": "SC2b-097",
-    "missingStandardLegal": false,
-    "sourceId": "MC-515",
-    "confidence": "medium"
-  },
-  {
-    "name": "蓋蓋蟲",
-    "field": "abilities",
-    "missingId": "SC2b-002",
-    "missingStandardLegal": false,
-    "sourceId": "SV11B-009",
-    "confidence": "medium"
-  },
-  {
     "name": "赫普的啪嚓海膽ex",
     "field": "attacks",
     "missingId": "SV-P-208",
@@ -4416,115 +1000,11 @@
     "confidence": "medium"
   },
   {
-    "name": "輕身鱈",
-    "field": "abilities",
-    "missingId": "SV2P-023",
-    "missingStandardLegal": false,
-    "sourceId": "MC-219",
-    "confidence": "medium"
-  },
-  {
-    "name": "輕身鱈",
-    "field": "abilities",
-    "missingId": "SV4a-048",
-    "missingStandardLegal": false,
-    "sourceId": "MC-219",
-    "confidence": "medium"
-  },
-  {
-    "name": "輕身鱈",
-    "field": "abilities",
-    "missingId": "SV4a-230",
-    "missingStandardLegal": false,
-    "sourceId": "MC-219",
-    "confidence": "medium"
-  },
-  {
-    "name": "銃嘴大鳥",
-    "field": "abilities",
-    "missingId": "SCA-091",
-    "missingStandardLegal": false,
-    "sourceId": "M5-066",
-    "confidence": "medium"
-  },
-  {
-    "name": "銃嘴大鳥",
-    "field": "abilities",
-    "missingId": "SC2b-127",
-    "missingStandardLegal": false,
-    "sourceId": "M5-066",
-    "confidence": "medium"
-  },
-  {
-    "name": "噗噗豬",
-    "field": "abilities",
-    "missingId": "SV1a-037",
-    "missingStandardLegal": false,
-    "sourceId": "MC-306",
-    "confidence": "medium"
-  },
-  {
-    "name": "樂天河童",
-    "field": "abilities",
-    "missingId": "SC1b-009",
-    "missingStandardLegal": false,
-    "sourceId": "M2-007",
-    "confidence": "medium"
-  },
-  {
-    "name": "齒輪怪",
-    "field": "abilities",
-    "missingId": "SC2b-094",
-    "missingStandardLegal": false,
-    "sourceId": "MC-508",
-    "confidence": "medium"
-  },
-  {
-    "name": "齒輪怪",
-    "field": "abilities",
-    "missingId": "SC2D-110",
-    "missingStandardLegal": false,
-    "sourceId": "MC-508",
-    "confidence": "medium"
-  },
-  {
-    "name": "燈罩夜菇",
-    "field": "abilities",
-    "missingId": "SC2a-079",
-    "missingStandardLegal": false,
-    "sourceId": "MC-059",
-    "confidence": "medium"
-  },
-  {
-    "name": "磨牙彩皮魚",
-    "field": "abilities",
-    "missingId": "S5R-029",
-    "missingStandardLegal": false,
-    "sourceId": "SV7a-068",
-    "confidence": "medium"
-  },
-  {
-    "name": "磨牙彩皮魚",
-    "field": "abilities",
-    "missingId": "SCB-041",
-    "missingStandardLegal": false,
-    "sourceId": "SV7a-068",
-    "confidence": "medium"
-  },
-  {
-    "name": "磨牙彩皮魚",
-    "field": "abilities",
-    "missingId": "SI-114",
-    "missingStandardLegal": false,
-    "sourceId": "SV7a-068",
-    "confidence": "medium"
-  },
-  {
     "name": "貓頭夜鷹",
     "field": "abilities",
     "missingId": "S9a-056",
     "missingStandardLegal": false,
-    "sourceId": "MC-573",
+    "sourceId": "SV-P-145",
     "confidence": "medium"
   },
   {
@@ -4536,139 +1016,11 @@
     "confidence": "medium"
   },
   {
-    "name": "鴨嘴炎獸",
-    "field": "abilities",
-    "missingId": "SVEL-002",
-    "missingStandardLegal": false,
-    "sourceId": "M6-013",
-    "confidence": "medium"
-  },
-  {
-    "name": "鴨嘴炎獸",
-    "field": "abilities",
-    "missingId": "S9-017",
-    "missingStandardLegal": false,
-    "sourceId": "M6-013",
-    "confidence": "medium"
-  },
-  {
-    "name": "鴨嘴炎獸",
-    "field": "abilities",
-    "missingId": "S12a-017",
-    "missingStandardLegal": false,
-    "sourceId": "M6-013",
-    "confidence": "medium"
-  },
-  {
-    "name": "鴨嘴炎獸",
-    "field": "abilities",
-    "missingId": "SC1D-020",
-    "missingStandardLegal": false,
-    "sourceId": "M6-013",
-    "confidence": "medium"
-  },
-  {
-    "name": "鴨嘴炎獸",
-    "field": "abilities",
-    "missingId": "SC1b-042",
-    "missingStandardLegal": false,
-    "sourceId": "M6-013",
-    "confidence": "medium"
-  },
-  {
-    "name": "鴨嘴炎獸",
-    "field": "abilities",
-    "missingId": "S12a-175",
-    "missingStandardLegal": false,
-    "sourceId": "M6-013",
-    "confidence": "medium"
-  },
-  {
-    "name": "膽小蟲",
-    "field": "abilities",
-    "missingId": "S4a-004",
-    "missingStandardLegal": false,
-    "sourceId": "M6-008",
-    "confidence": "medium"
-  },
-  {
-    "name": "膽小蟲",
-    "field": "abilities",
-    "missingId": "SV3a-009",
-    "missingStandardLegal": false,
-    "sourceId": "M6-008",
-    "confidence": "medium"
-  },
-  {
-    "name": "膽小蟲",
-    "field": "abilities",
-    "missingId": "SV4K-021",
-    "missingStandardLegal": false,
-    "sourceId": "M6-008",
-    "confidence": "medium"
-  },
-  {
-    "name": "膽小蟲",
-    "field": "abilities",
-    "missingId": "SC2a-030",
-    "missingStandardLegal": false,
-    "sourceId": "M6-008",
-    "confidence": "medium"
-  },
-  {
     "name": "鬃岩狼人",
     "field": "abilities",
     "missingId": "S6H-042",
     "missingStandardLegal": false,
     "sourceId": "SV9-052",
-    "confidence": "medium"
-  },
-  {
-    "name": "鬃岩狼人",
-    "field": "abilities",
-    "missingId": "S12-054",
-    "missingStandardLegal": false,
-    "sourceId": "SV9-107",
-    "confidence": "medium"
-  },
-  {
-    "name": "鬃岩狼人",
-    "field": "abilities",
-    "missingId": "SC2b-070",
-    "missingStandardLegal": false,
-    "sourceId": "SV9-107",
-    "confidence": "medium"
-  },
-  {
-    "name": "鬃岩狼人",
-    "field": "abilities",
-    "missingId": "SC2b-071",
-    "missingStandardLegal": false,
-    "sourceId": "SV9-107",
-    "confidence": "medium"
-  },
-  {
-    "name": "鬃岩狼人",
-    "field": "abilities",
-    "missingId": "SC2D-078",
-    "missingStandardLegal": false,
-    "sourceId": "SV9-107",
-    "confidence": "medium"
-  },
-  {
-    "name": "鬃岩狼人",
-    "field": "abilities",
-    "missingId": "SC2D-079",
-    "missingStandardLegal": false,
-    "sourceId": "SV9-107",
-    "confidence": "medium"
-  },
-  {
-    "name": "鬃岩狼人",
-    "field": "abilities",
-    "missingId": "S8b-087",
-    "missingStandardLegal": false,
-    "sourceId": "SV9-107",
     "confidence": "medium"
   },
   {
@@ -4688,91 +1040,11 @@
     "confidence": "medium"
   },
   {
-    "name": "爆焰龜獸",
-    "field": "abilities",
-    "missingId": "EXT10-009",
-    "missingStandardLegal": false,
-    "sourceId": "M3-017",
-    "confidence": "medium"
-  },
-  {
     "name": "願增猿",
     "field": "attacks",
     "missingId": "EXT06-001",
     "missingStandardLegal": false,
     "sourceId": "SV6-055",
-    "confidence": "medium"
-  },
-  {
-    "name": "寶包繭",
-    "field": "abilities",
-    "missingId": "S6a-005",
-    "missingStandardLegal": false,
-    "sourceId": "SV11W-002",
-    "confidence": "medium"
-  },
-  {
-    "name": "鐵脖頸",
-    "field": "abilities",
-    "missingId": "SV4M-058",
-    "missingStandardLegal": false,
-    "sourceId": "MC-628",
-    "confidence": "medium"
-  },
-  {
-    "name": "鐵脖頸",
-    "field": "abilities",
-    "missingId": "SV8a-135",
-    "missingStandardLegal": false,
-    "sourceId": "MC-628",
-    "confidence": "medium"
-  },
-  {
-    "name": "鐵殼蛹",
-    "field": "abilities",
-    "missingId": "S5a-002",
-    "missingStandardLegal": false,
-    "sourceId": "M4-002",
-    "confidence": "medium"
-  },
-  {
-    "name": "鐵殼蛹",
-    "field": "abilities",
-    "missingId": "S8b-002",
-    "missingStandardLegal": false,
-    "sourceId": "M4-002",
-    "confidence": "medium"
-  },
-  {
-    "name": "鐵殼蛹",
-    "field": "abilities",
-    "missingId": "SC2D-004",
-    "missingStandardLegal": false,
-    "sourceId": "M4-002",
-    "confidence": "medium"
-  },
-  {
-    "name": "鐵殼蛹",
-    "field": "abilities",
-    "missingId": "SC2a-006",
-    "missingStandardLegal": false,
-    "sourceId": "M4-002",
-    "confidence": "medium"
-  },
-  {
-    "name": "鐵殼蛹",
-    "field": "abilities",
-    "missingId": "SC2a-007",
-    "missingStandardLegal": false,
-    "sourceId": "M4-002",
-    "confidence": "medium"
-  },
-  {
-    "name": "魔幻假面喵",
-    "field": "abilities",
-    "missingId": "SVAM-006",
-    "missingStandardLegal": false,
-    "sourceId": "MC-067",
     "confidence": "medium"
   },
   {
