@@ -76,6 +76,8 @@ interface BattleStateResponse {
   pendingChoice: PendingChoice | null;
   /** Shared, board-wide — only one Stadium may be in play at a time and it affects both sides. */
   activeStadium: { id: string; cardData: Card } | null;
+  /** Whether an undo snapshot exists (悔棋 button enablement). */
+  canUndo: boolean;
 }
 
 interface BattleSession {
@@ -85,7 +87,13 @@ interface BattleSession {
   aiDeck: string[];
   aiPlayer: IAIPlayer;
   createdAt: number;
+  /** Pre-move snapshots for undo — one entry per HUMAN move, capped. Undoing pops back to the
+   * state before the player's last action, which in a vs-AI game also rewinds any AI turns
+   * that followed it (the only sensible undo semantics against an AI). */
+  history: PtcgGameState[];
 }
+
+const MAX_UNDO_HISTORY = 20;
 
 /* ------------------------------------------------------- */
 /*  Helpers                                                */
@@ -184,6 +192,7 @@ function buildResponse(session: BattleSession): BattleStateResponse {
     activeStadium: G.activeStadium ? { id: G.activeStadium.id, cardData: G.activeStadium.cardData } : null,
     winner: G.winner,
     winReason: G.winReason,
+    canUndo: session.history.length > 0,
     pendingChoice: enrichPendingChoice(G, G.pendingChoice && G.pendingChoice.player === 0 ? G.pendingChoice : null),
   };
 }
@@ -367,6 +376,7 @@ router.post('/', async (ctx) => {
       aiDeck: opponentDeck,
       aiPlayer: resolved.ai,
       createdAt: Date.now(),
+      history: [],
     };
     sessions.set(session.id, session);
     // Map iteration order is insertion order, so the first key is the oldest.
@@ -394,6 +404,26 @@ router.get('/:id', (ctx) => {
 });
 
 /** Submit a move as the human player */
+/** 悔棋: rewind to the state before the player's last move (which, vs an AI, also rewinds
+ * any AI turns that followed it). Disabled once the game has a winner. */
+router.post('/:id/undo', (ctx) => {
+  const session = sessions.get(ctx.params.id);
+  if (!session) { ctx.status = 404; ctx.body = { error: 'Session not found' }; return; }
+  if (session.gameState.winner !== null) {
+    ctx.status = 400;
+    ctx.body = { error: 'Game is over — nothing to undo', state: buildResponse(session) };
+    return;
+  }
+  const snapshot = session.history.pop();
+  if (!snapshot) {
+    ctx.status = 400;
+    ctx.body = { error: 'Nothing to undo', state: buildResponse(session) };
+    return;
+  }
+  session.gameState = snapshot;
+  ctx.body = { sessionId: session.id, state: buildResponse(session) };
+});
+
 router.post('/:id/move', async (ctx) => {
   try {
     const session = sessions.get(ctx.params.id);
@@ -419,6 +449,10 @@ router.post('/:id/move', async (ctx) => {
       ctx.body = { error: 'Illegal move', legalMoves, state: buildResponse(session) };
       return;
     }
+    // Undo snapshot: taken only after the legality check, so history holds exactly one entry
+    // per move that actually executed. structuredClone is safe — PtcgGameState is pure data.
+    session.history.push(structuredClone(G));
+    if (session.history.length > MAX_UNDO_HISTORY) session.history.shift();
     executeGameAction(G, { type, payload });
     if (checkAndApplyWin(G)) {
       ctx.body = { sessionId: session.id, state: buildResponse(session) };

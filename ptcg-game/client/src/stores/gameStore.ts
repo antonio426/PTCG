@@ -50,6 +50,8 @@ export interface BattleState {
   winReason: string | null;
   pendingChoice: PendingChoice | null;
   activeStadium: { id: string; cardData: Card } | null;
+  /** Whether the server holds an undo snapshot (悔棋 button enablement). */
+  canUndo: boolean;
 }
 
 export type BattlePhase = 'select' | 'playing' | 'ended';
@@ -70,6 +72,7 @@ interface GameState {
 
   createBattle: (deckA: string[], deckB?: string[], difficulty?: 'easy' | 'normal' | 'hard') => Promise<string>;
   submitMove: (type: string, payload?: Record<string, unknown>) => Promise<void>;
+  undo: () => Promise<void>;
   refreshState: () => Promise<void>;
   leaveGame: () => void;
   setPlayerName: (name: string) => void;
@@ -113,6 +116,20 @@ export const useGameStore = create<GameState>((set, get) => ({
         error: err instanceof Error ? err.message : 'Unknown error',
       });
       throw err;
+    }
+  },
+
+  undo: async () => {
+    const { sessionId, battleState } = get();
+    if (!sessionId || !battleState || battleState.winner !== null || !battleState.canUndo) return;
+    set({ loading: true, error: null });
+    try {
+      const res = await fetch(`${BASE}/${sessionId}/undo`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Undo failed');
+      set({ battleState: data.state, loading: false });
+    } catch (err) {
+      set({ loading: false, error: err instanceof Error ? err.message : 'Unknown error' });
     }
   },
 

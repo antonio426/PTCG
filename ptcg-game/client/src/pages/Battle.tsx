@@ -556,7 +556,7 @@ export default function Battle() {
   const { cards, fetchCards } = useCardStore();
   const {
     battleState, loading, error, battlePhase,
-    createBattle, submitMove, leaveGame,
+    createBattle, submitMove, undo, leaveGame,
   } = useGameStore();
 
   const [selectedDeckId, setSelectedDeckId] = useState('');
@@ -1017,6 +1017,14 @@ export default function Battle() {
             <button onClick={leaveGame} className="flex items-center gap-1 text-emerald-500/70 hover:text-emerald-300 text-xs transition-colors mr-0.5 sm:mr-1">
               <IconArrowLeft className="w-3.5 h-3.5" />
               離開
+            </button>
+            <button
+              onClick={() => undo()}
+              disabled={loading || !bs.canUndo || bs.winner !== null}
+              title="悔棋：回到你上一步行動之前（含其後的 AI 回合）"
+              className="flex items-center gap-1 text-emerald-500/70 hover:text-emerald-300 text-xs transition-colors mr-1 disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              ↩ 悔棋
             </button>
             <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${bs.isPlayerTurn ? 'bg-green-900/60 text-green-300 border border-green-700/60 shadow-[0_0_8px_rgba(34,197,94,0.45)]' : 'bg-red-900/60 text-red-300 border border-red-700/60'}`}>
               {bs.isPlayerTurn ? '你的回合' : '對手回合'}
