@@ -11,7 +11,7 @@ import { resolveGenericAttackEffect } from './effects/genericAttacks';
 import { inferEvolvesFromSpecies, evolvesFromMatches } from './evolutionChains';
 import {
   EffectContext, EffectStep,
-  hasTrainerEffect, startTrainerEffect, resumeTrainerEffect,
+  hasTrainerEffect, canPlayTrainer, startTrainerEffect, resumeTrainerEffect,
   hasAbilityEffect, startAbilityEffect, resumeAbilityEffect, isAbilityUnlimitedUse,
   hasAttackEffect, startAttackEffect, resumeAttackEffect,
   normalizeAbilityName,
@@ -261,6 +261,15 @@ export const moves = {
 
     const cardName = trainerCard.cardData.name;
     const ctxInfo: EffectContext = { G, playerIndex: G.currentPlayer as 0 | 1, sourceCardId: trainerCard.id };
+
+    // Belt-and-braces re-check of the handler's canPlay gate — getLegalMoves already filters
+    // these out, but playTrainer is reachable from paths that never consulted it. An unplayable
+    // card goes straight back to hand consuming nothing: no discard, no cardsPlayedThisTurn,
+    // and (returning before the isSupporter bookkeeping below) no supporter slot.
+    if (!canPlayTrainer(cardName, ctxInfo)) {
+      player.hand.push(trainerCard);
+      return;
+    }
 
     // Stadium cards enter a shared field slot instead of the discard pile; only one is in play
     // at a time — playing a new one discards whichever was there (to its own owner's pile).

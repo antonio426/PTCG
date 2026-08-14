@@ -60,6 +60,7 @@ const ultraBall: EffectHandler = {
 
 /** 老大的指令 Boss's Orders: force-switch one of the opponent's benched Pokémon to active. */
 const bosssOrders: EffectHandler = {
+  canPlay(ctx) { return opponent(ctx.G, ctx.playerIndex).bench.some(c => c !== null); },
   start(ctx) {
     const opp = opponent(ctx.G, ctx.playerIndex);
     const benched = opp.bench.filter((c): c is GameCard => c !== null);
@@ -90,6 +91,21 @@ const bosssOrders: EffectHandler = {
 
 /** 神奇糖果 Rare Candy: evolve a Basic Pokémon in play directly into a Stage 2 from hand. */
 const rareCandy: EffectHandler = {
+  // Basic straight to Stage 2 only (never Stage 1 -> Stage 2), never on turn 1, and only
+  // when some Stage 2 in hand actually evolves from a Basic already in play that wasn't
+  // played this turn. All public/own information, so an impossible play is simply illegal.
+  canPlay(ctx) {
+    if (ctx.G.turn === 1) return false;
+    const p = player(ctx.G, ctx.playerIndex);
+    return p.hand
+      .filter(c => c.cardData.supertype === 'Pokémon' && c.cardData.subtypes.includes('Stage 2'))
+      .some(stage2 =>
+        [p.active, ...p.bench].some(t =>
+          t && t.cardData.subtypes.includes('Basic') && !p.pokemonPlayedThisTurn.includes(t.id)
+            && chainTracesBackTo(stage2.cardData, t.cardData.name)
+        )
+      );
+  },
   start(ctx) {
     // "無法對自己的最初回合...使用" — Rare Candy can't be used on your own first turn at all.
     if (ctx.G.turn === 1) return 'done';
@@ -328,6 +344,7 @@ const akamatsu: EffectHandler = {
 
 /** 寶可夢交替 Pokémon Exchange: switch your own Active with a Benched Pokémon. */
 const pokemonExchange: EffectHandler = {
+  canPlay(ctx) { const p = player(ctx.G, ctx.playerIndex); return !!p.active && p.bench.some(c => c !== null); },
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     if (!p.active || !p.bench.some(s => s !== null)) return 'done';
@@ -369,6 +386,7 @@ const potion: EffectHandler = {
 
 /** 能量轉移 Energy Transfer: move one attached Basic Energy from one of your Pokémon to another. */
 const energyTransfer: EffectHandler = {
+  canPlay(ctx) { return allPokemon(ctx.G, ctx.playerIndex).some(c => c.attachedEnergy.length > 0); },
   start(ctx) {
     const withEnergy = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.attachedEnergy.length > 0);
     if (withEnergy.length === 0) return 'done';
@@ -421,6 +439,8 @@ const energyDelivery: EffectHandler = {
 
 /** 寶可夢捕捉器 Pokémon Catcher: flip a coin; if heads, Boss's-Orders-style force switch. */
 const pokemonCatcher: EffectHandler = {
+  // even heads does nothing vs an empty bench
+  canPlay(ctx) { return opponent(ctx.G, ctx.playerIndex).bench.some(c => c !== null); },
   start(ctx) {
     if (!flipCoin()) return 'done';
     return bosssOrders.start(ctx);
@@ -467,6 +487,7 @@ const judge: EffectHandler = {
 
 /** 能量回收 Energy Retrieval: from discard, choose up to 2 Basic Energy to hand. */
 const energyRetrieval: EffectHandler = {
+  canPlay(ctx) { return player(ctx.G, ctx.playerIndex).discardPile.some(c => c.cardData.subtypes.includes('Basic Energy')); },
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     const options = deckOptions(p.discardPile, c => c.cardData.subtypes.includes('Basic Energy'));
@@ -481,6 +502,7 @@ const energyRetrieval: EffectHandler = {
 
 /** 能量回收器 Energy Recycling System: from discard, choose up to 5 Basic Energy back into the deck (reshuffled). */
 const energyRecyclingSystem: EffectHandler = {
+  canPlay(ctx) { return player(ctx.G, ctx.playerIndex).discardPile.some(c => c.cardData.subtypes.includes('Basic Energy')); },
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     const options = deckOptions(p.discardPile, c => c.cardData.subtypes.includes('Basic Energy'));
@@ -522,6 +544,7 @@ const crushingHammer: EffectHandler = {
 
 /** 改造之錘 Forest Hammer(-style): discard 1 Special Energy attached to an opponent's Pokémon (no coin flip). */
 const modifiedHammer: EffectHandler = {
+  canPlay(ctx) { return allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1).some(c => c.attachedEnergy.length > 0 && !isEnergyDiscardProtected(ctx.G, c)); },
   start(ctx) {
     const targets = allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1).filter(c => c.attachedEnergy.length > 0 && !isEnergyDiscardProtected(ctx.G, c));
     const options: { id: string; label: string }[] = [];
@@ -652,6 +675,8 @@ const dorasena: EffectHandler = {
 
 /** 頂尖捕捉器 Top Catcher: force-switch an opponent's benched Pokémon to active, then switch your own. */
 const topCatcher: EffectHandler = {
+  // full no-op only when neither half can act
+  canPlay(ctx) { return bosssOrders.canPlay!(ctx) || pokemonExchange.canPlay!(ctx); },
   start(ctx) {
     const step = bosssOrders.start(ctx);
     return step === 'done' ? pokemonExchange.start(ctx) : { ...step, context: { ...step.context, step: 'opponent' } };
@@ -883,6 +908,7 @@ const bugCatchingSet: EffectHandler = {
 
 /** 道具拆除器: discard up to 2 Pokémon Tool cards attached to EITHER side's Pokémon. */
 const toolWrecker: EffectHandler = {
+  canPlay(ctx) { return [...allPokemon(ctx.G, 0), ...allPokemon(ctx.G, 1)].some(c => !!c.attachedTool); },
   start(ctx) {
     const targets = [...allPokemon(ctx.G, 0), ...allPokemon(ctx.G, 1)].filter(c => c.attachedTool);
     if (targets.length === 0) return 'done';
@@ -924,6 +950,7 @@ const rocketApollo = mutualHandResetAbility(5, 3);
 
 /** 聖灰: from discard pile, choose up to 5 Pokémon cards, show opponent, put back into deck (reshuffled). */
 const holyAsh: EffectHandler = {
+  canPlay(ctx) { return player(ctx.G, ctx.playerIndex).discardPile.some(c => c.cardData.supertype === 'Pokémon'); },
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     const options = deckOptions(p.discardPile, c => c.cardData.supertype === 'Pokémon');
@@ -1072,6 +1099,7 @@ const saijo: EffectHandler = {
 
 /** N的ＰＰ提升劑: from discard, 1 Basic Energy, attach to a Benched "N的" family Pokémon. */
 const nsBooster: EffectHandler = {
+  canPlay(ctx) { const p = player(ctx.G, ctx.playerIndex); return p.bench.some(c => c !== null && c.cardData.name.includes('N的')) && p.discardPile.some(c => c.cardData.subtypes.includes('Basic Energy')); },
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     const targets = p.bench.filter((c): c is GameCard => c !== null && c.cardData.name.includes('N的'));
@@ -1100,6 +1128,7 @@ const nsBooster: EffectHandler = {
  * (The printed "only with a Tera Pokémon in play" gate can't be checked — Tera isn't modeled in this
  * project's card data — so it's always available, a documented simplification.) */
 const glassHorn: EffectHandler = {
+  canPlay(ctx) { const p = player(ctx.G, ctx.playerIndex); return p.bench.some(c => c !== null && (c.cardData.types || []).includes('Colorless')) && p.discardPile.some(c => c.cardData.subtypes.includes('Basic Energy')); },
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     const targets = p.bench.filter((c): c is GameCard => c !== null && (c.cardData.types || []).includes('Colorless'));
@@ -1293,6 +1322,13 @@ const aokisMethod: EffectHandler = {
 
 /** 奇跡修正檔: from discard, 1 Basic Psychic Energy, attach to a Benched Psychic Pokémon. */
 const miracleCipher: EffectHandler = {
+  // Discard pile and bench are public zones: with no Basic Psychic Energy discarded or no
+  // Benched Psychic Pokémon, start() would bail untouched and the card be wasted.
+  canPlay(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    return p.bench.some(c => c !== null && (c.cardData.types || []).includes('Psychic'))
+      && p.discardPile.some(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes('Psychic'));
+  },
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     const targets = p.bench.filter((c): c is GameCard => c !== null && (c.cardData.types || []).includes('Psychic'));
@@ -1549,6 +1585,7 @@ const superJumboIceCream: EffectHandler = {
 
 /** 豐收漁網: from discard, up to 3 each of Water Pokémon + Basic Water Energy, show opponent, back into the deck (reshuffled) — not hand. */
 const harvestNet: EffectHandler = {
+  canPlay(ctx) { return player(ctx.G, ctx.playerIndex).discardPile.some(c => (c.cardData.supertype === 'Pokémon' && (c.cardData.types || []).includes('Water')) || (c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes('Water'))); },
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     const options = deckOptions(p.discardPile, c =>
@@ -2945,6 +2982,13 @@ export const trainerEffects: Record<string, EffectHandler> = {
 
 export function hasTrainerEffect(name: string): boolean {
   return normalizeCardName(name) in trainerEffects;
+}
+
+/** True when the named Trainer either defines no canPlay gate or its gate passes — see
+ * EffectHandler.canPlay in types.ts for the contract (public-zone requirements only). */
+export function canPlayTrainer(name: string, ctx: EffectContext): boolean {
+  const handler = trainerEffects[normalizeCardName(name)];
+  return handler?.canPlay ? handler.canPlay(ctx) : true;
 }
 
 export function startTrainerEffect(name: string, ctx: EffectContext): EffectStep {

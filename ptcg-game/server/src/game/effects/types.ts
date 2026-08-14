@@ -25,6 +25,16 @@ export interface EffectHandler {
    * once-per-turn tracking in abilitiesUsedThisTurn.
    */
   unlimitedUse?: boolean;
+  /**
+   * Trainers only: "could this card's effect do anything at all right now?" Consulted by
+   * getLegalMoves (the play isn't offered) and double-checked by moves.playTrainer (the card
+   * returns to hand, consuming nothing) — without it, a play whose start() bails out
+   * immediately still discards the card for zero effect. Mirror start()'s own bail-out
+   * conditions, keep it read-only, and only define it for cards whose requirements live in
+   * PUBLIC zones (discard pile, board): real rules let you play a hidden-zone search (deck)
+   * even when it will find nothing, so deck-search Trainers must NOT get a canPlay.
+   */
+  canPlay?(ctx: EffectContext): boolean;
 }
 
 export function player(G: PtcgGameState, idx: 0 | 1) {

@@ -1,10 +1,11 @@
 import { GameCard, EnergyType, LegalAction } from '@ptcg/shared';
 import { PtcgGameState, GamePhase, PendingChoice } from './GameState';
 import { hasAbilityEffect } from './effects/abilities';
+import { canPlayTrainer } from './effects/trainers';
 import { getRetreatCostReduction, getColorlessCostReduction } from './effects/tools';
 import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatCostReduction, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, isAttackLockedByTimedEffect, isItemAndToolPlayBlocked, isItemLockedByTimedEffect, isItemPlayBlocked, isNamedAttackLockedByTimedEffect, isRetreatLockedByTimedEffect } from './effects/passiveAbilities';
 import { normalizeAbilityName, normalizeCardName } from './effects/types';
-import { hasEvolvesFrom, evolvesFromMatches, inferEvolvesFromSpecies, chainTracesBackTo } from './evolutionChains';
+import { hasEvolvesFrom, evolvesFromMatches, inferEvolvesFromSpecies } from './evolutionChains';
 
 /** All k-sized combinations of `items`, capped so huge hands can't explode the move list. */
 function combinations<T>(items: T[], k: number, cap = 40): T[][] {
@@ -127,34 +128,6 @@ function isFirstTurnOfGame(G: PtcgGameState): boolean {
   return G.turn === 1;
 }
 
-/**
- * "Can this Trainer's effect actually do anything right now?" gates, keyed by normalized card
- * name. Each mirrors the bail-out conditions of that card's own effect handler in
- * effects/trainers.ts — when the handler's start() would immediately return 'done' having done
- * nothing, the play must not be offered, or the card is consumed for zero effect. Keep the two
- * in sync when either side changes.
- */
-type PlayerState = PtcgGameState['players'][0];
-const TRAINER_PLAY_GATES: Record<string, (G: PtcgGameState, player: PlayerState) => boolean> = {
-  // Rare Candy: Basic straight to Stage 2 only (never Stage 1 -> Stage 2), never on turn 1,
-  // and only when some Stage 2 in hand actually evolves from a Basic already in play that
-  // wasn't played this turn.
-  '神奇糖果': (G, player) =>
-    !isFirstTurnOfGame(G) &&
-    player.hand
-      .filter(c => c.cardData.supertype === 'Pokémon' && c.cardData.subtypes.includes('Stage 2'))
-      .some(stage2 =>
-        [player.active, ...player.bench].some(t =>
-          t && t.cardData.subtypes.includes('Basic') && !player.pokemonPlayedThisTurn.includes(t.id)
-            && chainTracesBackTo(stage2.cardData, t.cardData.name)
-        )
-      ),
-  // 奇跡修正檔: needs a Basic Psychic Energy in the discard AND a Benched Psychic Pokémon —
-  // miracleCipher.start() returns 'done' untouched when either is missing.
-  '奇跡修正檔': (_G, player) =>
-    player.bench.some(c => c !== null && (c.cardData.types || []).includes('Psychic')) &&
-    player.discardPile.some(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes('Psychic')),
-};
 
 export function canEvolve(G: PtcgGameState, playerIndex: number, cardId: string, targetId: string): boolean {
   const player = playerState(G, playerIndex, ['main']);
@@ -356,13 +329,12 @@ export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalActio
         const isItem = card.cardData.subtypes.includes('Item');
         const blockedByOpponentAbility = ((isItem || card.cardData.subtypes.includes('Pokémon Tool')) && isItemAndToolPlayBlocked(G, playerIndex as 0 | 1))
           || (isItem && (isItemPlayBlocked(G, playerIndex as 0 | 1) || isItemLockedByTimedEffect(G, playerIndex as 0 | 1)));
-        // Per-card playability gates (TRAINER_PLAY_GATES below): a Trainer whose effect could
-        // not do anything right now is not offered as a move at all — otherwise the generic
-        // trainer-play flow discards the card even though its effect handler bailed out
-        // immediately, i.e. the item "failed" but still cost the card. Name goes through
-        // normalizeCardName per the documented zero-width-char pitfall.
-        const gate = TRAINER_PLAY_GATES[normalizeCardName(card.cardData.name)];
-        const blockedByGate = gate ? !gate(G, player) : false;
+        // Per-handler canPlay gate (EffectHandler.canPlay, co-located with each trainer's own
+        // effect logic in effects/trainers.ts): a Trainer whose effect could not do anything
+        // right now is not offered as a move at all — otherwise the generic trainer-play flow
+        // discards the card even though its handler bailed out immediately, i.e. the item
+        // "failed" but still cost the card.
+        const blockedByGate = !canPlayTrainer(card.cardData.name, { G, playerIndex: playerIndex as 0 | 1, sourceCardId: card.id });
         if (!blockedFirstTurn && !blockedAlreadyPlayed && !blockedByOpponentAbility && !blockedByGate) {
           legalMoves.push({
             type: 'play_trainer',
