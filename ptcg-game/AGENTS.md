@@ -1,5 +1,9 @@
 # PTCG 卡牌遊戲專案 — Agent Context
 
+> **注意**：本檔案的架構描述寫於專案早期，已與現狀脫節（後端實為 Koa + boardgame.io、AI 有
+> Random/Mock/Heuristic/Claude 四種、資料來源除 TCGdex 外還有官網爬蟲）。**當前準確的操作指南
+> 是 `CLAUDE.md`**；本檔案保留作為歷史決策記錄與 Backlog 存檔。
+
 ## 專案概述
 
 Pokémon TCG 卡牌遊戲，使用 Express + TypeScript 後端，React + TypeScript 前端。卡牌資料來源為 TCGdex v2 API（`https://api.tcgdex.net/v2/`）。
@@ -53,17 +57,13 @@ ptcg-game/
 
 ## 已知問題 & Backlog
 
-### 1. 卡片 ID 格式不一致 (已知、未解決)
+### 1. 卡片 ID 格式不一致 (✅ 已完全解決，2026-08)
 
 **問題**: `preset-decks.json` 使用舊格式 ID（`scr-14129`），但當前的 TCGdex 目錄使用 `SV*-*` 格式 ID（如 `SV1V-001`）。當對戰使用預設牌組時，`fetchCardsByIds` 因 cache 中沒有任何卡片的 id 為 `scr-14129` 而失敗。
 
-**影響**: 對戰創建會拋出「Card data not found for scr-14129」錯誤。
-
-**可能解法**:
-- (A) 更新 `preset-decks.json` 的卡片 ID 為新格式
-- (B) 在伺服器啟動時建立舊 ID → 新 ID 的對照表
-- (C) 在 `tcgdex.ts` 的 `fetchCardsByIds` 中實作 fallback 查詢（例如比對 `localId`）
-- (D) 使用者自己保存的 localStorage 牌組也使用舊 ID，需要一個遷移腳本
+**解決方式**（採用了候選解法 A + D 的組合）:
+- (A) 預組：`audit-preset-decks-standard.ts --fix` 把 56 副預組全部重指到 Standard 印刷（commit 819a278）。
+- (D) 使用者 localStorage 牌組：`printRemap.ts` + `POST /api/cards/remap` + deckStore 的一次性自動遷移（備份到 `ptcg-decks-pre-migration`、console 報告、`ptcg-decks-migrated-v1` 防重跑；commit f99f122、入口修正 60c2d52）。
 
 ### 2. 使用者 localStorage 牌組 ID 格式衝突 (已部分修復)
 
