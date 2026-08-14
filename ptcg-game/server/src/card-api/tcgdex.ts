@@ -325,7 +325,16 @@ export async function fetchAllCards(lang = 'zh-tw'): Promise<MapCard[]> {
   console.log(`[tcgdex] Loaded ${cards.length}/${total} cards via category endpoints`);
 
   inMemoryCards = cards;
-  await cache.saveCardCache(cards);
+  // Never overwrite an EXISTING cards.json from this full-refetch path unless the refresh was
+  // explicitly requested: reaching here with a file present means the file failed to parse
+  // (e.g. corruption), and clobbering it would permanently destroy the curated dataset — serve
+  // the fetched data from memory and leave the file for manual recovery instead. This exact
+  // clobber happened once via a mid-write restart before writes were atomic.
+  if (!cache.cardCacheFileExists() || forceRefresh) {
+    await cache.saveCardCache(cards);
+  } else {
+    console.error('[tcgdex] cards.json exists but failed to load — NOT overwriting it with bare TCGdex data. Restore it (e.g. from git) and restart.');
+  }
   return cards;
 }
 
@@ -506,6 +515,13 @@ export function invalidateCache(): void {
 }
 
 export async function refreshCache(lang = 'zh-tw'): Promise<{ cards: number; sets: number }> {
+  // Curated-master policy: a full refresh deletes cards.json and rebuilds it from bare TCGdex
+  // data, destroying every scripted backfill. Only allowed when explicitly opted in via env —
+  // the `?refresh=true` route param alone must never be able to do this.
+  if (process.env.PTCG_REFRESH_CARDS !== '1') {
+    console.error('[tcgdex] refreshCache blocked: set PTCG_REFRESH_CARDS=1 to explicitly allow rebuilding the curated dataset (re-run the curation scripts afterwards).');
+    return { cards: (inMemoryCards ?? []).length, sets: (inMemorySets ?? []).length };
+  }
   invalidateCache();
   const cards = await fetchAllCards(lang);
   const sets = await fetchAllSets(lang);

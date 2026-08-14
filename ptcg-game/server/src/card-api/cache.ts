@@ -40,7 +40,21 @@ function readCacheFile<T>(filePath: string): CacheData<T> | null {
 async function writeCacheFile<T>(filePath: string, data: T): Promise<void> {
   ensureDataDir();
   const cache: CacheData<T> = { timestamp: Date.now(), data };
-  await fs.promises.writeFile(filePath, JSON.stringify(cache, null, 2), 'utf-8');
+  // Atomic write (tmp + rename): a tsx-watch restart landing mid-writeFile left a TRUNCATED
+  // cards.json on disk; the new process's JSON.parse failed, readCacheFile returned null, and
+  // fetchAllCards treated that as "no cache" — full TCGdex refetch, which then OVERWROTE the
+  // curated dataset with bare summaries (10714 curated cards -> 7436, every M-series print and
+  // official-site backfill gone). Rename is atomic on the same volume, so readers only ever see
+  // the old file or the complete new one.
+  const tmpPath = `${filePath}.tmp`;
+  await fs.promises.writeFile(tmpPath, JSON.stringify(cache, null, 2), 'utf-8');
+  await fs.promises.rename(tmpPath, filePath);
+}
+
+/** True when the file exists but can't be parsed — distinct from "no cache at all", so callers
+ * can refuse to clobber a possibly-recoverable curated file with freshly fetched bare data. */
+export function cardCacheFileExists(): boolean {
+  return fs.existsSync(CARDS_FILE);
 }
 
 export async function saveCardCache(cards: MapCard[]): Promise<void> {
