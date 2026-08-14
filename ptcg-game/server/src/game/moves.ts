@@ -113,12 +113,29 @@ export const moves = {
     player.hand.splice(idx, 1);
     player.active = card;
     G.phase = 'draw';
+    addLog(G, parseInt(ctx.currentPlayer), 'choose_active', `Set ${card.cardData.name} as Active Pokémon`);
+    // Deferred mulligan compensation (real rules: optional, 0..max) resolves before turn 1 —
+    // currentPlayer stays with the chooser until it's answered; the resolveChoice handler
+    // performs the firstPlayer handover instead.
+    if (G.pendingMulliganBonus && G.pendingMulliganBonus.player === parseInt(ctx.currentPlayer)) {
+      const { player: chooser, max } = G.pendingMulliganBonus;
+      G.pendingChoice = {
+        player: chooser,
+        effectKey: 'mulligan_bonus',
+        prompt: `對手重抽懲罰補償：選擇補抽張數（最多 ${max} 張）`,
+        choiceType: 'select_from_list',
+        count: 1,
+        options: Array.from({ length: max + 1 }, (_, n) => ({ id: String(n), label: `補抽 ${n} 張` })),
+        context: {},
+      };
+      G.pendingMulliganBonus = undefined;
+      return;
+    }
     // Setup is complete — the coin flip's decided first player takes over turn 1 now (during the
     // choose_first/choose_active phases currentPlayer was pinned to the interactive player so
     // getLegalMoves kept working). When that's the AI, humanBattle's move endpoint sees
     // currentPlayer === 1 after this move and runs the AI's (restricted) first turn.
     if (G.firstPlayer !== undefined) G.currentPlayer = G.firstPlayer;
-    addLog(G, parseInt(ctx.currentPlayer), 'choose_active', `Set ${card.cardData.name} as Active Pokémon`);
   },
 
   drawCard: ({ G, ctx }: { G: PtcgGameState; ctx: any }) => {
@@ -376,6 +393,56 @@ export const moves = {
     if (G.pendingChoice.player !== G.currentPlayer) return;
 
     const { effectKey, context } = G.pendingChoice;
+
+    // Interactive mulligan compensation, stage 1: how many bonus cards to draw (0..max).
+    // Stage 2 (below) optionally benches any Basics among the drawn cards — reference-site
+    // behavior. Only after both stages does turn 1 hand over to the coin flip's firstPlayer.
+    if (effectKey === 'mulligan_bonus') {
+      const player = G.players[G.currentPlayer];
+      const n = parseInt(selection[0] ?? '0', 10) || 0;
+      const drawnIds: string[] = [];
+      for (let i = 0; i < n && player.deck.length > 0; i++) {
+        const card = player.deck.pop()!;
+        player.hand.push(card);
+        drawnIds.push(card.id);
+      }
+      addLog(G, G.currentPlayer, 'mulligan_bonus_draw', `選擇補抽 ${n} 張（對手重抽懲罰補償）`);
+      const drawnBasics = player.hand.filter(c => drawnIds.includes(c.id)
+        && c.cardData.supertype === 'Pokémon' && c.cardData.subtypes.includes('Basic'));
+      const freeSlots = player.bench.filter(s => s === null).length;
+      if (drawnBasics.length > 0 && freeSlots > 0) {
+        G.pendingChoice = {
+          player: G.currentPlayer as 0 | 1,
+          effectKey: 'mulligan_bonus_bench',
+          prompt: '可將補抽到的基礎寶可夢直接放上備戰區（可不選）',
+          choiceType: 'select_from_list',
+          minCount: 0,
+          maxCount: Math.min(drawnBasics.length, freeSlots),
+          options: drawnBasics.map(c => ({ id: c.id, label: c.cardData.name })),
+          context: {},
+        };
+      } else {
+        G.pendingChoice = null;
+        if (G.firstPlayer !== undefined) G.currentPlayer = G.firstPlayer;
+      }
+      return;
+    }
+    if (effectKey === 'mulligan_bonus_bench') {
+      const player = G.players[G.currentPlayer];
+      const placed: string[] = [];
+      for (const id of selection) {
+        const idx = player.hand.findIndex(c => c.id === id);
+        const slot = player.bench.findIndex(s => s === null);
+        if (idx === -1 || slot === -1) continue;
+        const card = player.hand.splice(idx, 1)[0];
+        player.bench[slot] = card;
+        placed.push(card.cardData.name);
+      }
+      if (placed.length > 0) addLog(G, G.currentPlayer, 'mulligan_bonus_bench', `放到備戰區：${placed.join('、')}`);
+      G.pendingChoice = null;
+      if (G.firstPlayer !== undefined) G.currentPlayer = G.firstPlayer;
+      return;
+    }
 
     if (effectKey === 'tool_attach') {
       const player = G.players[G.currentPlayer];

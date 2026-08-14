@@ -167,15 +167,24 @@ export function setup(setupData?: PtcgSetupData): PtcgGameState {
     }
   }
 
+  let pendingMulliganBonus: { player: 0 | 1; max: number } | undefined;
   for (let p = 0; p < 2; p++) {
     const opponentIdx = (1 - p) as 0 | 1;
+    if (mulliganCounts[p] === 0) continue;
+    if (setupData.interactivePlayer === opponentIdx) {
+      // Real rules: the compensation draw is OPTIONAL (0..max). Defer the interactive player's
+      // decision to a PendingChoice raised by chooseActive — auto-drawing here took the choice
+      // away. Non-interactive sides below keep the auto-max behavior (what the reference AI
+      // did in all 220 audited games).
+      pendingMulliganBonus = { player: opponentIdx, max: mulliganCounts[p] };
+      addSetupLog(turnLog, opponentIdx, 'mulligan_reveal', `對手起手無基礎寶可夢，重抽懲罰 ${mulliganCounts[p]} 次 → 你可選擇多抽 ${mulliganCounts[p]} 張`);
+      continue;
+    }
     for (let m = 0; m < mulliganCounts[p]; m++) {
       const card = players[opponentIdx].deck.pop();
       if (card) players[opponentIdx].hand.push(card);
     }
-    if (mulliganCounts[p] > 0) {
-      addSetupLog(turnLog, opponentIdx, 'mulligan_bonus_draw', `Opponent mulliganed ${mulliganCounts[p]} time(s) — drew ${mulliganCounts[p]} bonus card(s)`);
-    }
+    addSetupLog(turnLog, opponentIdx, 'mulligan_bonus_draw', `選擇補抽 ${mulliganCounts[p]} 張（對手重抽懲罰補償）`);
   }
 
   for (let p = 0; p < 2; p++) {
@@ -208,6 +217,7 @@ export function setup(setupData?: PtcgSetupData): PtcgGameState {
     phase: interactiveWonFlip ? 'choose_first' : (setupData.interactivePlayer !== undefined ? 'choose_active' : 'draw'),
     coinWinner,
     firstPlayer,
+    pendingMulliganBonus,
     winner: null,
     winReason: null,
     turnLog,

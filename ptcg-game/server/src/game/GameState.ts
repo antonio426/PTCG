@@ -67,6 +67,10 @@ export interface PtcgGameState {
    * interactive player won. During choose_first/choose_active, currentPlayer stays the
    * interactive player so getLegalMoves keeps working — chooseActive applies this afterward. */
   firstPlayer?: 0 | 1;
+  /** Deferred mulligan compensation for an INTERACTIVE player (real rules: drawing the bonus
+   * cards is optional, 0..max). Non-interactive sides auto-draw the max in setup as before.
+   * Converted into a PendingChoice by chooseActive, resolved before turn 1 begins. */
+  pendingMulliganBonus?: { player: 0 | 1; max: number };
   winner: number | null;
   winReason: string | null;
   turnLog: TurnAction[];
