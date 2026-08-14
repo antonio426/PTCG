@@ -1,5 +1,5 @@
 {
-  "timestamp": 1785775727396,
+  "timestamp": 1786539863109,
   "data": [
     {
       "id": "SVD-001",
@@ -316942,7 +316942,14 @@
       "convertedRetreatCost": 1,
       "artist": "akagi",
       "regulationMark": "I",
-      "localId": "018"
+      "localId": "018",
+      "abilities": [
+        {
+          "name": "激動渦輪",
+          "text": "若自己的場上有【火】屬性的「超級進化寶可夢【ex】」，則在自己的回合時，可不限次數使用。從自己的手牌選擇1張「基本【火】能量」卡，附於備戰區的【火】寶可夢身上。",
+          "type": "Ability"
+        }
+      ]
     },
     {
       "id": "M2-013",
@@ -323179,6 +323186,19 @@
       "convertedRetreatCost": 2,
       "nationalPokedexNumbers": [
         741
+      ],
+      "attacks": [
+        {
+          "name": "火焰之翼",
+          "cost": [
+            "Fire",
+            "Fire",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 3,
+          "damage": "110",
+          "text": ""
+        }
       ]
     },
     {
@@ -398083,6 +398103,19 @@
       "convertedRetreatCost": 2,
       "nationalPokedexNumbers": [
         741
+      ],
+      "attacks": [
+        {
+          "name": "火焰之翼",
+          "cost": [
+            "Fire",
+            "Fire",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 3,
+          "damage": "110",
+          "text": ""
+        }
       ]
     },
     {
@@ -398694,6 +398727,19 @@
       "convertedRetreatCost": 2,
       "nationalPokedexNumbers": [
         741
+      ],
+      "attacks": [
+        {
+          "name": "火焰之翼",
+          "cost": [
+            "Fire",
+            "Fire",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 3,
+          "damage": "110",
+          "text": ""
+        }
       ]
     },
     {
