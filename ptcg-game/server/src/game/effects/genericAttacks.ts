@@ -24,6 +24,7 @@
  * into, so there'd be nothing to actually change).
  */
 import { StatusCondition } from '@ptcg/shared';
+import { normalizeAbilityName } from './types';
 
 export interface TimedEffectDescriptor {
   kind: 'cantAttack' | 'cantRetreat' | 'damageImmune' | 'damageReduction' | 'outgoingDamageReduction' | 'outgoingDamageBoost' | 'coinFlipAttackMiss' | 'namedAttackLock';
@@ -237,6 +238,17 @@ export interface AttackBoardContext {
   ownBenchStage2Count: number;
   /** Count of own-Bench Pokémon holding at least 1 Energy of each given type. */
   ownBenchEnergyHolderCounts: Record<string, number>;
+  /** Energy count this very attack's printed cost requires — for "if this Pokémon has N more
+   * Energy attached than this attack costs, add M damage" texts, which can't be evaluated
+   * from attachedTotal alone. */
+  attackCostCount: number;
+  /** Prizes the OPPONENT has already taken (6 - their remaining), for prize-scaled damage. */
+  opponentTakenPrizes: number;
+  /** Damage counters on each own-Bench Pokémon, keyed by that Pokémon's name — for
+   * "damage = counters on all your benched <named family> x N" texts. */
+  ownBenchDamageCountersByName: { name: string; counters: number }[];
+  /** How many Pokémon in the attacker's own discard pile carry each ability name. */
+  ownDiscardAbilityCounts: Record<string, number>;
 }
 
 const STATUS_ZH: Record<string, StatusCondition> = {
@@ -428,6 +440,14 @@ const TEMPLATES: RegExp[] = [
   /^造成自己場上的身上放置有傷害指示物的寶可夢的數量×(\d+)點傷害。$/,
   /^造成自己的場上的，持有「(.+?)」招式的寶可夢的數量×(\d+)點傷害。$/,
   /^造成這隻寶可夢身上附加的基本能量的數量×(\d+)點傷害。$/,
+  // "attack fails unless …" + surplus-energy / prize / discard-ability / benched-family scaling.
+  // Added after auditing 220 real games on ptcg-tw-sim.com (data-scraped/reference-audit.md).
+  /^若自己的備戰區沒有「(.+?)」，則這個招式失敗。這個招式的傷害不計算弱點・抵抗力。$/,
+  /^若自己的備戰寶可夢為(\d+)隻以下，則這個招式失敗。$/,
+  /^若身上附有的能量比使用這個招式所需的能量多(\d+)個，則增加(\d+)點傷害。$/,
+  /^造成對手已經獲得的獎賞卡的張數×(\d+)點傷害。$/,
+  /^若自己的棄牌區有(\d+)張以上擁有特性「(.+?)」的寶可夢卡，則增加(\d+)點傷害。$/,
+  /^造成自己的備戰區的所有「(.+?)」身上放置的傷害指示物的數量×(\d+)點傷害。這個招式的傷害不計算弱點。$/,
 ];
 
 /** Pure classifier (no randomness) — used by coverage-report.ts to count these as covered. */
@@ -771,6 +791,49 @@ export function resolveGenericAttackEffect(text: string, damageField: string, bo
   if (m) {
     const type = ENERGY_TYPE_FROM_ZH[m[1]];
     if (type) return { baseDamage: parseBaseNumber(damageField), deckSearchTypedEnergyToSelfCount: { type, count: 1 } };
+  }
+
+  // ── "this attack fails unless <condition>" family ───────────────────────────────────────
+  // Verified against ptcg-tw-sim.com, which logs the failure explicitly
+  // ("宇宙光束：備戰區沒有「月石」，招式失敗") rather than dealing the printed damage anyway.
+
+  // 若自己的備戰區沒有「X」，則這個招式失敗。這個招式的傷害不計算弱點・抵抗力。(太陽岩::宇宙光束)
+  m = t.match(/^若自己的備戰區沒有「(.+?)」，則這個招式失敗。這個招式的傷害不計算弱點・抵抗力。$/);
+  if (m) {
+    const present = board.ownBenchNames.some(n => n.includes(m![1]));
+    return { baseDamage: present ? parseBaseNumber(damageField) : 0, ignoreWeakness: true, ignoreResistance: true };
+  }
+  // 若自己的備戰寶可夢為N隻以下，則這個招式失敗。(比克提尼::V戰力)
+  m = t.match(/^若自己的備戰寶可夢為(\d+)隻以下，則這個招式失敗。$/);
+  if (m) return { baseDamage: board.ownBenchCount <= parseInt(m[1], 10) ? 0 : parseBaseNumber(damageField) };
+
+  // 若身上附有的能量比使用這個招式所需的能量多N個，則增加M點傷害。(胖嘟嘟ex::力量壓制, 超級龍頭地鼠ex::極限鑽)
+  m = t.match(/^若身上附有的能量比使用這個招式所需的能量多(\d+)個，則增加(\d+)點傷害。$/);
+  if (m) {
+    const surplus = board.attackerTotalEnergyCount - board.attackCostCount;
+    return { baseDamage: parseBaseNumber(damageField) + (surplus >= parseInt(m[1], 10) ? parseInt(m[2], 10) : 0) };
+  }
+
+  // 造成對手已經獲得的獎賞卡的張數×N點傷害。(桃歹郎ex::煩煩爆炸)
+  m = t.match(/^造成對手已經獲得的獎賞卡的張數×(\d+)點傷害。$/);
+  if (m) return { baseDamage: board.opponentTakenPrizes * parseInt(m[1], 10) };
+
+  // 若自己的棄牌區有N張以上擁有特性「X」的寶可夢卡，則增加M點傷害。(破破舵輪::悔念錨)
+  m = t.match(/^若自己的棄牌區有(\d+)張以上擁有特性「(.+?)」的寶可夢卡，則增加(\d+)點傷害。$/);
+  if (m) {
+    const have = board.ownDiscardAbilityCounts[normalizeAbilityName(m[2])] || 0;
+    return { baseDamage: parseBaseNumber(damageField) + (have >= parseInt(m[1], 10) ? parseInt(m[3], 10) : 0) };
+  }
+
+  // 造成自己的備戰區的所有「X」身上放置的傷害指示物的數量×N點傷害。這個招式的傷害不計算弱點。
+  // (竹蘭的花岩怪::激怒咒詛 — "竹蘭的寶可夢" is a name-prefix family, so match on the prefix.)
+  m = t.match(/^造成自己的備戰區的所有「(.+?)」身上放置的傷害指示物的數量×(\d+)點傷害。這個招式的傷害不計算弱點。$/);
+  if (m) {
+    const family = m[1].replace(/寶可夢$/, '');
+    const counters = board.ownBenchDamageCountersByName
+      .filter(b => b.name.includes(family))
+      .reduce((sum, b) => sum + b.counters, 0);
+    return { baseDamage: counters * parseInt(m[2], 10), ignoreWeakness: true };
   }
 
   // 從牌庫附給自己的所有備戰寶可夢各1張「基本【X】能量」卡。並且重洗牌庫。

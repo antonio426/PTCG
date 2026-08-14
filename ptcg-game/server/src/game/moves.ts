@@ -586,6 +586,16 @@ export const moves = {
           for (const ty of new Set(c.attachedEnergy.map(e => e.type))) acc[ty] = (acc[ty] || 0) + 1;
           return acc;
         }, {} as Record<string, number>),
+        attackCostCount: attack.cost.length,
+        opponentTakenPrizes: 6 - opponent.prizes.length,
+        ownBenchDamageCountersByName: ownBench.map(c => ({ name: c.cardData.name, counters: c.damage / 10 })),
+        ownDiscardAbilityCounts: player.discardPile.reduce((acc, c) => {
+          for (const a of c.cardData.abilities || []) {
+            const n = normalizeAbilityName(a.name);
+            acc[n] = (acc[n] || 0) + 1;
+          }
+          return acc;
+        }, {} as Record<string, number>),
       };
       const genericOutcome = attack.text ? resolveGenericAttackEffect(attack.text, attack.damage, attackBoard) : undefined;
       if (genericOutcome?.familyScaledDamage) {

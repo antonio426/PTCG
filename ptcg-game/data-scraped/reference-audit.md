@@ -3,22 +3,15 @@
 - 對局數：220（完成 146）
 - 參考站實際觸發過的具名效果：122（特性/訓練家/其他）
 - 參考站實際使用過的招式：82
-- **我方引擎沒有對應處理的：13**
+- **我方引擎沒有對應處理的：6**
 
 ## 我方未覆蓋（依出現次數排序）
 
-- `太陽岩::宇宙光束` ×74 — Attack — TEXT NOT HANDLED: 若自己的備戰區沒有「月石」，則這個招式失敗。這個招式的傷害不計算弱點・抵抗力。
-- `竹蘭的花岩怪::激怒咒詛` ×51 — Attack — TEXT NOT HANDLED: 造成自己的備戰區的所有「竹蘭的寶可夢」身上放置的傷害指示物的數量×10點傷害。這個招式的傷害不計算弱點。
-- `比克提尼::V戰力` ×51 — Attack — TEXT NOT HANDLED: 若自己的備戰寶可夢為4隻以下，則這個招式失敗。
-- `破破舵輪::悔念錨` ×20 — Attack — TEXT NOT HANDLED: 若自己的棄牌區有4張以上擁有特性「化隱」的寶可夢卡，則增加140點傷害。
 - `凱路迪歐ex::疾風直撞` ×15 — Attack — TEXT NOT HANDLED: 在這個回合，若從備戰區將這隻寶可夢放置於戰鬥場，則增加90點傷害。
 - `超級路卡利歐ex::波動突刺` ×12 — Attack — TEXT NOT HANDLED: 從自己的棄牌區選擇最多3張「基本【鬥】能量」卡，以任意方式附於備戰寶可夢身上。
 - `熔蟻獸::舔舔捕捉` ×11 — Attack — TEXT NOT HANDLED: 從自己的牌庫選擇【火】寶可夢卡與「基本【火】能量」卡合計最多3張，在給對手看過後加入手牌。並且重洗牌庫。
-- `胖嘟嘟ex::力量壓制` ×6 — Attack — TEXT NOT HANDLED: 若身上附有的能量比使用這個招式所需的能量多2個，則增加80點傷害。
 - `喵喵ex::夾尾巴逃跑` ×4 — Attack — TEXT NOT HANDLED: 將這隻寶可夢與附加的卡，全部放回手牌。
-- `桃歹郎ex::煩煩爆炸` ×4 — Attack — TEXT NOT HANDLED: 造成對手已經獲得的獎賞卡的張數×60點傷害。
 - `超級噴火龍Xex::烈獄狂火X` ×4 — Attack — TEXT NOT HANDLED: 將自己的場上寶可夢身上附加的任意數量的【火】能量卡丟棄，造成其張數×90點傷害。
-- `超級龍頭地鼠ex::極限鑽` ×3 — Attack — TEXT NOT HANDLED: 若身上附有的能量比使用這個招式所需的能量多2個，則增加130點傷害。
 - `詛咒娃娃::玩偶捕捉` ×3 — Attack — TEXT NOT HANDLED: 若希望，從自己的牌庫任意選擇1張卡加入手牌。並且重洗牌庫。
 
 ## 傷害計算式（參考站顯示的公式）
@@ -101,6 +94,7 @@
 - `從棄牌取回` ×78 — engine-message — not a card name
 - `夜間擔架` ×74 — Trainer — trainerEffects
 - `宇宙光束` ×74 — engine-message — not a card name
+- `太陽岩::宇宙光束` ×74 — Attack — generic template
 - `好友寶芬` ×70 — Trainer — trainerEffects
 - `機關槍合擊` ×67 — engine-message — not a card name
 - `碧綠之舞` ×66 — Ability — abilityEffects
@@ -118,4 +112,3 @@
 - `琵魯` ×51 — Trainer — trainerEffects
 - `激怒咒詛` ×51 — engine-message — not a card name
 - `V戰力` ×51 — engine-message — not a card name
-- `力量蛋白飲` ×49 — Trainer — trainerEffects
