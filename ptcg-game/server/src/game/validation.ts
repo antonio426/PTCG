@@ -240,6 +240,15 @@ export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalActio
 
   if (G.currentPlayer !== playerIndex) return legalMoves;
 
+  if (G.phase === 'choose_first') {
+    if (G.coinWinner === playerIndex) {
+      legalMoves.push({ type: 'choose_first', description: '你贏得擲硬幣：選擇先攻', payload: { goFirst: true } });
+      legalMoves.push({ type: 'choose_first', description: '你贏得擲硬幣：選擇後攻', payload: { goFirst: false } });
+    }
+    legalMoves.push({ type: 'forfeit', description: 'Forfeit the game' });
+    return legalMoves;
+  }
+
   if (G.phase === 'choose_active') {
     for (const card of player.hand) {
       if (card.cardData.supertype === 'Pokémon' && card.cardData.subtypes.includes('Basic')) {

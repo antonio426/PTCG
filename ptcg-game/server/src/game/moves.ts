@@ -92,6 +92,16 @@ function performRetreat(G: PtcgGameState, targetBenchPosition: number | undefine
 }
 
 export const moves = {
+  /** The coin-flip winner (an interactive player — AI winners decide in setup) picks first/second. */
+  chooseFirst: ({ G, ctx }: { G: PtcgGameState; ctx: any }, goFirst: boolean) => {
+    if (G.phase !== 'choose_first') return;
+    const chooser = parseInt(ctx.currentPlayer) as 0 | 1;
+    if (G.coinWinner !== chooser) return;
+    G.firstPlayer = goFirst ? chooser : ((1 - chooser) as 0 | 1);
+    G.phase = 'choose_active';
+    addLog(G, chooser, 'choose_first', goFirst ? '選擇先攻' : '選擇後攻');
+  },
+
   chooseActive: ({ G, ctx }: { G: PtcgGameState; ctx: any }, cardId: string) => {
     if (G.phase !== 'choose_active') return;
     const player = G.players[parseInt(ctx.currentPlayer) as 0 | 1];
@@ -103,6 +113,11 @@ export const moves = {
     player.hand.splice(idx, 1);
     player.active = card;
     G.phase = 'draw';
+    // Setup is complete — the coin flip's decided first player takes over turn 1 now (during the
+    // choose_first/choose_active phases currentPlayer was pinned to the interactive player so
+    // getLegalMoves kept working). When that's the AI, humanBattle's move endpoint sees
+    // currentPlayer === 1 after this move and runs the AI's (restricted) first turn.
+    if (G.firstPlayer !== undefined) G.currentPlayer = G.firstPlayer;
     addLog(G, parseInt(ctx.currentPlayer), 'choose_active', `Set ${card.cardData.name} as Active Pokémon`);
   },
 

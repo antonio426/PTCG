@@ -219,6 +219,11 @@ function enrichPendingChoice(G: PtcgGameState, choice: PendingChoice | null): Pe
 
 function checkAndApplyWin(G: PtcgGameState): boolean {
   if (G.winner !== null) return true;
+  // During setup phases the human legitimately has no Pokémon in play yet — evaluating the
+  // "opponent has no pokemon" condition here declared the AI winner right after the new
+  // choose_first move (the pre-coin-flip flow never ran a win check mid-setup, so this was
+  // latent). Direct winners (forfeit) are still honored by the G.winner check above.
+  if (G.phase === 'choose_first' || G.phase === 'choose_active') return false;
   for (let p = 0; p < 2; p++) {
     const pState = G.players[p as 0 | 1];
     const opponent = G.players[(1 - p) as 0 | 1];
@@ -278,6 +283,7 @@ function executeGameAction(G: PtcgGameState, action: { type: string; payload?: R
   };
   const p = action.payload || {};
   switch (action.type) {
+    case 'choose_first': moves.chooseFirst({ G, ctx }, p.goFirst as boolean); break;
     case 'choose_active': moves.chooseActive({ G, ctx }, p.cardId as string); break;
     case 'draw_card': moves.drawCard({ G, ctx }); break;
     case 'play_pokemon': moves.playPokemon({ G, ctx }, p.cardId as string, p.benchPosition as number); break;
@@ -415,6 +421,15 @@ router.post('/:id/move', async (ctx) => {
     }
     executeGameAction(G, { type, payload });
     if (checkAndApplyWin(G)) {
+      ctx.body = { sessionId: session.id, state: buildResponse(session) };
+      return;
+    }
+    // The coin-flip winner may have given turn 1 to the AI: chooseActive hands over
+    // currentPlayer without going through an 'end' phase, so run the AI here too.
+    // (Fresh read: the `!== 0` guard above narrowed the type, but executeGameAction mutates it.)
+    const playerAfterMove = G.currentPlayer as number;
+    if (G.phase !== 'end' && playerAfterMove === 1 && G.winner === null) {
+      await runAiTurns(session);
       ctx.body = { sessionId: session.id, state: buildResponse(session) };
       return;
     }

@@ -187,11 +187,27 @@ export function setup(setupData?: PtcgSetupData): PtcgGameState {
     setupPrizes(players[p as 0 | 1], 6);
   }
 
+  // Real rules: a coin flip decides who CHOOSES to go first or second (the winner picks —
+  // going first is not automatic). Seeded so battleRunner simulations stay reproducible.
+  const coinWinner = (seededRandom(seed + 7919)() < 0.5 ? 0 : 1) as 0 | 1;
+  addSetupLog(turnLog, coinWinner, 'coin_flip', `擲硬幣：${coinWinner === setupData.interactivePlayer ? '你' : (setupData.interactivePlayer !== undefined ? 'AI 對手' : `玩家 ${coinWinner}`)} 獲勝`);
+
+  const interactiveWonFlip = setupData.interactivePlayer !== undefined && coinWinner === setupData.interactivePlayer;
+  // A non-interactive flip winner (AI opponent, or either side of a headless simulation)
+  // decides immediately, and always takes first — the near-universal real-play choice.
+  const firstPlayer = interactiveWonFlip ? undefined : coinWinner;
+  if (!interactiveWonFlip) addSetupLog(turnLog, coinWinner, 'choose_first', '選擇先攻');
+
   return {
     players,
     turn: 1,
-    currentPlayer: 0,
-    phase: setupData.interactivePlayer !== undefined ? 'choose_active' : 'draw',
+    // Interactive setups keep the interactive player as currentPlayer through the
+    // choose_first/choose_active phases (getLegalMoves gates on currentPlayer); the decided
+    // firstPlayer takes over in moves.chooseActive. Headless games start with the flip winner.
+    currentPlayer: setupData.interactivePlayer !== undefined ? setupData.interactivePlayer : coinWinner,
+    phase: interactiveWonFlip ? 'choose_first' : (setupData.interactivePlayer !== undefined ? 'choose_active' : 'draw'),
+    coinWinner,
+    firstPlayer,
     winner: null,
     winReason: null,
     turnLog,

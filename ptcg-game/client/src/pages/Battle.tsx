@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useDeckStore } from '../stores/deckStore';
 import { useCardStore } from '../stores/cardStore';
 import { useGameStore, type SanitizedGameCard } from '../stores/gameStore';
-import type { Card, LegalAction, PendingChoice } from '@ptcg/shared';
+import type { Card, LegalAction, PendingChoice, TurnAction } from '@ptcg/shared';
 import { exportTurnLogAsJson, exportTurnLogAsText } from '../utils/exportLog';
 import { CARD_IMAGE_FALLBACK, handleCardImgError } from '../utils/cardImageFallback';
 import HpBar from '../components/HpBar';
@@ -170,7 +170,7 @@ function HoverPreview({ card, children, placement = 'above' }: { card: Card; chi
 
 function SectionHeader({ icon, label }: { icon: ReactNode; label: string }) {
   return (
-    <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-500/70 mb-1.5 pb-1 border-b border-emerald-900/40">
+    <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400/90 uppercase tracking-wider mb-1.5 pl-2 border-l-2 border-emerald-500/60">
       {icon}
       <span>{label}</span>
     </div>
@@ -385,12 +385,17 @@ const keyActivate = (fn: () => void) => (e: KeyboardEvent) => {
  * on every Pokémon card every time Battle re-renders — which happens once a second just from
  * the clockNow tick. Hoisting to module scope keeps the type stable across renders. */
 function PokemonCardView({
-  card, size = 'normal', showHp = true, onClick, targetable, picked, previewPlacement = 'above', shake = false, loading, onShowDetail,
+  card, size = 'normal', showHp = true, onClick, targetable, picked, previewPlacement = 'above', shake = false, loading, onShowDetail, side = 'player',
 }: {
   card: SanitizedGameCard;
   size?: 'normal' | 'small';
   showHp?: boolean;
   onClick?: () => void;
+  /** Tints the card's drop shadow blue (player) or red (opponent) — a cheap, purely decorative
+   * way to reinforce whose side a card belongs to at a glance, echoing the same blue/red used for
+   * turn indicators and turn-log entries elsewhere on this screen. Never used for anything a
+   * player needs to *read* precisely (that's still the "你"/"對手" labels and board position). */
+  side?: 'player' | 'opponent';
   /** This Pokémon is a legal click-target for whatever's currently being resolved (attaching
    * energy, evolving, or a server-forced pendingChoice) — gets a pulsing highlight so the
    * valid options read at a glance instead of needing a separate list to cross-reference. */
@@ -412,8 +417,10 @@ function PokemonCardView({
   const hp = card.maxHp || (cd.hp ? parseInt(cd.hp) : 0);
   const remainingHp = Math.max(0, hp - card.damage);
   const isW = size === 'small';
-  const wCls = isW ? 'w-24' : 'w-36';
-  const imgH = isW ? 'h-[4.5rem]' : 'h-[7.5rem]';
+  // Width scales up across breakpoints (phone -> desktop); height is no longer a separate
+  // per-breakpoint class — the image box uses a fixed card aspect-ratio instead, so it can never
+  // drift out of sync with the width classes the way two parallel breakpoint lists could.
+  const wCls = isW ? 'w-14 sm:w-16 md:w-20 lg:w-24' : 'w-20 sm:w-28 md:w-32 lg:w-36';
   const ring = picked
     ? 'ring-2 ring-emerald-400 shadow-[0_0_14px_rgba(52,211,153,0.6)]'
     : targetable
@@ -422,7 +429,7 @@ function PokemonCardView({
 
   return (
     <div
-      className={`flex flex-col items-center gap-1 cursor-pointer transition-all animate-card-enter ${ring ? 'rounded-xl' : ''} ${ring}
+      className={`flex-shrink-0 flex flex-col items-center gap-1 cursor-pointer transition-all animate-card-enter ${wCls} ${ring ? 'rounded-xl' : ''} ${ring}
         ${onClick ? 'hover:-translate-y-1 focus-visible:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 focus-visible:outline-offset-2 rounded-xl' : ''} ${shake ? 'animate-shake' : ''}
         ${onClick && loading ? 'opacity-40 !cursor-not-allowed' : ''}`}
       onClick={onClick}
@@ -431,7 +438,7 @@ function PokemonCardView({
       onKeyDown={onClick ? keyActivate(onClick) : undefined}
     >
       <HoverPreview card={cd} placement={previewPlacement}>
-        <div className={`relative ${wCls} ${imgH} bg-slate-900 border-2 border-slate-600/80 rounded-xl overflow-hidden hover:border-emerald-400 transition-colors shadow-lg shadow-black/40`}>
+        <div className={`relative w-full aspect-[63/88] bg-slate-900 border-2 border-slate-600/80 ring-1 ring-inset ring-white/10 rounded-xl overflow-hidden hover:border-emerald-400 transition-colors shadow-lg ${side === 'opponent' ? 'shadow-red-950/50' : 'shadow-blue-950/50'}`}>
           <img src={cd.images.small} alt={cd.name} onError={handleCardImgError} className="w-full h-full object-contain" />
           <button
             onClick={(e) => { e.stopPropagation(); onShowDetail(card); }}
@@ -520,6 +527,26 @@ function DiscardModal({ title, cards, onClose }: { title: string; cards: Sanitiz
   );
 }
 
+/** Shared turn-log entry list — used both by the persistent desktop sidebar (`lg` and up) and the
+ * mobile/tablet drawer Modal (below `lg`), so the two surfaces render from one place and can
+ * never drift out of sync with each other. */
+function TurnLogEntries({ turnLog }: { turnLog: TurnAction[] }) {
+  if (turnLog.length === 0) return <p className="text-emerald-800 text-xs">尚無紀錄</p>;
+  return (
+    <div className="space-y-1">
+      {[...turnLog].reverse().slice(0, 100).map((entry, i) => (
+        <div key={i} className={`text-xs border-l-2 pl-2 py-0.5 pr-1 rounded-r-md hover:bg-white/5 transition-colors ${entry.player === 0 ? 'border-blue-700/60' : 'border-red-700/60'}`}>
+          <span className={`font-medium ${entry.player === 0 ? 'text-blue-400' : 'text-red-400'}`}>
+            [{entry.turn}]
+          </span>{' '}
+          <span className="text-emerald-50">{entry.action}</span>
+          {entry.details && <p className="text-emerald-700/80 mt-0.5">{entry.details}</p>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /* ====================================================== */
 /*  Main Battle Component                                 */
 /* ====================================================== */
@@ -538,6 +565,7 @@ export default function Battle() {
   const [showPlayerDiscard, setShowPlayerDiscard] = useState(false);
   const [showOpponentDiscard, setShowOpponentDiscard] = useState(false);
   const [showOpponentHand, setShowOpponentHand] = useState(false);
+  const [showTurnLog, setShowTurnLog] = useState(false);
   const [fullDetailCard, setFullDetailCard] = useState<SanitizedGameCard | null>(null);
   const [floaters, setFloaters] = useState<{ id: number; side: 'player' | 'opponent'; text: string; kind: 'damage' | 'ko' }[]>([]);
   // Hand-card-initiated targeting (e.g. "attach this energy to which of your Pokémon?") — set
@@ -685,7 +713,7 @@ export default function Battle() {
   }, [bs?.turn, bs?.turnLog]);
 
   const phaseLabels: Record<string, string> = {
-    choose_active: '選擇出戰寶可夢', draw: '抽牌階段', main: '主要階段', attack: '攻擊階段', end: '結束階段',
+    choose_first: '選擇先攻後攻', choose_active: '選擇出戰寶可夢', draw: '抽牌階段', main: '主要階段', attack: '攻擊階段', end: '結束階段',
   };
   const winReasonLabels: Record<string, string> = {
     'took all prizes': '奪得所有獎賞卡',
@@ -708,8 +736,18 @@ export default function Battle() {
             backgroundSize: '32px 32px',
           }}
         />
-        <div className="relative bg-slate-900/80 backdrop-blur border border-emerald-800/50 rounded-2xl p-8 w-full max-w-md shadow-2xl">
-          <h1 className="text-2xl font-bold text-white text-center mb-1">⚔ AI 對戰練習</h1>
+        {/* Vignette: darkens the rim so the felt reads as a lit table rather than a flat tint —
+            purely decorative, pointer-events-none, layered inside the already-relative/overflow-
+            hidden wrapper above. */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.55) 100%)' }}
+        />
+        <div className="relative bg-slate-900/80 backdrop-blur border border-emerald-800/50 ring-1 ring-inset ring-white/10 rounded-2xl p-6 sm:p-8 w-full max-w-md shadow-2xl">
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <IconSword className="w-5 h-5 text-emerald-400" />
+            <h1 className="text-2xl font-bold bg-gradient-to-b from-emerald-200 to-emerald-400 bg-clip-text text-transparent tracking-wide">AI 對戰練習</h1>
+          </div>
           <p className="text-center text-emerald-500/70 text-xs mb-6">挑選一副牌組，開始練習對局</p>
           <div className="space-y-4">
             <div>
@@ -759,7 +797,7 @@ export default function Battle() {
             <button
               onClick={handleStartBattle}
               disabled={!selectedDeckId || loading}
-              className="w-full py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-lg shadow-emerald-900/40"
+              className="w-full py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-lg shadow-emerald-900/40 ring-1 ring-inset ring-white/15"
             >
               {loading ? '建立對戰中...' : '開始對戰'}
             </button>
@@ -872,7 +910,7 @@ export default function Battle() {
   };
 
   return (
-    <div className="flex gap-3 h-[calc(100vh-7rem)] min-h-0">
+    <div className="flex flex-col lg:flex-row gap-2 lg:gap-3 h-[calc(100vh-7rem)] min-h-0">
 
       {/* Pending choice modal: only for choices with no on-field/in-hand representation (deck
           search results, "pick an energy type", a bare confirm). Choices that ARE a Pokémon
@@ -929,8 +967,8 @@ export default function Battle() {
           once enough targets are picked. Non-blocking (no backdrop) since the player needs to
           see the board to click on it. */}
       {!isOver && activeTargeting && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[55] flex items-center gap-2 bg-slate-900/95 border border-sky-500/50 rounded-full pl-4 pr-1.5 py-1.5 shadow-2xl shadow-black/50 animate-result-pop">
-          <span className="text-sky-200 text-xs font-medium">{activeTargeting.prompt}</span>
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[55] flex items-center gap-2 max-w-[92vw] bg-slate-900/95 border border-sky-500/50 rounded-full pl-4 pr-1.5 py-1.5 shadow-2xl shadow-black/50 animate-result-pop">
+          <span className="text-sky-200 text-xs font-medium break-words">{activeTargeting.prompt}</span>
           {isMultiTarget && (
             <span className="text-sky-400/70 text-[10px]">已選 {pickedTargets.size}/{activeTargeting.maxCount}</span>
           )}
@@ -964,15 +1002,23 @@ export default function Battle() {
             backgroundSize: '32px 32px',
           }}
         />
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.45) 100%)' }}
+        />
 
-        {/* Top status bar: turn/phase + legal-action availability at a glance */}
-        <div className="relative flex-shrink-0 flex items-center justify-between px-3 py-1.5 bg-black/30 backdrop-blur-sm border-b border-emerald-900/50">
-          <div className="flex items-center gap-2">
-            <button onClick={leaveGame} className="flex items-center gap-1 text-emerald-500/70 hover:text-emerald-300 text-xs transition-colors mr-1">
+        {/* Top status bar: turn/phase + legal-action availability at a glance. `flex-wrap` is a
+            safety net (this bar sits inside a board wrapper with `overflow-hidden`, so anything
+            that didn't fit used to get silently clipped rather than visibly wrapping); the
+            lowest-value info (timers, and hand counts that are already shown as StatBoxes further
+            down) hides below `sm` instead of contributing to that overflow. */}
+        <div className="relative flex-shrink-0 flex flex-wrap items-center justify-between gap-y-1 px-2 sm:px-3 py-1.5 bg-black/30 backdrop-blur-sm border-b border-emerald-900/50">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <button onClick={leaveGame} className="flex items-center gap-1 text-emerald-500/70 hover:text-emerald-300 text-xs transition-colors mr-0.5 sm:mr-1">
               <IconArrowLeft className="w-3.5 h-3.5" />
               離開
             </button>
-            <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${bs.isPlayerTurn ? 'bg-green-900/60 text-green-300 border border-green-700/60' : 'bg-red-900/60 text-red-300 border border-red-700/60'}`}>
+            <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${bs.isPlayerTurn ? 'bg-green-900/60 text-green-300 border border-green-700/60 shadow-[0_0_8px_rgba(34,197,94,0.45)]' : 'bg-red-900/60 text-red-300 border border-red-700/60'}`}>
               {bs.isPlayerTurn ? '你的回合' : '對手回合'}
             </span>
             <span className="text-xs text-slate-400">回合 {bs.turn}</span>
@@ -982,7 +1028,7 @@ export default function Battle() {
             {loading && (
               <span className="flex items-center gap-1 text-[11px] text-sky-400/80">
                 <span className="w-2.5 h-2.5 rounded-full border-2 border-sky-400/40 border-t-sky-400 animate-spin" />
-                傳送中…
+                <span className="hidden sm:inline">傳送中…</span>
               </span>
             )}
           </div>
@@ -1007,16 +1053,27 @@ export default function Battle() {
               ))}
             </div>
           )}
-          <span className="text-[11px] text-slate-500 flex items-center gap-2">
-            {!isOver && (
-              <span className="flex items-center gap-1 tabular-nums" title="本回合已進行時間（純顯示，不影響回合判定）">
-                <IconClock className="w-3 h-3" />
-                {formatDuration(clockNow - turnStartRef.current)}
-              </span>
-            )}
-            <span className="tabular-nums" title="對戰總時長（純顯示）">總計 {formatDuration(clockNow - (battleStartRef.current ?? clockNow))}</span>
-            <span>對手手牌 {bs.opponent.handCount} · 你的手牌 {bs.player.hand.length}</span>
-          </span>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <span className="hidden sm:flex text-[11px] text-slate-500 items-center gap-2">
+              {!isOver && (
+                <span className="flex items-center gap-1 tabular-nums" title="本回合已進行時間（純顯示，不影響回合判定）">
+                  <IconClock className="w-3 h-3" />
+                  {formatDuration(clockNow - turnStartRef.current)}
+                </span>
+              )}
+              <span className="tabular-nums" title="對戰總時長（純顯示）">總計 {formatDuration(clockNow - (battleStartRef.current ?? clockNow))}</span>
+              <span>對手手牌 {bs.opponent.handCount} · 你的手牌 {bs.player.hand.length}</span>
+            </span>
+            {/* Mobile/tablet-only entry point into the turn log — the persistent sidebar (see the
+                right column further down) only exists at `lg` and up. */}
+            <button
+              onClick={() => setShowTurnLog(true)}
+              aria-label="查看對戰紀錄"
+              className="lg:hidden flex items-center gap-1 px-1.5 py-1 rounded text-emerald-500/70 hover:text-emerald-300 hover:bg-white/5 transition-colors"
+            >
+              <IconScroll className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
         {/* Active Stadium: shared, board-wide effect — sits between both sides rather than
@@ -1047,14 +1104,19 @@ export default function Battle() {
             </div>
           </div>
 
-          <div className="flex items-center justify-center gap-3">
-            <div className="relative">
+          {/* Active is pinned (flex-shrink-0); the bench strip scrolls horizontally below `sm`
+              instead of shrinking 5 cards down to illegible size on a phone, then reverts to a
+              normal centered, non-scrolling row at `sm` and up (matches the original desktop
+              layout exactly). */}
+          <div className="flex items-center gap-2 sm:gap-3 sm:justify-center">
+            <div className="relative flex-shrink-0">
               {bs.opponent.active ? (
                 <PokemonCardView
                   key="opponent-active"
                   card={bs.opponent.active}
                   size="normal"
                   showHp={true}
+                  side="opponent"
                   previewPlacement="below"
                   loading={loading}
                   onShowDetail={setFullDetailCard}
@@ -1062,8 +1124,8 @@ export default function Battle() {
                   {...targetProps(bs.opponent.active.id)}
                 />
               ) : (
-                <div className="w-36 h-[7.5rem] bg-black/20 border-2 border-dashed border-emerald-900/60 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <span className="text-emerald-600/80 text-xs">無寶可夢</span>
+                <div className="w-20 sm:w-28 md:w-32 lg:w-36 aspect-[63/88] bg-black/20 border-2 border-dashed border-emerald-900/60 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <span className="text-emerald-600/80 text-[10px] sm:text-xs">無寶可夢</span>
                 </div>
               )}
               <div className="absolute inset-x-0 top-0 flex flex-col items-center pointer-events-none z-20">
@@ -1075,13 +1137,13 @@ export default function Battle() {
               </div>
             </div>
             <div className="w-px self-stretch bg-emerald-900/40 flex-shrink-0" />
-            <div className="flex gap-2">
+            <div className="flex gap-1.5 sm:gap-2 overflow-x-auto sm:overflow-visible sm:flex-none min-w-0 flex-1 py-0.5">
               {Array.from({ length: 5 }, (_, i) => {
                 const c = bs.opponent.bench[i];
                 return c ? (
-                  <PokemonCardView key={i} card={c} size="small" showHp={false} previewPlacement="below" loading={loading} onShowDetail={setFullDetailCard} {...targetProps(c.id)} />
+                  <PokemonCardView key={i} card={c} size="small" showHp={false} side="opponent" previewPlacement="below" loading={loading} onShowDetail={setFullDetailCard} {...targetProps(c.id)} />
                 ) : (
-                  <div key={i} className="w-24 h-[4.5rem] bg-black/10 border border-dashed border-emerald-900/50 rounded-md flex items-center justify-center">
+                  <div key={i} className="w-14 sm:w-16 md:w-20 lg:w-24 aspect-[63/88] flex-shrink-0 bg-black/10 border border-dashed border-emerald-900/50 rounded-md flex items-center justify-center">
                     <span className="text-emerald-700/80 text-xs">?</span>
                   </div>
                 );
@@ -1173,6 +1235,27 @@ export default function Battle() {
             <div className="flex-1 overflow-y-auto min-h-0">
 
               {/* Choose-active phase: opening hand is dealt, pick which Basic Pokémon starts as Active */}
+              {/* Coin-flip won by the player: real rules let the winner choose first or second. */}
+              {bs.phase === 'choose_first' && (
+                <div className="flex flex-col items-center justify-center h-full gap-4 text-center px-4 animate-result-pop">
+                  <div className="text-5xl">🪙</div>
+                  <p className="text-lg font-semibold text-white">你贏得擲硬幣！要先攻還是後攻？</p>
+                  <p className="text-xs text-slate-400 -mt-3">先攻的第一回合不能攻擊、進化、使用支援者</p>
+                  <div className="flex gap-4">
+                    {battleState.legalMoves.filter(m => m.type === 'choose_first').map((m, i) => (
+                      <button
+                        key={i}
+                        onClick={() => handleSubmitMove(m)}
+                        disabled={loading}
+                        className="px-8 py-3 bg-gradient-to-b from-emerald-500 to-emerald-700 text-white rounded-xl font-bold text-lg hover:from-emerald-400 hover:to-emerald-600 transition-colors shadow-lg shadow-emerald-950/50 disabled:opacity-40"
+                      >
+                        {m.payload?.goFirst ? '⚡ 先攻' : '🛡️ 後攻'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {bs.phase === 'choose_active' && (
                 <div className="flex flex-col items-center justify-center h-full gap-4 text-center px-4">
                   <p className="text-lg font-semibold text-white">請選擇一張基礎寶可夢作為你的出戰寶可夢</p>
@@ -1188,7 +1271,7 @@ export default function Battle() {
                           disabled={loading}
                           className="flex flex-col items-center gap-1 group animate-card-enter disabled:opacity-40 disabled:cursor-not-allowed"
                         >
-                          <div className="w-20 h-[6.75rem] bg-slate-900 border-2 border-emerald-600/60 rounded-lg overflow-hidden group-hover:border-emerald-400 group-hover:-translate-y-1 transition-all shadow-lg shadow-emerald-950/50">
+                          <div className="w-16 sm:w-20 aspect-[63/88] bg-slate-900 border-2 border-emerald-600/60 rounded-lg overflow-hidden ring-1 ring-inset ring-white/10 group-hover:border-emerald-400 group-hover:-translate-y-1 transition-all shadow-lg shadow-emerald-950/50">
                             <img src={cardData.images.small} alt={cardData.name} onError={handleCardImgError} className="w-full h-full object-contain" />
                           </div>
                           <span className="text-xs text-slate-200 font-medium max-w-20 truncate">{cardData.name}</span>
@@ -1208,7 +1291,7 @@ export default function Battle() {
                       if (drawMove) handleSubmitMove(drawMove);
                     }}
                     disabled={loading}
-                    className="px-8 py-4 bg-gradient-to-b from-emerald-500 to-emerald-700 text-white rounded-xl text-lg font-medium hover:from-emerald-400 hover:to-emerald-600 transition-colors shadow-lg shadow-emerald-950/50 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="px-8 py-4 bg-gradient-to-b from-emerald-500 to-emerald-700 text-white rounded-xl text-lg font-medium hover:from-emerald-400 hover:to-emerald-600 transition-colors shadow-lg shadow-emerald-950/50 ring-1 ring-inset ring-white/15 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     抽牌
                   </button>
@@ -1231,7 +1314,7 @@ export default function Battle() {
                             key={i}
                             onClick={() => handleSubmitMove(m)}
                             disabled={loading}
-                            className="px-3 py-2 bg-gradient-to-b from-red-600 to-red-800 text-white rounded-lg text-xs font-medium hover:from-red-500 hover:to-red-700 transition-colors flex items-center gap-1.5 shadow-md shadow-red-950/50 border border-red-500/30 disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="px-3 py-2 bg-gradient-to-b from-red-600 to-red-800 text-white rounded-lg text-xs font-medium hover:from-red-500 hover:to-red-700 transition-colors flex items-center gap-1.5 shadow-md shadow-red-950/50 border border-red-500/30 ring-1 ring-inset ring-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
                           >
                             <IconSword className="w-3.5 h-3.5" />
                             {atk?.cost.map((c, ci) => <EnergyIcon key={ci} type={c} />)}
@@ -1267,7 +1350,7 @@ export default function Battle() {
                           key={i}
                           onClick={() => handleSubmitMove(m)}
                           disabled={loading}
-                          className="px-3 py-2 bg-slate-700 text-white rounded-lg text-xs font-medium hover:bg-slate-600 transition-colors ml-auto border border-slate-500/30 disabled:opacity-40 disabled:cursor-not-allowed"
+                          className="px-3 py-2 bg-slate-700 text-white rounded-lg text-xs font-medium hover:bg-slate-600 transition-colors ml-auto border border-slate-500/30 ring-1 ring-inset ring-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           結束回合 →
                         </button>
@@ -1289,7 +1372,7 @@ export default function Battle() {
                                   src={hca.cardData.images.small}
                                   alt={hca.cardData.name}
                                   onError={handleCardImgError}
-                                  className={`w-14 h-[4.5rem] rounded-lg transition-all object-contain border-2
+                                  className={`w-12 sm:w-14 aspect-[63/88] rounded-lg transition-all object-contain border-2
                                     ${isTargetingSource ? 'border-sky-400 -translate-y-1 shadow-lg shadow-sky-500/30' : 'border-slate-600 hover:border-slate-400'}
                                     ${loading ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
                                     focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 focus-visible:outline-offset-2`}
@@ -1380,14 +1463,15 @@ export default function Battle() {
             </div>
           </div>
 
-          <div className="flex items-center justify-center gap-3 mb-1.5">
-            <div className="relative">
+          <div className="flex items-center gap-2 sm:gap-3 sm:justify-center mb-1.5">
+            <div className="relative flex-shrink-0">
               {bs.player.active ? (
                 <PokemonCardView
                   key="player-active"
                   card={bs.player.active}
                   size="normal"
                   showHp={true}
+                  side="player"
                   loading={loading}
                   onShowDetail={setFullDetailCard}
                   shake={floaters.some(f => f.side === 'player' && f.kind === 'damage')}
@@ -1395,7 +1479,7 @@ export default function Battle() {
                 />
               ) : (
                 <div
-                  className={`w-36 h-[7.5rem] bg-black/20 border-2 border-dashed rounded-xl flex items-center justify-center flex-shrink-0 ${
+                  className={`w-20 sm:w-28 md:w-32 lg:w-36 aspect-[63/88] bg-black/20 border-2 border-dashed rounded-xl flex items-center justify-center flex-shrink-0 ${
                     bs.phase === 'choose_active'
                       ? 'border-emerald-400 animate-pulse shadow-[0_0_16px_rgba(52,211,153,0.35)]'
                       : 'border-emerald-900/60'
@@ -1415,13 +1499,13 @@ export default function Battle() {
               </div>
             </div>
             <div className="w-px self-stretch bg-emerald-900/40 flex-shrink-0" />
-            <div className="flex gap-2">
+            <div className="flex gap-1.5 sm:gap-2 overflow-x-auto sm:overflow-visible sm:flex-none min-w-0 flex-1 py-0.5">
               {Array.from({ length: 5 }, (_, i) => {
                 const c = bs.player.bench[i];
                 return c ? (
-                  <PokemonCardView key={i} card={c} size="small" showHp={false} loading={loading} onShowDetail={setFullDetailCard} {...targetProps(c.id)} />
+                  <PokemonCardView key={i} card={c} size="small" showHp={false} side="player" loading={loading} onShowDetail={setFullDetailCard} {...targetProps(c.id)} />
                 ) : (
-                  <div key={i} className="w-24 h-[4.5rem] bg-black/10 border border-dashed border-emerald-900/50 rounded-md flex items-center justify-center">
+                  <div key={i} className="w-14 sm:w-16 md:w-20 lg:w-24 aspect-[63/88] flex-shrink-0 bg-black/10 border border-dashed border-emerald-900/50 rounded-md flex items-center justify-center">
                     <span className="text-emerald-700/80 text-xs">?</span>
                   </div>
                 );
@@ -1432,7 +1516,11 @@ export default function Battle() {
           {/* Player hand row — doubles as the picker for a select_hand_cards pendingChoice (e.g.
               discarding for Ultra Ball): the actual cards here light up and toggle directly
               instead of a separate modal grid duplicating them. */}
-          <div className="flex justify-center gap-1.5 overflow-x-auto pb-1">
+          {/* `justify-start` on mobile, not `justify-center`: centering a flex row that's wider
+              than its container clips the start of the overflow instead of just scrolling to it
+              in some browsers — left-aligning avoids that gotcha for a hand of 7-8+ cards on a
+              phone. Reverts to centered at `sm`+, where a typical hand size fits without scrolling. */}
+          <div className="flex justify-start sm:justify-center gap-1.5 overflow-x-auto pb-1">
             {bs.player.hand.length === 0 ? (
               <div className="text-slate-600 text-xs py-2">手牌為空</div>
             ) : (
@@ -1453,7 +1541,7 @@ export default function Battle() {
                 return (
                   <HoverPreview key={card.id} card={card} placement="above">
                     <div
-                      className={`flex-shrink-0 w-16 h-[5.75rem] bg-slate-900 border-2 rounded-lg overflow-hidden animate-card-enter
+                      className={`flex-shrink-0 w-14 sm:w-16 lg:w-[4.5rem] aspect-[63/88] bg-slate-900 border-2 rounded-lg overflow-hidden animate-card-enter ring-1 ring-inset ring-white/10
                         ${ring} transition-all shadow-lg shadow-black/40
                         ${loading ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
                         focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 focus-visible:outline-offset-2`}
@@ -1472,28 +1560,32 @@ export default function Battle() {
         </div>
       </div>
 
-      {/* Right column: Turn log */}
-      <div className="w-64 flex-shrink-0 bg-[radial-gradient(ellipse_at_top,theme(colors.battle.feltFrom)_0%,theme(colors.battle.felt.via)_55%,theme(colors.battle.felt.to)_100%)] border border-emerald-900/50 rounded-2xl p-3 flex flex-col min-h-0 shadow-xl">
-        <h3 className="text-sm font-semibold text-emerald-100 mb-3 flex items-center gap-1.5 pb-2 border-b border-emerald-900/50">
+      {/* Right column: Turn log — a persistent sidebar at `lg` (1024px) and up. Below that it's
+          secondary information reached via the header's log-icon button instead (rendered as a
+          Modal drawer just below), since keeping a fixed 256px column always on-screen would eat
+          too much of a phone's vertical space. */}
+      <div className="hidden lg:flex lg:flex-col w-64 flex-shrink-0 bg-[radial-gradient(ellipse_at_top,theme(colors.battle.feltFrom)_0%,theme(colors.battle.felt.via)_55%,theme(colors.battle.felt.to)_100%)] border border-emerald-900/50 rounded-2xl p-3 min-h-0 shadow-xl">
+        <h3 className="text-sm font-semibold text-emerald-100 mb-3 flex items-center gap-1.5 pb-2 border-b border-emerald-900/50 uppercase tracking-wider text-xs">
           <IconScroll className="w-4 h-4" />
           對戰紀錄
         </h3>
-        <div className="flex-1 overflow-y-auto space-y-1">
-          {bs.turnLog.length === 0 ? (
-            <p className="text-emerald-800 text-xs">尚無紀錄</p>
-          ) : (
-            [...bs.turnLog].reverse().slice(0, 100).map((entry, i) => (
-              <div key={i} className={`text-xs border-l-2 pl-2 py-0.5 ${entry.player === 0 ? 'border-blue-700/60' : 'border-red-700/60'}`}>
-                <span className={`font-medium ${entry.player === 0 ? 'text-blue-400' : 'text-red-400'}`}>
-                  [{entry.turn}]
-                </span>{' '}
-                <span className="text-emerald-50">{entry.action}</span>
-                {entry.details && <p className="text-emerald-700/80 mt-0.5">{entry.details}</p>}
-              </div>
-            ))
-          )}
+        <div className="flex-1 overflow-y-auto">
+          <TurnLogEntries turnLog={bs.turnLog} />
         </div>
       </div>
+
+      {/* Mobile/tablet turn-log drawer — same content as the sidebar above, opened from the
+          header's log-icon button (that button is itself `lg:hidden`, so this and the sidebar
+          are never both reachable at once). */}
+      {showTurnLog && (
+        <Modal
+          onClose={() => setShowTurnLog(false)}
+          title={<><IconScroll className="w-4 h-4" />對戰紀錄</>}
+          maxWidthClassName="max-w-sm"
+        >
+          <TurnLogEntries turnLog={bs.turnLog} />
+        </Modal>
+      )}
 
       {showPlayerDiscard && (
         <DiscardModal title="你的棄牌堆" cards={bs.player.discardPile} onClose={() => setShowPlayerDiscard(false)} />

@@ -19,6 +19,10 @@ export const PtcgGame: Game<PtcgGameState> = {
   moves,
 
   turn: {
+    // KNOWN DIVERGENCE from humanBattle/battleRunner: setup() flips the opening coin and
+    // records coinWinner/firstPlayer, but boardgame.io's ctx controls turn order here and
+    // always starts with player 0 — the coin result is NOT wired into this (unused-by-client)
+    // path. If this engine ever gets a client, map firstPlayer via boardgame.io's turn.order.
     onBegin: ({ G, ctx }: { G: PtcgGameState; ctx: Ctx }) => {
       if (ctx.turn > 1) processBetweenTurns(G);
       G.turn = ctx.turn;

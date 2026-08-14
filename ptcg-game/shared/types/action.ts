@@ -1,4 +1,5 @@
 export type GameActionType =
+  | 'choose_first'
   | 'choose_active'
   | 'draw_card'
   | 'play_pokemon'

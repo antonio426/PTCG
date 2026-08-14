@@ -55,9 +55,18 @@ export interface PtcgGameState {
   players: [PtcgPlayerState, PtcgPlayerState];
   turn: number;
   currentPlayer: number;
-  /** 'choose_active' precedes the very first turn for a player who was dealt a hand
+  /** 'choose_first' (winner of the opening coin flip picks going first/second, only when an
+   * interactive player won the flip — AI winners decide instantly in setup) precedes
+   * 'choose_active', which precedes the very first turn for a player who was dealt a hand
    * without an auto-placed Active — see setup.ts's `interactivePlayer` option. */
-  phase: 'choose_active' | 'draw' | 'main' | 'attack' | 'end';
+  phase: 'choose_first' | 'choose_active' | 'draw' | 'main' | 'attack' | 'end';
+  /** Who won the opening coin flip (real rules: the winner CHOOSES first or second). */
+  coinWinner?: 0 | 1;
+  /** The decided turn-1 player. Set immediately in setup when the flip winner is an AI (they
+   * always choose to go first, matching common play); set by the chooseFirst move when the
+   * interactive player won. During choose_first/choose_active, currentPlayer stays the
+   * interactive player so getLegalMoves keeps working — chooseActive applies this afterward. */
+  firstPlayer?: 0 | 1;
   winner: number | null;
   winReason: string | null;
   turnLog: TurnAction[];
