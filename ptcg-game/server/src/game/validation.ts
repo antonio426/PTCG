@@ -3,7 +3,7 @@ import { PtcgGameState, GamePhase, PendingChoice } from './GameState';
 import { hasAbilityEffect } from './effects/abilities';
 import { canPlayTrainer } from './effects/trainers';
 import { getRetreatCostReduction, getColorlessCostReduction } from './effects/tools';
-import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatCostReduction, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, isAttackLockedByTimedEffect, isItemAndToolPlayBlocked, isItemLockedByTimedEffect, isItemPlayBlocked, isNamedAttackLockedByTimedEffect, isRetreatLockedByTimedEffect } from './effects/passiveAbilities';
+import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatCostReduction, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, areAbilitiesNegated, isAttackLockedByTimedEffect, isItemAndToolPlayBlocked, isItemLockedByTimedEffect, isItemPlayBlocked, isNamedAttackLockedByTimedEffect, isRetreatLockedByTimedEffect } from './effects/passiveAbilities';
 import { normalizeAbilityName, normalizeCardName } from './effects/types';
 import { hasEvolvesFrom, evolvesFromMatches, inferEvolvesFromSpecies } from './evolutionChains';
 
@@ -152,7 +152,7 @@ export function canEvolve(G: PtcgGameState, playerIndex: number, cardId: string,
   if (!bypassTiming && isFirstTurnOfGame(G)) return false;
   const nameMatches = evolvesFromMatches(card.cardData, target.cardData.name);
   const effectiveEvolvesFrom = card.cardData.evolvesFrom || inferEvolvesFromSpecies(card.cardData.name);
-  if (!nameMatches && !canEvolveViaPassive(target, effectiveEvolvesFrom)) return false;
+  if (!nameMatches && !canEvolveViaPassive(G, target, effectiveEvolvesFrom)) return false;
   if (!bypassTiming && player.pokemonPlayedThisTurn.includes(target.id)) return false;
 
   return true;
@@ -210,7 +210,7 @@ export function canAttack(G: PtcgGameState, playerIndex: number, attackIndex: nu
   const opponent = G.players[(1 - playerIndex) as 0 | 1];
   if (!opponent.active) return false;
   // 出道演出: this specific Pokémon is exempt from the first-turn attack restriction.
-  if (isFirstTurnOfGame(G) && !canAttackOnFirstTurn(player.active)) return false;
+  if (isFirstTurnOfGame(G) && !canAttackOnFirstTurn(G, player.active)) return false;
   if (player.active.statusConditions.includes('Asleep') || player.active.statusConditions.includes('Paralyzed')) return false;
   if (isAttackLockedByTimedEffect(G, player.active)) return false;
 
@@ -261,6 +261,8 @@ export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalActio
 
   if (G.phase === 'main') {
     for (const pokemon of [player.active, ...player.bench].filter((c): c is GameCard => c !== null)) {
+      // 暗夜羽擊: an Active facing the opponent's 暗夜羽擊 Active has all its abilities negated.
+      if (areAbilitiesNegated(G, pokemon)) continue;
       const ability = pokemon.cardData.abilities?.find(a => hasAbilityEffect(normalizeAbilityName(a.name)));
       if (ability) {
         const name = normalizeAbilityName(ability.name);

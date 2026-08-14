@@ -197,7 +197,7 @@ export function handleKo(G: PtcgGameState, koPlayerIndex: number, koCardId: stri
 
   // 無限之影: when KO'd by an attack specifically, this card returns to hand (reset to a fresh
   // state) instead of the discard pile — its attachments still go to the discard pile as normal.
-  const returnsToHand = (c: GameCard) => !!attackerCard && hasPassiveAbilityNamed(c, '無限之影');
+  const returnsToHand = (c: GameCard) => !!attackerCard && hasPassiveAbilityNamed(G, c, '無限之影');
   const retireCard = (c: GameCard) => {
     if (c.attachedTool) koPlayer.discardPile.push(c.attachedTool);
     if (returnsToHand(c)) {

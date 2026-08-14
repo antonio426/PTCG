@@ -74,6 +74,10 @@ npm run preview              # 僅 client — 預覽 production build
 
 合法行動的產生邏輯集中在 `server/src/game/validation.ts`（`getLegalMoves`）— 這是「玩家 X 現在能做什麼」的唯一真實來源，前面三套對戰路徑都會用到它。
 
+動卡片邏輯前要知道的兩個慣例：
+- **`EffectHandler.canPlay?`**（`effects/types.ts`）：一張此刻效果完全無法生效的訓練家卡，必須定義 canPlay（鏡射自己 `start()` 的失敗條件）——`getLegalMoves` 就不會提供這張牌，`playTrainer` 對強行打出的也會退回手牌（否則卡片會被白白棄掉）。只適用於需求在**公開區域**（棄牌區/場上）的卡：真實規則允許打出撲空的牌庫搜尋，所以牌庫搜尋類**不能**加 canPlay。刻意不做 refund 型 EffectStep——用 gate 可避免文件已記載的 AI 無限重試迴圈。
+- **特性消除**（暗夜羽擊）：實作在 `passiveAbilities.ts` 唯一的持有判定入口 `hasAbility(G, card, name)`（對外名 `hasPassiveAbilityNamed`），加上給 `useAbility`/`getLegalMoves` 查的 `areAbilitiesNegated(G, card)`。作用範圍刻意收窄——只有雙方戰鬥位會互相影響。之後任何「特性被消除」類效果都應該擴充 `areAbilitiesNegated`，不要另起爐灶。
+
 ### 進化史堆疊（`GameCard.preEvolutions`）
 真實規則：進化不會立刻把進化前的卡丟進棄牌堆——它會疊在新卡底下，直到這隻寶可夢整疊被擊倒（或以其他方式永久離場）時才一起進棄牌堆。`shared/types/game.ts` 的 `GameCard.preEvolutions?: GameCard[]`（舊到新排序）就是這疊歷史。`server/src/game/damage.ts` 匯出兩個共用 helper：`stackAsPreEvolution(newTop, oldCard)`（進化時呼叫，取代直接 push 進棄牌堆）與 `flushPreEvolutionsToDiscard(card, discardPile)`（KO、彈回手牌、洗回牌庫等任何「這張卡永久離開目前這疊」的時機都要呼叫，避免整疊歷史卡憑空消失）。新增任何會讓寶可夢進化/降階/離場的效果時，記得檢查是否也要處理這疊歷史。
 

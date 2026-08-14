@@ -3,7 +3,7 @@ import { PtcgGameState, PendingChoice } from './GameState';
 import { canPlayPokemon, canEvolve, canAttachEnergy, canRetreat, canAttack, effectiveRetreatCost, FIRST_TURN_SUPPORTER_EXCEPTIONS } from './validation';
 import { clearStatusConditionsOnLeaveActive } from './statusConditions';
 import { calculateDamageBreakdown, effectiveMaxHp, flushPreEvolutionsToDiscard, handleKo, prizesForKo, promoteActiveIfNeeded, stackAsPreEvolution } from './damage';
-import { getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasCoinFlipAttackMissDebuff, hasPassiveAbilityNamed, isRetreatBlockedByOpponent, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat, shouldDiscardAttackerEnergy } from './effects/passiveAbilities';
+import { areAbilitiesNegated, getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasCoinFlipAttackMissDebuff, hasPassiveAbilityNamed, isRetreatBlockedByOpponent, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat, shouldDiscardAttackerEnergy } from './effects/passiveAbilities';
 import { isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
 import { applyStatusCondition, discardAttachedEnergy, drawCards, drawUpTo, shuffleDeck } from './effects/primitives';
@@ -337,6 +337,8 @@ export const moves = {
     if (!source) return;
     const ability = source.cardData.abilities?.find(a => hasAbilityEffect(normalizeAbilityName(a.name)));
     if (!ability) return;
+    // 暗夜羽擊: an Active facing the opponent's 暗夜羽擊 Active has all its abilities negated.
+    if (areAbilitiesNegated(G, source)) return;
     const name = normalizeAbilityName(ability.name);
     if (player.abilitiesUsedThisTurn.includes(source.id) && !isAbilityUnlimitedUse(name)) return;
 
@@ -721,15 +723,15 @@ export const moves = {
       // 龐克頭盔-style retaliation Tool: damages the attacker back when its holder is hit,
       // regardless of whether the hit also knocked the holder out.
       let retaliation = getToolRetaliationDamage(G, defender);
-      if (damage > 0 && hasPassiveAbilityNamed(defender, '反擊雞冠')) retaliation += 5;
-      if (damage > 0 && (hasPassiveAbilityNamed(defender, '自動用武') || hasPassiveAbilityNamed(defender, '反擊') || hasPassiveAbilityNamed(defender, '反擊針'))) retaliation += 3;
-      if (damage > 0) retaliation += getScaledRetaliation(defender);
+      if (damage > 0 && hasPassiveAbilityNamed(G, defender, '反擊雞冠')) retaliation += 5;
+      if (damage > 0 && (hasPassiveAbilityNamed(G, defender, '自動用武') || hasPassiveAbilityNamed(G, defender, '反擊') || hasPassiveAbilityNamed(G, defender, '反擊針'))) retaliation += 3;
+      if (damage > 0) retaliation += getScaledRetaliation(G, defender);
       retaliation += getGrudgeVortexRetaliation(G, defender);
       if (retaliation > 0) {
         attacker.damage += retaliation * 10;
       }
       // 甲殼刺: being hit while Active discards 1 Energy attached to the attacker.
-      if (damage > 0 && shouldDiscardAttackerEnergy(defender) && attacker.attachedEnergy.length > 0) {
+      if (damage > 0 && shouldDiscardAttackerEnergy(G, defender) && attacker.attachedEnergy.length > 0) {
         const removed = attacker.attachedEnergy.splice(Math.floor(Math.random() * attacker.attachedEnergy.length), 1)[0];
         discardAttachedEnergy(G, attacker.owner, removed);
       }
@@ -737,21 +739,21 @@ export const moves = {
       if (damage > 0) {
         const defenderHpBefore = effectiveMaxHp(G, defender);
         if (defenderHpBefore > 0 && defender.damage >= defenderHpBefore) {
-          const lethalRetaliation = getLethalOnlyRetaliation(defender);
+          const lethalRetaliation = getLethalOnlyRetaliation(G, defender);
           if (lethalRetaliation > 0) attacker.damage += lethalRetaliation * 10;
         }
       }
       // 毒刺 / 灼熱之軀-style retaliation: being hit while Active poisons/burns the attacker.
-      if (damage > 0 && hasPassiveAbilityNamed(defender, '毒刺')) {
+      if (damage > 0 && hasPassiveAbilityNamed(G, defender, '毒刺')) {
         attacker.statusConditions = attacker.statusConditions.filter(c => c !== 'Poisoned');
         attacker.statusConditions.push('Poisoned');
       }
-      if (damage > 0 && hasPassiveAbilityNamed(defender, '灼熱之軀')) {
+      if (damage > 0 && hasPassiveAbilityNamed(G, defender, '灼熱之軀')) {
         attacker.statusConditions = attacker.statusConditions.filter(c => c !== 'Burned');
         attacker.statusConditions.push('Burned');
       }
       // 堅忍之軀: a coin flip may let a Pokémon that would be KO'd by this attack survive at 10 HP instead.
-      if (hasPassiveAbilityNamed(defender, '堅忍之軀') || hasPassiveAbilityNamed(defender, '不朽身軀')) {
+      if (hasPassiveAbilityNamed(G, defender, '堅忍之軀') || hasPassiveAbilityNamed(G, defender, '不朽身軀')) {
         const wouldBeLethal = effectiveMaxHp(G, defender) > 0 && defender.damage >= effectiveMaxHp(G, defender);
         if (wouldBeLethal) {
           const survived = Math.random() < 0.5;
@@ -761,7 +763,7 @@ export const moves = {
       }
       // 勤奮之心 / 結實: unconditionally (no coin flip) survives a would-be-lethal hit at 10 HP,
       // but only if it entered this hit at full HP (same text, different cards).
-      if ((hasPassiveAbilityNamed(defender, '勤奮之心') || hasPassiveAbilityNamed(defender, '結實')) && defenderWasFullHp) {
+      if ((hasPassiveAbilityNamed(G, defender, '勤奮之心') || hasPassiveAbilityNamed(G, defender, '結實')) && defenderWasFullHp) {
         const wouldBeLethal = effectiveMaxHp(G, defender) > 0 && defender.damage >= effectiveMaxHp(G, defender);
         if (wouldBeLethal) {
           defender.damage = effectiveMaxHp(G, defender) - 10;
@@ -1202,7 +1204,7 @@ export const moves = {
     // Simplified vs. the printed text's KO/promote timing nuance — just allows one bonus
     // attack this turn rather than modeling the exact "opponent must first promote" sequencing.
     if (!G.pendingChoice && !player.usedBonusAttackThisTurn
-      && hasPassiveAbilityNamed(attacker, '祭典樂舞') && isStadiumActive(G, '祭典會場')) {
+      && hasPassiveAbilityNamed(G, attacker, '祭典樂舞') && isStadiumActive(G, '祭典會場')) {
       player.usedBonusAttackThisTurn = true;
       addLog(G, G.currentPlayer, 'ability', `${attacker.cardData.name}'s 祭典樂舞 grants a second attack this turn`);
       return;
