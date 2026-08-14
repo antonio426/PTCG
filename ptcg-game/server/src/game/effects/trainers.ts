@@ -179,6 +179,7 @@ const lilliesDetermination: EffectHandler = {
 
 /** 夜間擔架 Night Stretcher: retrieve 1 Pokémon or Basic Energy from discard to hand. */
 const nightStretcher: EffectHandler = {
+  canPlay(ctx) { return player(ctx.G, ctx.playerIndex).discardPile.some(c => c.cardData.supertype === 'Pokémon' || c.cardData.subtypes.includes('Basic Energy')); },
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     const options = deckOptions(
@@ -226,6 +227,7 @@ const pokeTablet: EffectHandler = {
 
 /** 好友寶芬 Buddy-Buddy Poffin: search up to 2 Basic Pokémon with HP<=70 onto the bench. */
 const buddyPoffin: EffectHandler = {
+  canPlay(ctx) { return player(ctx.G, ctx.playerIndex).bench.some(s => s === null); },
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     const freeSlots = p.bench.filter(s => s === null).length;
@@ -259,6 +261,7 @@ const buddyPoffin: EffectHandler = {
 
 /** 艾莉絲的鬥志: discard 1 card from hand, draw back up to 6. */
 const alicesResolve: EffectHandler = {
+  canPlay(ctx) { return player(ctx.G, ctx.playerIndex).hand.some(c => c.id !== ctx.sourceCardId); },
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     if (p.hand.length === 0) return 'done';
@@ -557,6 +560,7 @@ const modifiedHammer: EffectHandler = {
 
 /** 水蓮的照顧 Erika's Hospitality: from discard, up to 3 total of (non-rule-box Pokémon + Basic Energy) to hand. */
 const erikasHospitality: EffectHandler = {
+  canPlay(ctx) { return player(ctx.G, ctx.playerIndex).discardPile.some(c => (c.cardData.supertype === 'Pokémon' && hasNoRuleBox(c)) || c.cardData.subtypes.includes('Basic Energy')); },
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     const options = deckOptions(p.discardPile, c => (c.cardData.supertype === 'Pokémon' && hasNoRuleBox(c)) || c.cardData.subtypes.includes('Basic Energy'));
@@ -571,6 +575,7 @@ const erikasHospitality: EffectHandler = {
 
 /** 松葉的信心 Matsuba's Conviction: discard 1 card, draw cards equal to the opponent's bench count. */
 const matsubasConviction: EffectHandler = {
+  canPlay(ctx) { return player(ctx.G, ctx.playerIndex).hand.some(c => c.id !== ctx.sourceCardId); },
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     if (p.hand.length === 0) return 'done';
@@ -742,6 +747,8 @@ const rocketLambda: EffectHandler = {
 
 /** 探險家的嚮導 Explorer's Guide: look at top 6, take 2 cards to hand, discard the rest. */
 const explorersGuide: EffectHandler = {
+  // deck COUNT is public
+  canPlay(ctx) { return player(ctx.G, ctx.playerIndex).deck.length > 0; },
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     const top = p.deck.slice(-6);
@@ -795,6 +802,7 @@ const fightingDrum: EffectHandler = {
 
 /** N的謀劃 N's Scheme(-style): move up to 2 energy from benched Pokémon onto the Active. */
 const movesBenchEnergyToActive: EffectHandler = {
+  canPlay(ctx) { const p = player(ctx.G, ctx.playerIndex); return !!p.active && p.bench.some(c => c !== null && c.attachedEnergy.length > 0); },
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     if (!p.active) return 'done';
@@ -827,6 +835,7 @@ const healAllLightning: EffectHandler = {
 
 /** 滿充的體貼 (full heal + return energy): fully heal one of your own Mega ("超級...ex") Pokémon and return its energy to hand. */
 const fullHealMegaReturnEnergy: EffectHandler = {
+  canPlay(ctx) { return allPokemon(ctx.G, ctx.playerIndex).some(c => c.cardData.name.startsWith('超級') && c.cardData.subtypes.includes('ex')); },
   start(ctx) {
     const targets = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.cardData.name.startsWith('超級') && c.cardData.subtypes.includes('ex'));
     if (targets.length === 0) return 'done';
@@ -1009,6 +1018,8 @@ const surfer: EffectHandler = {
 
 /** 庫瑟洛斯奇的企圖: opponent discards down to 3 hand cards. */
 const kusserothsAmbition: EffectHandler = {
+  // hand COUNT is public information
+  canPlay(ctx) { return opponent(ctx.G, ctx.playerIndex).hand.length > 3; },
   start(ctx) {
     const opp = opponent(ctx.G, ctx.playerIndex);
     while (opp.hand.length > 3) opp.discardPile.push(opp.hand.pop()!);
@@ -1037,6 +1048,8 @@ const hibikisAdventure: EffectHandler = {
 
 /** 暗碼迷的解讀: look at top 2 of deck, put back on top in whatever order chosen (rest of deck untouched, no reshuffle). */
 const decoderMania: EffectHandler = {
+  // deck COUNT is public
+  canPlay(ctx) { return player(ctx.G, ctx.playerIndex).deck.length > 0; },
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     const top = p.deck.slice(-2);
@@ -1165,6 +1178,7 @@ const tradeTicket: EffectHandler = {
 
 /** 秘密箱: discard 3 hand cards, then search 1 each of Item/Pokémon Tool/Supporter/Stadium from deck to hand. */
 const secretBox: EffectHandler = {
+  canPlay(ctx) { return player(ctx.G, ctx.playerIndex).hand.filter(c => c.id !== ctx.sourceCardId).length >= 3; },
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     if (p.hand.length < 3) return 'done';
@@ -1241,6 +1255,7 @@ const uguisu: EffectHandler = {
 
 /** 奇跡耳麥: from discard, choose up to 2 Supporter cards to hand. */
 const miracleHeadset: EffectHandler = {
+  canPlay(ctx) { return player(ctx.G, ctx.playerIndex).discardPile.some(c => c.cardData.subtypes.includes('Supporter')); },
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     const options = deckOptions(p.discardPile, c => c.cardData.subtypes.includes('Supporter'));
@@ -1267,6 +1282,7 @@ const tanyu: EffectHandler = {
 
 /** 白蕾雅: if the opponent has exactly 2 prizes remaining, your next KO this turn awards 1 bonus prize. */
 const whiteLyra: EffectHandler = {
+  canPlay(ctx) { return opponent(ctx.G, ctx.playerIndex).prizes.length === 2; },
   start(ctx) {
     const opp = opponent(ctx.G, ctx.playerIndex);
     if (opp.prizes.length !== 2) return 'done';
@@ -1300,6 +1316,8 @@ const teraOrb: EffectHandler = {
 
 /** 寶可夢中心的姐姐: heal 30 damage from each of your own Pokémon. */
 const pokemonCenterLady: EffectHandler = {
+  // healing an undamaged team is a no-op play
+  canPlay(ctx) { return allPokemon(ctx.G, ctx.playerIndex).some(c => c.damage > 0); },
   start(ctx) {
     for (const c of allPokemon(ctx.G, ctx.playerIndex)) healDamage(c, 30);
     return 'done';
@@ -1364,6 +1382,7 @@ const powerProtein: EffectHandler = {
 
 /** 特殊紅牌: if the opponent has 3 or fewer prizes remaining, they shuffle their hand into their deck and draw 3. */
 const specialRedCard: EffectHandler = {
+  canPlay(ctx) { return opponent(ctx.G, ctx.playerIndex).prizes.length <= 3; },
   start(ctx) {
     const opp = opponent(ctx.G, ctx.playerIndex);
     if (opp.prizes.length > 3) return 'done';
@@ -1410,6 +1429,7 @@ const naeisEncouragement: EffectHandler = {
 
 /** 吉普索: from discard, up to 2 Basic Metal Energy, attach to an own Metal Pokémon. */
 const jipuso: EffectHandler = {
+  canPlay(ctx) { const p = player(ctx.G, ctx.playerIndex); return allPokemon(ctx.G, ctx.playerIndex).some(c => (c.cardData.types || []).includes('Metal')) && p.discardPile.some(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes('Metal')); },
   start(ctx) {
     const targets = allPokemon(ctx.G, ctx.playerIndex).filter(c => (c.cardData.types || []).includes('Metal'));
     const p = player(ctx.G, ctx.playerIndex);
@@ -1491,6 +1511,7 @@ const highTempBurner: EffectHandler = {
 
 /** 塔拉剛: from discard, up to 4 total of Fighting Pokémon + Basic Fighting Energy, to hand. */
 const taragan: EffectHandler = {
+  canPlay(ctx) { return player(ctx.G, ctx.playerIndex).discardPile.some(c => (c.cardData.supertype === 'Pokémon' && (c.cardData.types || []).includes('Fighting')) || (c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes('Fighting'))); },
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     const options = deckOptions(p.discardPile, c =>
@@ -1507,6 +1528,8 @@ const taragan: EffectHandler = {
 
 /** 完全體攪拌器: mill up to 5 cards from your own deck to the discard pile, reshuffle the rest. */
 const perfectBlender: EffectHandler = {
+  // deck COUNT is public
+  canPlay(ctx) { return player(ctx.G, ctx.playerIndex).deck.length > 0; },
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     if (p.deck.length === 0) return 'done';
@@ -1638,6 +1661,7 @@ const kasumisSpirit: EffectHandler = {
 
 /** 沐淨: discard up to 2 non-rule-box Pokémon cards from hand, draw 3 cards per card discarded. */
 const mujing: EffectHandler = {
+  canPlay(ctx) { return player(ctx.G, ctx.playerIndex).hand.some(c => c.cardData.supertype === 'Pokémon' && hasNoRuleBox(c)); },
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     const options = p.hand.filter(c => c.cardData.supertype === 'Pokémon' && hasNoRuleBox(c));
