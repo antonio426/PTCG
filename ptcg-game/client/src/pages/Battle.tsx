@@ -660,6 +660,13 @@ export default function Battle() {
     } catch { /* handled by store */ }
   }, [selectedDeckId, selectableDecks, createBattle, difficulty]);
 
+  /** 重新開局: same deck, same difficulty, brand-new session (fresh coin flip and hands).
+   * No negotiation needed vs an AI — mid-game it just asks for confirmation first. */
+  const handleRematch = useCallback(async (needConfirm: boolean) => {
+    if (needConfirm && !window.confirm('重新開局？將捨棄目前的對局，以同一副牌組重新開始。')) return;
+    await handleStartBattle();
+  }, [handleStartBattle]);
+
   // Every interactive surface (quick actions, hand cards, board targets, pending-choice picks)
   // funnels through this handler or the two below — guarding `loading` here once, rather than on
   // every individual button, is what keeps a slow response from letting a rapid double-click
@@ -1026,6 +1033,14 @@ export default function Battle() {
             >
               ↩ 悔棋
             </button>
+            <button
+              onClick={() => handleRematch(bs.winner === null)}
+              disabled={loading}
+              title="以同牌組、同難度重新開始一場新對局"
+              className="flex items-center gap-1 text-emerald-500/70 hover:text-emerald-300 text-xs transition-colors mr-1 disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              🔄 重開
+            </button>
             <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${bs.isPlayerTurn ? 'bg-green-900/60 text-green-300 border border-green-700/60 shadow-[0_0_8px_rgba(34,197,94,0.45)]' : 'bg-red-900/60 text-red-300 border border-red-700/60'}`}>
               {bs.isPlayerTurn ? '你的回合' : '對手回合'}
             </span>
@@ -1211,6 +1226,12 @@ export default function Battle() {
                   className="px-8 py-2.5 bg-gradient-to-b from-emerald-500 to-emerald-700 text-white rounded-xl font-medium hover:from-emerald-400 hover:to-emerald-600 transition-colors shadow-lg shadow-emerald-950/50"
                 >
                   返回大廳
+                </button>
+                <button
+                  onClick={() => handleRematch(false)}
+                  className="mt-2 px-8 py-2.5 bg-gradient-to-b from-sky-500 to-sky-700 text-white rounded-xl font-medium hover:from-sky-400 hover:to-sky-600 transition-colors shadow-lg shadow-sky-950/50"
+                >
+                  🔄 再來一場
                 </button>
                 <div className="flex items-center gap-2 mt-3">
                   <button
