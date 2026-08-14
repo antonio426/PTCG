@@ -3,7 +3,7 @@ import { PtcgGameState, GamePhase, PendingChoice } from './GameState';
 import { hasAbilityEffect } from './effects/abilities';
 import { getRetreatCostReduction, getColorlessCostReduction } from './effects/tools';
 import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatCostReduction, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, isAttackLockedByTimedEffect, isItemAndToolPlayBlocked, isItemLockedByTimedEffect, isItemPlayBlocked, isNamedAttackLockedByTimedEffect, isRetreatLockedByTimedEffect } from './effects/passiveAbilities';
-import { normalizeAbilityName } from './effects/types';
+import { normalizeAbilityName, normalizeCardName } from './effects/types';
 import { hasEvolvesFrom, evolvesFromMatches, inferEvolvesFromSpecies, chainTracesBackTo } from './evolutionChains';
 
 /** All k-sized combinations of `items`, capped so huge hands can't explode the move list. */
@@ -126,6 +126,35 @@ export const FIRST_TURN_SUPPORTER_EXCEPTIONS = new Set(['丹瑜', '火箭隊的�
 function isFirstTurnOfGame(G: PtcgGameState): boolean {
   return G.turn === 1;
 }
+
+/**
+ * "Can this Trainer's effect actually do anything right now?" gates, keyed by normalized card
+ * name. Each mirrors the bail-out conditions of that card's own effect handler in
+ * effects/trainers.ts — when the handler's start() would immediately return 'done' having done
+ * nothing, the play must not be offered, or the card is consumed for zero effect. Keep the two
+ * in sync when either side changes.
+ */
+type PlayerState = PtcgGameState['players'][0];
+const TRAINER_PLAY_GATES: Record<string, (G: PtcgGameState, player: PlayerState) => boolean> = {
+  // Rare Candy: Basic straight to Stage 2 only (never Stage 1 -> Stage 2), never on turn 1,
+  // and only when some Stage 2 in hand actually evolves from a Basic already in play that
+  // wasn't played this turn.
+  '神奇糖果': (G, player) =>
+    !isFirstTurnOfGame(G) &&
+    player.hand
+      .filter(c => c.cardData.supertype === 'Pokémon' && c.cardData.subtypes.includes('Stage 2'))
+      .some(stage2 =>
+        [player.active, ...player.bench].some(t =>
+          t && t.cardData.subtypes.includes('Basic') && !player.pokemonPlayedThisTurn.includes(t.id)
+            && chainTracesBackTo(stage2.cardData, t.cardData.name)
+        )
+      ),
+  // 奇跡修正檔: needs a Basic Psychic Energy in the discard AND a Benched Psychic Pokémon —
+  // miracleCipher.start() returns 'done' untouched when either is missing.
+  '奇跡修正檔': (_G, player) =>
+    player.bench.some(c => c !== null && (c.cardData.types || []).includes('Psychic')) &&
+    player.discardPile.some(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes('Psychic')),
+};
 
 export function canEvolve(G: PtcgGameState, playerIndex: number, cardId: string, targetId: string): boolean {
   const player = playerState(G, playerIndex, ['main']);
@@ -321,24 +350,14 @@ export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalActio
         const isItem = card.cardData.subtypes.includes('Item');
         const blockedByOpponentAbility = ((isItem || card.cardData.subtypes.includes('Pokémon Tool')) && isItemAndToolPlayBlocked(G, playerIndex as 0 | 1))
           || (isItem && (isItemPlayBlocked(G, playerIndex as 0 | 1) || isItemLockedByTimedEffect(G, playerIndex as 0 | 1)));
-        // 神奇糖果 Rare Candy: real rules only let it evolve a Basic straight to Stage 2 (never
-        // Stage 1 -> Stage 2), and it can't be played at all on the first turn. Without this check
-        // the card was always offered as playable, then unconditionally discarded by the generic
-        // trainer-play flow below regardless of whether a legal Basic target actually existed —
-        // i.e. the item "failed" but still cost the card. Gate it here instead so an illegal use
-        // is simply not offered as a move, matching how canEvolve/canPlayPokemon gate other plays.
-        const blockedRareCandy = card.cardData.name === '神奇糖果' && (
-          isFirstTurnOfGame(G) ||
-          !player.hand
-            .filter(c => c.cardData.supertype === 'Pokémon' && c.cardData.subtypes.includes('Stage 2'))
-            .some(stage2 =>
-              [player.active, ...player.bench].some(t =>
-                t && t.cardData.subtypes.includes('Basic') && !player.pokemonPlayedThisTurn.includes(t.id)
-                  && chainTracesBackTo(stage2.cardData, t.cardData.name)
-              )
-            )
-        );
-        if (!blockedFirstTurn && !blockedAlreadyPlayed && !blockedByOpponentAbility && !blockedRareCandy) {
+        // Per-card playability gates (TRAINER_PLAY_GATES below): a Trainer whose effect could
+        // not do anything right now is not offered as a move at all — otherwise the generic
+        // trainer-play flow discards the card even though its effect handler bailed out
+        // immediately, i.e. the item "failed" but still cost the card. Name goes through
+        // normalizeCardName per the documented zero-width-char pitfall.
+        const gate = TRAINER_PLAY_GATES[normalizeCardName(card.cardData.name)];
+        const blockedByGate = gate ? !gate(G, player) : false;
+        if (!blockedFirstTurn && !blockedAlreadyPlayed && !blockedByOpponentAbility && !blockedByGate) {
           legalMoves.push({
             type: 'play_trainer',
             description: `Play ${card.cardData.name}`,

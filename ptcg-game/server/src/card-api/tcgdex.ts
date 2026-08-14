@@ -274,7 +274,15 @@ async function fetchWithRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> 
 
 export async function fetchAllCards(lang = 'zh-tw'): Promise<MapCard[]> {
   if (inMemoryCards) return inMemoryCards;
-  const fileCached = cache.loadCardCache();
+  // cards.json is a CURATED dataset, not a disposable cache: one-off scripts under src/scripts/
+  // (official-site ability/attack backfills, ACE SPEC patches, sibling-print fixes) write
+  // straight into it. The old TTL-checked load meant any server start >24h after the last save
+  // silently REPLACED the whole catalog with bare TCGdex category summaries — destroying every
+  // curated field and "un-fixing" cards that had already been repaired, repeatedly. So: always
+  // trust the file when it exists; refetch only when it's missing or explicitly requested via
+  // PTCG_REFRESH_CARDS=1 (after which the curation scripts need re-running).
+  const forceRefresh = process.env.PTCG_REFRESH_CARDS === '1';
+  const fileCached = forceRefresh ? null : cache.loadCardCache(true);
   if (fileCached) {
     inMemoryCards = fileCached;
     // setLegality must be populated for standardOnly filter to work on cached cards
@@ -329,7 +337,7 @@ export async function fetchCardById(id: string, lang = 'zh-tw'): Promise<MapCard
     if (found && enrichedCheck(found)) return found;
   }
   // Check file cache
-  const fileCached = cache.loadCardCache();
+  const fileCached = cache.loadCardCache(true); // curated master — see fetchAllCards
   if (fileCached) {
     const found = fileCached.find(c => c.id === id);
     if (found && enrichedCheck(found)) { inMemoryCards = fileCached; return found; }
@@ -367,7 +375,7 @@ export async function fetchCardsByIds(ids: string[], lang = 'zh-tw'): Promise<Re
       else uncached.push(id);
     }
   } else {
-    const fileCached = cache.loadCardCache();
+    const fileCached = cache.loadCardCache(true); // curated master — see fetchAllCards
     if (fileCached) {
       for (const id of ids) {
         const found = fileCached.find(c => c.id === id);
@@ -418,7 +426,7 @@ export async function fetchCardsByIds(ids: string[], lang = 'zh-tw'): Promise<Re
 
 export async function fetchAllSets(lang = 'zh-tw'): Promise<SetData[]> {
   if (inMemorySets) return inMemorySets;
-  const fileCached = cache.loadSetCache();
+  const fileCached = process.env.PTCG_REFRESH_CARDS === '1' ? null : cache.loadSetCache(true); // curated-master policy, same as fetchAllCards
   if (fileCached) {
     inMemorySets = fileCached;
     for (const s of fileCached) {
@@ -461,7 +469,7 @@ export async function fetchAllSets(lang = 'zh-tw'): Promise<SetData[]> {
 
 export async function fetchSetById(id: string, lang = 'zh-tw'): Promise<SetData | null> {
   if (inMemorySets) { const f = inMemorySets.find(s => s.id === id); if (f) return f; }
-  const fileCached = cache.loadSetCache();
+  const fileCached = process.env.PTCG_REFRESH_CARDS === '1' ? null : cache.loadSetCache(true); // curated-master policy, same as fetchAllCards
   if (fileCached) {
     const f = fileCached.find(s => s.id === id);
     if (f) {
