@@ -104,6 +104,8 @@ npm run preview              # 僅 client — 預覽 production build
 - `coverage-report.ts` — 找「資料有寫、程式沒接」：比對 `abilityEffects`/`PASSIVE_ABILITY_NAMES`/`trainerEffects`/`attackEffects`（`server/src/game/effects/{abilities,passiveAbilities,trainers,attacks}.ts`）是否涵蓋 `cards.json` 裡實際出現過的特性/訓練家/攻擊名稱（透過 `normalizeCardName`/`normalizeAbilityName` 比對，見「反覆踩過的坑」），依重印次數排序輸出，結果存到 `data-scraped/coverage-uncovered-*.json`。
 - `find-sibling-data-gaps.ts` — 找「資料本身就漏寫」：把同名卡分組，比對是否有印刷版本缺 `abilities`/`attacks` 而其他印刷版本（HP 相符，且雙方都有招式資料時招式簽章也相符）有，輸出候選清單到 `data-scraped/sibling-data-gaps.json`。**這支工具只能抓到「有姊妹版本可比對」的缺口**，孤例卡片抓不到。它給的 `confidence: 'high'` 代表招式簽章完全相符；`'medium'` 代表沒辦法這樣交叉驗證——`'medium'` 的候選在回填前，要用「卡片資料流程」段落講的反向缺口檢查法手動核對。
 
+- `audit-vs-reference.ts` — 找「真實對局觸發了這個效果，但我們什麼都不會做」：讀取參考網站自己的事件記錄（由 `autoplay.mjs`／`batch.mjs` 擷取到 `.playwright-mcp/games`，見「專案概述」裡參考網站那一段），把實際觸發過的每個特性／訓練家／招式拿去比對我們的登記表。輸出：`data-scraped/reference-audit.md`。這是三者中訊號最強的一支——不像另外兩支，它只回報**真的被打出來過**的效果，所以結果不會是紙上談兵。220 場基準線：特性／訓練家 0 個未覆蓋，招式文字 13 個未覆蓋。
+
 `cards.json` 每次重新抓取/enrich 後這兩份報告就可能過期，改動卡片效果實作或懷疑有資料缺口時應該重跑一次。回填完之後，建議用 `battleRunner.ts` 針對真正含有這些卡的牌組小規模跑幾場（場數見「成本/情境使用紀律」），不要只相信報告本身——這只能確認資料不會讓引擎崩潰，不能證明一個「新實作」的效果會像參考網站那樣真的觸發（要驗證這個，去參考網站實測）。
 
 ### 官網文字爬蟲（`scrape-all-official-data.ts` / `scrape-missing-card-data.ts`）
