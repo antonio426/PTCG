@@ -243,6 +243,12 @@ export function canAttack(G: PtcgGameState, playerIndex: number, attackIndex: nu
 
   const attack = player.active.cardData.attacks?.[attackIndex];
   if (!attack) return false;
+  // Old-scraper residue stored ability text as `[特性]`-prefixed pseudo-ATTACKS with an empty
+  // cost — always payable, so selecting one silently wasted the turn's attack. The data has
+  // been cleaned (46 entries), but keep this guard against a future scrape regression.
+  // NOTE: raw regex on purpose — normalizeCardName/normalizeAbilityName strip the [特性]
+  // marker, so the normalized name can't be used to DETECT it.
+  if (/^[‌​\s]*\[特性\]/.test(attack.name)) return false;
   if (isNamedAttackLockedByTimedEffect(G, player.active, attack.name)) return false;
   if (!canUsePassiveGatedAttack(G, player.active)) return false;
 

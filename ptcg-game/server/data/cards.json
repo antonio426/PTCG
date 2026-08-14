@@ -1,5 +1,5 @@
 {
-  "timestamp": 1786647224104,
+  "timestamp": 1786696123836,
   "data": [
     {
       "id": "SVD-001",
@@ -6148,15 +6148,14 @@
       "types": [
         "Grass"
       ],
-      "abilities": [],
-      "attacks": [
+      "abilities": [
         {
-          "name": "‌[特性]複眼",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "這隻寶可夢使用的招式，對對手的戰鬥場的擁有特性的寶可夢造成的傷害「+50」點。"
-        },
+          "name": "複眼",
+          "text": "這隻寶可夢使用的招式，對對手的戰鬥場的擁有特性的寶可夢造成的傷害「+50」點。",
+          "type": "Ability"
+        }
+      ],
+      "attacks": [
         {
           "name": "麻麻羅網",
           "cost": [
@@ -83414,13 +83413,6 @@
       ],
       "attacks": [
         {
-          "name": "‌[特性]咒詛炸彈",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "在自己的回合時可使用1次，若使用，則將這隻寶可夢【昏厥】。在對手的1隻寶可夢身上放置5個傷害指示物。"
-        },
-        {
           "name": "鬼火",
           "cost": [
             "Psychic",
@@ -87321,13 +87313,6 @@
         }
       ],
       "attacks": [
-        {
-          "name": "‌[特性]咒詛炸彈",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "在自己的回合時可使用1次，若使用，則將這隻寶可夢【昏厥】。在對手的1隻寶可夢身上放置13個傷害指示物。"
-        },
         {
           "name": "影子束縛",
           "cost": [
@@ -151534,15 +151519,14 @@
       "types": [
         "Darkness"
       ],
-      "abilities": [],
-      "attacks": [
+      "abilities": [
         {
-          "name": "‌[特性]鬆口氣",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "這隻寶可夢受到對手的寶可夢招式的傷害而【昏厥】時，若自己的場上有「桃歹郎ex」，則被獲得的獎賞卡減少1張。"
-        },
+          "name": "鬆口氣",
+          "text": "這隻寶可夢受到對手的寶可夢招式的傷害而【昏厥】時，若自己的場上有「桃歹郎ex」，則被獲得的獎賞卡減少1張。",
+          "type": "Ability"
+        }
+      ],
+      "attacks": [
         {
           "name": "惡劣頭擊",
           "cost": [
@@ -155285,15 +155269,14 @@
       "types": [
         "Darkness"
       ],
-      "abilities": [],
-      "attacks": [
+      "abilities": [
         {
-          "name": "‌‌[特性]扭轉乾坤",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "在上個對手的回合，若自己的寶可夢【昏厥】了，則在自己的回合時可使用1次。從自己的牌庫抽出3張卡。在這個回合，若已經使出了其他的「扭轉乾坤」，則這個特性無法使用。"
-        },
+          "name": "扭轉乾坤",
+          "text": "在上個對手的回合，若自己的寶可夢【昏厥】了，則在自己的回合時可使用1次。從自己的牌庫抽出3張卡。在這個回合，若已經使出了其他的「扭轉乾坤」，則這個特性無法使用。",
+          "type": "Ability"
+        }
+      ],
+      "attacks": [
         {
           "name": "殘酷箭",
           "cost": [
@@ -159090,15 +159073,14 @@
       "types": [
         "Darkness"
       ],
-      "abilities": [],
-      "attacks": [
+      "abilities": [
         {
-          "name": "‌‌[特性]支配鎖鏈",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "在自己的回合時可使用1次。選擇1隻自己的備戰區的【惡】寶可夢（「桃歹郎ex」除外），與戰鬥寶可夢互換。然後，將新的戰鬥寶可夢【中毒】。在這個回合，若已經使出了其他的「支配鎖鏈」，則這個特性無法使用。"
-        },
+          "name": "支配鎖鏈",
+          "text": "在自己的回合時可使用1次。選擇1隻自己的備戰區的【惡】寶可夢（「桃歹郎ex」除外），與戰鬥寶可夢互換。然後，將新的戰鬥寶可夢【中毒】。在這個回合，若已經使出了其他的「支配鎖鏈」，則這個特性無法使用。",
+          "type": "Ability"
+        }
+      ],
+      "attacks": [
         {
           "name": "煩煩爆炸",
           "cost": [
@@ -162876,15 +162858,14 @@
       "types": [
         "Metal"
       ],
-      "abilities": [],
-      "attacks": [
+      "abilities": [
         {
-          "name": "‌‌[特性]ACE消弭",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "若這隻寶可夢附有「寶可夢道具」卡，則對手無法從手牌使出「【ACE SPEC】」卡。"
-        },
+          "name": "ACE消弭",
+          "text": "若這隻寶可夢附有「寶可夢道具」卡，則對手無法從手牌使出「【ACE SPEC】」卡。",
+          "type": "Ability"
+        }
+      ],
+      "attacks": [
         {
           "name": "磁力爆破",
           "cost": [
@@ -170254,15 +170235,14 @@
       "types": [
         "Metal"
       ],
-      "abilities": [],
-      "attacks": [
+      "abilities": [
         {
-          "name": "‌‌[特性]爆大身軀",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "只要這隻寶可夢在戰鬥場上，對手無法從手牌使出競技場卡。"
-        },
+          "name": "爆大身軀",
+          "text": "只要這隻寶可夢在戰鬥場上，對手無法從手牌使出競技場卡。",
+          "type": "Ability"
+        }
+      ],
+      "attacks": [
         {
           "name": "鼻之金勾臂",
           "cost": [
@@ -188759,15 +188739,14 @@
       "types": [
         "Dragon"
       ],
-      "abilities": [],
-      "attacks": [
+      "abilities": [
         {
-          "name": "‌‌[特性]反等離子",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "若對手的棄牌區有‌名稱中有「‌阿克羅瑪」的卡，則這隻寶可夢使用「‌三重冰霜」所需的能量，改為1個【無】能量。"
-        },
+          "name": "反等離子",
+          "text": "若對手的棄牌區有‌名稱中有「‌阿克羅瑪」的卡，則這隻寶可夢使用「‌三重冰霜」所需的能量，改為1個【無】能量。",
+          "type": "Ability"
+        }
+      ],
+      "attacks": [
         {
           "name": "三重冰霜",
           "cost": [
@@ -443340,13 +443319,6 @@
       "rarity": "U",
       "attacks": [
         {
-          "name": "‌[特性] 拍檔提升",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "在自己的回合時可使用1次。從自己的手牌選擇「基本【火】能量」卡與「基本【雷】能量」卡最多各1張，以任意方式附於自己的「電擊魔獸」或者「鴨嘴炎獸」身上。"
-        },
-        {
           "name": "高溫重壓",
           "cost": [
             "Fire",
@@ -443719,13 +443691,6 @@
       "_enriched": true,
       "rarity": "U",
       "attacks": [
-        {
-          "name": "‌[特性] 深海抽出",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "在自己的回合時可使用1次。從自己的牌庫抽出1張卡。然後，若希望，選擇1張自己的手牌，放回牌庫下方。"
-        },
         {
           "name": "重摑",
           "cost": [
@@ -468803,13 +468768,6 @@
       "rarity": "無標記",
       "attacks": [
         {
-          "name": "‌[特性] 繁星花紋",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "在自己的回合，從手牌使出這張卡並完成進化時，可使用1次。選擇1隻對手備戰區剩餘HP為「90」以下的寶可夢，與戰鬥寶可夢互換。"
-        },
-        {
           "name": "高速星星",
           "cost": [
             "Colorless",
@@ -470671,13 +470629,6 @@
       "rarity": "無標記",
       "attacks": [
         {
-          "name": "‌[特性] 複眼",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "這隻寶可夢使用的招式，對對手的戰鬥場的擁有特性的寶可夢造成的傷害「+50」點。"
-        },
-        {
           "name": "麻麻羅網",
           "cost": [
             "Grass",
@@ -471535,13 +471486,6 @@
       "_enriched": true,
       "rarity": "無標記",
       "attacks": [
-        {
-          "name": "‌[特性] 熟成充能",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "在自己的回合時可使用1次。從自己的手牌選擇1張「基本【草】能量」卡，附於自己的寶可夢身上。然後，將附上那張卡的寶可夢恢復「30」HP。"
-        },
         {
           "name": "蜜糖風暴",
           "cost": [
@@ -478966,13 +478910,6 @@
       "rarity": "無標記",
       "attacks": [
         {
-          "name": "‌[特性] 璀璨鱗片",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "這隻寶可夢不會受到對手的「太晶」寶可夢招式的傷害與效果的影響。"
-        },
-        {
           "name": "昏睡飛濺",
           "cost": [
             "Water",
@@ -480385,13 +480322,6 @@
       "rarity": "無標記",
       "attacks": [
         {
-          "name": "‌[特性] 事先準備",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "這隻寶可夢使用招式所需的【無】能量，減少自己的棄牌區的「海岱」的張數。"
-        },
-        {
           "name": "揮大拳",
           "cost": [
             "Water",
@@ -480637,13 +480567,6 @@
       "_enriched": true,
       "rarity": "無標記",
       "attacks": [
-        {
-          "name": "‌[特性] 快節奏",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "在自己的回合，若將1張自己的手牌放回牌庫下方，則可使用1次。從牌庫抽卡直到自己的手牌滿5張為止。"
-        },
         {
           "name": "水炮濺射",
           "cost": [
@@ -481089,13 +481012,6 @@
       "_enriched": true,
       "rarity": "無標記",
       "attacks": [
-        {
-          "name": "‌[特性] 事先準備",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "這隻寶可夢使用招式所需的【無】能量，減少自己的棄牌區的「海岱」的張數。"
-        },
         {
           "name": "音波刀鋒",
           "cost": [
@@ -481833,13 +481749,6 @@
       "_enriched": true,
       "rarity": "無標記",
       "attacks": [
-        {
-          "name": "‌‌‌[特性] 過度放電",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "在自己的回合時可使用1次，若使用，則將這隻寶可夢【昏厥】。從自己的棄牌區選擇最多3張基本能量卡，以任意方式附於自己的【雷】寶可夢身上。"
-        },
         {
           "name": "雷電球",
           "cost": [
@@ -486696,13 +486605,6 @@
       "rarity": "無標記",
       "attacks": [
         {
-          "name": "‌[特性] 天空徑線",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "只要這隻寶可夢在場上，自己的所有【基礎】寶可夢【撤退】所需的能量全部消除。"
-        },
-        {
           "name": "無限之刃",
           "cost": [
             "Psychic",
@@ -488936,13 +488838,6 @@
       "_enriched": true,
       "rarity": "無標記",
       "attacks": [
-        {
-          "name": "‌[特性] 飽腹時間",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "在自己的回合，從手牌使出這張卡並完成進化時，可使用1次。將自己的所有進化寶可夢的HP全部恢復。然後，將恢復的寶可夢身上附加的能量全部丟棄。"
-        },
         {
           "name": "奇跡閃耀",
           "cost": [
@@ -500020,13 +499915,6 @@
       "rarity": "無標記",
       "attacks": [
         {
-          "name": "‌‌[特性] 合金建造",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "在自己的回合，從手牌使出這張卡並完成進化時，可使用1次。從自己的棄牌區選擇最多2張「基本【鋼】能量」卡，以任意方式附於自己的【鋼】寶可夢身上。"
-        },
-        {
           "name": "金屬防禦強化",
           "cost": [
             "Metal",
@@ -500570,13 +500458,6 @@
       "_enriched": true,
       "rarity": "無標記",
       "attacks": [
-        {
-          "name": "‌[特性] 快掃拳返",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "這隻寶可夢受到對手的寶可夢招式的傷害時，將與這隻寶可夢身上附加的【鋼】能量的數量×2個的相同數量的傷害指示物，放置於使用招式的寶可夢身上。"
-        },
         {
           "name": "岩石封鎖",
           "cost": [
@@ -513146,13 +513027,6 @@
       "rarity": "無標記",
       "attacks": [
         {
-          "name": "‌‌[特性] 沉雪",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "在自己的回合，從手牌將這張卡放置於備戰區時，可使用1次。將場上的競技場卡丟棄。"
-        },
-        {
           "name": "冰柱閉環",
           "cost": [
             "Water",
@@ -513337,13 +513211,6 @@
       "_enriched": true,
       "rarity": "無標記",
       "attacks": [
-        {
-          "name": "‌‌‌[特性] 過度放電",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "在自己的回合時可使用1次，若使用，則將這隻寶可夢【昏厥】。從自己的棄牌區選擇最多3張基本能量卡，以任意方式附於自己的【雷】寶可夢身上。"
-        },
         {
           "name": "雷電球",
           "cost": [
@@ -515221,13 +515088,6 @@
       "_enriched": true,
       "rarity": "RR",
       "attacks": [
-        {
-          "name": "‌[特性] 天空徑線",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "只要這隻寶可夢在場上，自己的所有【基礎】寶可夢【撤退】所需的能量全部消除。"
-        },
         {
           "name": "無限之刃",
           "cost": [
@@ -517895,13 +517755,6 @@
       "rarity": "RR",
       "attacks": [
         {
-          "name": "‌‌[特性] 合金建造",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "在自己的回合，從手牌使出這張卡並完成進化時，可使用1次。從自己的棄牌區選擇最多2張「基本【鋼】能量」卡，以任意方式附於自己的【鋼】寶可夢身上。"
-        },
-        {
           "name": "金屬防禦強化",
           "cost": [
             "Metal",
@@ -518868,13 +518721,6 @@
       "_enriched": true,
       "rarity": "無標記",
       "attacks": [
-        {
-          "name": "‌[特性] 捲牆",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "只要這隻寶可夢與自己的其他「爆炸頭水牛」在場上，自己的所有【無】屬性的【基礎】寶可夢受到對手的寶可夢招式的傷害「-60」點。無論有多少隻擁有這個特性的寶可夢，這個效果也不會重複。"
-        },
         {
           "name": "潛力",
           "cost": [
@@ -546261,13 +546107,6 @@
       "_enriched": true,
       "rarity": "無標記",
       "attacks": [
-        {
-          "name": "‌[特性] 拍檔提升",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "在自己的回合時可使用1次。從自己的手牌選擇「基本【火】能量」卡與「基本【雷】能量」卡最多各1張，以任意方式附於自己的「電擊魔獸」或者「鴨嘴炎獸」身上。"
-        },
         {
           "name": "高溫重壓",
           "cost": [
@@ -579395,13 +579234,6 @@
       "rarity": "AR",
       "attacks": [
         {
-          "name": "‌‌‌[特性]過度放電",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "在自己的回合時可使用1次，若使用，則將這隻寶可夢【昏厥】。從自己的棄牌區選擇最多3張基本能量卡，以任意方式附於自己的【雷】寶可夢身上。"
-        },
-        {
           "name": "雷電球",
           "cost": [
             "Lightning",
@@ -579961,13 +579793,6 @@
       "_enriched": true,
       "rarity": "SR",
       "attacks": [
-        {
-          "name": "‌[特性]璀璨鱗片",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "這隻寶可夢不會受到對手的「太晶」寶可夢招式的傷害與效果的影響。"
-        },
         {
           "name": "昏睡飛濺",
           "cost": [
@@ -580575,13 +580400,6 @@
       "_enriched": true,
       "rarity": "SAR",
       "attacks": [
-        {
-          "name": "‌[特性]璀璨鱗片",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "這隻寶可夢不會受到對手的「太晶」寶可夢招式的傷害與效果的影響。"
-        },
         {
           "name": "昏睡飛濺",
           "cost": [
@@ -581704,13 +581522,6 @@
       "rarity": "SR",
       "attacks": [
         {
-          "name": "‌[特性]天空徑線",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "只要這隻寶可夢在場上，自己的所有【基礎】寶可夢【撤退】所需的能量全部消除。"
-        },
-        {
           "name": "無限之刃",
           "cost": [
             "Psychic",
@@ -581964,13 +581775,6 @@
       "_enriched": true,
       "rarity": "SR",
       "attacks": [
-        {
-          "name": "‌‌[特性]合金建造",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "在自己的回合，從手牌使出這張卡並完成進化時，可使用1次。從自己的棄牌區選擇最多2張「基本【鋼】能量」卡，以任意方式附於自己的【鋼】寶可夢身上。"
-        },
         {
           "name": "金屬防禦強化",
           "cost": [
@@ -582232,13 +582036,6 @@
       "rarity": "SAR",
       "attacks": [
         {
-          "name": "‌[特性]天空徑線",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "只要這隻寶可夢在場上，自己的所有【基礎】寶可夢【撤退】所需的能量全部消除。"
-        },
-        {
           "name": "無限之刃",
           "cost": [
             "Psychic",
@@ -582311,13 +582108,6 @@
       "_enriched": true,
       "rarity": "SAR",
       "attacks": [
-        {
-          "name": "‌‌[特性]合金建造",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "在自己的回合，從手牌使出這張卡並完成進化時，可使用1次。從自己的棄牌區選擇最多2張「基本【鋼】能量」卡，以任意方式附於自己的【鋼】寶可夢身上。"
-        },
         {
           "name": "金屬防禦強化",
           "cost": [
@@ -588138,13 +587928,6 @@
       "rarity": "AR",
       "attacks": [
         {
-          "name": "‌[特性]咒詛炸彈",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "在自己的回合時可使用1次，若使用，則將這隻寶可夢【昏厥】。在對手的1隻寶可夢身上放置5個傷害指示物。"
-        },
-        {
           "name": "鬼火",
           "cost": [
             "Psychic",
@@ -588216,13 +587999,6 @@
       "_enriched": true,
       "rarity": "AR",
       "attacks": [
-        {
-          "name": "‌[特性]咒詛炸彈",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "在自己的回合時可使用1次，若使用，則將這隻寶可夢【昏厥】。在對手的1隻寶可夢身上放置13個傷害指示物。"
-        },
         {
           "name": "影子束縛",
           "cost": [
@@ -588851,13 +588627,6 @@
       "rarity": "SR",
       "attacks": [
         {
-          "name": "‌[特性]鬆口氣",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "這隻寶可夢受到對手的寶可夢招式的傷害而【昏厥】時，若自己的場上有「桃歹郎ex」，則被獲得的獎賞卡減少1張。"
-        },
-        {
           "name": "惡劣頭擊",
           "cost": [
             "Darkness",
@@ -588924,13 +588693,6 @@
       "_enriched": true,
       "rarity": "SR",
       "attacks": [
-        {
-          "name": "‌‌[特性]扭轉乾坤",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "在上個對手的回合，若自己的寶可夢【昏厥】了，則在自己的回合時可使用1次。從自己的牌庫抽出3張卡。在這個回合，若已經使出了其他的「扭轉乾坤」，則這個特性無法使用。"
-        },
         {
           "name": "殘酷箭",
           "cost": [
@@ -589029,13 +588791,6 @@
       "_enriched": true,
       "rarity": "SR",
       "attacks": [
-        {
-          "name": "‌‌[特性]支配鎖鏈",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "在自己的回合時可使用1次。選擇1隻自己的備戰區的【惡】寶可夢（「桃歹郎ex」除外），與戰鬥寶可夢互換。然後，將新的戰鬥寶可夢【中毒】。在這個回合，若已經使出了其他的「支配鎖鏈」，則這個特性無法使用。"
-        },
         {
           "name": "煩煩爆炸",
           "cost": [
@@ -589257,13 +589012,6 @@
       "rarity": "SAR",
       "attacks": [
         {
-          "name": "‌[特性]鬆口氣",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "這隻寶可夢受到對手的寶可夢招式的傷害而【昏厥】時，若自己的場上有「桃歹郎ex」，則被獲得的獎賞卡減少1張。"
-        },
-        {
           "name": "惡劣頭擊",
           "cost": [
             "Darkness",
@@ -589362,13 +589110,6 @@
       "rarity": "SAR",
       "attacks": [
         {
-          "name": "‌‌[特性]支配鎖鏈",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "在自己的回合時可使用1次。選擇1隻自己的備戰區的【惡】寶可夢（「桃歹郎ex」除外），與戰鬥寶可夢互換。然後，將新的戰鬥寶可夢【中毒】。在這個回合，若已經使出了其他的「支配鎖鏈」，則這個特性無法使用。"
-        },
-        {
           "name": "煩煩爆炸",
           "cost": [
             "Darkness",
@@ -589434,13 +589175,6 @@
       "_enriched": true,
       "rarity": "SAR",
       "attacks": [
-        {
-          "name": "‌‌[特性]扭轉乾坤",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "在上個對手的回合，若自己的寶可夢【昏厥】了，則在自己的回合時可使用1次。從自己的牌庫抽出3張卡。在這個回合，若已經使出了其他的「扭轉乾坤」，則這個特性無法使用。"
-        },
         {
           "name": "殘酷箭",
           "cost": [
@@ -589539,13 +589273,6 @@
       "_enriched": true,
       "rarity": "UR",
       "attacks": [
-        {
-          "name": "‌‌[特性]支配鎖鏈",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "在自己的回合時可使用1次。選擇1隻自己的備戰區的【惡】寶可夢（「桃歹郎ex」除外），與戰鬥寶可夢互換。然後，將新的戰鬥寶可夢【中毒】。在這個回合，若已經使出了其他的「支配鎖鏈」，則這個特性無法使用。"
-        },
         {
           "name": "煩煩爆炸",
           "cost": [
@@ -611470,13 +611197,6 @@
       ],
       "attacks": [
         {
-          "name": "‌[特性]反擊針",
-          "cost": [],
-          "convertedEnergyCost": 0,
-          "damage": "",
-          "text": "這隻寶可夢在戰鬥場受到對手的寶可夢招式的傷害時，在使用招式的寶可夢身上放置3個傷害指示物。"
-        },
-        {
           "name": "扣殺閃電",
           "cost": [
             "Lightning",
@@ -611502,7 +611222,14 @@
       "artist": "5ban Graphics",
       "regulationMark": "I",
       "rarity": "無標記",
-      "_enriched": true
+      "_enriched": true,
+      "abilities": [
+        {
+          "name": "反擊針",
+          "text": "這隻寶可夢在戰鬥場受到對手的寶可夢招式的傷害時，在使用招式的寶可夢身上放置3個傷害指示物。",
+          "type": "Ability"
+        }
+      ]
     }
   ]
 }
