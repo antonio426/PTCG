@@ -17,6 +17,8 @@ Card data comes from three independent sources — don't assume they agree with 
 
   Driving it is automatable — `playwright` is already a devDependency at the workspace root, and `.playwright-mcp/` plus `*.png` are gitignored, so put throwaway driver scripts and screenshots there. What works: `本機雙人對戰` → pick both decks via the two `<select>`s (their `<option>` labels match this project's preset-deck names exactly) → `開始 vs AI`. Then drag a Basic from `.hand-scroll > *` onto the `拖曳基礎寶可夢到這裡` drop zone and confirm. Two gotchas: click buttons by evaluating a DOM-level `.click()` on matched `innerText` (Playwright's own click times out against the site's overlays), and the site's own event log — the highest-value artifact, since it narrates each rule as it fires — lives in the element whose class matches `/log/i`.
 
+Feature roadmap vs the reference site lives in `ROADMAP.md` (zh-TW, produced from a live UI-by-UI comparison) — check off items there as they land.
+
 ## Common commands
 
 Run the following from `ptcg-game/` (the workspace root, not the repo root one level up).

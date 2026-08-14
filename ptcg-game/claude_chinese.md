@@ -22,6 +22,8 @@ PTCG Game 是一個 Pokémon TCG 風格的卡牌對戰專案：React 前端、Ko
 
   這件事可以自動化：`playwright` 已經是 workspace 根目錄的 devDependency，而且 `.playwright-mcp/` 跟 `*.png` 都已被 gitignore，臨時的驅動腳本跟截圖放那裡即可。可行流程：`本機雙人對戰` → 用兩個 `<select>` 選雙方牌組（它的 `<option>` 文字跟本專案的預組牌組名稱完全一致）→ `開始 vs AI`。接著把基礎寶可夢從 `.hand-scroll > *` 拖到 `拖曳基礎寶可夢到這裡` 的放置區再確認。兩個雷點：按鈕要用 DOM 層級的 `.click()`（比對 `innerText`）來點，Playwright 自己的 click 會被該網站的覆蓋層擋到逾時；還有該網站自己的事件記錄（最有價值的產物，因為它會把每條規則觸發時逐條講出來）在 class 符合 `/log/i` 的那個元素裡。
 
+對照目標網站的功能路線圖在 `ROADMAP.md`（繁中，由逐頁實機比對產生）——完成一項就在那裡打勾。
+
 ## 常用指令
 
 以下指令請在 `ptcg-game/`（workspace 根目錄，而非上一層的 repo 根目錄）執行。
