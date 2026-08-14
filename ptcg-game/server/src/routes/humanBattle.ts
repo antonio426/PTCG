@@ -243,6 +243,9 @@ function checkAndApplyWin(G: PtcgGameState): boolean {
 }
 
 function applyTurnBegin(G: PtcgGameState): void {
+  // Before promoteActiveIfNeeded: a KO replacement promoted now also counts as
+  // "placed from the Bench this turn".
+  G.players[G.currentPlayer].activeIdAtTurnStart = G.players[G.currentPlayer].active?.id;
   // If this player's Active was Knocked Out last turn, they choose their new one now — see
   // promoteActiveIfNeeded's own comment for why this timing is always safe.
   promoteActiveIfNeeded(G, G.currentPlayer as 0 | 1);

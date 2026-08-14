@@ -2,7 +2,7 @@ import { DamageDetail, GameCard } from '@ptcg/shared';
 import { PtcgGameState, PendingChoice } from './GameState';
 import { canPlayPokemon, canEvolve, canAttachEnergy, canRetreat, canAttack, effectiveRetreatCost, FIRST_TURN_SUPPORTER_EXCEPTIONS } from './validation';
 import { clearStatusConditionsOnLeaveActive } from './statusConditions';
-import { calculateDamageBreakdown, effectiveMaxHp, handleKo, prizesForKo, stackAsPreEvolution } from './damage';
+import { calculateDamageBreakdown, effectiveMaxHp, flushPreEvolutionsToDiscard, handleKo, prizesForKo, promoteActiveIfNeeded, stackAsPreEvolution } from './damage';
 import { getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasCoinFlipAttackMissDebuff, hasPassiveAbilityNamed, isRetreatBlockedByOpponent, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat, shouldDiscardAttackerEnergy } from './effects/passiveAbilities';
 import { isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
@@ -587,6 +587,12 @@ export const moves = {
           return acc;
         }, {} as Record<string, number>),
         attackCostCount: attack.cost.length,
+        attackerPromotedFromBenchThisTurn: player.activeIdAtTurnStart !== undefined && player.activeIdAtTurnStart !== attacker.id,
+        ownDiscardEnergyCounts: player.discardPile.reduce((acc, c) => {
+          if (!c.cardData.subtypes.includes('Basic Energy')) return acc;
+          for (const ty of c.cardData.types || []) acc[ty] = (acc[ty] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>),
         opponentTakenPrizes: 6 - opponent.prizes.length,
         ownBenchDamageCountersByName: ownBench.map(c => ({ name: c.cardData.name, counters: c.damage / 10 })),
         ownDiscardAbilityCounts: player.discardPile.reduce((acc, c) => {
@@ -602,6 +608,20 @@ export const moves = {
         const { name, amount } = genericOutcome.familyScaledDamage;
         const familyCount = [player.active, ...player.bench].filter((c): c is GameCard => c !== null && c.cardData.name.includes(name)).length;
         genericOutcome.baseDamage = familyCount * amount;
+      }
+      // Must run here, in the pre-breakdown baseDamage phase: the cost IS the damage source, so
+      // the Energy has to be discarded before calculateDamageBreakdown reads baseDamage below.
+      if (genericOutcome?.discardOwnFieldTypedEnergyForDamage) {
+        const { type, per } = genericOutcome.discardOwnFieldTypedEnergyForDamage;
+        let discarded = 0;
+        for (const c of [player.active, ...player.bench].filter((x): x is GameCard => x !== null)) {
+          for (let i = c.attachedEnergy.length - 1; i >= 0; i--) {
+            if (c.attachedEnergy[i].type !== type) continue;
+            discardAttachedEnergy(G, G.currentPlayer as 0 | 1, c.attachedEnergy.splice(i, 1)[0]);
+            discarded++;
+          }
+        }
+        genericOutcome.baseDamage = discarded * per;
       }
       if (genericOutcome?.discardPileAttackScaledDamage) {
         const { attackName, amount } = genericOutcome.discardPileAttackScaledDamage;
@@ -852,6 +872,22 @@ export const moves = {
           G.players[G.activeStadium.owner].discardPile.push(G.activeStadium);
           G.activeStadium = null;
         }
+        // 喵喵ex::夾尾巴逃跑 — the attacker itself bounces to hand after dealing damage. Only
+        // meaningful while it is still the Active (a KO from recoil already removed it), and the
+        // stacked pre-evolution history does NOT ride along into hand — same rule as handleKo's
+        // 無限之影 path, so reuse flushPreEvolutionsToDiscard rather than losing the stack.
+        if (genericOutcome.returnSelfAndAttachmentsToHand && player.active?.id === attacker.id) {
+          for (const energy of attacker.attachedEnergy.splice(0)) {
+            if (energy.cardData) player.hand.push({ id: energy.id, cardData: energy.cardData, owner: G.currentPlayer as 0 | 1, damage: 0, statusConditions: [], attachedEnergy: [] });
+          }
+          if (attacker.attachedTool) { player.hand.push(attacker.attachedTool); attacker.attachedTool = null; }
+          flushPreEvolutionsToDiscard(attacker, player.discardPile);
+          attacker.damage = 0;
+          attacker.statusConditions = [];
+          player.hand.push(attacker);
+          player.active = null;
+          promoteActiveIfNeeded(G, G.currentPlayer as 0 | 1);
+        }
         if (genericOutcome.selfSwitchToRandomBench) {
           const benchIdxs = player.bench.map((c, i) => c ? i : -1).filter(i => i >= 0);
           if (benchIdxs.length > 0 && player.active) {
@@ -966,6 +1002,36 @@ export const moves = {
             if (deckIdx >= 0) player.hand.push(player.deck.splice(deckIdx, 1)[0]);
           }
           shuffleDeck(player.deck);
+        }
+        if (genericOutcome.deckSearchTypedPokemonOrEnergyToHand) {
+          const { type, count } = genericOutcome.deckSearchTypedPokemonOrEnergyToHand;
+          const eligible = player.deck.filter(c =>
+            (c.cardData.supertype === 'Pokémon' && (c.cardData.types || []).includes(type as any)) ||
+            (c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes(type as any)));
+          for (let n = 0; n < count && eligible.length > 0; n++) {
+            const pick = eligible.splice(Math.floor(Math.random() * eligible.length), 1)[0];
+            const i = player.deck.findIndex(c => c.id === pick.id);
+            if (i >= 0) player.hand.push(player.deck.splice(i, 1)[0]);
+          }
+          shuffleDeck(player.deck);
+        }
+        if (genericOutcome.deckSearchAnyCardToHand) {
+          if (player.deck.length > 0) {
+            const i = Math.floor(Math.random() * player.deck.length);
+            player.hand.push(player.deck.splice(i, 1)[0]);
+          }
+          shuffleDeck(player.deck);
+        }
+        if (genericOutcome.discardEnergyToOwnBench) {
+          const { type, count } = genericOutcome.discardEnergyToOwnBench;
+          const benchTargets = player.bench.filter((c): c is GameCard => c !== null);
+          for (let n = 0; n < count && benchTargets.length > 0; n++) {
+            const i = player.discardPile.findIndex(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes(type as any));
+            if (i < 0) break;
+            const energy = player.discardPile.splice(i, 1)[0];
+            // spread them around rather than stacking on one Pokémon ("以任意方式")
+            benchTargets[n % benchTargets.length].attachedEnergy.push({ id: energy.id, type: type as any, cardData: energy.cardData });
+          }
         }
         if (genericOutcome.itemLockOpponentNextTurn) {
           opponent.itemLockedUntilTurn = G.turn + 1;

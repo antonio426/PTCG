@@ -23,6 +23,7 @@ export const PtcgGame: Game<PtcgGameState> = {
       if (ctx.turn > 1) processBetweenTurns(G);
       G.turn = ctx.turn;
       G.currentPlayer = parseInt(ctx.currentPlayer) as 0 | 1;
+      G.players[G.currentPlayer].activeIdAtTurnStart = G.players[G.currentPlayer].active?.id;
       promoteActiveIfNeeded(G, G.currentPlayer as 0 | 1);
       // Always 'draw' — see battleRunner.ts's applyTurnBegin for why the first turn draws too.
       G.phase = 'draw';

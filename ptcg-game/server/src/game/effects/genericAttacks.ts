@@ -105,6 +105,18 @@ export interface GenericAttackOutcome {
   /** Attach 1 Basic Energy of a specific type from the deck to EACH of the attacker's own Benched
    * Pokémon (skipping any bench slot the deck runs out of matching Energy for), reshuffle. */
   deckSearchTypedEnergyToAllBenchEach?: string;
+  /** Search the deck for up to N cards that are either a Pokémon of the given type or a Basic
+   * Energy of it, add to hand, reshuffle. */
+  deckSearchTypedPokemonOrEnergyToHand?: { type: string; count: number };
+  /** Search the deck for any 1 card, add to hand, reshuffle (an optional "若希望" effect that we
+   * always take — declining can never be better here). */
+  deckSearchAnyCardToHand?: boolean;
+  /** Take up to N Basic Energy of a type out of the DISCARD pile and spread them over own Bench. */
+  discardEnergyToOwnBench?: { type: string; count: number };
+  /** Return the attacker plus everything attached to it to its owner's hand. */
+  returnSelfAndAttachmentsToHand?: boolean;
+  /** Discard every Energy of a type from the attacker's whole field; damage = discarded x per. */
+  discardOwnFieldTypedEnergyForDamage?: { type: string; per: number };
   /** Search the deck for 1 Pokémon Tool card, add to hand, reshuffle. */
   deckSearchToolToHand?: boolean;
   /** Skip resistance / skip weakness when computing this hit's damage. */
@@ -249,6 +261,11 @@ export interface AttackBoardContext {
   ownBenchDamageCountersByName: { name: string; counters: number }[];
   /** How many Pokémon in the attacker's own discard pile carry each ability name. */
   ownDiscardAbilityCounts: Record<string, number>;
+  /** True when the attacker was not the Active at the start of this turn, i.e. it came up from
+   * the Bench during it (retreat, switch effect, or KO replacement). */
+  attackerPromotedFromBenchThisTurn: boolean;
+  /** Count of each Energy type sitting in the attacker's own discard pile. */
+  ownDiscardEnergyCounts: Record<string, number>;
 }
 
 const STATUS_ZH: Record<string, StatusCondition> = {
@@ -448,6 +465,12 @@ const TEMPLATES: RegExp[] = [
   /^造成對手已經獲得的獎賞卡的張數×(\d+)點傷害。$/,
   /^若自己的棄牌區有(\d+)張以上擁有特性「(.+?)」的寶可夢卡，則增加(\d+)點傷害。$/,
   /^造成自己的備戰區的所有「(.+?)」身上放置的傷害指示物的數量×(\d+)點傷害。這個招式的傷害不計算弱點。$/,
+  /^在這個回合，若從備戰區將這隻寶可夢放置於戰鬥場，則增加(\d+)點傷害。$/,
+  /^從自己的牌庫選擇【(.+?)】寶可夢卡與「基本【(.+?)】能量」卡合計最多(\d+)張，在給對手看過後加入手牌。並且重洗牌庫。$/,
+  /^若希望，從自己的牌庫任意選擇1張卡加入手牌。並且重洗牌庫。$/,
+  /^從自己的棄牌區選擇最多(\d+)張「基本【(.+?)】能量」卡，以任意方式附於備戰寶可夢身上。$/,
+  /^將這隻寶可夢與附加的卡，全部放回手牌。$/,
+  /^將自己的場上寶可夢身上附加的任意數量的【(.+?)】能量卡丟棄，造成其張數×(\d+)點傷害。$/,
 ];
 
 /** Pure classifier (no randomness) — used by coverage-report.ts to count these as covered. */
@@ -834,6 +857,44 @@ export function resolveGenericAttackEffect(text: string, damageField: string, bo
       .filter(b => b.name.includes(family))
       .reduce((sum, b) => sum + b.counters, 0);
     return { baseDamage: counters * parseInt(m[2], 10), ignoreWeakness: true };
+  }
+
+  // 在這個回合，若從備戰區將這隻寶可夢放置於戰鬥場，則增加N點傷害。(凱路迪歐ex::疾風直撞)
+  m = t.match(/^在這個回合，若從備戰區將這隻寶可夢放置於戰鬥場，則增加(\d+)點傷害。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField) + (board.attackerPromotedFromBenchThisTurn ? parseInt(m[1], 10) : 0) };
+
+  // 從自己的牌庫選擇【X】寶可夢卡與「基本【X】能量」卡合計最多N張，在給對手看過後加入手牌。並且重洗牌庫。(熔蟻獸::舔舔捕捉)
+  m = t.match(/^從自己的牌庫選擇【(.+?)】寶可夢卡與「基本【(.+?)】能量」卡合計最多(\d+)張，在給對手看過後加入手牌。並且重洗牌庫。$/);
+  if (m && m[1] === m[2]) {
+    const type = ENERGY_TYPE_FROM_ZH[m[1]];
+    if (type) return { baseDamage: parseBaseNumber(damageField), deckSearchTypedPokemonOrEnergyToHand: { type, count: parseInt(m[3], 10) } };
+  }
+
+  // 若希望，從自己的牌庫任意選擇1張卡加入手牌。並且重洗牌庫。(詛咒娃娃::玩偶捕捉)
+  if (/^若希望，從自己的牌庫任意選擇1張卡加入手牌。並且重洗牌庫。$/.test(t)) {
+    return { baseDamage: parseBaseNumber(damageField), deckSearchAnyCardToHand: true };
+  }
+
+  // 從自己的棄牌區選擇最多N張「基本【X】能量」卡，以任意方式附於備戰寶可夢身上。(超級路卡利歐ex::波動突刺)
+  m = t.match(/^從自己的棄牌區選擇最多(\d+)張「基本【(.+?)】能量」卡，以任意方式附於備戰寶可夢身上。$/);
+  if (m) {
+    const type = ENERGY_TYPE_FROM_ZH[m[2]];
+    if (type) return { baseDamage: parseBaseNumber(damageField), discardEnergyToOwnBench: { type, count: parseInt(m[1], 10) } };
+  }
+
+  // 將這隻寶可夢與附加的卡，全部放回手牌。(喵喵ex::夾尾巴逃跑)
+  if (/^將這隻寶可夢與附加的卡，全部放回手牌。$/.test(t)) {
+    return { baseDamage: parseBaseNumber(damageField), returnSelfAndAttachmentsToHand: true };
+  }
+
+  // 將自己的場上寶可夢身上附加的任意數量的【X】能量卡丟棄，造成其張數×N點傷害。(超級噴火龍Xex::烈獄狂火X)
+  // "任意數量" is a choice; we always discard every matching Energy, which maximises the damage
+  // this attack exists to deal — the same "resolve the choice greedily" simplification the rest
+  // of this module already documents.
+  m = t.match(/^將自己的場上寶可夢身上附加的任意數量的【(.+?)】能量卡丟棄，造成其張數×(\d+)點傷害。$/);
+  if (m) {
+    const type = ENERGY_TYPE_FROM_ZH[m[1]];
+    if (type) return { baseDamage: 0, discardOwnFieldTypedEnergyForDamage: { type, per: parseInt(m[2], 10) } };
   }
 
   // 從牌庫附給自己的所有備戰寶可夢各1張「基本【X】能量」卡。並且重洗牌庫。

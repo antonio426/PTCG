@@ -43,6 +43,12 @@ export interface PtcgPlayerState {
    * extra one, not currently modeled). Reset at this player's own turn-begin, same as the other
    * *ThisTurn flags. */
   retreatedThisTurn: boolean;
+  /** Instance id of whoever was Active when this turn began. Anything else standing in the
+   * Active spot later in the turn therefore got there from the Bench this turn — which is what
+   * "在這個回合，若從備戰區將這隻寶可夢放置於戰鬥場" keys off. Recorded once per turn instead
+   * of flagging every promote site (retreat, KO promotion, Trainer/ability switches, …), so no
+   * future switch effect can forget to set it. */
+  activeIdAtTurnStart?: string;
 }
 
 export interface PtcgGameState {

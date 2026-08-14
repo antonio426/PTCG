@@ -53,6 +53,9 @@ function checkEndCondition(G: PtcgGameState): void {
 }
 
 function applyTurnBegin(G: PtcgGameState): void {
+  // Before promoteActiveIfNeeded: a KO replacement promoted now also counts as
+  // "placed from the Bench this turn".
+  G.players[G.currentPlayer].activeIdAtTurnStart = G.players[G.currentPlayer].active?.id;
   promoteActiveIfNeeded(G, G.currentPlayer as 0 | 1);
   if (G.turn > 1) processBetweenTurns(G);
   // Every turn starts with a draw, INCLUDING the first player's first turn — going first is
