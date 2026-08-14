@@ -49,6 +49,60 @@ function saveDecks(decks: Deck[]): void {
   try { localStorage.setItem('ptcg-decks', JSON.stringify(decks)); } catch {}
 }
 
+/* One-time migration of legacy card ids inside saved decks (old scraper scr-* ids and
+ * rotated prints like S5R-027 輕飄飄) to current Standard-legal prints — decks saved before
+ * the preset repoint kept referencing old prints, so battles showed the old card's real
+ * attacks/art ("自我再生") instead of the current design. The server decides every mapping
+ * (POST /api/cards/remap); unresolvable ids stay untouched (validateDeck tolerates them). */
+const MIGRATION_FLAG = 'ptcg-decks-migrated-v1';
+const MIGRATION_BACKUP = 'ptcg-decks-pre-migration';
+
+async function migrateLegacyDeckIds(): Promise<void> {
+  try {
+    if (localStorage.getItem(MIGRATION_FLAG)) return;
+    const decks = loadDecks();
+    if (decks.length === 0) { localStorage.setItem(MIGRATION_FLAG, String(Date.now())); return; }
+
+    const ids = [...new Set(decks.flatMap(d => d.cards))];
+    const res = await fetch('/api/cards/remap', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids }),
+    });
+    if (!res.ok) return; // flag stays unset -> retried on next app load
+    const { remap } = await res.json() as { remap: Record<string, string | null> };
+
+    const changed = new Map<string, string>();
+    const unresolved = new Set<string>();
+    const migrated = decks.map(d => ({
+      ...d,
+      cards: d.cards.map(id => {
+        const to = remap[id];
+        if (to === null) { unresolved.add(id); return id; }
+        if (to && to !== id) { changed.set(id, to); return to; }
+        return id;
+      }),
+    }));
+
+    if (changed.size > 0) {
+      // single, never-overwritten backup of the pre-migration state
+      if (!localStorage.getItem(MIGRATION_BACKUP)) {
+        localStorage.setItem(MIGRATION_BACKUP, localStorage.getItem('ptcg-decks') ?? '[]');
+      }
+      saveDecks(migrated);
+      useDeckStore.setState({ decks: migrated });
+      console.info(
+        `[deck-migration] 已把 ${changed.size} 種舊卡片 ID 換成 Standard 印刷（原始資料備份於 localStorage['${MIGRATION_BACKUP}']）：`,
+        Object.fromEntries(changed),
+      );
+    }
+    if (unresolved.size > 0) {
+      console.warn('[deck-migration] 無法解析、維持原樣的 ID：', [...unresolved]);
+    }
+    localStorage.setItem(MIGRATION_FLAG, String(Date.now()));
+  } catch { /* network hiccup: retry next load */ }
+}
+
 export const useDeckStore = create<DeckState>((set, get) => ({
   decks: loadDecks(),
   currentDeck: { id: null, name: '', cards: [] },
@@ -196,3 +250,6 @@ export const useDeckStore = create<DeckState>((set, get) => ({
     });
   },
 }));
+
+// Fire-and-forget at module load: must run after useDeckStore exists (setState above).
+void migrateLegacyDeckIds();

@@ -28,6 +28,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import type { MapCard } from '../card-api/types';
+import { buildStandardByName, isStandard, pickReplacement, signature, stageOf } from '../card-api/printRemap';
 
 const CARDS_CACHE = path.resolve(__dirname, '../../data/cards.json');
 const DECKS_PATH = path.resolve(__dirname, '../../data/preset-decks.json');
@@ -36,26 +37,6 @@ const REPORT_OUT = path.resolve(__dirname, '../../../data-scraped/preset-deck-st
 interface DeckEntry { cardId: string; count: number }
 interface PresetDeck { id: string; name: string; entries: DeckEntry[] }
 
-const STAGE_SUBTYPES = ['Basic', 'Stage 1', 'Stage 2'];
-
-function stageOf(c: MapCard): string | null {
-  return (c.subtypes || []).find(s => STAGE_SUBTYPES.includes(s)) ?? null;
-}
-
-/** Attack+ability fingerprint — two prints with the same fingerprint are the same real card. */
-function signature(c: MapCard): string {
-  const atk = (c.attacks || [])
-    .map(a => `${a.name}:${(a.cost || []).join(',')}:${a.damage}`)
-    .sort()
-    .join('|');
-  const abi = (c.abilities || []).map(a => a.name).sort().join('|');
-  return `${atk}##${abi}`;
-}
-
-function isStandard(c: MapCard): boolean {
-  return c.legalities?.standard === 'Legal';
-}
-
 function main() {
   const fix = process.argv.includes('--fix');
 
@@ -63,35 +44,7 @@ function main() {
   const byId = new Map(cards.map(c => [c.id, c]));
   const decks = JSON.parse(fs.readFileSync(DECKS_PATH, 'utf-8')) as PresetDeck[];
 
-  const standardByName = new Map<string, MapCard[]>();
-  for (const c of cards) {
-    if (!isStandard(c)) continue;
-    if (!standardByName.has(c.name)) standardByName.set(c.name, []);
-    standardByName.get(c.name)!.push(c);
-  }
-
-  /** Picks the best standard-legal stand-in for `old`, or null if none qualifies. */
-  function pickReplacement(old: MapCard): { card: MapCard; exact: boolean } | null {
-    let cands = (standardByName.get(old.name) || []).filter(c => c.supertype === old.supertype);
-    if (old.supertype === 'Pokémon') {
-      const stage = stageOf(old);
-      // Only constrain by stage when the old card actually declares one; some scraped prints
-      // have empty subtypes, and over-filtering there would reject a valid replacement.
-      if (stage) cands = cands.filter(c => stageOf(c) === stage);
-    }
-    if (cands.length === 0) return null;
-
-    const oldSig = signature(old);
-    const exactMatches = cands.filter(c => signature(c) === oldSig);
-    if (exactMatches.length > 0) {
-      exactMatches.sort((a, b) => a.id.localeCompare(b.id));
-      return { card: exactMatches[0], exact: true };
-    }
-    // Deterministic "newest set" heuristic: prefer the highest set id lexically, then lowest
-    // card id, so repeated runs always produce the same file.
-    cands.sort((a, b) => (b.set?.id || '').localeCompare(a.set?.id || '') || a.id.localeCompare(b.id));
-    return { card: cands[0], exact: false };
-  }
+  const standardByName = buildStandardByName(cards);
 
   const swaps: any[] = [];
   const unresolved: any[] = [];
@@ -106,7 +59,7 @@ function main() {
       if (!old || isStandard(old)) continue;
       nonStandardSlots += n;
 
-      const repl = pickReplacement(old);
+      const repl = pickReplacement(old, standardByName);
       if (!repl) {
         unresolved.push({ deck: deck.name, cardId: entry.cardId, name: old.name, supertype: old.supertype, stage: stageOf(old), count: n });
         continue;

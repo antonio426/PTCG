@@ -4,8 +4,38 @@ import {
   fetchAllSets, refreshCache, getCachedCards,
   getEnrichmentStats,
 } from '../card-api/tcgdex';
+import { buildStandardByName, remapId } from '../card-api/printRemap';
 
 const router = new Router();
+
+/**
+ * Legacy-id migration for saved decks (AGENTS.md backlog item D): maps outdated print ids
+ * (rotated prints like S5R-027, old scraper scr-* ids) to a current Standard-legal print.
+ * Response: { remap: { [oldId]: newId | null } } — oldId === newId means "already fine",
+ * null means "unresolvable, keep the original". Used by the client deckStore's one-time
+ * localStorage migration.
+ */
+router.post('/remap', async (ctx) => {
+  try {
+    const { ids } = (ctx.request.body ?? {}) as { ids?: unknown };
+    if (!Array.isArray(ids) || ids.some(i => typeof i !== 'string') || ids.length > 2000) {
+      ctx.status = 400;
+      ctx.body = { error: 'ids must be an array of at most 2000 strings' };
+      return;
+    }
+    const cards = await fetchAllCards();
+    const byId = new Map(cards.map(c => [c.id, c]));
+    const standardByName = buildStandardByName(cards);
+    const remap: Record<string, string | null> = {};
+    for (const id of new Set(ids as string[])) {
+      remap[id] = remapId(id, byId, standardByName);
+    }
+    ctx.body = { remap };
+  } catch (err: any) {
+    ctx.status = 500;
+    ctx.body = { error: 'Failed to remap ids', detail: err.message };
+  }
+});
 
 router.get('/', async (ctx) => {
   try {
