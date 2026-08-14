@@ -1,6 +1,10 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import Home from './pages/Home';
+// Side-effect import: deckStore runs the one-time localStorage legacy-deck migration at module
+// load. Without this, the store module only loads when a page that uses it is visited (DeckBuilder/
+// Battle are lazy-loaded), so a user landing on Home would never get migrated — caught by e2e.
+import './stores/deckStore';
 
 const CardBrowser = lazy(() => import('./pages/CardBrowser'));
 const DeckBuilder = lazy(() => import('./pages/DeckBuilder'));
