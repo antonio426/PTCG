@@ -7,6 +7,9 @@ import * as path from 'path';
 // scripts/build-evolution-chains.ts) covers every card regardless of which TCGdex field is
 // missing — independent of TCGdex's own data gaps entirely.
 // Keyed by bare Traditional-Chinese species name (e.g. "妙蛙草" -> "妙蛙種子").
+/** Raw child->parent species map, exposed for the client's evolution-family search. */
+export function getEvolutionChains(): Record<string, string> { return CHAINS; }
+
 const CHAINS: Record<string, string> = JSON.parse(
   fs.readFileSync(path.resolve(__dirname, '../../data/evolution-chains.json'), 'utf-8')
 );

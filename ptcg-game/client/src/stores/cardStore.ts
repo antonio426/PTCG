@@ -21,7 +21,50 @@ interface CardFilters {
   regulationMarks?: string[];
 }
 
-export type SearchScope = 'name' | 'attack' | 'ability' | 'all';
+export type SearchScope = 'name' | 'attack' | 'ability' | 'evolution' | 'all';
+
+/* ---- Evolution-family search ------------------------------------------------------------ */
+/* Child->parent species chains served by /api/cards/evolution-chains (static PokeAPI-derived
+ * data, same table the server's game logic uses). Fetched lazily on first 進化鏈 search. */
+let chains: Record<string, string> | null = null;
+let knownSpecies: string[] = [];
+let chainsFetch: Promise<void> | null = null;
+export function ensureEvolutionChains(): Promise<void> {
+  if (chains) return Promise.resolve();
+  chainsFetch ??= fetch('/api/cards/evolution-chains')
+    .then(r => r.json())
+    .then((data: Record<string, string>) => {
+      chains = data;
+      // longest-first so decorated printed names match the most specific species (server parity)
+      knownSpecies = Array.from(new Set([...Object.keys(data), ...Object.values(data)]))
+        .sort((a, b) => b.length - a.length);
+    })
+    .catch(() => { chainsFetch = null; });
+  return chainsFetch;
+}
+function extractSpecies(cardName: string): string | undefined {
+  return knownSpecies.find(sp => cardName.includes(sp));
+}
+/** Every species in the queried Pokémon's whole family: walk up to the root Basic, then
+ * collect all descendants via a reverse index. Empty when the species is unknown. */
+export function evolutionFamilyOf(query: string): Set<string> {
+  const family = new Set<string>();
+  if (!chains) return family;
+  let root = extractSpecies(query) ?? query.trim();
+  if (!root) return family;
+  const seen = new Set([root]);
+  while (chains[root]) { root = chains[root]; if (seen.has(root)) break; seen.add(root); }
+  if (!knownSpecies.includes(root)) return family;
+  family.add(root);
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const [child, parent] of Object.entries(chains)) {
+      if (family.has(parent) && !family.has(child)) { family.add(child); grew = true; }
+    }
+  }
+  return family;
+}
 export type CardTag = 'ace-spec' | 'tera' | 'mega-ex' | 'trainer-named';
 
 export const CARD_TAG_DEFS: { tag: CardTag; label: string }[] = [
@@ -110,11 +153,19 @@ export const useCardStore = create<CardState>((set, get) => ({
         (a.name ?? '').toLowerCase().includes(lower) || (a.text ?? '').toLowerCase().includes(lower));
       const abilityHit = (c: Card) => !!c.abilities?.some(a =>
         (a.name ?? '').toLowerCase().includes(lower) || (a.text ?? '').toLowerCase().includes(lower));
-      result = result.filter((c) =>
-        scope === 'name' ? nameHit(c)
-        : scope === 'attack' ? attackHit(c)
-        : scope === 'ability' ? abilityHit(c)
-        : nameHit(c) || attackHit(c) || abilityHit(c));
+      if (scope === 'evolution') {
+        // whole evolution family of the queried species (chains fetched by the page on demand)
+        const family = evolutionFamilyOf(query);
+        result = family.size === 0
+          ? result.filter(nameHit)
+          : result.filter((c) => c.supertype === 'Pokémon' && [...family].some(sp => c.name.includes(sp)));
+      } else {
+        result = result.filter((c) =>
+          scope === 'name' ? nameHit(c)
+          : scope === 'attack' ? attackHit(c)
+          : scope === 'ability' ? abilityHit(c)
+          : nameHit(c) || attackHit(c) || abilityHit(c));
+      }
     }
 
     if (filters?.tag) {

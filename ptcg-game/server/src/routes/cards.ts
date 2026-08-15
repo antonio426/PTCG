@@ -5,6 +5,7 @@ import {
   getEnrichmentStats,
 } from '../card-api/tcgdex';
 import { buildStandardByName, remapId } from '../card-api/printRemap';
+import { getEvolutionChains } from '../game/evolutionChains';
 
 const router = new Router();
 
@@ -15,6 +16,12 @@ const router = new Router();
  * null means "unresolvable, keep the original". Used by the client deckStore's one-time
  * localStorage migration.
  */
+/** Species evolution chains (child -> parent), for the client's 進化鏈 search. Static data. */
+router.get('/evolution-chains', (ctx) => {
+  ctx.set('Cache-Control', 'public, max-age=86400');
+  ctx.body = getEvolutionChains();
+});
+
 router.post('/remap', async (ctx) => {
   try {
     const { ids } = (ctx.request.body ?? {}) as { ids?: unknown };

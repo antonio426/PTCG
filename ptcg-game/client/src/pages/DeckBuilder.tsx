@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useCardStore, CARD_TAG_DEFS } from '../stores/cardStore';
+import { useCardStore, CARD_TAG_DEFS, ensureEvolutionChains } from '../stores/cardStore';
 import type { SearchScope, CardTag } from '../stores/cardStore';
 import { useDeckStore } from '../stores/deckStore';
 import { MAX_DECK_SIZE } from '@ptcg/shared';
@@ -340,13 +340,14 @@ export default function DeckBuilder() {
         <div className="flex gap-2 mb-2">
           <select
             value={searchScope}
-            onChange={(e) => setSearchScope(e.target.value as SearchScope)}
+            onChange={(e) => { const v = e.target.value as SearchScope; setSearchScope(v); if (v === 'evolution') void ensureEvolutionChains(); }}
             title="關鍵字要搜尋卡片的哪個部分"
             className="bg-slate-800 border border-slate-600 rounded-lg px-2 py-2 text-slate-300 text-sm focus:outline-none focus:border-blue-500"
           >
             <option value="name">名稱</option>
             <option value="attack">招式</option>
             <option value="ability">特性</option>
+            <option value="evolution">進化鏈</option>
             <option value="all">全部</option>
           </select>
           <input
