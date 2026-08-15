@@ -151,6 +151,7 @@ export function setup(setupData?: PtcgSetupData): PtcgGameState {
 
   const mulliganCounts = [0, 0];
   const turnLog: TurnAction[] = [];
+  const mulliganReveals: { player: 0 | 1; cards: { name: string; image: string }[] }[] = [];
 
   const MAX_MULLIGANS = 100;
   for (let p = 0; p < 2; p++) {
@@ -164,6 +165,10 @@ export function setup(setupData?: PtcgSetupData): PtcgGameState {
       if (mulliganCounts[p] > MAX_MULLIGANS) {
         throw new Error(`Deck for player ${p} has no Basic Pokémon — cannot complete setup`);
       }
+      mulliganReveals.push({
+        player: p as 0 | 1,
+        cards: player.hand.map(c => ({ name: c.cardData.name, image: c.cardData.images?.small ?? '' })),
+      });
       player.deck.push(...player.hand);
       player.hand = [];
       player.deck = shuffle(player.deck, seed + p + mulliganCounts[p]);
@@ -230,6 +235,7 @@ export function setup(setupData?: PtcgSetupData): PtcgGameState {
     firstPlayer,
     interactivePlayers: [...interactive].sort(),
     pendingMulliganBonuses,
+    mulliganReveals,
     winner: null,
     winReason: null,
     turnLog,

@@ -75,6 +75,10 @@ export interface PtcgGameState {
    * Converted into PendingChoices one at a time after all Actives are placed, resolved before
    * turn 1 begins. A queue because in local 2P BOTH sides can be owed compensation. */
   pendingMulliganBonuses?: { player: 0 | 1; max: number }[];
+  /** Real rules: every mulligan reshuffle first reveals the whole hand to the opponent.
+   * Captured during setup (name+image are enough to render — no instance ids needed since
+   * these cards went straight back into the deck), shown once by the client at battle start. */
+  mulliganReveals?: { player: 0 | 1; cards: { name: string; image: string }[] }[];
   winner: number | null;
   winReason: string | null;
   turnLog: TurnAction[];

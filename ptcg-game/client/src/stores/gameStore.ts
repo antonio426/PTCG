@@ -55,6 +55,8 @@ export interface BattleState {
   /** Which seat this state was built for (vs-AI: 0; local 2P: the seat that must act). */
   viewerIndex: 0 | 1;
   mode: 'ai' | 'local';
+  /** Setup-time mulligan hand reveals (public info) — shown once at battle start. */
+  mulliganReveals: { player: 0 | 1; cards: { name: string; image: string }[] }[];
 }
 
 export type BattlePhase = 'select' | 'playing' | 'ended';

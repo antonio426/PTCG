@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef, type ReactNode, type KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { useDeckStore } from '../stores/deckStore';
+import { useSettingsStore, type ZoomMode } from '../stores/settingsStore';
+import { playSfx, setSfxEnabled, startBgm, stopBgm, type SfxName } from '../utils/sfx';
 import { useCardStore } from '../stores/cardStore';
 import { useGameStore, type SanitizedGameCard } from '../stores/gameStore';
 import type { Card, LegalAction, PendingChoice, TurnAction } from '@ptcg/shared';
@@ -566,6 +568,83 @@ export default function Battle() {
   // confirms they have the device — otherwise their fresh hand is visible to the previous seat.
   const [handoffPending, setHandoffPending] = useState(false);
   const prevViewerRef = useRef<number | null>(null);
+  const { zoom, sfx, bgm, setZoom, setSfx, setBgm } = useSettingsStore();
+  const [showSettings, setShowSettings] = useState(false);
+  const [mulliganRevealDismissed, setMulliganRevealDismissed] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(!!document.fullscreenElement);
+  useEffect(() => {
+    const onFs = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onFs);
+    return () => document.removeEventListener('fullscreenchange', onFs);
+  }, []);
+  const toggleFullscreen = useCallback(() => {
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else void document.documentElement.requestFullscreen().catch(() => {});
+  }, []);
+  useEffect(() => { setSfxEnabled(sfx); }, [sfx]);
+  useEffect(() => {
+    if (bgm && battleState && battleState.winner === null) startBgm();
+    else stopBgm();
+    return () => stopBgm();
+  }, [bgm, !!battleState, battleState?.winner]);
+  // Sounds are driven off turnLog growth (one place, every engine action lands there) instead
+  // of per-button handlers. Only the newest few entries fire so a big multi-effect turn (or the
+  // AI's whole turn arriving in one response) doesn't queue a long noise burst.
+  const sfxLogLenRef = useRef<number | null>(null);
+  const prevWinnerRef = useRef<number | null>(null);
+  useEffect(() => {
+    const log = battleState?.turnLog;
+    if (!log) { sfxLogLenRef.current = null; return; }
+    const prev = sfxLogLenRef.current;
+    sfxLogLenRef.current = log.length;
+    if (prev === null || log.length <= prev) return;
+    const SOUND_MAP: Record<string, SfxName> = {
+      attack: 'attack', ko: 'ko', play_pokemon: 'card', evolve: 'evolve',
+      attach_energy: 'energy', play_trainer: 'trainer', ability: 'trainer',
+      use_ability: 'trainer', retreat: 'card', coin_flip: 'coin', end_turn: 'turn',
+      choose_active: 'card',
+    };
+    const fresh = log.slice(prev).map(e => SOUND_MAP[e.action]).filter(Boolean).slice(-3);
+    fresh.forEach((name, i) => setTimeout(() => playSfx(name), i * 180));
+  }, [battleState?.turnLog]);
+  useEffect(() => {
+    const w = battleState?.winner ?? null;
+    if (w !== null && prevWinnerRef.current === null && battleState) {
+      const viewerSeat = battleState.mode === 'local' ? battleState.viewerIndex : 0;
+      playSfx(w === viewerSeat ? 'victory' : 'defeat');
+    }
+    prevWinnerRef.current = w;
+  }, [battleState?.winner]);
+
+  /* Drag & drop: dragging a hand card highlights every legal destination derived from the
+   * same legalMoves the click flow uses — dropping just submits that move, so DnD can never
+   * do anything the click path couldn't. Click interaction is fully preserved. */
+  const [draggingCardId, setDraggingCardId] = useState<string | null>(null);
+  const dragMoves = useMemo(() => {
+    if (!draggingCardId || !battleState) return [];
+    return battleState.legalMoves.filter(m =>
+      m.payload?.cardId === draggingCardId &&
+      ['play_pokemon', 'evolve_pokemon', 'attach_energy', 'choose_active'].includes(m.type)
+    );
+  }, [draggingCardId, battleState]);
+  const dragTargetIds = useMemo(
+    () => new Set(dragMoves.map(m => m.payload?.targetId).filter((t): t is string => typeof t === 'string')),
+    [dragMoves],
+  );
+  const dragBenchMove = dragMoves.find(m => m.type === 'play_pokemon');
+  const dragActiveSlotMove = dragMoves.find(m => m.type === 'choose_active');
+  const handleDropOn = (key: string) => {
+    const move = key === 'bench-empty' ? dragBenchMove
+      : key === 'active-slot' ? dragActiveSlotMove
+      : dragMoves.find(m => m.payload?.targetId === key);
+    setDraggingCardId(null);
+    if (move) handleSubmitMove(move);
+  };
+  const dropZoneProps = (key: string, valid: boolean) => valid ? {
+    onDragOver: (e: React.DragEvent) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; },
+    onDrop: (e: React.DragEvent) => { e.preventDefault(); handleDropOn(key); },
+  } : {};
+  const dropRing = (valid: boolean) => valid ? ' ring-2 ring-yellow-400 rounded-xl animate-pulse' : '';
   const [difficulty, setDifficulty] = useState<'easy' | 'normal' | 'hard'>('normal');
   const [hardModeAvailable, setHardModeAvailable] = useState(false);
   const [showPlayerDiscard, setShowPlayerDiscard] = useState(false);
@@ -672,6 +751,7 @@ export default function Battle() {
     if (battleMode === 'local' && !deckB) return;
     prevViewerRef.current = null;
     setHandoffPending(false);
+    setMulliganRevealDismissed(false);
     try {
       await createBattle(deck.cards, deckB?.cards, difficulty, battleMode);
     } catch { /* handled by store */ }
@@ -976,8 +1056,12 @@ export default function Battle() {
     });
   };
 
+  const zoomFactor = zoom === 'auto' ? 1 : zoom / 100;
   return (
-    <div className="flex flex-col lg:flex-row gap-2 lg:gap-3 h-[calc(100vh-7rem)] min-h-0">
+    <div
+      className="flex flex-col lg:flex-row gap-2 lg:gap-3 min-h-0"
+      style={{ zoom: zoomFactor, height: `calc((100vh - 7rem) / ${zoomFactor})` }}
+    >
 
       {/* Pending choice modal: only for choices with no on-field/in-hand representation (deck
           search results, "pick an energy type", a bare confirm). Choices that ARE a Pokémon
@@ -1149,6 +1233,22 @@ export default function Battle() {
             </span>
             {/* Mobile/tablet-only entry point into the turn log — the persistent sidebar (see the
                 right column further down) only exists at `lg` and up. */}
+            <button
+              onClick={() => setShowSettings(true)}
+              aria-label="設定"
+              title="設定：畫面縮放／音效"
+              className="flex items-center gap-1 text-emerald-500/70 hover:text-emerald-300 text-xs transition-colors"
+            >
+              ⚙
+            </button>
+            <button
+              onClick={toggleFullscreen}
+              aria-label="全螢幕"
+              title={isFullscreen ? '離開全螢幕' : '全螢幕'}
+              className="flex items-center gap-1 text-emerald-500/70 hover:text-emerald-300 text-xs transition-colors"
+            >
+              {isFullscreen ? '🡼' : '⛶'}
+            </button>
             <button
               onClick={() => setShowTurnLog(true)}
               aria-label="查看對戰紀錄"
@@ -1566,7 +1666,10 @@ export default function Battle() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 sm:justify-center mb-1.5">
-            <div className="relative flex-shrink-0">
+            <div
+              className={`relative flex-shrink-0${dropRing(!!bs.player.active && dragTargetIds.has(bs.player.active.id))}`}
+              {...(bs.player.active ? dropZoneProps(bs.player.active.id, dragTargetIds.has(bs.player.active.id)) : dropZoneProps('active-slot', !!dragActiveSlotMove))}
+            >
               {bs.player.active ? (
                 <PokemonCardView
                   key="player-active"
@@ -1581,7 +1684,7 @@ export default function Battle() {
                 />
               ) : (
                 <div
-                  className={`w-20 sm:w-28 md:w-32 lg:w-36 aspect-[63/88] bg-black/20 border-2 border-dashed rounded-xl flex items-center justify-center flex-shrink-0 ${
+                  className={`w-20 sm:w-28 md:w-32 lg:w-36 aspect-[63/88] bg-black/20 border-2 border-dashed rounded-xl flex items-center justify-center flex-shrink-0${dropRing(!!dragActiveSlotMove)} ${
                     bs.phase === 'choose_active'
                       ? 'border-emerald-400 animate-pulse shadow-[0_0_16px_rgba(52,211,153,0.35)]'
                       : 'border-emerald-900/60'
@@ -1605,9 +1708,15 @@ export default function Battle() {
               {Array.from({ length: 5 }, (_, i) => {
                 const c = bs.player.bench[i];
                 return c ? (
-                  <PokemonCardView key={i} card={c} size="small" showHp={false} side="player" loading={loading} onShowDetail={setFullDetailCard} {...targetProps(c.id)} />
+                  <div key={i} className={`flex-shrink-0${dropRing(dragTargetIds.has(c.id))}`} {...dropZoneProps(c.id, dragTargetIds.has(c.id))}>
+                    <PokemonCardView card={c} size="small" showHp={false} side="player" loading={loading} onShowDetail={setFullDetailCard} {...targetProps(c.id)} />
+                  </div>
                 ) : (
-                  <div key={i} className="w-14 sm:w-16 md:w-20 lg:w-24 aspect-[63/88] flex-shrink-0 bg-black/10 border border-dashed border-emerald-900/50 rounded-md flex items-center justify-center">
+                  <div
+                    key={i}
+                    className={`w-14 sm:w-16 md:w-20 lg:w-24 aspect-[63/88] flex-shrink-0 bg-black/10 border border-dashed border-emerald-900/50 rounded-md flex items-center justify-center${dropRing(!!dragBenchMove)}`}
+                    {...dropZoneProps('bench-empty', !!dragBenchMove)}
+                  >
                     <span className="text-emerald-700/80 text-xs">?</span>
                   </div>
                 );
@@ -1651,6 +1760,9 @@ export default function Battle() {
                       role="button"
                       tabIndex={loading ? -1 : 0}
                       onKeyDown={keyActivate(() => (handTargeting ? handleTargetClick(card.id) : handleCardClick(card.id)))}
+                      draggable={!loading && !handTargeting}
+                      onDragStart={(e) => { setDraggingCardId(card.id); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', card.id); }}
+                      onDragEnd={() => setDraggingCardId(null)}
                     >
                       <img src={card.images.small} alt={card.name} onError={handleCardImgError} className="w-full h-full object-contain" />
                     </div>
@@ -1695,6 +1807,77 @@ export default function Battle() {
 
       {showOpponentDiscard && (
         <DiscardModal title="對手棄牌堆" cards={bs.opponent.discardPile} onClose={() => setShowOpponentDiscard(false)} />
+      )}
+
+      {!mulliganRevealDismissed && !isOver && (bs.mulliganReveals?.length ?? 0) > 0 && (bs.phase === 'choose_first' || bs.phase === 'choose_active') && (
+        <Modal onClose={() => setMulliganRevealDismissed(true)} title={<>🃏 重抽公開手牌</>} maxWidthClassName="max-w-lg">
+          <p className="text-sm text-slate-400 mb-3">起手無基礎寶可夢時必須公開手牌並重抽（正式規則）：</p>
+          <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
+            {bs.mulliganReveals.map((rv, i) => (
+              <div key={i}>
+                <p className="text-xs font-medium text-emerald-300 mb-1.5">
+                  {bs.mode === 'local' ? `玩家 ${rv.player + 1}` : rv.player === viewerIndex ? '你' : '對手'} 第 {bs.mulliganReveals.slice(0, i + 1).filter(x => x.player === rv.player).length} 次重抽：
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {rv.cards.map((c, j) => (
+                    c.image
+                      ? <img key={j} src={c.image} alt={c.name} title={c.name} className="w-14 rounded-md border border-slate-600" loading="lazy" />
+                      : <span key={j} className="px-2 py-1 rounded bg-slate-800 border border-slate-600 text-xs text-slate-300">{c.name}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => setMulliganRevealDismissed(true)}
+            className="mt-4 w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors"
+          >
+            知道了
+          </button>
+        </Modal>
+      )}
+
+      {showSettings && (
+        <Modal onClose={() => setShowSettings(false)} title={<>⚙ 設定</>} maxWidthClassName="max-w-sm">
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm text-slate-400 mb-1.5 block">畫面縮放</label>
+              <div className="flex flex-wrap gap-1.5">
+                {(['auto', 100, 90, 80, 70, 60] as ZoomMode[]).map(z => (
+                  <button
+                    key={z}
+                    onClick={() => setZoom(z)}
+                    className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
+                      zoom === z ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-slate-800 border-slate-600 text-slate-300 hover:border-slate-500'
+                    }`}
+                  >
+                    {z === 'auto' ? '自動' : `${z}%`}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-300">遊戲音效</span>
+              <button
+                onClick={() => setSfx(!sfx)}
+                className={`w-11 h-6 rounded-full transition-colors relative ${sfx ? 'bg-emerald-600' : 'bg-slate-700'}`}
+                aria-label="遊戲音效開關"
+              >
+                <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all ${sfx ? 'left-[22px]' : 'left-0.5'}`} />
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-300">背景音樂</span>
+              <button
+                onClick={() => setBgm(!bgm)}
+                className={`w-11 h-6 rounded-full transition-colors relative ${bgm ? 'bg-emerald-600' : 'bg-slate-700'}`}
+                aria-label="背景音樂開關"
+              >
+                <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all ${bgm ? 'left-[22px]' : 'left-0.5'}`} />
+              </button>
+            </div>
+          </div>
+        </Modal>
       )}
 
       {/* Opponent hand modal — hand contents are genuinely hidden info, so this shows face-down

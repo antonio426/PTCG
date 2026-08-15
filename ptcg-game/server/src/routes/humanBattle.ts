@@ -82,6 +82,8 @@ interface BattleStateResponse {
    * The client swaps its "you/opponent" panels and gates the hand on this. */
   viewerIndex: 0 | 1;
   mode: 'ai' | 'local';
+  /** Setup-time mulligan hand reveals (public info under real rules) — client shows them once. */
+  mulliganReveals: { player: 0 | 1; cards: { name: string; image: string }[] }[];
 }
 
 interface BattleSession {
@@ -201,6 +203,7 @@ function buildResponse(session: BattleSession): BattleStateResponse {
     winner: G.winner,
     winReason: G.winReason,
     canUndo: session.history.length > 0,
+    mulliganReveals: G.mulliganReveals ?? [],
     viewerIndex: viewer,
     mode: session.aiPlayer ? 'ai' : 'local',
     pendingChoice: enrichPendingChoice(G, G.pendingChoice && G.pendingChoice.player === viewer ? G.pendingChoice : null),
