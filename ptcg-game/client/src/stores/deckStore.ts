@@ -19,6 +19,8 @@ interface CurrentDeck {
 interface DeckState {
   decks: Deck[];
   currentDeck: CurrentDeck;
+  /** Unsaved-changes marker for the current draft (未存檔 indicator). */
+  dirty: boolean;
   presetDecks: Deck[];
   presetDecksLoading: boolean;
   createDeck: (name: string) => void;
@@ -106,12 +108,14 @@ async function migrateLegacyDeckIds(): Promise<void> {
 export const useDeckStore = create<DeckState>((set, get) => ({
   decks: loadDecks(),
   currentDeck: { id: null, name: '', cards: [] },
+  dirty: false,
   presetDecks: [],
   presetDecksLoading: false,
 
   createDeck: (name: string) => {
     set({
       currentDeck: { id: null, name, cards: [] },
+      dirty: false,
     });
   },
 
@@ -127,6 +131,7 @@ export const useDeckStore = create<DeckState>((set, get) => ({
         ...currentDeck,
         cards: [...currentDeck.cards, cardId],
       },
+      dirty: true,
     });
   },
 
@@ -140,6 +145,7 @@ export const useDeckStore = create<DeckState>((set, get) => ({
 
     set({
       currentDeck: { ...currentDeck, cards: updated },
+      dirty: true,
     });
   },
 
@@ -164,7 +170,7 @@ export const useDeckStore = create<DeckState>((set, get) => ({
       updated = [...decks, newDeck];
       set({ currentDeck: { ...currentDeck, id: newDeck.id } });
     }
-    set({ decks: updated });
+    set({ decks: updated, dirty: false });
     saveDecks(updated);
   },
 
@@ -175,6 +181,7 @@ export const useDeckStore = create<DeckState>((set, get) => ({
 
     set({
       currentDeck: { id: deck.id, name: deck.name, cards: [...deck.cards] },
+      dirty: false,
     });
   },
 
@@ -221,12 +228,24 @@ export const useDeckStore = create<DeckState>((set, get) => ({
       }
     }
 
+    // Real rules: a deck must contain at least 1 Basic Pokémon (you must be able to open with
+    // an Active). Only checkable when the catalog is supplied; unknown ids are tolerated the
+    // same way the 4-copy check tolerates them.
+    if (allCards && currentDeck.cards.length > 0) {
+      const hasBasic = currentDeck.cards.some((id) => {
+        const card = allCards.find((c) => c.id === id);
+        return !!card && card.supertype === 'Pokémon' && card.subtypes.includes('Basic' as Subtype);
+      });
+      const anyResolved = currentDeck.cards.some((id) => allCards.some((c) => c.id === id));
+      if (anyResolved && !hasBasic) errors.push('牌組至少需要 1 隻基礎寶可夢');
+    }
+
     return { valid: errors.length === 0, errors };
   },
 
   setDeckName: (name: string) => {
     const { currentDeck } = get();
-    set({ currentDeck: { ...currentDeck, name } });
+    set({ currentDeck: { ...currentDeck, name }, dirty: true });
   },
 
   fetchPresetDecks: async () => {
@@ -247,6 +266,7 @@ export const useDeckStore = create<DeckState>((set, get) => ({
     if (!deck) return;
     set({
       currentDeck: { id: null, name: `[預組] ${deck.name}`, cards: [...deck.cards] },
+      dirty: true, // a preset copy is an unsaved draft until 存檔
     });
   },
 }));

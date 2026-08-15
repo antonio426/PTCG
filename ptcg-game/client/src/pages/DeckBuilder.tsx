@@ -151,7 +151,7 @@ function getDisplaySubtypes(card: Card): string[] {
 export default function DeckBuilder() {
   const { cards, sets, loading, fetchCards, searchCards, fetchCardDetail } = useCardStore();
   const {
-    decks, currentDeck, presetDecks, presetDecksLoading,
+    decks, currentDeck, dirty, presetDecks, presetDecksLoading,
     createDeck, addCard, removeCard, saveDeck, loadDeck, deleteDeck, validateDeck, setDeckName,
     fetchPresetDecks, loadPresetDeck,
   } = useDeckStore();
@@ -791,6 +791,11 @@ export default function DeckBuilder() {
               placeholder="牌組名稱"
               className="flex-1 bg-slate-700 border border-slate-600 rounded-lg px-3 py-1.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"
             />
+            {dirty && (
+              <span className="text-xs text-amber-400 flex items-center gap-1 flex-shrink-0" title="有尚未存檔的變更">
+                未存檔<span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
+              </span>
+            )}
             <span className={`text-sm font-bold ${deckCardCount === MAX_DECK_SIZE ? 'text-green-400' : deckCardCount > MAX_DECK_SIZE ? 'text-red-400' : 'text-slate-400'}`}>
               {deckCardCount}/{MAX_DECK_SIZE}
             </span>
