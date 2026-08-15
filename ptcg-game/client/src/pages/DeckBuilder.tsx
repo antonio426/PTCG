@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useCardStore } from '../stores/cardStore';
+import { useCardStore, CARD_TAG_DEFS } from '../stores/cardStore';
+import type { SearchScope, CardTag } from '../stores/cardStore';
 import { useDeckStore } from '../stores/deckStore';
 import { MAX_DECK_SIZE } from '@ptcg/shared';
 import type { Card, Supertype, EnergyType, Subtype } from '@ptcg/shared';
@@ -171,6 +172,8 @@ export default function DeckBuilder() {
   const [hpMin, setHpMin] = useState('');
   const [hpMax, setHpMax] = useState('');
   const [standardOnly, setStandardOnly] = useState(true);
+  const [searchScope, setSearchScope] = useState<SearchScope>('name');
+  const [selectedTag, setSelectedTag] = useState<CardTag | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>('number-asc');
   const [selectedRarities, setSelectedRarities] = useState<string[]>([]);
   const [page, setPage] = useState(1);
@@ -222,8 +225,12 @@ export default function DeckBuilder() {
     set?: string;
     rarity?: string[];
     sortOrder?: SortOrder;
+    searchScope?: SearchScope;
+    tag?: CardTag;
   } = {};
 
+  filterArgs.searchScope = searchScope;
+  if (selectedTag) filterArgs.tag = selectedTag;
   if (supertype) filterArgs.supertype = supertype;
   if (selectedTypes.length > 0) filterArgs.types = selectedTypes;
   if (selectedSet) filterArgs.set = selectedSet;
@@ -331,11 +338,22 @@ export default function DeckBuilder() {
 
         {/* ---- Search row ---- */}
         <div className="flex gap-2 mb-2">
+          <select
+            value={searchScope}
+            onChange={(e) => setSearchScope(e.target.value as SearchScope)}
+            title="關鍵字要搜尋卡片的哪個部分"
+            className="bg-slate-800 border border-slate-600 rounded-lg px-2 py-2 text-slate-300 text-sm focus:outline-none focus:border-blue-500"
+          >
+            <option value="name">名稱</option>
+            <option value="attack">招式</option>
+            <option value="ability">特性</option>
+            <option value="all">全部</option>
+          </select>
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="搜尋卡牌名稱或編號..."
+            placeholder={searchScope === 'attack' ? '搜尋招式名稱／效果...' : searchScope === 'ability' ? '搜尋特性名稱／效果...' : searchScope === 'all' ? '搜尋名稱／招式／特性...' : '搜尋卡牌名稱或編號...'}
             className="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"
           />
           <select
@@ -368,6 +386,21 @@ export default function DeckBuilder() {
           >
             篩選
           </button>
+        </div>
+
+        {/* ---- Mechanic-tag chips (single-select; derived from card data) ---- */}
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {CARD_TAG_DEFS.map(({ tag, label }) => (
+            <button
+              key={tag}
+              onClick={() => setSelectedTag(prev => prev === tag ? null : tag)}
+              className={`px-2.5 py-1 rounded-lg text-xs border transition-colors ${
+                selectedTag === tag ? 'bg-purple-600 border-purple-500 text-white' : 'bg-slate-700 border-slate-600 text-slate-300 hover:border-slate-500'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
         {/* ---- Collapsible advanced filters ---- */}

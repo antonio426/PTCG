@@ -12,6 +12,42 @@ interface CardFilters {
   namePrefix?: string;
   /** Filter cards whose name ends with this string (e.g. 'EX') */
   nameSuffix?: string;
+  /** Where the text query is matched: card name/id (default), attack names+text, ability
+   * names+text, or all of those at once. */
+  searchScope?: SearchScope;
+  /** Mechanic-tag filter — see cardMatchesTag for how each is derived from card data. */
+  tag?: CardTag;
+  /** Restrict to specific regulation marks (賽季 H/I/J …). */
+  regulationMarks?: string[];
+}
+
+export type SearchScope = 'name' | 'attack' | 'ability' | 'all';
+export type CardTag = 'ace-spec' | 'tera' | 'mega-ex' | 'trainer-named';
+
+export const CARD_TAG_DEFS: { tag: CardTag; label: string }[] = [
+  { tag: 'ace-spec', label: 'ACE SPEC' },
+  { tag: 'tera', label: '太晶' },
+  { tag: 'mega-ex', label: '超級進化' },
+  { tag: 'trainer-named', label: '訓練家冠名' },
+];
+
+/** Data-derived mechanic tags. 古代/未來 are deliberately absent: no source in the current
+ * dataset carries a structured Ancient/Future marker (subtypes count is 0 across all 10k+
+ * cards; the official scrape only has it as free text) — recorded as a data gap in ROADMAP.md. */
+export function cardMatchesTag(c: Card, tag: CardTag): boolean {
+  switch (tag) {
+    case 'ace-spec':
+      return c.rarity === 'ACE';
+    case 'tera':
+      // Same marker the server's passive-ability logic uses (hasTeraBenchedImmunity): every
+      // Tera print carries this fixed rules line inside an attack, plus the few 太晶-named cards.
+      return c.name.includes('太晶')
+        || !!c.attacks?.some(a => a.text?.trim() === '只要這隻寶可夢在備戰區，不會受到招式的傷害。');
+    case 'mega-ex':
+      return c.name.startsWith('超級') && c.subtypes.includes('ex');
+    case 'trainer-named':
+      return c.supertype === 'Pokémon' && /^.{1,6}的./.test(c.name);
+  }
 }
 
 type SortOrder = 'number-asc' | 'number-desc' | 'name-asc' | 'name-desc' | 'hp-desc' | 'hp-asc';
@@ -66,11 +102,27 @@ export const useCardStore = create<CardState>((set, get) => ({
 
     if (query) {
       const lower = query.toLowerCase();
-      result = result.filter(
-        (c) =>
-          c.name.toLowerCase().includes(lower) ||
-          c.id.toLowerCase().includes(lower),
-      );
+      const scope = filters?.searchScope ?? 'name';
+      const nameHit = (c: Card) => c.name.toLowerCase().includes(lower) || c.id.toLowerCase().includes(lower);
+      // (a.name ?? ''): a handful of scraped entries carry no name at all (e.g. S5R-059
+      // 爆炸頭水牛's ability — the case normalizeCardName guards server-side).
+      const attackHit = (c: Card) => !!c.attacks?.some(a =>
+        (a.name ?? '').toLowerCase().includes(lower) || (a.text ?? '').toLowerCase().includes(lower));
+      const abilityHit = (c: Card) => !!c.abilities?.some(a =>
+        (a.name ?? '').toLowerCase().includes(lower) || (a.text ?? '').toLowerCase().includes(lower));
+      result = result.filter((c) =>
+        scope === 'name' ? nameHit(c)
+        : scope === 'attack' ? attackHit(c)
+        : scope === 'ability' ? abilityHit(c)
+        : nameHit(c) || attackHit(c) || abilityHit(c));
+    }
+
+    if (filters?.tag) {
+      result = result.filter((c) => cardMatchesTag(c, filters.tag!));
+    }
+
+    if (filters?.regulationMarks?.length) {
+      result = result.filter((c) => c.regulationMark && filters.regulationMarks!.includes(c.regulationMark));
     }
 
     if (filters?.supertype) {

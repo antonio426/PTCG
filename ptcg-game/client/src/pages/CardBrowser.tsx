@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useCardStore } from '../stores/cardStore';
+import { useCardStore, CARD_TAG_DEFS } from '../stores/cardStore';
+import type { SearchScope, CardTag } from '../stores/cardStore';
 import type { SortOrder } from '../stores/cardStore';
 import type { Card, Supertype, EnergyType, Subtype } from '@ptcg/shared';
 import { handleCardImgError } from '../utils/cardImageFallback';
@@ -371,6 +372,9 @@ export default function CardBrowser() {
   const [standardOnly, setStandardOnly] = useState(true);
   const [sortOrder, setSortOrder] = useState<SortOrder>('number-asc');
   const [selectedRarities, setSelectedRarities] = useState<string[]>([]);
+  const [searchScope, setSearchScope] = useState<SearchScope>('name');
+  const [selectedTag, setSelectedTag] = useState<CardTag | null>(null);
+  const [selectedMarks, setSelectedMarks] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(true);
   const [page, setPage] = useState(1);
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
@@ -384,7 +388,7 @@ export default function CardBrowser() {
 
   useEffect(() => {
     setPage(1);
-  }, [query, selectedCardType, selectedStage, selectedTypes, selectedSet, hpMin, hpMax, standardOnly, sortOrder, selectedRarities]);
+  }, [query, selectedCardType, selectedStage, selectedTypes, selectedSet, hpMin, hpMax, standardOnly, sortOrder, selectedRarities, searchScope, selectedTag, selectedMarks]);
 
   const toggleType = (t: EnergyType) => {
     setSelectedTypes((prev) =>
@@ -412,7 +416,13 @@ export default function CardBrowser() {
     set?: string;
     rarity?: string[];
     sortOrder?: SortOrder;
+    searchScope?: SearchScope;
+    tag?: CardTag;
+    regulationMarks?: string[];
   } = {};
+  filterArgs.searchScope = searchScope;
+  if (selectedTag) filterArgs.tag = selectedTag;
+  if (selectedMarks.length > 0) filterArgs.regulationMarks = selectedMarks;
 
   if (selectedTypes.length > 0) {
     filterArgs.types = selectedTypes;
@@ -504,12 +514,23 @@ export default function CardBrowser() {
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <h1 className="text-2xl font-bold text-white">卡牌瀏覽</h1>
         <div className="flex gap-2 w-full sm:w-auto">
+          <select
+            value={searchScope}
+            onChange={(e) => setSearchScope(e.target.value as SearchScope)}
+            title="關鍵字要搜尋卡片的哪個部分"
+            className="bg-slate-800 border border-slate-600 rounded-lg px-2 py-2 text-slate-300 text-sm focus:outline-none focus:border-blue-500"
+          >
+            <option value="name">名稱</option>
+            <option value="attack">招式</option>
+            <option value="ability">特性</option>
+            <option value="all">全部</option>
+          </select>
           <div className="relative flex-1 sm:flex-initial">
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="搜尋卡牌名稱..."
+              placeholder={searchScope === 'attack' ? '搜尋招式名稱或效果文字...' : searchScope === 'ability' ? '搜尋特性名稱或效果文字...' : searchScope === 'all' ? '搜尋名稱／招式／特性...' : '搜尋卡牌名稱...'}
               className="w-full sm:w-72 bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"
             />
           </div>
@@ -559,6 +580,42 @@ export default function CardBrowser() {
               })}
             </div>
           </div>
+          {/* 標籤 — single-select mechanic tags (derived from card data; see cardMatchesTag) */}
+          <div>
+            <label className="text-sm text-slate-400 mb-2 block">標籤</label>
+            <div className="flex flex-wrap gap-2">
+              {CARD_TAG_DEFS.map(({ tag, label }) => (
+                <button
+                  key={tag}
+                  onClick={() => setSelectedTag(prev => prev === tag ? null : tag)}
+                  className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+                    selectedTag === tag ? 'bg-purple-600 border-purple-500 text-white' : 'bg-slate-700 border-slate-600 text-slate-300 hover:border-slate-500'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 賽季 — multi-select regulation marks */}
+          <div>
+            <label className="text-sm text-slate-400 mb-2 block">賽季標記</label>
+            <div className="flex flex-wrap gap-2">
+              {['H', 'I', 'J'].map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setSelectedMarks(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m])}
+                  className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+                    selectedMarks.includes(m) ? 'bg-amber-600 border-amber-500 text-white' : 'bg-slate-700 border-slate-600 text-slate-300 hover:border-slate-500'
+                  }`}
+                >
+                  {m} 標
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* 進化分類 — single-select */}
           <div>
             <label className="text-sm text-slate-400 mb-2 block">進化分類</label>
