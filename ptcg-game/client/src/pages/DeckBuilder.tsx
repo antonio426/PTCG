@@ -102,6 +102,13 @@ const RARITY_OPTIONS: { label: string; value: string }[] = [
 
 const PAGE_SIZE = 24;
 
+function downloadFile(filename: string, content: string, mime: string) {
+  const url = URL.createObjectURL(new Blob([content], { type: mime }));
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
 function EnergyIcon({ type, size = 'sm' }: { type: string; size?: 'sm' | 'md' | 'lg' }) {
   const colorClass = TYPE_COLORS[type] || 'bg-gray-400';
   const sizeClass = size === 'lg' ? 'w-7 h-7 text-sm' : size === 'md' ? 'w-5 h-5 text-[10px]' : 'w-4 h-4 text-[8px]';
@@ -178,6 +185,12 @@ export default function DeckBuilder() {
   const [selectedRarities, setSelectedRarities] = useState<string[]>([]);
   const [page, setPage] = useState(1);
 
+  // ---- Import/export state ----
+  const [showImport, setShowImport] = useState(false);
+  const [importText, setImportText] = useState('');
+  const [importMsg, setImportMsg] = useState<string | null>(null);
+  const jsonFileRef = useRef<HTMLInputElement>(null);
+
   // ---- Hover popover state ----
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
   const [hoverPos, setHoverPos] = useState({ x: 0, y: 0 });
@@ -216,6 +229,60 @@ export default function DeckBuilder() {
 
   const selectStage = (label: string) => {
     setSelectedStage((prev) => prev === label ? null : label);
+  };
+
+  // ---- Import / export ----------------------------------------------------------------
+  /** Text deck list: "count name id" lines, grouped by supertype. Import accepts the same
+   * shape back — the trailing id wins when present; otherwise the name resolves to its
+   * Standard-legal print. Lines starting with # or ## are decoration and ignored. */
+  const exportAsText = () => {
+    const counts = new Map<string, number>();
+    for (const id of currentDeck.cards) counts.set(id, (counts.get(id) ?? 0) + 1);
+    const groups: Record<string, string[]> = { 'Pokémon': [], 'Trainer': [], 'Energy': [], '其他': [] };
+    for (const [id, count] of counts) {
+      const card = cards.find(c => c.id === id);
+      const line = `${count} ${card?.name ?? '未知卡片'} ${id}`;
+      (groups[card?.supertype ?? '其他'] ?? groups['其他']).push(line);
+    }
+    const zh: Record<string, string> = { 'Pokémon': '寶可夢', 'Trainer': '訓練家', 'Energy': '能量', '其他': '其他' };
+    const text = [`# ${currentDeck.name || '未命名牌組'}（${currentDeck.cards.length} 張）`,
+      ...Object.entries(groups).filter(([, ls]) => ls.length).flatMap(([g, ls]) => [`## ${zh[g]}`, ...ls])].join('\n');
+    void navigator.clipboard?.writeText(text).catch(() => {});
+    downloadFile(`${currentDeck.name || 'deck'}.txt`, text, 'text/plain');
+  };
+
+  const exportAsJson = () => {
+    downloadFile(`${currentDeck.name || 'deck'}.json`,
+      JSON.stringify({ name: currentDeck.name, cards: currentDeck.cards }, null, 2), 'application/json');
+  };
+
+  const runTextImport = () => {
+    const lines = importText.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+    const ids: string[] = [];
+    const misses: string[] = [];
+    for (const line of lines) {
+      const m = line.match(/^(\d+)[x×]?\s+(.+?)(?:\s+([A-Za-z0-9]+(?:-[A-Za-z0-9]+)+))?$/);
+      if (!m) { misses.push(line); continue; }
+      const count = Math.min(parseInt(m[1], 10) || 0, 60);
+      const name = m[2].trim();
+      let card = m[3] ? cards.find(c => c.id === m[3]) : undefined;
+      card ??= cards.find(c => c.name === name && c.legalities?.standard === 'Legal') ?? cards.find(c => c.name === name);
+      if (!card) { misses.push(line); continue; }
+      for (let i = 0; i < count; i++) ids.push(card.id);
+    }
+    if (ids.length === 0) { setImportMsg('沒有解析到任何卡片'); return; }
+    useDeckStore.setState({ currentDeck: { id: null, name: currentDeck.name || '匯入的牌組', cards: ids.slice(0, 60) }, dirty: true });
+    setImportMsg(`匯入 ${Math.min(ids.length, 60)} 張${misses.length ? `；無法解析 ${misses.length} 行：${misses.slice(0, 3).join(' / ')}` : ''}`);
+    if (misses.length === 0) { setShowImport(false); setImportText(''); }
+  };
+
+  const onJsonFile = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      const j = JSON.parse(await file.text());
+      if (!Array.isArray(j.cards) || !j.cards.every((c: unknown) => typeof c === 'string')) throw new Error('bad shape');
+      useDeckStore.setState({ currentDeck: { id: null, name: String(j.name || file.name.replace(/\.json$/i, '')), cards: j.cards.slice(0, 60) }, dirty: true });
+    } catch { setImportMsg('JSON 格式不正確（需要 { name, cards: string[] }）'); setShowImport(true); }
   };
 
   // ---- Build filter args ----
@@ -800,6 +867,37 @@ export default function DeckBuilder() {
               {deckCardCount}/{MAX_DECK_SIZE}
             </span>
           </div>
+
+          {/* Import / export toolbar (text + JSON; 官網代碼 pending format research — ROADMAP) */}
+          <div className="flex flex-wrap gap-1.5 mb-3 text-xs">
+            <button onClick={exportAsText} disabled={currentDeck.cards.length === 0}
+              className="px-2 py-1 rounded bg-slate-700 border border-slate-600 text-slate-300 hover:border-slate-500 disabled:opacity-40">🖼️ 匯出文字</button>
+            <button onClick={() => { setImportMsg(null); setShowImport(true); }}
+              className="px-2 py-1 rounded bg-slate-700 border border-slate-600 text-slate-300 hover:border-slate-500">📝 匯入文字</button>
+            <button onClick={exportAsJson} disabled={currentDeck.cards.length === 0}
+              className="px-2 py-1 rounded bg-slate-700 border border-slate-600 text-slate-300 hover:border-slate-500 disabled:opacity-40">💾 匯出 JSON</button>
+            <button onClick={() => jsonFileRef.current?.click()}
+              className="px-2 py-1 rounded bg-slate-700 border border-slate-600 text-slate-300 hover:border-slate-500">📂 匯入 JSON</button>
+            <input ref={jsonFileRef} type="file" accept=".json,application/json" className="hidden"
+              onChange={(e) => { void onJsonFile(e.target.files?.[0]); e.target.value = ''; }} />
+          </div>
+
+          {showImport && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setShowImport(false)}>
+              <div className="bg-slate-800 border border-slate-600 rounded-xl p-5 w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
+                <h3 className="text-white font-semibold mb-2">匯入文字牌表</h3>
+                <p className="text-xs text-slate-400 mb-2">每行「數量 卡名 [卡片ID]」；有 ID 以 ID 為準，否則以卡名找標準賽印刷。# 開頭的行會忽略。</p>
+                <textarea value={importText} onChange={(e) => setImportText(e.target.value)} rows={10}
+                  placeholder={'4 拉魯拉絲 SV5a-050\n2 神奇糖果\n...'}
+                  className="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-xs text-slate-100 font-mono focus:outline-none focus:border-blue-500" />
+                {importMsg && <p className="text-xs text-amber-400 mt-1">{importMsg}</p>}
+                <div className="flex justify-end gap-2 mt-3">
+                  <button onClick={() => setShowImport(false)} className="px-3 py-1.5 text-sm rounded bg-slate-700 text-slate-300">取消</button>
+                  <button onClick={runTextImport} className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-500">匯入</button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {!currentDeck.name.trim() && (
             <div className="flex gap-2 mb-3">
