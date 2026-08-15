@@ -67,10 +67,14 @@ export interface PtcgGameState {
    * interactive player won. During choose_first/choose_active, currentPlayer stays the
    * interactive player so getLegalMoves keeps working — chooseActive applies this afterward. */
   firstPlayer?: 0 | 1;
-  /** Deferred mulligan compensation for an INTERACTIVE player (real rules: drawing the bonus
+  /** Which seats are driven by a human (vs-AI: [0]; local hotseat: [0,1]; headless: []).
+   * Read by chooseActive/chooseFirst to route the setup phases through every human seat. */
+  interactivePlayers?: (0 | 1)[];
+  /** Deferred mulligan compensations for INTERACTIVE players (real rules: drawing the bonus
    * cards is optional, 0..max). Non-interactive sides auto-draw the max in setup as before.
-   * Converted into a PendingChoice by chooseActive, resolved before turn 1 begins. */
-  pendingMulliganBonus?: { player: 0 | 1; max: number };
+   * Converted into PendingChoices one at a time after all Actives are placed, resolved before
+   * turn 1 begins. A queue because in local 2P BOTH sides can be owed compensation. */
+  pendingMulliganBonuses?: { player: 0 | 1; max: number }[];
   winner: number | null;
   winReason: string | null;
   turnLog: TurnAction[];

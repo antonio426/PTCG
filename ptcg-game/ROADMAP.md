@@ -37,10 +37,11 @@
 - ✅ 未存檔草稿標示（預組唯讀入口原已存在）
 - ✅ 資料庫頁依卡包分組視圖（⚠ 發售日期：資料集全空）
 
-## Phase 3 本機雙人對戰（同機輪流）
+## Phase 3 本機雙人對戰（同機輪流）✅
 
-- 引擎本就雙人：`setup()` 的 `interactivePlayer` 擴為兩側即可
-- 主要工作在 UI：換手遮蔽畫面、雙視角切換、雙方都走 `choose_active` 流程
+- ✅ 引擎：`setup()`/moves 支援 `interactivePlayers: [0,1]`（雙方都走 choose_first/choose_active/mulligan 補償）
+- ✅ REST：`mode: 'local'`（無 AI），回應依「當前行動座位」視角參數化（`viewerIndex`/`mode`）
+- ✅ UI：模式切換＋玩家 2 牌組選擇、換手遮蔽畫面（視角切換時全螢幕遮蔽＋確認）、座位標示（玩家 1/2）、悔棋沿用
 
 ## Phase 4 對戰體驗
 

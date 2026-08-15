@@ -10,6 +10,8 @@ export interface PtcgSetupData {
    * battle. That player's hand keeps every Basic; they place one as Active via the
    * 'choose_active' move, and any others normally via 'play_pokemon' on their first turn. */
   interactivePlayer?: 0 | 1;
+  /** Local-2P form: BOTH seats are human (e.g. [0, 1]). Supersedes interactivePlayer. */
+  interactivePlayers?: (0 | 1)[];
 }
 
 function seededRandom(seed: number) {
@@ -135,6 +137,9 @@ export function setup(setupData?: PtcgSetupData): PtcgGameState {
 
   const seed = setupData.seed ?? Date.now();
   instanceCounter = 0;
+  const interactive = new Set<0 | 1>(
+    setupData.interactivePlayers ?? (setupData.interactivePlayer !== undefined ? [setupData.interactivePlayer] : []),
+  );
 
   const players: [PtcgPlayerState, PtcgPlayerState] = [
     createPlayerState(setupData.decks[0], setupData.cardData, 0, seed),
@@ -167,16 +172,16 @@ export function setup(setupData?: PtcgSetupData): PtcgGameState {
     }
   }
 
-  let pendingMulliganBonus: { player: 0 | 1; max: number } | undefined;
+  const pendingMulliganBonuses: { player: 0 | 1; max: number }[] = [];
   for (let p = 0; p < 2; p++) {
     const opponentIdx = (1 - p) as 0 | 1;
     if (mulliganCounts[p] === 0) continue;
-    if (setupData.interactivePlayer === opponentIdx) {
+    if (interactive.has(opponentIdx)) {
       // Real rules: the compensation draw is OPTIONAL (0..max). Defer the interactive player's
       // decision to a PendingChoice raised by chooseActive — auto-drawing here took the choice
       // away. Non-interactive sides below keep the auto-max behavior (what the reference AI
       // did in all 220 audited games).
-      pendingMulliganBonus = { player: opponentIdx, max: mulliganCounts[p] };
+      pendingMulliganBonuses.push({ player: opponentIdx, max: mulliganCounts[p] });
       addSetupLog(turnLog, opponentIdx, 'mulligan_reveal', `對手起手無基礎寶可夢，重抽懲罰 ${mulliganCounts[p]} 次 → 你可選擇多抽 ${mulliganCounts[p]} 張`);
       continue;
     }
@@ -188,7 +193,7 @@ export function setup(setupData?: PtcgSetupData): PtcgGameState {
   }
 
   for (let p = 0; p < 2; p++) {
-    if (setupData.interactivePlayer === p) continue;
+    if (interactive.has(p as 0 | 1)) continue;
     placeBasics(players[p as 0 | 1]);
   }
 
@@ -199,9 +204,13 @@ export function setup(setupData?: PtcgSetupData): PtcgGameState {
   // Real rules: a coin flip decides who CHOOSES to go first or second (the winner picks —
   // going first is not automatic). Seeded so battleRunner simulations stay reproducible.
   const coinWinner = (seededRandom(seed + 7919)() < 0.5 ? 0 : 1) as 0 | 1;
-  addSetupLog(turnLog, coinWinner, 'coin_flip', `擲硬幣：${coinWinner === setupData.interactivePlayer ? '你' : (setupData.interactivePlayer !== undefined ? 'AI 對手' : `玩家 ${coinWinner}`)} 獲勝`);
+  const seatName = (p: 0 | 1) =>
+    interactive.size === 2 ? `玩家 ${p + 1}`
+    : interactive.size === 1 ? (interactive.has(p) ? '你' : 'AI 對手')
+    : `玩家 ${p}`;
+  addSetupLog(turnLog, coinWinner, 'coin_flip', `擲硬幣：${seatName(coinWinner)} 獲勝`);
 
-  const interactiveWonFlip = setupData.interactivePlayer !== undefined && coinWinner === setupData.interactivePlayer;
+  const interactiveWonFlip = interactive.has(coinWinner);
   // A non-interactive flip winner (AI opponent, or either side of a headless simulation)
   // decides immediately, and always takes first — the near-universal real-play choice.
   const firstPlayer = interactiveWonFlip ? undefined : coinWinner;
@@ -213,11 +222,14 @@ export function setup(setupData?: PtcgSetupData): PtcgGameState {
     // Interactive setups keep the interactive player as currentPlayer through the
     // choose_first/choose_active phases (getLegalMoves gates on currentPlayer); the decided
     // firstPlayer takes over in moves.chooseActive. Headless games start with the flip winner.
-    currentPlayer: setupData.interactivePlayer !== undefined ? setupData.interactivePlayer : coinWinner,
-    phase: interactiveWonFlip ? 'choose_first' : (setupData.interactivePlayer !== undefined ? 'choose_active' : 'draw'),
+    // choose_first's actor is the flip winner; otherwise the (single) interactive seat picks
+    // its Active; headless games start with the flip winner immediately.
+    currentPlayer: interactiveWonFlip ? coinWinner : (interactive.size > 0 ? [...interactive][0] : coinWinner),
+    phase: interactiveWonFlip ? 'choose_first' : (interactive.size > 0 ? 'choose_active' : 'draw'),
     coinWinner,
     firstPlayer,
-    pendingMulliganBonus,
+    interactivePlayers: [...interactive].sort(),
+    pendingMulliganBonuses,
     winner: null,
     winReason: null,
     turnLog,

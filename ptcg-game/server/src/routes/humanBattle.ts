@@ -78,6 +78,10 @@ interface BattleStateResponse {
   activeStadium: { id: string; cardData: Card } | null;
   /** Whether an undo snapshot exists (悔棋 button enablement). */
   canUndo: boolean;
+  /** Which seat this response is built for (vs-AI: always 0; local 2P: the seat that must act).
+   * The client swaps its "you/opponent" panels and gates the hand on this. */
+  viewerIndex: 0 | 1;
+  mode: 'ai' | 'local';
 }
 
 interface BattleSession {
@@ -85,7 +89,8 @@ interface BattleSession {
   gameState: PtcgGameState;
   playerDeck: string[];
   aiDeck: string[];
-  aiPlayer: IAIPlayer;
+  /** null = local 2P hotseat (both seats human, no AI turns ever run). */
+  aiPlayer: IAIPlayer | null;
   createdAt: number;
   /** Pre-move snapshots for undo — one entry per HUMAN move, capped. Undoing pops back to the
    * state before the player's last action, which in a vs-AI game also rewinds any AI turns
@@ -160,8 +165,11 @@ function sanitizeCard(G: PtcgGameState, gc: PtcgGameState['players'][0]['active'
 
 function buildResponse(session: BattleSession): BattleStateResponse {
   const G = session.gameState;
-  const player = G.players[0];
-  const opponent = G.players[1];
+  // vs-AI responses are always seat 0's view. Local 2P builds for whoever must act next —
+  // a pending choice's owner outranks currentPlayer (e.g. the opponent resolving a pick).
+  const viewer: 0 | 1 = session.aiPlayer ? 0 : ((G.pendingChoice?.player ?? G.currentPlayer) as 0 | 1);
+  const player = G.players[viewer];
+  const opponent = G.players[(1 - viewer) as 0 | 1];
 
   return {
     player: {
@@ -185,15 +193,17 @@ function buildResponse(session: BattleSession): BattleStateResponse {
       deckCount: opponent.deck.length,
     },
     turn: G.turn,
-    isPlayerTurn: G.currentPlayer === 0,
+    isPlayerTurn: G.currentPlayer === viewer,
     phase: G.phase,
-    legalMoves: getLegalMoves(G, 0),
+    legalMoves: getLegalMoves(G, viewer),
     turnLog: G.turnLog,
     activeStadium: G.activeStadium ? { id: G.activeStadium.id, cardData: G.activeStadium.cardData } : null,
     winner: G.winner,
     winReason: G.winReason,
     canUndo: session.history.length > 0,
-    pendingChoice: enrichPendingChoice(G, G.pendingChoice && G.pendingChoice.player === 0 ? G.pendingChoice : null),
+    viewerIndex: viewer,
+    mode: session.aiPlayer ? 'ai' : 'local',
+    pendingChoice: enrichPendingChoice(G, G.pendingChoice && G.pendingChoice.player === viewer ? G.pendingChoice : null),
   };
 }
 
@@ -311,6 +321,8 @@ function executeGameAction(G: PtcgGameState, action: { type: string; payload?: R
 /** Run AI turns until it's the human's turn again or game ends */
 async function runAiTurns(session: BattleSession): Promise<void> {
   const G = session.gameState;
+  const ai = session.aiPlayer;
+  if (!ai) return; // local 2P hotseat — there is no AI seat
   // Belt-and-suspenders against an AI that keeps re-selecting the same still-legal move without
   // ever advancing G.phase to 'end' (e.g. a validation gap letting a move stay legal after it's
   // already been executed) — without this cap, the loop spins forever, pushing to G.turnLog on
@@ -319,7 +331,6 @@ async function runAiTurns(session: BattleSession): Promise<void> {
   let aiMoveSafety = 0;
   while (G.winner === null && G.currentPlayer === 1 && aiMoveSafety < 500) {
     aiMoveSafety++;
-    const ai = session.aiPlayer;
     const legalMoves = getLegalMoves(G, 1);
     if (legalMoves.length === 0) {
       G.winner = 0;
@@ -352,29 +363,41 @@ const router = new Router();
 /** Create a new human-vs-AI battle */
 router.post('/', async (ctx) => {
   try {
-    const { deckA, deckB, difficulty } = ctx.request.body as { deckA: string[]; deckB?: string[]; difficulty?: Difficulty };
+    const { deckA, deckB, difficulty, mode } = ctx.request.body as { deckA: string[]; deckB?: string[]; difficulty?: Difficulty; mode?: 'ai' | 'local' };
     if (!deckA || !Array.isArray(deckA) || deckA.length === 0) {
       ctx.status = 400;
       ctx.body = { error: 'deckA required (array of card IDs)' };
       return;
     }
-    const resolved = resolveAiPlayer(difficulty);
-    if ('error' in resolved) {
+    const isLocal = mode === 'local';
+    if (isLocal && (!deckB || !Array.isArray(deckB) || deckB.length === 0)) {
       ctx.status = 400;
-      ctx.body = { error: resolved.error };
+      ctx.body = { error: 'local mode requires deckB (player 2 deck)' };
       return;
+    }
+    let aiPlayer: IAIPlayer | null = null;
+    if (!isLocal) {
+      const resolved = resolveAiPlayer(difficulty);
+      if ('error' in resolved) {
+        ctx.status = 400;
+        ctx.body = { error: resolved.error };
+        return;
+      }
+      aiPlayer = resolved.ai;
     }
     const opponentDeck = deckB || [...deckA].sort(() => Math.random() - 0.5);
     const allIds = [...new Set([...deckA, ...opponentDeck])];
     const cardDataRaw = await fetchCardsByIds(allIds);
     const cardData = cardDataRaw as unknown as Record<string, Card>;
-    const G = setup({ decks: [deckA, opponentDeck], cardData, seed: Date.now(), interactivePlayer: 0 });
+    const G = setup(isLocal
+      ? { decks: [deckA, opponentDeck], cardData, seed: Date.now(), interactivePlayers: [0, 1] }
+      : { decks: [deckA, opponentDeck], cardData, seed: Date.now(), interactivePlayer: 0 });
     const session: BattleSession = {
       id: randomUUID(),
       gameState: G,
       playerDeck: deckA,
       aiDeck: opponentDeck,
-      aiPlayer: resolved.ai,
+      aiPlayer,
       createdAt: Date.now(),
       history: [],
     };
@@ -385,8 +408,8 @@ router.post('/', async (ctx) => {
       if (oldest === undefined) break;
       sessions.delete(oldest);
     }
-    // If AI goes first, run AI turns immediately
-    if (G.currentPlayer === 1) {
+    // If the AI goes first, run its turns immediately (never in local 2P)
+    if (session.aiPlayer && G.currentPlayer === 1) {
       await runAiTurns(session);
     }
     ctx.body = { sessionId: session.id, state: buildResponse(session) };
@@ -433,7 +456,10 @@ router.post('/:id/move', async (ctx) => {
       ctx.body = { sessionId: session.id, state: buildResponse(session) };
       return;
     }
-    if (G.currentPlayer !== 0) {
+    // vs-AI: only seat 0 may act. Local 2P: whoever the state says must act (hotseat — the
+    // device is shared, so there's no cross-seat auth concern).
+    const actor: 0 | 1 = session.aiPlayer ? 0 : ((G.pendingChoice?.player ?? G.currentPlayer) as 0 | 1);
+    if (session.aiPlayer && G.currentPlayer !== 0) {
       ctx.status = 400;
       ctx.body = { error: 'Not your turn', state: buildResponse(session) };
       return;
@@ -441,7 +467,7 @@ router.post('/:id/move', async (ctx) => {
     const { type, payload } = ctx.request.body as { type: string; payload?: Record<string, any> };
     if (!type) { ctx.status = 400; ctx.body = { error: 'Move type required' }; return; }
     // Validate move is legal
-    const legalMoves = getLegalMoves(G, 0);
+    const legalMoves = getLegalMoves(G, actor);
     const matched = legalMoves.find(m => m.type === type &&
       JSON.stringify(m.payload || {}) === JSON.stringify(payload || {}));
     if (!matched) {
@@ -462,22 +488,21 @@ router.post('/:id/move', async (ctx) => {
     // currentPlayer without going through an 'end' phase, so run the AI here too.
     // (Fresh read: the `!== 0` guard above narrowed the type, but executeGameAction mutates it.)
     const playerAfterMove = G.currentPlayer as number;
-    if (G.phase !== 'end' && playerAfterMove === 1 && G.winner === null) {
+    if (session.aiPlayer && G.phase !== 'end' && playerAfterMove === 1 && G.winner === null) {
       await runAiTurns(session);
       ctx.body = { sessionId: session.id, state: buildResponse(session) };
       return;
     }
-    // If turn ended, advance to next turn (AI's turn)
+    // If the turn ended, advance to the next turn (the opponent's — AI or the other human)
     if (G.phase === 'end') {
-      G.currentPlayer = 1;
+      G.currentPlayer = 1 - G.currentPlayer;
       G.turn++;
       applyTurnBegin(G);
       if (checkAndApplyWin(G)) {
         ctx.body = { sessionId: session.id, state: buildResponse(session) };
         return;
       }
-      // Run AI turns
-      await runAiTurns(session);
+      if (session.aiPlayer) await runAiTurns(session);
     }
     ctx.body = { sessionId: session.id, state: buildResponse(session) };
   } catch (err: any) {

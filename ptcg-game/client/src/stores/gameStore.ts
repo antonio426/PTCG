@@ -52,6 +52,9 @@ export interface BattleState {
   activeStadium: { id: string; cardData: Card } | null;
   /** Whether the server holds an undo snapshot (悔棋 button enablement). */
   canUndo: boolean;
+  /** Which seat this state was built for (vs-AI: 0; local 2P: the seat that must act). */
+  viewerIndex: 0 | 1;
+  mode: 'ai' | 'local';
 }
 
 export type BattlePhase = 'select' | 'playing' | 'ended';
@@ -70,7 +73,7 @@ interface GameState {
   matchResult: { wins: number; losses: number; total: number };
   playerName: string;
 
-  createBattle: (deckA: string[], deckB?: string[], difficulty?: 'easy' | 'normal' | 'hard') => Promise<string>;
+  createBattle: (deckA: string[], deckB?: string[], difficulty?: 'easy' | 'normal' | 'hard', mode?: 'ai' | 'local') => Promise<string>;
   submitMove: (type: string, payload?: Record<string, unknown>) => Promise<void>;
   undo: () => Promise<void>;
   refreshState: () => Promise<void>;
@@ -90,13 +93,13 @@ export const useGameStore = create<GameState>((set, get) => ({
   matchResult: { wins: 0, losses: 0, total: 0 },
   playerName: 'Player',
 
-  createBattle: async (deckA: string[], deckB?: string[], difficulty?: 'easy' | 'normal' | 'hard') => {
+  createBattle: async (deckA: string[], deckB?: string[], difficulty?: 'easy' | 'normal' | 'hard', mode?: 'ai' | 'local') => {
     set({ loading: true, error: null });
     try {
       const res = await fetch(BASE, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deckA, deckB, difficulty }),
+        body: JSON.stringify({ deckA, deckB, difficulty, mode }),
       });
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));

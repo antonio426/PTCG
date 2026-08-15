@@ -91,6 +91,27 @@ function performRetreat(G: PtcgGameState, targetBenchPosition: number | undefine
   }
 }
 
+/** After every human Active is placed: raise the next queued mulligan compensation (one at a
+ * time — local 2P can owe BOTH sides), or, once the queue is empty, hand turn 1 to the coin
+ * flip's decided first player. */
+function raiseNextMulliganBonusOrFinish(G: PtcgGameState): void {
+  const entry = G.pendingMulliganBonuses?.shift();
+  if (entry) {
+    G.currentPlayer = entry.player;
+    G.pendingChoice = {
+      player: entry.player,
+      effectKey: 'mulligan_bonus',
+      prompt: `對手重抽懲罰補償：選擇補抽張數（最多 ${entry.max} 張）`,
+      choiceType: 'select_from_list',
+      count: 1,
+      options: Array.from({ length: entry.max + 1 }, (_, i) => ({ id: String(i), label: `補抽 ${i} 張` })),
+      context: {},
+    };
+    return;
+  }
+  if (G.firstPlayer !== undefined) G.currentPlayer = G.firstPlayer;
+}
+
 export const moves = {
   /** The coin-flip winner (an interactive player — AI winners decide in setup) picks first/second. */
   chooseFirst: ({ G, ctx }: { G: PtcgGameState; ctx: any }, goFirst: boolean) => {
@@ -100,6 +121,10 @@ export const moves = {
     G.firstPlayer = goFirst ? chooser : ((1 - chooser) as 0 | 1);
     G.phase = 'choose_active';
     addLog(G, chooser, 'choose_first', goFirst ? '選擇先攻' : '選擇後攻');
+    // Next actor: the first human seat without an Active (the chooser itself in vs-AI;
+    // seat order 0 -> 1 in local 2P).
+    const next = (G.interactivePlayers ?? []).find(p => !G.players[p].active);
+    if (next !== undefined) G.currentPlayer = next;
   },
 
   chooseActive: ({ G, ctx }: { G: PtcgGameState; ctx: any }, cardId: string) => {
@@ -112,30 +137,18 @@ export const moves = {
 
     player.hand.splice(idx, 1);
     player.active = card;
-    G.phase = 'draw';
     addLog(G, parseInt(ctx.currentPlayer), 'choose_active', `Set ${card.cardData.name} as Active Pokémon`);
-    // Deferred mulligan compensation (real rules: optional, 0..max) resolves before turn 1 —
-    // currentPlayer stays with the chooser until it's answered; the resolveChoice handler
-    // performs the firstPlayer handover instead.
-    if (G.pendingMulliganBonus && G.pendingMulliganBonus.player === parseInt(ctx.currentPlayer)) {
-      const { player: chooser, max } = G.pendingMulliganBonus;
-      G.pendingChoice = {
-        player: chooser,
-        effectKey: 'mulligan_bonus',
-        prompt: `對手重抽懲罰補償：選擇補抽張數（最多 ${max} 張）`,
-        choiceType: 'select_from_list',
-        count: 1,
-        options: Array.from({ length: max + 1 }, (_, n) => ({ id: String(n), label: `補抽 ${n} 張` })),
-        context: {},
-      };
-      G.pendingMulliganBonus = undefined;
-      return;
+    // Local 2P: the other human seat may still need to place its Active — hand the phase over.
+    const next = (G.interactivePlayers ?? []).find(p => !G.players[p].active);
+    if (next !== undefined) {
+      G.currentPlayer = next;
+      return; // phase stays 'choose_active'
     }
-    // Setup is complete — the coin flip's decided first player takes over turn 1 now (during the
-    // choose_first/choose_active phases currentPlayer was pinned to the interactive player so
-    // getLegalMoves kept working). When that's the AI, humanBattle's move endpoint sees
-    // currentPlayer === 1 after this move and runs the AI's (restricted) first turn.
-    if (G.firstPlayer !== undefined) G.currentPlayer = G.firstPlayer;
+    // Every Active is placed — deferred mulligan compensations resolve one at a time before
+    // turn 1; once the queue is empty the coin flip's decided first player takes over. When
+    // that's the AI, humanBattle's move endpoint sees currentPlayer === 1 and runs its turn.
+    G.phase = 'draw';
+    raiseNextMulliganBonusOrFinish(G);
   },
 
   drawCard: ({ G, ctx }: { G: PtcgGameState; ctx: any }) => {
@@ -423,7 +436,7 @@ export const moves = {
         };
       } else {
         G.pendingChoice = null;
-        if (G.firstPlayer !== undefined) G.currentPlayer = G.firstPlayer;
+        raiseNextMulliganBonusOrFinish(G);
       }
       return;
     }
@@ -440,7 +453,7 @@ export const moves = {
       }
       if (placed.length > 0) addLog(G, G.currentPlayer, 'mulligan_bonus_bench', `放到備戰區：${placed.join('、')}`);
       G.pendingChoice = null;
-      if (G.firstPlayer !== undefined) G.currentPlayer = G.firstPlayer;
+      raiseNextMulliganBonusOrFinish(G);
       return;
     }
 

@@ -560,6 +560,12 @@ export default function Battle() {
   } = useGameStore();
 
   const [selectedDeckId, setSelectedDeckId] = useState('');
+  const [selectedDeckIdB, setSelectedDeckIdB] = useState('');
+  const [battleMode, setBattleMode] = useState<'ai' | 'local'>('ai');
+  // Local 2P hotseat: when the acting seat changes, cover the board until the next player
+  // confirms they have the device — otherwise their fresh hand is visible to the previous seat.
+  const [handoffPending, setHandoffPending] = useState(false);
+  const prevViewerRef = useRef<number | null>(null);
   const [difficulty, setDifficulty] = useState<'easy' | 'normal' | 'hard'>('normal');
   const [hardModeAvailable, setHardModeAvailable] = useState(false);
   const [showPlayerDiscard, setShowPlayerDiscard] = useState(false);
@@ -651,14 +657,25 @@ export default function Battle() {
     return battleState.legalMoves.filter(m => m.type === 'use_ability');
   }, [battleState]);
 
+  const viewerIndex = battleState?.viewerIndex ?? 0;
+  useEffect(() => {
+    if (battleState?.mode !== 'local' || battleState.winner !== null) { prevViewerRef.current = viewerIndex; return; }
+    if (prevViewerRef.current !== null && prevViewerRef.current !== viewerIndex) setHandoffPending(true);
+    prevViewerRef.current = viewerIndex;
+  }, [viewerIndex, battleState?.mode, battleState?.winner]);
+
   const handleStartBattle = useCallback(async () => {
     if (!selectedDeckId) return;
     const deck = selectableDecks.find(d => d.id === selectedDeckId);
     if (!deck) return;
+    const deckB = battleMode === 'local' ? selectableDecks.find(d => d.id === selectedDeckIdB) : undefined;
+    if (battleMode === 'local' && !deckB) return;
+    prevViewerRef.current = null;
+    setHandoffPending(false);
     try {
-      await createBattle(deck.cards, undefined, difficulty);
+      await createBattle(deck.cards, deckB?.cards, difficulty, battleMode);
     } catch { /* handled by store */ }
-  }, [selectedDeckId, selectableDecks, createBattle, difficulty]);
+  }, [selectedDeckId, selectedDeckIdB, battleMode, selectableDecks, createBattle, difficulty]);
 
   /** 重新開局: same deck, same difficulty, brand-new session (fresh coin flip and hands).
    * No negotiation needed vs an AI — mid-game it just asks for confirmation first. */
@@ -757,8 +774,21 @@ export default function Battle() {
           </div>
           <p className="text-center text-emerald-500/70 text-xs mb-6">挑選一副牌組，開始練習對局</p>
           <div className="space-y-4">
+            <div className="flex gap-2">
+              {([['ai', '🤖 對戰 AI'], ['local', '👥 本機雙人']] as const).map(([m, label]) => (
+                <button
+                  key={m}
+                  onClick={() => setBattleMode(m)}
+                  className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                    battleMode === m ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-slate-800 border-slate-600 text-slate-300 hover:border-slate-500'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
             <div>
-              <label className="text-sm text-slate-400 mb-1.5 block">選擇你的牌組</label>
+              <label className="text-sm text-slate-400 mb-1.5 block">{battleMode === 'local' ? '玩家 1 牌組' : '選擇你的牌組'}</label>
               {selectableDecks.length === 0 ? (
                 <p className="text-slate-500 text-sm bg-slate-700/50 rounded-lg p-3 text-center">
                   尚無可用牌組，請先到牌組構築建立牌組
@@ -787,6 +817,33 @@ export default function Battle() {
                 </select>
               )}
             </div>
+            {battleMode === 'local' && (
+              <div>
+                <label className="text-sm text-slate-400 mb-1.5 block">玩家 2 牌組</label>
+                <select
+                  value={selectedDeckIdB}
+                  onChange={(e) => setSelectedDeckIdB(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 text-slate-100 focus:outline-none focus:border-emerald-500"
+                >
+                  <option value="">選擇牌組...</option>
+                  {decks.length > 0 && (
+                    <optgroup label="我的牌組">
+                      {decks.map((d) => (
+                        <option key={d.id} value={d.id}>{d.name}（{d.cards.length} 張）</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {presetDecks.length > 0 && (
+                    <optgroup label="預組牌組">
+                      {presetDecks.map((d) => (
+                        <option key={d.id} value={d.id}>{d.name}（{d.cards.length} 張）</option>
+                      ))}
+                    </optgroup>
+                  )}
+                </select>
+              </div>
+            )}
+            {battleMode === 'ai' && (
             <div>
               <label className="text-sm text-slate-400 mb-1.5 block">AI 難度</label>
               <select
@@ -801,9 +858,10 @@ export default function Battle() {
                 </option>
               </select>
             </div>
+            )}
             <button
               onClick={handleStartBattle}
-              disabled={!selectedDeckId || loading}
+              disabled={!selectedDeckId || (battleMode === 'local' && !selectedDeckIdB) || loading}
               className="w-full py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-lg shadow-emerald-900/40 ring-1 ring-inset ring-white/15"
             >
               {loading ? '建立對戰中...' : '開始對戰'}
@@ -834,6 +892,8 @@ export default function Battle() {
   /* ======================== */
 
   const isOver = bs.winner !== null;
+  // bs.winner is an absolute seat index; the panels are viewer-relative.
+  const viewerWon = bs.winner === (bs.mode === 'local' ? viewerIndex : 0);
 
   // A multi-step trainer/ability/attack effect (e.g. Ultra Ball) is awaiting a response —
   // every option is already a fully-validated resolve_choice move from the server, so the
@@ -1042,7 +1102,7 @@ export default function Battle() {
               🔄 重開
             </button>
             <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${bs.isPlayerTurn ? 'bg-green-900/60 text-green-300 border border-green-700/60 shadow-[0_0_8px_rgba(34,197,94,0.45)]' : 'bg-red-900/60 text-red-300 border border-red-700/60'}`}>
-              {bs.isPlayerTurn ? '你的回合' : '對手回合'}
+              {bs.mode === 'local' ? `玩家 ${(bs.viewerIndex ?? 0) + 1} 的回合` : bs.isPlayerTurn ? '你的回合' : '對手回合'}
             </span>
             <span className="text-xs text-slate-400">回合 {bs.turn}</span>
             <span className="px-1.5 py-0.5 rounded bg-slate-700/80 text-[11px] text-slate-300 font-medium">
@@ -1192,31 +1252,44 @@ export default function Battle() {
               clipped or scrollable, so it visually bled into the board rows above and below
               instead of being contained. The Modal shell is viewport-fixed with its own
               max-h/overflow-y-auto, so it's never squeezed by board layout. */}
+          {handoffPending && !isOver && (
+            <div className="fixed inset-0 z-[70] bg-slate-950 flex flex-col items-center justify-center gap-6">
+              <div className="text-6xl">🔄</div>
+              <p className="text-xl font-bold text-slate-100">請將裝置交給 玩家 {viewerIndex + 1}</p>
+              <p className="text-sm text-slate-400">為避免看到對方手牌，畫面已遮蔽</p>
+              <button
+                onClick={() => setHandoffPending(false)}
+                className="px-8 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition-colors"
+              >
+                我是玩家 {viewerIndex + 1}，繼續
+              </button>
+            </div>
+          )}
           {isOver && (
             <Modal maxWidthClassName="max-w-md">
               <div className="flex flex-col items-center animate-result-pop">
-                <div className={`text-6xl mb-2 ${bs.winner === 0 ? 'animate-glow-pulse' : 'opacity-60 grayscale'}`}>
-                  {bs.winner === 0 ? '🏆' : '💀'}
+                <div className={`text-6xl mb-2 ${viewerWon ? 'animate-glow-pulse' : 'opacity-60 grayscale'}`}>
+                  {viewerWon ? '🏆' : '💀'}
                 </div>
                 <p
                   className={`text-3xl font-black tracking-wide mb-1 ${
-                    bs.winner === 0
+                    viewerWon
                       ? 'bg-gradient-to-b from-yellow-200 to-yellow-500 bg-clip-text text-transparent drop-shadow-[0_2px_16px_rgba(250,204,21,0.45)]'
                       : 'text-slate-400'
                   }`}
                 >
-                  {bs.winner === 0 ? '勝利！' : '戰敗'}
+                  {bs.mode === 'local' ? `玩家 ${(bs.winner ?? 0) + 1} 獲勝！` : viewerWon ? '勝利！' : '戰敗'}
                 </p>
                 <p className="text-xs text-slate-500 mb-5">{(bs.winReason && winReasonLabels[bs.winReason]) || bs.winReason}</p>
                 <div className="flex items-center gap-8 mb-6">
                   <div className="flex flex-col items-center gap-1.5">
-                    <span className="text-xs font-medium text-blue-300">你</span>
+                    <span className="text-xs font-medium text-blue-300">{bs.mode === 'local' ? `玩家 ${viewerIndex + 1}` : '你'}</span>
                     <PrizeDisplay count={bs.player.prizes} label="" />
                     <span className="text-[10px] text-slate-500">已奪 {bs.player.prizes}/6</span>
                   </div>
                   <div className="w-px h-10 bg-emerald-900/60" />
                   <div className="flex flex-col items-center gap-1.5">
-                    <span className="text-xs font-medium text-red-300">對手</span>
+                    <span className="text-xs font-medium text-red-300">{bs.mode === 'local' ? `玩家 ${2 - viewerIndex}` : '對手'}</span>
                     <PrizeDisplay count={bs.opponent.prizes} label="" />
                     <span className="text-[10px] text-slate-500">已奪 {bs.opponent.prizes}/6</span>
                   </div>
