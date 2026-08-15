@@ -373,6 +373,7 @@ export default function CardBrowser() {
   const [sortOrder, setSortOrder] = useState<SortOrder>('number-asc');
   const [selectedRarities, setSelectedRarities] = useState<string[]>([]);
   const [searchScope, setSearchScope] = useState<SearchScope>('name');
+  const [viewMode, setViewMode] = useState<'list' | 'sets'>('list');
   const [selectedTag, setSelectedTag] = useState<CardTag | null>(null);
   const [selectedMarks, setSelectedMarks] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(true);
@@ -408,6 +409,32 @@ export default function CardBrowser() {
 
   const selectStage = (label: string) => {
     setSelectedStage((prev) => prev === label ? null : label);
+  };
+
+  // ---- Set-pack view data: per-set card count + dominant regulation mark ----
+  const setPacks = (() => {
+    if (viewMode !== 'sets') return [];
+    const bySet = new Map<string, { id: string; name: string; count: number; marks: Record<string, number> }>();
+    for (const c of cards) {
+      const id = c.set?.id;
+      if (!id) continue;
+      const e = bySet.get(id) ?? { id, name: c.set?.name || id, count: 0, marks: {} };
+      e.count++;
+      if (!e.name && c.set?.name) e.name = c.set.name;
+      if (c.regulationMark) e.marks[c.regulationMark] = (e.marks[c.regulationMark] ?? 0) + 1;
+      bySet.set(id, e);
+    }
+    return [...bySet.values()].map(e => ({
+      ...e,
+      mark: Object.entries(e.marks).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '—',
+    }));
+  })();
+  const MARK_ORDER = ['J', 'I', 'H', 'G', 'F', 'E', 'D', '—'];
+
+  const openSetPack = (packId: string, mark: string) => {
+    setSelectedSet(packId);
+    if (!['H', 'I', 'J'].includes(mark)) setStandardOnly(false); // otherwise a rotated pack lists empty
+    setViewMode('list');
   };
 
   // Build filter args — non-type filters are sent to searchCards (AND logic)
@@ -543,9 +570,46 @@ export default function CardBrowser() {
           >
             篩選
           </button>
+          <button
+            onClick={() => setViewMode(viewMode === 'sets' ? 'list' : 'sets')}
+            title="在清單與卡包分組視圖間切換"
+            className={`px-4 py-2 rounded-lg border transition-colors ${
+              viewMode === 'sets' ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-slate-800 border-slate-600 text-slate-300 hover:border-slate-500'
+            }`}
+          >
+            📦 卡包
+          </button>
         </div>
       </div>
 
+      {/* Set-pack grouped view: J/I/H sections, per-pack card counts. Release dates are
+          absent from the whole dataset (TCGdex zh-tw never populates them) — ROADMAP note. */}
+      {viewMode === 'sets' && (
+        <div className="space-y-6">
+          {MARK_ORDER.filter(m => setPacks.some(p => p.mark === m)).map(mark => (
+            <div key={mark}>
+              <h2 className="text-lg font-bold text-amber-300 mb-2">
+                {mark === '—' ? '無標記' : `${mark} 標`}
+                <span className="text-xs text-slate-500 ml-2">{setPacks.filter(p => p.mark === mark).length} 個卡包</span>
+              </h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                {setPacks.filter(p => p.mark === mark).sort((a, b) => b.id.localeCompare(a.id)).map(p => (
+                  <button
+                    key={p.id}
+                    onClick={() => openSetPack(p.id, p.mark)}
+                    className="text-left bg-slate-800 border border-slate-700 rounded-lg p-3 hover:border-emerald-500 transition-colors"
+                  >
+                    <div className="text-sm font-semibold text-white truncate">{p.name || p.id}</div>
+                    <div className="text-xs text-slate-400 mt-0.5">{p.id} · {p.count} 張</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {viewMode === 'list' && (<>
       {/* Filters */}
       {showFilters && (
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-5 space-y-5">
@@ -846,6 +910,8 @@ export default function CardBrowser() {
           )}
         </>
       )}
+
+      </>)}
 
       {/* Hover popover */}
       {hoveredCardId && <CardHoverPopover cardId={hoveredCardId} position={hoverPos} />}
