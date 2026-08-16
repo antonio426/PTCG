@@ -517,6 +517,27 @@ export const moves = {
       return;
     }
 
+    // Generic attack template "選擇N個這隻寶可夢身上附加的能量，將其丟棄" (e.g. 超級快龍ex's
+    // 龍之滑翔) — see the pendingChoice raised in moves.attack's discardSelfEnergyCount handling.
+    // Finishes the turn immediately after, same as the custom attackEffects path below does once
+    // its own pendingChoice clears — this choice IS the last thing the attack has left to do.
+    if (effectKey === 'attack_self_energy_discard') {
+      const player = G.players[G.currentPlayer];
+      const attackerId = context.attackerId as string;
+      const attacker = player.active?.id === attackerId ? player.active : player.bench.find(c => c?.id === attackerId);
+      if (attacker) {
+        for (const id of selection) {
+          const idx = attacker.attachedEnergy.findIndex(e => e.id === id);
+          if (idx >= 0) discardAttachedEnergy(G, G.currentPlayer as 0 | 1, attacker.attachedEnergy.splice(idx, 1)[0]);
+        }
+      }
+      G.pendingChoice = null;
+      addLog(G, G.currentPlayer, 'resolve_choice', `Discarded ${selection.length} Energy from ${attacker?.cardData.name ?? '?'}`);
+      G.phase = 'end';
+      ctx.events?.endTurn?.();
+      return;
+    }
+
     const colonIdx = effectKey.indexOf(':');
     const kind = effectKey.slice(0, colonIdx);
     const name = effectKey.slice(colonIdx + 1);
@@ -938,9 +959,23 @@ export const moves = {
         if (genericOutcome.discardAllSelfEnergy) {
           for (const energy of attacker.attachedEnergy.splice(0)) discardAttachedEnergy(G, attacker.owner, energy);
         } else if (genericOutcome.discardSelfEnergyCount) {
-          for (let i = 0; i < genericOutcome.discardSelfEnergyCount && attacker.attachedEnergy.length > 0; i++) {
-            const removed = attacker.attachedEnergy.splice(Math.floor(Math.random() * attacker.attachedEnergy.length), 1)[0];
-            discardAttachedEnergy(G, attacker.owner, removed);
+          // Printed text is "選擇N個...丟棄" (CHOOSE N ... discard) — the player picks which,
+          // same as retreat's own energy-cost choice. Only worth asking when there's a real
+          // choice (more energy attached than the count needs); otherwise "discard everything
+          // attached" isn't actually a decision, so resolve it immediately like retreat does.
+          const count = genericOutcome.discardSelfEnergyCount;
+          if (attacker.attachedEnergy.length > count) {
+            G.pendingChoice = {
+              player: G.currentPlayer as 0 | 1,
+              effectKey: 'attack_self_energy_discard',
+              prompt: `選擇 ${count} 張要丟棄的能量`,
+              choiceType: 'select_from_list',
+              count,
+              options: attacker.attachedEnergy.map(e => ({ id: e.id, label: ENERGY_TYPE_ZH_LABEL[e.type] || e.type })),
+              context: { attackerId: attacker.id },
+            };
+          } else {
+            for (const energy of attacker.attachedEnergy.splice(0, count)) discardAttachedEnergy(G, attacker.owner, energy);
           }
         }
         if (damage > 0 && genericOutcome.discardOpponentEnergyCount) {
