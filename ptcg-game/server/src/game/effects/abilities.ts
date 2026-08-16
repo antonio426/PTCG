@@ -1503,11 +1503,25 @@ const rocketBrainpower: EffectHandler = {
   },
 };
 
+/** True only during the exact turn `ctx.sourceCardId` entered play from hand (played as a Basic
+ * to the Bench, or evolved into — moves.ts's playPokemon/evolvePokemon both push onto
+ * pokemonPlayedThisTurn) — the real trigger condition for the many "on play from hand" / "on
+ * evolving via this card from hand" abilities below, which this codebase otherwise simplifies to
+ * a plain once-per-turn ability (no separate auto-trigger hook exists for either event). Without
+ * this gate they stayed usable on ANY of the holder's turns for as long as it remained in play,
+ * not just the turn it entered — confirmed as a real bug from a battle log showing 喵喵ex's
+ * 殺手鐧捕捉 (one of these) firing on turns 1, 3, and 5 of the same game. */
+function playedOrEvolvedThisTurn(ctx: EffectContext): boolean {
+  return player(ctx.G, ctx.playerIndex).pokemonPlayedThisTurn.includes(ctx.sourceCardId);
+}
+
 /** 尖刺纏身: real trigger is "on evolving via this card from hand" — simplified to a regular
- * once-per-turn triggered ability (same simplification as 狂挖 above, no on-evolve auto-trigger
- * hook exists). Discard up to 2 named "扣殺能量" Special Energy from the discard pile, attach to self. */
+ * once-per-turn triggered ability, but gated on playedOrEvolvedThisTurn (see above) so it's at
+ * least restricted to the correct turn. Discard up to 2 named "扣殺能量" Special Energy from the
+ * discard pile, attach to self. */
 const spikeCling: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const p = player(ctx.G, ctx.playerIndex);
     const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
     const options = p.discardPile.filter(c => c.cardData.name === '扣殺能量');
@@ -1571,6 +1585,7 @@ const luringTail: EffectHandler = {
  * pile for up to 2 named "派帕的三明治" cards, add to hand. */
 const greedyOrder: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const p = player(ctx.G, ctx.playerIndex);
     const options = p.discardPile.filter(c => c.cardData.name === '派帕的三明治');
     if (options.length === 0) return 'done';
@@ -1620,6 +1635,7 @@ const reconstruction: EffectHandler = {
  * once-per-turn use is enforced (via the normal abilitiesUsedThisTurn tracking). */
 const killerMoveCapture: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const p = player(ctx.G, ctx.playerIndex);
     const options = p.deck.filter(c => c.cardData.subtypes.includes('Supporter'));
     if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
@@ -1637,6 +1653,7 @@ const killerMoveCapture: EffectHandler = {
  * Search the deck for 1 named "脫殼忍者", place it directly onto the Bench, reshuffle. */
 const shedShell: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const p = player(ctx.G, ctx.playerIndex);
     if (p.bench.every(s => s !== null)) return 'done';
     const match = p.deck.find(c => c.cardData.name === '脫殼忍者');
@@ -1652,6 +1669,7 @@ const shedShell: EffectHandler = {
  * once-per-turn triggered ability. Discard whichever Stadium card is currently in play. */
 const snowSink: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const G = ctx.G;
     if (G.activeStadium) {
       player(G, G.activeStadium.owner).discardPile.push(G.activeStadium);
@@ -1746,6 +1764,7 @@ const quickTempo: EffectHandler = {
  * once-per-turn triggered ability. Heal your own Active 30 HP and cure 1 special condition. */
 const attentiveHealing: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const p = player(ctx.G, ctx.playerIndex);
     if (!p.active) return 'done';
     p.active.damage = Math.max(0, p.active.damage - 30);
@@ -1759,6 +1778,7 @@ const attentiveHealing: EffectHandler = {
  * once-per-turn triggered ability. Force-switch 1 of the opponent's Benched Pokémon into Active. */
 const challengeHornAttack: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const opp = opponent(ctx.G, ctx.playerIndex);
     const benched = opp.bench.filter((c): c is GameCard => c !== null);
     if (!opp.active || benched.length === 0) return 'done';
@@ -1843,6 +1863,7 @@ const evolutionGuide: EffectHandler = {
  * once-per-turn triggered ability. Fully heal 1 chosen own Pokémon. */
 const fullMelody: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const targets = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.damage > 0);
     if (targets.length === 0) return 'done';
     return { prompt: '全滿旋律：選 1 隻己方寶可夢全部回復 HP', choiceType: 'select_pokemon', count: 1, options: targets.map(c => ({ id: c.id, label: `${c.cardData.name}（${c.damage} 傷害）` })), context: {} };
@@ -2010,6 +2031,7 @@ const flowerBloom: EffectHandler = {
  * per-card distribution), shuffle the rest back. */
 const energyDance: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const p = player(ctx.G, ctx.playerIndex);
     const top = p.deck.slice(-4);
     const energyOptions = top.filter(c => c.cardData.subtypes.includes('Basic Energy'));
@@ -2060,6 +2082,7 @@ const energyDance: EffectHandler = {
  * opponent's Active. */
 const timelyHammer: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     if (!flipCoin()) return 'done';
     const opp = opponent(ctx.G, ctx.playerIndex);
     if (!opp.active || opp.active.attachedEnergy.length === 0) return 'done';
@@ -2358,6 +2381,7 @@ const invitingLight: EffectHandler = {
  * once-per-turn triggered ability. Deck search 1 Pokémon Tool card, attach to self, reshuffle. */
 const clutchCarry: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
     const p = player(ctx.G, ctx.playerIndex);
     const options = p.deck.filter(c => c.cardData.subtypes.includes('Pokémon Tool'));
@@ -2380,6 +2404,7 @@ const clutchCarry: EffectHandler = {
  * engine has no separate "reveal" state to model — the cards simply move). */
 const badTail: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const heads = flipCoins(2).filter(Boolean).length;
     if (heads === 0) return 'done';
     const opp = opponent(ctx.G, ctx.playerIndex);
@@ -2458,6 +2483,7 @@ const scaleRhythm: EffectHandler = {
  * card among them to self, reshuffle the rest. */
 const overlordRoar: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const p = player(ctx.G, ctx.playerIndex);
     const top = p.deck.slice(-4);
     const energyOptions = top.filter(c => c.cardData.subtypes.includes('Basic Energy'));
@@ -2710,6 +2736,7 @@ const invitingFeather: EffectHandler = {
  * abilities in this file), reshuffle. */
 const punkMuscleUp: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const p = player(ctx.G, ctx.playerIndex);
     const options = p.deck.filter(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes('Darkness'));
     const targets = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.cardData.name.includes('瑪俐的'));
@@ -2776,6 +2803,7 @@ const xActivation: EffectHandler = {
  * once-per-turn triggered ability. Confuse the opponent's Active. */
 const panicCage: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const opp = opponent(ctx.G, ctx.playerIndex);
     if (opp.active) applyStatusCondition(opp.active, 'Confused');
     return 'done';
@@ -2807,6 +2835,7 @@ const excitedDash: EffectHandler = {
  * once-per-turn triggered ability. Force-switch 1 opponent Benched Pokémon into Active. */
 const heavyDutyGrabber: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const opp = opponent(ctx.G, ctx.playerIndex);
     const benched = opp.bench.filter((c): c is GameCard => c !== null);
     if (!opp.active || benched.length === 0) return 'done';
@@ -2867,6 +2896,7 @@ const sweetGift: EffectHandler = {
  * the Bench, reshuffle. */
 const cocoonGrowth: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const p = player(ctx.G, ctx.playerIndex);
     if (p.bench.every(s => s !== null)) return 'done';
     const options = p.deck.filter(c => c.cardData.name === '甲殼繭' || c.cardData.name === '盾甲繭');
