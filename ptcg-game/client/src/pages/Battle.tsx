@@ -1278,7 +1278,14 @@ export default function Battle() {
         </Modal>
       )}
 
-      {!isOver && bs.isPlayerTurn && bs.phase === 'draw' && (
+      {/* `!bs.pendingChoice` matters here: a KO'd Active is replaced via a same-player
+          pendingChoice (`select_bench_pokemon`, see promoteActiveIfNeeded) resolved by clicking
+          the bench card directly on the board (the non-blocking `activeTargeting` banner further
+          up) — not by a phase change away from 'draw'. Without this guard the draw modal's
+          opaque backdrop sat on top of the board and silently blocked that click, even though
+          `draw_card` isn't even a legal move yet (the server's getLegalMoves answers a pending
+          choice before it ever looks at phase). Pending-choice replacement must resolve first. */}
+      {!isOver && bs.isPlayerTurn && bs.phase === 'draw' && !bs.pendingChoice && (
         <Modal maxWidthClassName="max-w-xs">
           <div className="flex items-center justify-center">
             <button
