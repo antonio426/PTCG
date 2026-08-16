@@ -527,16 +527,17 @@ const energyRecyclingSystem: EffectHandler = {
   },
 };
 
-/** 粉碎之錘 Crushing Hammer: flip a coin; if heads, discard 1 energy attached to an opponent's Pokémon. */
-const crushingHammer: EffectHandler = {
+/** "Choose 1 Energy attached to an opponent's Pokémon and discard it" — the shared body behind
+ * 粉碎之錘 (coin-gated) and 鏽蝕組手下 (not). Kept separate from the coin flip so a card whose
+ * printed text has no flip can't inherit one. */
+const discardOneOpponentEnergy: EffectHandler = {
   start(ctx) {
-    if (!flipCoin()) return 'done';
     // 崗哨: benched Pokémon protected by this ability can't have their Energy targeted.
     const targets = allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1).filter(c => c.attachedEnergy.length > 0 && !isEnergyDiscardProtected(ctx.G, c));
     if (targets.length === 0) return 'done';
     const options: { id: string; label: string }[] = [];
     for (const c of targets) for (const e of c.attachedEnergy) options.push({ id: e.id, label: `${c.cardData.name} 的 ${e.type} 能量` });
-    return { prompt: '粉碎之錘：選擇要丟棄對手身上的哪個能量', choiceType: 'select_from_list', count: 1, options, context: {} };
+    return { prompt: '選擇要丟棄對手身上的哪個能量', choiceType: 'select_from_list', count: 1, options, context: {} };
   },
   resume(ctx, _context, selection) {
     const opp = opponent(ctx.G, ctx.playerIndex);
@@ -549,17 +550,40 @@ const crushingHammer: EffectHandler = {
   },
 };
 
-/** 改造之錘 Forest Hammer(-style): discard 1 Special Energy attached to an opponent's Pokémon (no coin flip). */
-const modifiedHammer: EffectHandler = {
-  canPlay(ctx) { return allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1).some(c => c.attachedEnergy.length > 0 && !isEnergyDiscardProtected(ctx.G, c)); },
+/** 粉碎之錘 Crushing Hammer: flip a coin; if heads, discard 1 energy attached to an opponent's Pokémon. */
+const crushingHammer: EffectHandler = {
   start(ctx) {
-    const targets = allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1).filter(c => c.attachedEnergy.length > 0 && !isEnergyDiscardProtected(ctx.G, c));
+    if (!flipCoin()) return 'done';
+    return discardOneOpponentEnergy.start(ctx);
+  },
+  resume: discardOneOpponentEnergy.resume,
+};
+
+/** An attached Energy that is a Special Energy card rather than a basic one. AttachedEnergy keeps
+ * the original card in `cardData` precisely so this stays answerable after attaching; the legacy
+ * no-cardData case is treated as basic, which is the conservative reading (never discards more
+ * than the card allows). */
+const isSpecialEnergy = (e: { cardData?: { subtypes?: string[] } }) =>
+  !!e.cardData?.subtypes?.includes('Special Energy');
+
+/** 改造之錘: discard 1 SPECIAL Energy attached to an opponent's Pokémon (no coin flip). */
+const modifiedHammer: EffectHandler = {
+  canPlay(ctx) {
+    return allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1)
+      .some(c => c.attachedEnergy.some(isSpecialEnergy) && !isEnergyDiscardProtected(ctx.G, c));
+  },
+  start(ctx) {
+    const targets = allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1).filter(c => !isEnergyDiscardProtected(ctx.G, c));
     const options: { id: string; label: string }[] = [];
-    for (const c of targets) for (const e of c.attachedEnergy) options.push({ id: e.id, label: `${c.cardData.name} 的能量` });
+    // 特殊能量 only — this used to offer every attached Energy, so it could discard basic Energy
+    // the printed text never allowed it to touch.
+    for (const c of targets) for (const e of c.attachedEnergy) {
+      if (isSpecialEnergy(e)) options.push({ id: e.id, label: `${c.cardData.name} 的 ${e.cardData!.name}` });
+    }
     if (options.length === 0) return 'done';
     return { prompt: '改造之錘：選擇要丟棄對手身上的哪張特殊能量', choiceType: 'select_from_list', count: 1, options, context: {} };
   },
-  resume: crushingHammer.resume,
+  resume: discardOneOpponentEnergy.resume,
 };
 
 /** 水蓮的照顧 Erika's Hospitality: from discard, up to 3 total of (non-rule-box Pokémon + Basic Energy) to hand. */
@@ -939,6 +963,25 @@ const toolWrecker: EffectHandler = {
   },
 };
 
+/** 「這張卡必須在上個對手的回合自己的寶可夢【昏厥】了才可使用」 — the printed precondition shared
+ * by 不公印章, 八朔 and 鏽蝕組手下. Turns strictly alternate, so the opponent's last turn is always
+ * exactly G.turn - 1 (the reasoning that introduced lastPokemonFaintedTurn for 吉雉雞ex's 扭轉乾坤). */
+function ownPokemonFaintedLastTurn(ctx: EffectContext): boolean {
+  return player(ctx.G, ctx.playerIndex).lastPokemonFaintedTurn === ctx.G.turn - 1;
+}
+
+/** Adds that precondition to an existing handler. Gated in canPlay as well as start() on purpose:
+ * the condition lives entirely in public zones, so per the EffectHandler.canPlay convention
+ * getLegalMoves must never offer the card and playTrainer refunds a forced play — otherwise it
+ * gets discarded for zero effect. */
+function requireOwnKoLastTurn(h: EffectHandler): EffectHandler {
+  return {
+    ...h,
+    canPlay(ctx) { return ownPokemonFaintedLastTurn(ctx) && (h.canPlay ? h.canPlay(ctx) : true); },
+    start(ctx) { return ownPokemonFaintedLastTurn(ctx) ? h.start(ctx) : 'done'; },
+  };
+}
+
 /** 不公印章 / 火箭隊的阿波羅-style: both reshuffle hand into deck, self draws `selfDraw`, opponent
  * draws `oppDraw`. Gated on "own Pokémon fainted during the opponent's last turn" via
  * PtcgPlayerState.lastPokemonFaintedTurn (added for 吉雉雞ex's 扭轉乾坤 — same turns-strictly-
@@ -949,7 +992,7 @@ const toolWrecker: EffectHandler = {
  * that finer-grained tracking exists; only 不公印章's broader "any of your own Pokémon" condition
  * maps cleanly onto what's tracked today. */
 function mutualHandResetAbility(selfDraw: number, oppDraw: number, requireGate = true): EffectHandler {
-  const gateOk = (ctx: EffectContext) => !requireGate || player(ctx.G, ctx.playerIndex).lastPokemonFaintedTurn === ctx.G.turn - 1;
+  const gateOk = (ctx: EffectContext) => !requireGate || ownPokemonFaintedLastTurn(ctx);
   return {
     canPlay(ctx) { return gateOk(ctx); },
     start(ctx) {
@@ -2426,7 +2469,11 @@ const megatonHairDryer: EffectHandler = {
     for (const c of [opp.active, ...opp.bench]) {
       if (!c) continue;
       if (c.attachedTool) { opp.discardPile.push(c.attachedTool); c.attachedTool = null; }
-      for (const energy of c.attachedEnergy.splice(0)) discardAttachedEnergy(ctx.G, c.owner, energy);
+      // 特殊能量 only, same defect 改造之錘 had — basic Energy must survive this.
+      for (const energy of c.attachedEnergy.filter(isSpecialEnergy)) {
+        c.attachedEnergy.splice(c.attachedEnergy.indexOf(energy), 1);
+        discardAttachedEnergy(ctx.G, c.owner, energy);
+      }
     }
     if (ctx.G.activeStadium) {
       player(ctx.G, ctx.G.activeStadium.owner).discardPile.push(ctx.G.activeStadium);
@@ -2589,8 +2636,10 @@ const darkBell: EffectHandler = {
 
 /** 鏽蝕組手下: discard 1 Energy attached to an opponent Pokémon. (The "own Pokémon fainted last opponent-turn" gate can't be checked — documented simplification used elsewhere.) */
 const rustCrewGoon: EffectHandler = {
-  start: crushingHammer.start,
-  resume: crushingHammer.resume,
+  // Deliberately NOT crushingHammer: 鏽蝕組手下's printed text has no coin flip, but it used to
+  // borrow 粉碎之錘's start() wholesale and inherited one, silently failing half the time.
+  start: discardOneOpponentEnergy.start,
+  resume: discardOneOpponentEnergy.resume,
 };
 
 /** 瑪琪艾兒: reveal the opponent's hand, draw a card for each Pokémon card found in it. */
@@ -2985,7 +3034,7 @@ export const trainerEffects: Record<string, EffectHandler> = {
   '可怕的哥哥': scaryBrother,
   '急進開關': rapidSwitch,
   '悠哉尾草棒': laidBackTailGrass,
-  '八朔': hazaku,
+  '八朔': requireOwnKoLastTurn(hazaku),
   '海岱': haidai,
   '阿蜜的目光': amisGaze,
   '老大的指令（魁奇思）': bosssOrders,
@@ -3016,7 +3065,7 @@ export const trainerEffects: Record<string, EffectHandler> = {
   '小楓與小南的修行': kohanAndKonamiTraining,
   '老大的指令（烏羽）': bosssOrders,
   '暗黑鈴': darkBell,
-  '鏽蝕組手下': rustCrewGoon,
+  '鏽蝕組手下': requireOwnKoLastTurn(rustCrewGoon),
   '瑪琪艾兒': makiaru,
   '黑連': drawThree,
   '能量撢子': energyDuster,
