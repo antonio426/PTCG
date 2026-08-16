@@ -1,6 +1,6 @@
 import { EnergyType, GameCard } from '@ptcg/shared';
 import { PtcgGameState } from '../GameState';
-import { normalizeAbilityName } from './types';
+import { normalizeAbilityName, normalizeCardName } from './types';
 import { hasEvolvesFrom } from '../evolutionChains';
 import { isStadiumActive } from './stadiums';
 
@@ -22,10 +22,32 @@ import { isStadiumActive } from './stadiums';
  * respects it; active-ability use is additionally gated in moves.useAbility/validation via
  * the exported areAbilitiesNegated.
  */
+/** The self-KO clause every "若使用，則將這隻寶可夢【昏厥】" ability shares verbatim (咒詛炸彈,
+ * 過度放電). Matched on the printed text rather than a name list so future prints are covered,
+ * and deliberately anchored on 將…【昏厥】 so the opposite "這隻寶可夢不會【昏厥】" survival
+ * abilities (勤奮之心, 不朽身軀, 結實) don't match. */
+const SELF_KO_ABILITY = /將這隻寶可夢【昏厥】/;
+
+/** 濕氣: while its holder is in play on EITHER side. Direct .some() on the ability list on
+ * purpose — going through hasAbility here would recurse back into areAbilitiesNegated. */
+function isDampInPlay(G: PtcgGameState): boolean {
+  for (const p of G.players) {
+    for (const c of [p.active, ...p.bench]) {
+      if (c?.cardData.abilities?.some(a => a.text && normalizeAbilityName(a.name) === '濕氣')) return true;
+    }
+  }
+  return false;
+}
+
 export function areAbilitiesNegated(G: PtcgGameState, card: GameCard): boolean {
   // 火箭隊的監視塔 Stadium: while in play, negates EVERY Colorless Pokémon's abilities on BOTH
   // sides, Active or Benched — unlike 暗夜羽擊 below, not restricted to the Active spot.
   if (isStadiumActive(G, '火箭隊的監視塔') && (card.cardData.types || []).includes('Colorless')) return true;
+
+  // 濕氣 (可達鴨/哥達鴨): negates every self-KO ability on BOTH sides, Active or Benched. Card-level
+  // negation is exact enough here — every Standard print carrying a self-KO ability has only that
+  // one ability, so there's nothing else on the card to over-negate.
+  if (card.cardData.abilities?.some(a => a.text && SELF_KO_ABILITY.test(a.text)) && isDampInPlay(G)) return true;
 
   const owner = card.owner;
   if (G.players[owner].active?.id !== card.id) return false; // only the Active is ever negated by 暗夜羽擊
@@ -521,6 +543,21 @@ export function getPoisonCounterBonus(G: PtcgGameState, poisonedIdx: 0 | 1): num
   const opponentActive = G.players[(1 - poisonedIdx) as 0 | 1].active;
   if (opponentActive && hasAbility(G, opponentActive, '劇毒支配') && isActivePokemon(G, opponentActive)) return 5;
   return 0;
+}
+
+/** 反等離子 (酋雷姆): while the OPPONENT's discard pile holds any 「阿克羅瑪」 card, this
+ * Pokémon's 三重冰霜 costs a single Colorless instead of its printed 【水】【水】【鋼】【鋼】【無】.
+ * This is a cost REPLACEMENT, not a reduction — neither getPassiveAttackCostReduction (which only
+ * shaves Colorless pips) nor hasPassiveColorlessCostWaiver can express it, since the printed cost
+ * is almost entirely type-specific. Returns the replacement cost, or null when it doesn't apply. */
+export function getPassiveAttackCostOverride(
+  G: PtcgGameState, ownerIdx: 0 | 1, card: GameCard, attackName: string
+): EnergyType[] | null {
+  if (normalizeCardName(attackName) === '三重冰霜' && hasAbility(G, card, '反等離子')
+    && G.players[(1 - ownerIdx) as 0 | 1].discardPile.some(c => normalizeCardName(c.cardData.name).includes('阿克羅瑪'))) {
+    return ['Colorless'];
+  }
+  return null;
 }
 
 /** Colorless-cost reduction for a specific Pokémon+attack combo, from the attacker's own passive ability. */

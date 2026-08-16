@@ -3,7 +3,7 @@ import { PtcgGameState, GamePhase, PendingChoice } from './GameState';
 import { hasAbilityEffect } from './effects/abilities';
 import { canPlayTrainer } from './effects/trainers';
 import { getRetreatCostReduction, getColorlessCostReduction } from './effects/tools';
-import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatCostReduction, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, isAceSpecPlayBlocked, areAbilitiesNegated, isAttackLockedByTimedEffect, isItemAndToolPlayBlocked, isItemLockedByTimedEffect, isItemPlayBlocked, isNamedAttackLockedByTimedEffect, isRetreatLockedByTimedEffect } from './effects/passiveAbilities';
+import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostOverride, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatCostReduction, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, isAceSpecPlayBlocked, areAbilitiesNegated, isAttackLockedByTimedEffect, isItemAndToolPlayBlocked, isItemLockedByTimedEffect, isItemPlayBlocked, isNamedAttackLockedByTimedEffect, isRetreatLockedByTimedEffect } from './effects/passiveAbilities';
 import { normalizeAbilityName, normalizeCardName } from './effects/types';
 import { hasEvolvesFrom, evolvesFromMatches, inferEvolvesFromSpecies } from './evolutionChains';
 import { isFossilCard } from './fossils';
@@ -240,13 +240,17 @@ export function canAttack(G: PtcgGameState, playerIndex: number, attackIndex: nu
   if (isNamedAttackLockedByTimedEffect(G, player.active, attack.name)) return false;
   if (!canUsePassiveGatedAttack(G, player.active)) return false;
 
+  // 反等離子 replaces the printed cost outright, so it has to resolve before any reduction is
+  // applied to it — the reductions below all shave Colorless pips off whatever cost is in force.
+  const cost = getPassiveAttackCostOverride(G, playerIndex as 0 | 1, player.active, attack.name) ?? attack.cost;
+
   // 化身團結 waives only the Colorless portion of the cost — specific-type requirements remain.
-  const colorlessInCost = attack.cost.filter(c => c === 'Colorless').length;
+  const colorlessInCost = cost.filter(c => c === 'Colorless').length;
   const colorlessReduction = hasPassiveColorlessCostWaiver(G, player.active)
     ? colorlessInCost
     : getColorlessCostReduction(G, player.active, playerIndex as 0 | 1)
       + getPassiveAttackCostReduction(G, playerIndex as 0 | 1, player.active, attack.name);
-  return canPayEnergyCost(player.active.attachedEnergy, attack.cost, colorlessReduction);
+  return canPayEnergyCost(player.active.attachedEnergy, cost, colorlessReduction);
 }
 
 export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalAction[] {
