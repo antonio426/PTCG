@@ -939,13 +939,21 @@ const toolWrecker: EffectHandler = {
   },
 };
 
-/** 不公印章 / 火箭隊的阿波羅-style: both reshuffle hand into deck, self draws `selfDraw`, opponent draws `oppDraw`.
- * The printed "only after your Pokémon fainted last opponent-turn" gate can't be checked (no such
- * history is tracked) — always available, matching the project's tolerance for this class of
- * simplification elsewhere (see 劇毒粉塵 in abilities.ts). */
-function mutualHandResetAbility(selfDraw: number, oppDraw: number): EffectHandler {
+/** 不公印章 / 火箭隊的阿波羅-style: both reshuffle hand into deck, self draws `selfDraw`, opponent
+ * draws `oppDraw`. Gated on "own Pokémon fainted during the opponent's last turn" via
+ * PtcgPlayerState.lastPokemonFaintedTurn (added for 吉雉雞ex's 扭轉乾坤 — same turns-strictly-
+ * alternate reasoning: the opponent's last turn is always exactly G.turn - 1). `requireGate`
+ * defaults on; 火箭隊的阿波羅 opts out because its printed condition is narrower — specifically a
+ * "「火箭隊的寶可夢」" fainting, not any Pokémon — and lastPokemonFaintedTurn only tracks "did
+ * *something* faint," not which card. Left as the pre-existing unconditional simplification until
+ * that finer-grained tracking exists; only 不公印章's broader "any of your own Pokémon" condition
+ * maps cleanly onto what's tracked today. */
+function mutualHandResetAbility(selfDraw: number, oppDraw: number, requireGate = true): EffectHandler {
+  const gateOk = (ctx: EffectContext) => !requireGate || player(ctx.G, ctx.playerIndex).lastPokemonFaintedTurn === ctx.G.turn - 1;
   return {
+    canPlay(ctx) { return gateOk(ctx); },
     start(ctx) {
+      if (!gateOk(ctx)) return 'done';
       for (const [idx, count] of [[ctx.playerIndex, selfDraw], [(1 - ctx.playerIndex) as 0 | 1, oppDraw]] as const) {
         const p = player(ctx.G, idx);
         p.deck.push(...p.hand);
@@ -959,7 +967,7 @@ function mutualHandResetAbility(selfDraw: number, oppDraw: number): EffectHandle
   };
 }
 const unfairSeal = mutualHandResetAbility(5, 2);
-const rocketApollo = mutualHandResetAbility(5, 3);
+const rocketApollo = mutualHandResetAbility(5, 3, false);
 
 /** 聖灰: from discard pile, choose up to 5 Pokémon cards, show opponent, put back into deck (reshuffled). */
 const holyAsh: EffectHandler = {
