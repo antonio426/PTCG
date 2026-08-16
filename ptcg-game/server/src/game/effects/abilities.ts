@@ -80,9 +80,13 @@ const curseBomb: EffectHandler = {
   },
 };
 
-/** 腎上腺腦力: move up to 3 damage counters off a damaged Pokémon of yours, then place that many on 1 opponent Pokémon. */
+/** 腎上腺腦力: gated on the holder itself having a Darkness Energy attached ("若這隻寶可夢身上附有
+ * 【惡】能量卡") — move up to 3 damage counters off a damaged Pokémon of yours, then place that
+ * many on 1 opponent Pokémon. */
 const adrenalineBrain: EffectHandler = {
   start(ctx) {
+    const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
+    if (!self || !self.attachedEnergy.some(e => e.type === 'Darkness')) return 'done';
     const damaged = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.damage >= 10);
     if (damaged.length === 0) return 'done';
     return {

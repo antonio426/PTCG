@@ -723,6 +723,23 @@ export const moves = {
       return;
     }
 
+    // 喵喵ex::夾尾巴逃跑-style "attacker bounces to hand, choose the new Active from 2+ Bench
+    // options" — see the pendingChoice raised in moves.attack's returnSelfAndAttachmentsToHand
+    // handling. Ends the turn immediately after, since this choice is the last thing the attack
+    // has left to do (this is NOT the shared 'ko_promotion' key — that one's resolveChoice branch
+    // deliberately doesn't end the turn, which is correct for its own start-of-turn job but was
+    // exactly the bug here when reused mid-attack).
+    if (effectKey === 'attack_self_return_promotion') {
+      const player = G.players[G.currentPlayer];
+      const idx = player.bench.findIndex(c => c?.id === selection[0]);
+      if (idx >= 0) { player.active = player.bench[idx]; player.bench[idx] = null; }
+      G.pendingChoice = null;
+      addLog(G, G.currentPlayer, 'resolve_choice', `Set ${player.active?.cardData.name ?? '?'} as new Active Pokémon`);
+      G.phase = 'end';
+      ctx.events?.endTurn?.();
+      return;
+    }
+
     const colonIdx = effectKey.indexOf(':');
     const kind = effectKey.slice(0, colonIdx);
     const name = effectKey.slice(colonIdx + 1);
@@ -1248,7 +1265,34 @@ export const moves = {
           attacker.statusConditions = [];
           player.hand.push(attacker);
           player.active = null;
-          promoteActiveIfNeeded(G, G.currentPlayer as 0 | 1);
+          // NOT promoteActiveIfNeeded: that raises a 'ko_promotion' pendingChoice whose
+          // resolveChoice branch deliberately does NOT end the turn (correct for its real job —
+          // the start-of-turn promotion applyTurnBegin does before the player's turn even
+          // begins). Reusing it here left the AI stuck in phase:'attack' with G.pendingChoice
+          // cleared but the turn never ended — getLegalMoves offered nothing useful (attacking
+          // again needs energy the freshly-promoted Pokémon usually doesn't have yet, and
+          // everything else is gated on phase:'main'), so the AI's only remaining legal move was
+          // forfeit. Confirmed from a real battle log: opponent KO'd the player's Pokémon with
+          // this exact attack, promoted a second Bench Pokémon, then immediately forfeited.
+          const benchOptions = player.bench.filter((c): c is GameCard => c !== null);
+          if (benchOptions.length === 1) {
+            const idx = player.bench.indexOf(benchOptions[0]);
+            player.active = benchOptions[0];
+            player.bench[idx] = null;
+          } else if (benchOptions.length > 1) {
+            G.pendingChoice = {
+              player: G.currentPlayer as 0 | 1,
+              effectKey: 'attack_self_return_promotion',
+              prompt: '選擇要上場的備戰寶可夢',
+              choiceType: 'select_bench_pokemon',
+              count: 1,
+              options: benchOptions.map(c => ({ id: c.id, label: c.cardData.name })),
+              context: {},
+            };
+          }
+          // benchOptions.length === 0: active stays null — checkAndApplyWin's "no active and no
+          // bench" loss condition (checked right after this move returns) handles it from here,
+          // same as any other empty-bench-after-KO case.
         }
         if (genericOutcome.selfSwitchToRandomBench) {
           const benchIdxs = player.bench.map((c, i) => c ? i : -1).filter(i => i >= 0);
