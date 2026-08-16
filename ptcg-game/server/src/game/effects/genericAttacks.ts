@@ -27,7 +27,7 @@ import { StatusCondition } from '@ptcg/shared';
 import { normalizeAbilityName } from './types';
 
 export interface TimedEffectDescriptor {
-  kind: 'cantAttack' | 'cantRetreat' | 'damageImmune' | 'damageReduction' | 'outgoingDamageReduction' | 'outgoingDamageBoost' | 'coinFlipAttackMiss' | 'namedAttackLock';
+  kind: 'cantAttack' | 'cantRetreat' | 'damageImmune' | 'damageReduction' | 'outgoingDamageReduction' | 'outgoingDamageBoost' | 'coinFlipAttackMiss' | 'namedAttackLock' | 'weaknessRemoved';
   amount?: number;
   /** For 'damageImmune': restricts the immunity to attackers of this printed Subtype only (e.g. "Basic"). */
   vsSubtype?: string;
@@ -85,11 +85,16 @@ export interface GenericAttackOutcome {
   forceOpponentSwitchToRandomBench?: boolean;
   /** Move 1 of the attacker's own attached Energy to a random own Benched Pokémon. */
   moveSelfEnergyToRandomBench?: boolean;
+  /** Same, but moving up to N Energy at once (all to the same randomly-picked target). */
+  moveSelfEnergyToRandomBenchCount?: number;
 
   /** Flat damage (no weakness/resistance) to 1 random opponent Benched Pokémon. */
   benchSplashDamage?: number;
   /** Flat damage (no weakness/resistance) to EVERY one of the attacker's own Benched Pokémon. */
   selfAllBenchSplashDamage?: number;
+  /** Flat damage (no weakness/resistance) to EVERY one of the OPPONENT's Benched Pokémon (the
+   * mirror image of selfAllBenchSplashDamage, for "both sides' whole Bench" texts). */
+  opponentAllBenchSplashDamage?: number;
   /** Optional "draw up to N total hand size" (the printed "若希望" is always worth taking). */
   drawToHandSize?: number;
   /** Heal the attacker by however much damage this attack just dealt to the defender (drain). */
@@ -186,6 +191,59 @@ export interface GenericAttackOutcome {
    * substring) x amount; only the MATCHING cards are discarded, the rest are shuffled back into
    * the deck (unlike selfMillFamilyScaledDamage, which discards the whole revealed batch). */
   selfRevealTopMatchDiscardRestReshuffle?: { revealCount: number; name: string; amount: number };
+
+  /** Heal 1 random own-Bench Pokémon of the given type by amount (no-op if none match). */
+  healBenchTypedAmount?: { type: string; amount: number };
+  /** Search the deck for up to N Pokémon of the given type ONLY (no Energy alternative, unlike
+   * deckSearchTypedPokemonOrEnergyToHand), add to hand, reshuffle. */
+  deckSearchTypedPokemonToHandCount?: { type: string; count: number };
+  /** Place `amount`x10 damage counters on EVERY opponent Pokémon (active+bench) that already has
+   * at least 1 damage counter (not just one random target). */
+  damageToEachDamagedOpponentAmount?: number;
+  /** Discard the attacker's own whole hand (NOT shuffled back, unlike shuffleHandThenDrawCount), then draw N. */
+  discardHandThenDrawCount?: number;
+  /** Flat damage (no weakness/resistance), split across `count` DIFFERENT random opponent
+   * Pokémon (active+bench pool), `amount` each — the auto-pick-random simplification for "choose
+   * N times" / "N different Pokémon" texts. */
+  multiTargetOpponentFlatDamage?: { count: number; amount: number };
+  /** Pick 1 random card from the opponent's hand, put it on the BOTTOM of their deck (distinct
+   * from shuffleRandomOpponentHandCardIntoDeck, which shuffles to a random position). */
+  randomOpponentHandCardToDeckBottom?: boolean;
+  /** Force-KO the defender if its damage counters exactly equal this count, regardless of remaining HP. */
+  koDefenderIfDamageCountersEqual?: number;
+  /** Damage to 1 random opponent Bench Pokémon equal to THAT Pokémon's own damage counters x multiplier. */
+  opponentBenchDamageScaledSplash?: { multiplier: number };
+  /** If the attacker has at least 1 Energy of `type` attached, return one to hand and add `amount` damage. */
+  returnSelfEnergyToHandTypeBonus?: { type: string; amount: number };
+  /** Optional (auto-taken if available): shuffle up to `max` of the attacker's own attached
+   * Energy back into the deck, and if any were actually moved, splash `benchDamage` onto 1
+   * random opponent Bench Pokémon (no weakness/resistance). */
+  optionalEnergyToDeckForBenchDamage?: { max: number; benchDamage: number };
+  /** Return 1 random attached Energy from the attacker to hand (no damage bonus attached). */
+  returnSelfEnergyToHandCount?: number;
+  /** Discard this many random cards from the ATTACKER's own hand (mirrors discardRandomOpponentHandCount). */
+  discardRandomSelfHandCount?: number;
+  /** Pick `count` random opponent Bench Pokémon, remove them (with attachments) from play, shuffle into their deck. */
+  shuffleOpponentBenchToDeckCount?: number;
+  /** Heal every one of the attacker's own BENCH Pokémon (not the Active) by this amount. */
+  healAllOwnBenchAmount?: number;
+  /** Flip coins until the first tails (capped at 20 to stay finite); discard that many random
+   * Energy from the DEFENDER's attachedEnergy. */
+  flipUntilTailsDiscardOpponentEnergy?: boolean;
+  /** Shuffle ALL of the attacker's own attached Energy back into the deck (distinct from
+   * discardAllSelfEnergy, which sends them to the discard pile), reshuffle. */
+  shuffleAllSelfEnergyToDeck?: boolean;
+  /** Move up to N random cards from the attacker's own deck to the TOP of the deck (an omniscient
+   * "look at your whole deck, pick N, put them on top" simplified to a random pick — this engine
+   * has no hidden-information model preventing that lookup anyway). */
+  deckSearchAnyCardsToTopOfDeck?: number;
+  /** Same as shuffleRandomOpponentHandCardIntoDeck, but for N cards at once (opponent's own choice
+   * of which — auto-random per this file's convention). */
+  shuffleRandomOpponentHandCardsIntoDeckCount?: number;
+  /** Flip N coins; discard this many random Energy from the ATTACKER's own attachedEnergy, where
+   * the count discarded equals however many of the N flips came up TAILS (the mirror image of the
+   * existing heads-scaled-damage coin templates). */
+  flipCoinsDiscardSelfEnergyByTailsCount?: number;
 }
 
 export interface AttackBoardContext {
@@ -266,6 +324,20 @@ export interface AttackBoardContext {
   attackerPromotedFromBenchThisTurn: boolean;
   /** Count of each Energy type sitting in the attacker's own discard pile. */
   ownDiscardEnergyCounts: Record<string, number>;
+  /** Every attached Energy CARD's printed name (not just its EnergyType) — for conditions keyed
+   * to a specific named Special Energy (e.g. "火箭隊能量") rather than a basic type. */
+  attackerEnergyCardNames: string[];
+  /** The defender's own current damage counters, ONE ENTRY PER own-Bench Pokémon (order matches
+   * `ownBenchNames`/`ownBenchTypes`'s own-side convention, but for the OPPONENT's Bench) — for
+   * "damage to 1 Bench Pokémon equal to ITS OWN counters" texts, which the aggregate opponent
+   * counts elsewhere in this interface can't express. */
+  opponentBenchDamageCounters: number[];
+  /** Every one of the defender's own printed attack names (for "choose one of the defending
+   * Pokémon's attacks and lock it" texts — auto-picked randomly, same convention as every other
+   * "player's choice" template in this file). */
+  defenderAttackNames: string[];
+  /** Whether the defending Pokémon is a 太晶 (Tera) print — see hasTeraBenchedImmunity. */
+  defenderIsTera: boolean;
 }
 
 const STATUS_ZH: Record<string, StatusCondition> = {
@@ -324,6 +396,8 @@ const NEUTRAL_BOARD: AttackBoardContext = {
   ownBenchEnergyHolderCounts: {}, attackCostCount: 0, opponentTakenPrizes: 0,
   ownBenchDamageCountersByName: [], ownDiscardAbilityCounts: {},
   attackerPromotedFromBenchThisTurn: false, ownDiscardEnergyCounts: {},
+  attackerEnergyCardNames: [], opponentBenchDamageCounters: [], defenderAttackNames: [],
+  defenderIsTera: false,
 };
 
 export function matchesGenericAttackTemplate(text: string): boolean {
@@ -383,6 +457,25 @@ export function resolveGenericAttackEffect(text: string, damageField: string, bo
     if (heads) outcome.statusToInflict = [STATUS_ZH[m[1]]];
     return outcome;
   }
+
+  // 擲1次硬幣若為正面，則可將對手的戰鬥寶可夢【狀態】。("則可將" — optional even on heads, distinct from
+  // the unconditional "則將" template above; the "若希望" convention elsewhere always takes an
+  // optional upside, so heads always applies the status here too.)
+  m = t.match(new RegExp(`^擲1次硬幣[，,]?若為正面，則可將對手的戰鬥寶可夢【(${STATUS_ALT})】。$`));
+  if (m) {
+    const heads = Math.random() < 0.5;
+    const outcome: GenericAttackOutcome = { baseDamage: parseBaseNumber(damageField), coinFlipNote: heads ? '正面' : '反面' };
+    if (heads) outcome.statusToInflict = [STATUS_ZH[m[1]]];
+    return outcome;
+  }
+
+  // 對手的1隻寶可夢受到這隻寶可夢身上附加的能量的數量×N點傷害。[在備戰區不計算弱點・抵抗力。]
+  // ("1隻寶可夢", not "1隻備戰寶可夢" — real rules let the player pick Active OR Bench, with the
+  // bracket only clarifying the Bench case skips weakness/resistance; simplified to always
+  // targeting the Active through the normal weakness/resistance pipeline, matching how every
+  // other dynamically-scaled "N energy x M damage" template here already resolves.)
+  m = t.match(/^對手的1隻寶可夢受到這隻寶可夢身上附加的能量的數量×(\d+)點傷害。(?:\[在備戰區不計算弱點・抵抗力。\])?$/);
+  if (m) return { baseDamage: board.attackerTotalEnergyCount * parseInt(m[1], 10) };
 
   // 擲1次硬幣若為反面，則這個招式失敗。
   if (/^擲1次硬幣[，,]?若為反面，則這個招式失敗。$/.test(t)) {
@@ -1199,6 +1292,241 @@ export function resolveGenericAttackEffect(text: string, damageField: string, bo
   // same attachedEnergy Basic-vs-Special limitation documented elsewhere in this session)
   m = t.match(/^造成這隻寶可夢身上附加的基本能量的數量×(\d+)點傷害。$/);
   if (m) return { baseDamage: board.attackerTotalEnergyCount * parseInt(m[1], 10) };
+
+  // 將場上的競技場卡丟棄。若無法丟棄，則這個招式失敗。(fails outright — 0 damage — with no Stadium in play)
+  if (/^將場上的競技場卡丟棄。若無法丟棄，則這個招式失敗。$/.test(t)) {
+    return { baseDamage: board.hasActiveStadium ? parseBaseNumber(damageField) : 0, discardActiveStadium: true };
+  }
+
+  // 若場上沒有競技場卡，則這個招式失敗。(inverse of the above — needs an EXISTING Stadium to work at all)
+  if (/^若場上沒有競技場卡，則這個招式失敗。$/.test(t)) {
+    return { baseDamage: board.hasActiveStadium ? parseBaseNumber(damageField) : 0 };
+  }
+
+  // 若希望，選擇1張自己的反面朝上的獎賞卡，翻到正面。這個情況下，增加N點傷害。(the face-up prize itself
+  // has no further gameplay effect in this engine — no hidden-information model for prizes — so
+  // this is equivalent to always taking the optional bonus, matching the file's "若希望" convention.)
+  m = t.match(/^若希望，選擇1張自己的反面朝上的獎賞卡，翻到正面。這個情況下，增加(\d+)點傷害。(?:（在對戰結束前，那張獎賞卡維持正面朝上。）)?$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField) + parseInt(m[1], 10) };
+
+  // 若對手的戰鬥寶可夢身上放置有傷害指示物，則這個招式的傷害改為「N」點。(REPLACES, not adds to, base damage)
+  m = t.match(/^若對手的戰鬥寶可夢身上放置有傷害指示物，則這個招式的傷害改為「(\d+)」點。$/);
+  if (m) return { baseDamage: board.opponentDamageCounters > 0 ? parseInt(m[1], 10) : parseBaseNumber(damageField) };
+
+  // 造成自己已經獲得的獎賞卡的張數×N點傷害。(taken = 6 - remaining)
+  m = t.match(/^造成自己已經獲得的獎賞卡的張數×(\d+)點傷害。$/);
+  if (m) return { baseDamage: (6 - board.ownRemainingPrizes) * parseInt(m[1], 10) };
+
+  // 若自己的備戰區有「X」「Y」，則增加N點傷害。(two specific named cards, both required — exact name,
+  // not the substring match the single-name "有名稱中有「X」的寶可夢" template above uses)
+  m = t.match(/^若自己的備戰區有「(.+?)」「(.+?)」，則增加(\d+)點傷害。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField) + (board.ownBenchNames.includes(m[1]) && board.ownBenchNames.includes(m[2]) ? parseInt(m[3], 10) : 0) };
+
+  // 若自己的場上有與對手的場上寶可夢相同屬性的寶可夢，則增加N點傷害。(any own-field type overlapping ANY
+  // of the opponent's Active's printed types — approximated via the defender's own types, which is
+  // what "對手的場上寶可夢" resolves to for a single-Active engine like this one.)
+  m = t.match(/^若自己的場上有與對手的場上寶可夢相同屬性的寶可夢，則增加(\d+)點傷害。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField) + (board.defenderTypes.some(ty => (board.ownFieldTypeCounts[ty] || 0) > 0) ? parseInt(m[1], 10) : 0) };
+
+  // 若這隻寶可夢身上附有【X】能量卡，則增加N點傷害。(attacker's OWN attached Energy of one type — distinct
+  // from the "身上附加的能量的數量" scaling templates above; this is a flat bonus, not per-count)
+  m = t.match(/^若這隻寶可夢身上附有【(.+?)】能量卡，則增加(\d+)點傷害。$/);
+  if (m) {
+    const type = ENERGY_TYPE_FROM_ZH[m[1]];
+    return { baseDamage: parseBaseNumber(damageField) + (!!type && (board.attackerEnergyCounts[type] || 0) > 0 ? parseInt(m[2], 10) : 0) };
+  }
+
+  // 增加自己的棄牌區的能量卡的張數×N點傷害。(ALL Energy types combined, not one specific type)
+  m = t.match(/^增加自己的棄牌區的能量卡的張數×(\d+)點傷害。$/);
+  if (m) {
+    const total = Object.values(board.ownDiscardEnergyCounts).reduce((a, b) => a + b, 0);
+    return { baseDamage: parseBaseNumber(damageField) + total * parseInt(m[1], 10) };
+  }
+
+  // 若這隻寶可夢身上放置有傷害指示物，則增加N點傷害。(the ATTACKER's own damage counters — distinct from
+  // the defender-damage-counter templates above)
+  m = t.match(/^若這隻寶可夢身上放置有傷害指示物，則增加(\d+)點傷害。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField) + (board.selfDamageCounters > 0 ? parseInt(m[1], 10) : 0) };
+
+  // 將最多N張自己的場上寶可夢身上附加的【X】能量卡丟棄，造成其張數×M點傷害。(field-wide, typed —
+  // ownFieldEnergyDiscardScaledDamage already scans the attacker's whole field, not just itself)
+  m = t.match(/^將最多(\d+)張自己的場上寶可夢身上附加的【(.+?)】能量卡丟棄，造成其張數×(\d+)點傷害。$/);
+  if (m) {
+    const type = ENERGY_TYPE_FROM_ZH[m[2]];
+    if (type) return { baseDamage: 0, ownFieldEnergyDiscardScaledDamage: { type, max: parseInt(m[1], 10), amount: parseInt(m[3], 10) } };
+  }
+
+  // 將這隻寶可夢身上附加的能量卡全部丟棄，對手的1隻備戰寶可夢也受到N點傷害。[在備戰區不計算弱點・抵抗力。]
+  m = t.match(/^將這隻寶可夢身上附加的能量卡全部丟棄，對手的1隻備戰寶可夢也受到(\d+)點傷害。(?:\[在備戰區不計算弱點・抵抗力。\])?$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), discardAllSelfEnergy: true, benchSplashDamage: parseInt(m[1], 10) };
+
+  // 從自己的牌庫選擇最多N張基本能量卡，附於自己的1隻寶可夢身上。並且重洗牌庫。(any type, not one fixed type
+  // — deckSearchBasicEnergyToOwnPokemonCount already matches this shape exactly)
+  m = t.match(/^從自己的牌庫選擇最多(\d+)張基本能量卡，附於自己的1隻寶可夢身上。並且重洗牌庫。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), deckSearchBasicEnergyToOwnPokemonCount: parseInt(m[1], 10) };
+
+  // 將自己的備戰區的1隻【X】寶可夢恢復「N」HP。
+  m = t.match(/^將自己的備戰區的1隻【(.+?)】寶可夢恢復「(\d+)」HP。$/);
+  if (m) {
+    const type = ENERGY_TYPE_FROM_ZH[m[1]];
+    if (type) return { baseDamage: parseBaseNumber(damageField), healBenchTypedAmount: { type, amount: parseInt(m[2], 10) } };
+  }
+
+  // 從自己的牌庫選擇與這隻寶可夢身上附加的基本能量卡相同屬性的寶可夢卡合計最多N張，在給對手看過後
+  // 加入手牌。並且重洗牌庫。(the reveal-to-opponent step is cosmetic — no information-asymmetry model
+  // for hands here — and "same type as attached Basic Energy" picks whichever type the attacker
+  // actually has the most of when multiple are attached.)
+  m = t.match(/^從自己的牌庫選擇與這隻寶可夢身上附加的基本能量卡相同屬性的寶可夢卡合計最多(\d+)張，在給對手看過後加入手牌。並且重洗牌庫。$/);
+  if (m) {
+    // Falls back to Colorless (0 real matches, a legitimate empty search) if no Energy happens
+    // to be attached yet — this attack still has a cost, so real games always have some, but the
+    // template must resolve to a defined outcome either way, not bail with `undefined`.
+    const entries = Object.entries(board.attackerEnergyCounts);
+    const type = entries.length > 0 ? entries.sort((a, b) => b[1] - a[1])[0][0] : 'Colorless';
+    return { baseDamage: parseBaseNumber(damageField), deckSearchTypedPokemonToHandCount: { type, count: parseInt(m[1], 10) } };
+  }
+
+  // 選擇N個這隻寶可夢身上附加的能量，改附於1隻備戰寶可夢身上。
+  m = t.match(/^選擇(\d+)個這隻寶可夢身上附加的能量，改附於1隻備戰寶可夢身上。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), moveSelfEnergyToRandomBenchCount: parseInt(m[1], 10) };
+
+  // 將對手的戰鬥寶可夢【混亂】。選擇任意數量的對手的場上寶可夢身上放置的傷害指示物，以任意方式改放於
+  // 對手的場上寶可夢身上。(the counter-redistribution is entirely among the OPPONENT's own field —
+  // zero-sum for their total damage taken, so skipped as a documented simplification; the confuse
+  // is the only externally-observable part.)
+  if (/^將對手的戰鬥寶可夢【混亂】。選擇任意數量的對手的場上寶可夢身上放置的傷害指示物，以任意方式改放於對手的場上寶可夢身上。$/.test(t)) {
+    return { baseDamage: parseBaseNumber(damageField), statusToInflict: ['Confused'] };
+  }
+
+  // 在對手的身上放置有傷害指示物的所有寶可夢身上，各放置N個傷害指示物。
+  m = t.match(/^在對手的身上放置有傷害指示物的所有寶可夢身上，各放置(\d+)個傷害指示物。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), damageToEachDamagedOpponentAmount: parseInt(m[1], 10) };
+
+  // 若希望，將最多N張自己的備戰寶可夢身上附加的能量卡丟棄，增加其張數×M點傷害。(field-wide, untyped)
+  m = t.match(/^若希望，將最多(\d+)張自己的備戰寶可夢身上附加的能量卡丟棄，增加其張數×(\d+)點傷害。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), ownFieldEnergyDiscardScaledDamage: { max: parseInt(m[1], 10), amount: parseInt(m[2], 10) } };
+
+  // 若這隻寶可夢身上附有「X能量」，則增加N點傷害。(a specific NAMED Special Energy card, not a basic type)
+  m = t.match(/^若這隻寶可夢身上附有「(.+?)能量」，則增加(\d+)點傷害。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField) + (board.attackerEnergyCardNames.includes(`${m[1]}能量`) ? parseInt(m[2], 10) : 0) };
+
+  // 將自己的手牌全部丟棄，從牌庫抽出N張卡。(discard, not shuffle back — distinct from shuffleHandThenDrawCount)
+  m = t.match(/^將自己的手牌全部丟棄，從牌庫抽出(\d+)張卡。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), discardHandThenDrawCount: parseInt(m[1], 10) };
+
+  // 將這隻寶可夢身上附加的能量卡全部丟棄，對手的N隻寶可夢各受到M點傷害。[在備戰區不計算弱點・抵抗力。]
+  m = t.match(/^將這隻寶可夢身上附加的能量卡全部丟棄，對手的(\d+)隻寶可夢各受到(\d+)點傷害。(?:\[在備戰區不計算弱點・抵抗力。\])?$/);
+  if (m) return { baseDamage: 0, discardAllSelfEnergy: true, multiTargetOpponentFlatDamage: { count: parseInt(m[1], 10), amount: parseInt(m[2], 10) } };
+
+  // 選擇N次對手的寶可夢，對所選的所有寶可夢不計算弱點・抵抗力，造成其選擇次數×M點傷害。(1隻可選擇2次以上。)
+  // (total output is choice-count-independent — simplified to 1 target taking the full combined total)
+  m = t.match(/^選擇(\d+)次對手的寶可夢，對所選的所有寶可夢不計算弱點・抵抗力，造成其選擇次數×(\d+)點傷害。(?:（1隻可選擇2次以上。）)?$/);
+  if (m) return { baseDamage: 0, multiTargetOpponentFlatDamage: { count: 1, amount: parseInt(m[1], 10) * parseInt(m[2], 10) } };
+
+  // 在下個對手的回合，這隻寶可夢的弱點全部消除。
+  if (/^在下個對手的回合，這隻寶可夢的弱點全部消除。$/.test(t)) {
+    return { baseDamage: parseBaseNumber(damageField), selfTimedEffect: { kind: 'weaknessRemoved', turnOffset: 1 } };
+  }
+
+  // 查看對手的手牌，從其中選擇1張卡，放回對手的牌庫下方。
+  if (/^查看對手的手牌，從其中選擇1張卡，放回對手的牌庫下方。$/.test(t)) {
+    return { baseDamage: parseBaseNumber(damageField), randomOpponentHandCardToDeckBottom: true };
+  }
+
+  // 若對手的戰鬥寶可夢身上放置的傷害指示物為N個，則將那隻寶可夢【昏厥】。
+  m = t.match(/^若對手的戰鬥寶可夢身上放置的傷害指示物為(\d+)個，則將那隻寶可夢【昏厥】。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), koDefenderIfDamageCountersEqual: parseInt(m[1], 10) };
+
+  // 對手的1隻備戰寶可夢，受到那隻寶可夢身上放置的傷害指示物的數量×N點傷害。[在備戰區不計算弱點・抵抗力。]
+  m = t.match(/^對手的1隻備戰寶可夢，受到那隻寶可夢身上放置的傷害指示物的數量×(\d+)點傷害。(?:\[在備戰區不計算弱點・抵抗力。\])?$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), opponentBenchDamageScaledSplash: { multiplier: parseInt(m[1], 10) } };
+
+  // 若希望，將1個這隻寶可夢身上附加的【X】能量放回手牌，增加N點傷害。
+  m = t.match(/^若希望，將1個這隻寶可夢身上附加的【(.+?)】能量放回手牌，增加(\d+)點傷害。$/);
+  if (m) {
+    const type = ENERGY_TYPE_FROM_ZH[m[1]];
+    if (type) return { baseDamage: parseBaseNumber(damageField), returnSelfEnergyToHandTypeBonus: { type, amount: parseInt(m[2], 10) } };
+  }
+
+  // 將N個這隻寶可夢身上附加的能量丟棄，對手的M隻寶可夢各受到K點傷害。[在備戰區不計算弱點・抵抗力。]
+  m = t.match(/^將(\d+)個這隻寶可夢身上附加的能量丟棄，對手的(\d+)隻寶可夢各受到(\d+)點傷害。(?:\[在備戰區不計算弱點・抵抗力。\])?$/);
+  if (m) return { baseDamage: 0, discardSelfEnergyCount: parseInt(m[1], 10), multiTargetOpponentFlatDamage: { count: parseInt(m[2], 10), amount: parseInt(m[3], 10) } };
+
+  // 若希望，選擇N個這隻寶可夢身上附加的能量，放回牌庫並重洗。這個情況下，對手的1隻備戰寶可夢也受到M點傷害。
+  m = t.match(/^若希望，選擇(\d+)個這隻寶可夢身上附加的能量，放回牌庫並重洗。這個情況下，對手的1隻備戰寶可夢也受到(\d+)點傷害。(?:\[在備戰區不計算弱點・抵抗力。\])?$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), optionalEnergyToDeckForBenchDamage: { max: parseInt(m[1], 10), benchDamage: parseInt(m[2], 10) } };
+
+  // 若使用了這個招式，則這隻寶可夢離開戰鬥場前無法使用「X」。(approximated as a next-own-turn lock —
+  // real rule is "until this Pokémon leaves Active", which this engine's turn-numbered timed
+  // effects can't express; a Pokémon that survives many consecutive turns in a row is rare enough
+  // for the approximation to be a reasonable simplification.)
+  m = t.match(/^若使用了這個招式，則這隻寶可夢離開戰鬥場前無法使用「(.+?)」。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), selfTimedEffect: { kind: 'namedAttackLock', attackName: m[1], turnOffset: 2 } };
+
+  // 選擇1個這隻寶可夢身上附加的能量，放回手牌。
+  if (/^選擇1個這隻寶可夢身上附加的能量，放回手牌。$/.test(t)) {
+    return { baseDamage: parseBaseNumber(damageField), returnSelfEnergyToHandCount: 1 };
+  }
+
+  // 選擇1個對手的戰鬥寶可夢持有的招式。在下個對手的回合，受到這個招式的寶可夢無法使用被選擇的招式。
+  // (which attack is picked is the player's choice — auto-random among the defender's own printed
+  // attacks, same convention as every other "player's choice" template in this file.)
+  if (/^選擇1個對手的戰鬥寶可夢持有的招式。在下個對手的回合，受到這個招式的寶可夢無法使用被選擇的招式。$/.test(t)) {
+    if (board.defenderAttackNames.length === 0) return { baseDamage: parseBaseNumber(damageField) };
+    const pick = board.defenderAttackNames[Math.floor(Math.random() * board.defenderAttackNames.length)];
+    return { baseDamage: parseBaseNumber(damageField), opponentTimedEffect: { kind: 'namedAttackLock', attackName: pick, turnOffset: 1 } };
+  }
+
+  // 選擇1張自己的手牌，將其丟棄。然後，對手選擇1張對手自己的手牌，將其丟棄。
+  if (/^選擇1張自己的手牌，將其丟棄。然後，對手選擇1張對手自己的手牌，將其丟棄。$/.test(t)) {
+    return { baseDamage: parseBaseNumber(damageField), discardRandomSelfHandCount: 1, discardRandomOpponentHandCount: 1 };
+  }
+
+  // 選擇2隻對手的備戰寶可夢，將那些寶可夢與附加的卡全部放回牌庫並重洗。在上個自己的回合，若自己的寶可夢
+  // 使出了「X」，則無法使用這個招式。(the "can't reuse last-turn" self-gate is approximated the same
+  // way as the 烈火爆進-style locks above: a next-own-turn lock set whenever this attack fires.)
+  m = t.match(/^選擇2隻對手的備戰寶可夢，將那些寶可夢與附加的卡全部放回牌庫並重洗。在上個自己的回合，若自己的寶可夢使出了「(.+?)」，則無法使用這個招式。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), shuffleOpponentBenchToDeckCount: 2, selfTimedEffect: { kind: 'namedAttackLock', attackName: m[1], turnOffset: 2 } };
+
+  // 將自己的所有備戰寶可夢各恢復「N」HP。(BENCH only, not the Active — distinct from healAllOwnTeamAmount)
+  m = t.match(/^將自己的所有備戰寶可夢各恢復「(\d+)」HP。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), healAllOwnBenchAmount: parseInt(m[1], 10) };
+
+  // 對手的2隻寶可夢各受到N點傷害。這個招式的傷害不計算弱點・抵抗力與受到傷害的寶可夢身上的附加效果。
+  m = t.match(/^對手的2隻寶可夢各受到(\d+)點傷害。這個招式的傷害不計算弱點・抵抗力與受到傷害的寶可夢身上的附加效果。$/);
+  if (m) return { baseDamage: 0, multiTargetOpponentFlatDamage: { count: 2, amount: parseInt(m[1], 10) } };
+
+  // 擲硬幣直到出現反面，選擇與正面出現的次數相同數量的對手的戰鬥寶可夢身上附加的能量，將其丟棄。
+  if (/^擲硬幣直到出現反面，選擇與正面出現的次數相同數量的對手的戰鬥寶可夢身上附加的能量，將其丟棄。$/.test(t)) {
+    return { baseDamage: parseBaseNumber(damageField), flipUntilTailsDiscardOpponentEnergy: true };
+  }
+
+  // 將這隻寶可夢身上附加的能量卡全部放回牌庫並重洗，對手的1隻寶可夢受到N點傷害。[在備戰區不計算弱點・抵抗力。]
+  m = t.match(/^將這隻寶可夢身上附加的能量卡全部放回牌庫並重洗，對手的1隻寶可夢受到(\d+)點傷害。(?:\[在備戰區不計算弱點・抵抗力。\])?$/);
+  if (m) return { baseDamage: parseInt(m[1], 10), shuffleAllSelfEnergyToDeck: true };
+
+  // 從自己的牌庫任意選擇N張卡。重洗剩餘牌庫，將所選的卡以任意順序排列，放回牌庫上方。
+  m = t.match(/^從自己的牌庫任意選擇(\d+)張卡。重洗剩餘牌庫，將所選的卡以任意順序排列，放回牌庫上方。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), deckSearchAnyCardsToTopOfDeck: parseInt(m[1], 10) };
+
+  // 若對手的戰鬥寶可夢為「太晶」寶可夢，則增加N點傷害。
+  m = t.match(/^若對手的戰鬥寶可夢為「太晶」寶可夢，則增加(\d+)點傷害。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField) + (board.defenderIsTera ? parseInt(m[1], 10) : 0) };
+
+  // 對手選擇N張對手自己的手牌，放回牌庫並重洗。
+  m = t.match(/^對手選擇(\d+)張對手自己的手牌，放回牌庫並重洗。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), shuffleRandomOpponentHandCardsIntoDeckCount: parseInt(m[1], 10) };
+
+  // 擲N次硬幣，選擇與反面出現的次數相同數量的這隻寶可夢身上附加的能量，將其丟棄。
+  m = t.match(/^擲(\d+)次硬幣，選擇與反面出現的次數相同數量的這隻寶可夢身上附加的能量，將其丟棄。$/);
+  if (m) {
+    const tails = parseInt(m[1], 10) - flipCoins(parseInt(m[1], 10));
+    return { baseDamage: parseBaseNumber(damageField), flipCoinsDiscardSelfEnergyByTailsCount: tails };
+  }
+
+  // 雙方的所有備戰寶可夢也各受到N點傷害。 [在備戰區不計算弱點・抵抗力。](BOTH sides' whole Bench)
+  m = t.match(/^雙方的所有備戰寶可夢也各受到(\d+)點傷害。\s*(?:\[在備戰區不計算弱點・抵抗力。\])?$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), selfAllBenchSplashDamage: parseInt(m[1], 10), opponentAllBenchSplashDamage: parseInt(m[1], 10) };
 
   return undefined;
 }

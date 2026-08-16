@@ -3,7 +3,7 @@ import { PtcgGameState, PendingChoice } from './GameState';
 import { canPlayPokemon, canEvolve, canAttachEnergy, canRetreat, canAttack, effectiveRetreatCost, FIRST_TURN_SUPPORTER_EXCEPTIONS } from './validation';
 import { clearStatusConditionsOnLeaveActive } from './statusConditions';
 import { calculateDamageBreakdown, effectiveMaxHp, flushPreEvolutionsToDiscard, handleKo, prizesForKo, promoteActiveIfNeeded, stackAsPreEvolution } from './damage';
-import { areAbilitiesNegated, getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasCoinFlipAttackMissDebuff, hasPassiveAbilityNamed, isRetreatBlockedByOpponent, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat, shouldDiscardAttackerEnergy } from './effects/passiveAbilities';
+import { areAbilitiesNegated, getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasCoinFlipAttackMissDebuff, hasPassiveAbilityNamed, hasTeraBenchedImmunity, isRetreatBlockedByOpponent, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat, shouldDiscardAttackerEnergy } from './effects/passiveAbilities';
 import { isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
 import { applyStatusCondition, discardAttachedEnergy, drawCards, drawUpTo, shuffleDeck } from './effects/primitives';
@@ -740,6 +740,10 @@ export const moves = {
           }
           return acc;
         }, {} as Record<string, number>),
+        attackerEnergyCardNames: attacker.attachedEnergy.map(e => e.cardData?.name).filter((n): n is string => !!n),
+        opponentBenchDamageCounters: opponent.bench.filter((c): c is GameCard => c !== null).map(c => c.damage / 10),
+        defenderAttackNames: (defender.cardData.attacks || []).map(a => a.name),
+        defenderIsTera: hasTeraBenchedImmunity(defender) || defender.cardData.name.includes('太晶'),
       };
       const genericOutcome = attack.text ? resolveGenericAttackEffect(attack.text, attack.damage, attackBoard) : undefined;
       if (genericOutcome?.familyScaledDamage) {
@@ -1054,6 +1058,16 @@ export const moves = {
             target.attachedEnergy.push(attacker.attachedEnergy.splice(i, 1)[0]);
           }
         }
+        if (genericOutcome.moveSelfEnergyToRandomBenchCount && attacker.attachedEnergy.length > 0) {
+          const benchTargets = player.bench.filter((c): c is GameCard => c !== null);
+          if (benchTargets.length > 0) {
+            const target = benchTargets[Math.floor(Math.random() * benchTargets.length)];
+            for (let i = 0; i < genericOutcome.moveSelfEnergyToRandomBenchCount && attacker.attachedEnergy.length > 0; i++) {
+              const idx = Math.floor(Math.random() * attacker.attachedEnergy.length);
+              target.attachedEnergy.push(attacker.attachedEnergy.splice(idx, 1)[0]);
+            }
+          }
+        }
         if (genericOutcome.benchSplashDamage) {
           const targets = opponent.bench.filter((c): c is GameCard => c !== null);
           if (targets.length > 0) {
@@ -1323,6 +1337,166 @@ export const moves = {
           opponent.active.damage += genericOutcome.splashDamageAfterSwitch;
           const hp = effectiveMaxHp(G, opponent.active);
           if (hp > 0 && opponent.active.damage >= hp) handleKo(G, 1 - G.currentPlayer, opponent.active.id);
+        }
+        if (genericOutcome.healBenchTypedAmount) {
+          const { type, amount } = genericOutcome.healBenchTypedAmount;
+          const candidates = ownBench.filter(c => (c.cardData.types || []).includes(type as any));
+          if (candidates.length > 0) {
+            const target = candidates[Math.floor(Math.random() * candidates.length)];
+            target.damage = Math.max(0, target.damage - amount);
+          }
+        }
+        if (genericOutcome.deckSearchTypedPokemonToHandCount) {
+          const { type, count } = genericOutcome.deckSearchTypedPokemonToHandCount;
+          const matches = player.deck.filter(c => c.cardData.supertype === 'Pokémon' && (c.cardData.types || []).includes(type as any));
+          let remaining = count;
+          while (remaining > 0 && matches.length > 0) {
+            const pick = matches.splice(Math.floor(Math.random() * matches.length), 1)[0];
+            const deckIdx = player.deck.findIndex(c => c.id === pick.id);
+            if (deckIdx >= 0) player.hand.push(player.deck.splice(deckIdx, 1)[0]);
+            remaining--;
+          }
+          shuffleDeck(player.deck);
+        }
+        if (genericOutcome.damageToEachDamagedOpponentAmount) {
+          for (const target of [opponent.active, ...opponent.bench].filter((c): c is GameCard => c !== null && c.damage > 0)) {
+            target.damage += genericOutcome.damageToEachDamagedOpponentAmount * 10;
+            const hp = effectiveMaxHp(G, target);
+            if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id);
+          }
+        }
+        if (genericOutcome.discardHandThenDrawCount) {
+          player.discardPile.push(...player.hand.splice(0));
+          drawCards(G, G.currentPlayer as 0 | 1, genericOutcome.discardHandThenDrawCount);
+        }
+        if (genericOutcome.multiTargetOpponentFlatDamage) {
+          const { count, amount } = genericOutcome.multiTargetOpponentFlatDamage;
+          const pool = [opponent.active, ...opponent.bench].filter((c): c is GameCard => c !== null);
+          const picked = [...pool].sort(() => Math.random() - 0.5).slice(0, count);
+          for (const target of picked) {
+            target.damage += amount;
+            const hp = effectiveMaxHp(G, target);
+            if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id);
+          }
+        }
+        if (genericOutcome.randomOpponentHandCardToDeckBottom && opponent.hand.length > 0) {
+          opponent.deck.unshift(opponent.hand.splice(Math.floor(Math.random() * opponent.hand.length), 1)[0]);
+        }
+        // 死亡終局-style: the printed condition reads the defender's damage counters BEFORE this
+        // attack's own damage lands (the pre-attack board snapshot), not after — a live re-read
+        // here would compare against the wrong value once this attack's own base damage has
+        // already been added a few lines above.
+        if (genericOutcome.koDefenderIfDamageCountersEqual && attackBoard.opponentDamageCounters === genericOutcome.koDefenderIfDamageCountersEqual) {
+          handleKo(G, 1 - G.currentPlayer, defender.id, attacker);
+        }
+        if (genericOutcome.opponentBenchDamageScaledSplash) {
+          const targets = opponent.bench.filter((c): c is GameCard => c !== null);
+          if (targets.length > 0) {
+            const target = targets[Math.floor(Math.random() * targets.length)];
+            target.damage += (target.damage / 10) * genericOutcome.opponentBenchDamageScaledSplash.multiplier;
+            const hp = effectiveMaxHp(G, target);
+            if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id);
+          }
+        }
+        if (genericOutcome.returnSelfEnergyToHandTypeBonus) {
+          const { type } = genericOutcome.returnSelfEnergyToHandTypeBonus;
+          const idx = attacker.attachedEnergy.findIndex(e => e.type === type);
+          if (idx >= 0) {
+            const [energy] = attacker.attachedEnergy.splice(idx, 1);
+            if (energy.cardData) player.hand.push({ id: energy.id, cardData: energy.cardData, owner: G.currentPlayer as 0 | 1, damage: 0, statusConditions: [], attachedEnergy: [] });
+          }
+        }
+        if (genericOutcome.optionalEnergyToDeckForBenchDamage && attacker.attachedEnergy.length > 0) {
+          const { max, benchDamage } = genericOutcome.optionalEnergyToDeckForBenchDamage;
+          let moved = 0;
+          for (let i = 0; i < max && attacker.attachedEnergy.length > 0; i++) {
+            const [energy] = attacker.attachedEnergy.splice(0, 1);
+            if (energy.cardData) player.deck.push({ id: energy.id, cardData: energy.cardData, owner: G.currentPlayer as 0 | 1, damage: 0, statusConditions: [], attachedEnergy: [] });
+            moved++;
+          }
+          if (moved > 0) {
+            shuffleDeck(player.deck);
+            const targets = opponent.bench.filter((c): c is GameCard => c !== null);
+            if (targets.length > 0) {
+              const target = targets[Math.floor(Math.random() * targets.length)];
+              target.damage += benchDamage;
+              const hp = effectiveMaxHp(G, target);
+              if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id);
+            }
+          }
+        }
+        if (genericOutcome.returnSelfEnergyToHandCount && attacker.attachedEnergy.length > 0) {
+          for (let i = 0; i < genericOutcome.returnSelfEnergyToHandCount && attacker.attachedEnergy.length > 0; i++) {
+            const idx = Math.floor(Math.random() * attacker.attachedEnergy.length);
+            const [energy] = attacker.attachedEnergy.splice(idx, 1);
+            if (energy.cardData) player.hand.push({ id: energy.id, cardData: energy.cardData, owner: G.currentPlayer as 0 | 1, damage: 0, statusConditions: [], attachedEnergy: [] });
+          }
+        }
+        if (genericOutcome.discardRandomSelfHandCount) {
+          for (let i = 0; i < genericOutcome.discardRandomSelfHandCount && player.hand.length > 0; i++) {
+            player.discardPile.push(player.hand.splice(Math.floor(Math.random() * player.hand.length), 1)[0]);
+          }
+        }
+        if (genericOutcome.shuffleOpponentBenchToDeckCount) {
+          for (let i = 0; i < genericOutcome.shuffleOpponentBenchToDeckCount; i++) {
+            const idx = opponent.bench.findIndex(c => c !== null);
+            if (idx === -1) break;
+            const [target] = opponent.bench.splice(idx, 1, null);
+            if (!target) continue;
+            if (target.attachedTool) opponent.deck.push(target.attachedTool);
+            for (const energy of target.attachedEnergy.splice(0)) {
+              if (energy.cardData) opponent.deck.push({ id: energy.id, cardData: energy.cardData, owner: (1 - G.currentPlayer) as 0 | 1, damage: 0, statusConditions: [], attachedEnergy: [] });
+            }
+            flushPreEvolutionsToDiscard(target, opponent.discardPile);
+            opponent.deck.push({ ...target, damage: 0, statusConditions: [], attachedEnergy: [], attachedTool: null, preEvolutions: undefined });
+          }
+          while (opponent.bench.length < 5) opponent.bench.push(null);
+          shuffleDeck(opponent.deck);
+        }
+        if (genericOutcome.healAllOwnBenchAmount) {
+          for (const c of ownBench) c.damage = Math.max(0, c.damage - genericOutcome.healAllOwnBenchAmount);
+        }
+        if (genericOutcome.flipUntilTailsDiscardOpponentEnergy) {
+          let heads = 0;
+          for (let i = 0; i < 20 && Math.random() < 0.5; i++) heads++;
+          for (let i = 0; i < heads && defender.attachedEnergy.length > 0; i++) {
+            const [energy] = defender.attachedEnergy.splice(Math.floor(Math.random() * defender.attachedEnergy.length), 1);
+            discardAttachedEnergy(G, (1 - G.currentPlayer) as 0 | 1, energy);
+          }
+        }
+        if (genericOutcome.shuffleAllSelfEnergyToDeck && attacker.attachedEnergy.length > 0) {
+          for (const energy of attacker.attachedEnergy.splice(0)) {
+            if (energy.cardData) player.deck.push({ id: energy.id, cardData: energy.cardData, owner: G.currentPlayer as 0 | 1, damage: 0, statusConditions: [], attachedEnergy: [] });
+          }
+          shuffleDeck(player.deck);
+        }
+        if (genericOutcome.deckSearchAnyCardsToTopOfDeck) {
+          let remaining = Math.min(genericOutcome.deckSearchAnyCardsToTopOfDeck, player.deck.length);
+          const picked: GameCard[] = [];
+          while (remaining > 0 && player.deck.length > 0) {
+            picked.push(player.deck.splice(Math.floor(Math.random() * player.deck.length), 1)[0]);
+            remaining--;
+          }
+          player.deck.push(...picked);
+        }
+        if (genericOutcome.shuffleRandomOpponentHandCardsIntoDeckCount) {
+          for (let i = 0; i < genericOutcome.shuffleRandomOpponentHandCardsIntoDeckCount && opponent.hand.length > 0; i++) {
+            opponent.deck.push(opponent.hand.splice(Math.floor(Math.random() * opponent.hand.length), 1)[0]);
+          }
+          shuffleDeck(opponent.deck);
+        }
+        if (genericOutcome.flipCoinsDiscardSelfEnergyByTailsCount) {
+          for (let i = 0; i < genericOutcome.flipCoinsDiscardSelfEnergyByTailsCount && attacker.attachedEnergy.length > 0; i++) {
+            const [energy] = attacker.attachedEnergy.splice(Math.floor(Math.random() * attacker.attachedEnergy.length), 1);
+            discardAttachedEnergy(G, G.currentPlayer as 0 | 1, energy);
+          }
+        }
+        if (genericOutcome.opponentAllBenchSplashDamage) {
+          for (const target of opponent.bench.filter((c): c is GameCard => c !== null)) {
+            target.damage += genericOutcome.opponentAllBenchSplashDamage;
+            const hp = effectiveMaxHp(G, target);
+            if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id);
+          }
         }
       }
     }

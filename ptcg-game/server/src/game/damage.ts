@@ -1,6 +1,6 @@
 import { Attack, DamageDetail, GameCard } from '@ptcg/shared';
 import { PtcgGameState } from './GameState';
-import { getOutgoingDamageReduction, getPassiveDamageBonus, getPassiveDamageReduction, getPassiveMaxHpBonus, getPrizeReduction, getWeaknessTypeOverride, hasPassiveAbilityNamed, isDamageBlocked, rollBonusPrizeOnActiveKo, shouldExilePrizes } from './effects/passiveAbilities';
+import { getOutgoingDamageReduction, getPassiveDamageBonus, getPassiveDamageReduction, getPassiveMaxHpBonus, getPrizeReduction, getWeaknessTypeOverride, hasPassiveAbilityNamed, isDamageBlocked, isWeaknessRemovedByTimedEffect, rollBonusPrizeOnActiveKo, shouldExilePrizes } from './effects/passiveAbilities';
 import { getToolDamageBonus, getToolHpBonus } from './effects/tools';
 import { parseBaseNumber } from './effects/genericAttacks';
 
@@ -145,17 +145,22 @@ export function calculateDamageBreakdown(G: PtcgGameState, attackerIdx: 0 | 1, a
   // outgoing damage once it becomes their turn to attack).
   baseDamage = Math.max(0, baseDamage - getOutgoingDamageReduction(G, attacker));
   const weaknessOverride = getWeaknessTypeOverride(G, (1 - attackerIdx) as 0 | 1, defender);
-  const afterWeakness = applyWeaknessResistance(baseDamage, attacker, defender, weaknessOverride, ignoreResistance, ignoreWeakness);
+  const weaknessRemoved = ignoreWeakness || isWeaknessRemovedByTimedEffect(G, defender);
+  const afterWeakness = applyWeaknessResistance(baseDamage, attacker, defender, weaknessOverride, ignoreResistance, weaknessRemoved);
   const defenderIdx = (1 - attackerIdx) as 0 | 1;
-  let reduction = getPassiveDamageReduction(G, defender, attacker);
-  for (const r of G.players[defenderIdx].incomingDamageReduction) {
-    if (r.typeFilter && !(defender.cardData.types || []).includes(r.typeFilter as any)) continue;
-    reduction += r.amount;
+  // 藏青浪濤: this attacker's damage ignores every "attached effect" (Tool/ability-based
+  // incoming-damage reduction) the defender has — both incoming-reduction pipelines below.
+  let reduction = hasPassiveAbilityNamed(G, attacker, '藏青浪濤') ? 0 : getPassiveDamageReduction(G, defender, attacker);
+  if (!hasPassiveAbilityNamed(G, attacker, '藏青浪濤')) {
+    for (const r of G.players[defenderIdx].incomingDamageReduction) {
+      if (r.typeFilter && !(defender.cardData.types || []).includes(r.typeFilter as any)) continue;
+      reduction += r.amount;
+    }
   }
   const finalDamage = Math.max(0, afterWeakness - reduction);
 
   const attackerTypes = attacker.cardData.types || [];
-  const weaknessApplied = !ignoreWeakness && attackerTypes.some(t => {
+  const weaknessApplied = !weaknessRemoved && attackerTypes.some(t => {
     const weaknesses = weaknessOverride ? [{ type: weaknessOverride, value: '×2' }] : (defender.cardData.weaknesses || []);
     return weaknesses.some(w => w.type === t && isDoubleWeakness(w.value));
   });

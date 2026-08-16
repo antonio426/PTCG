@@ -117,6 +117,10 @@ export function applyStatusCondition(card: GameCard, condition: 'Asleep' | 'Burn
   const holderHasAbility = (name: string) => card.cardData.abilities?.some(a => a.text && a.name.replace(/^[‌​\s]+/, '').replace(/^\[特性\]\s*/, '').trim() === name);
   if (condition === 'Asleep' && holderHasAbility('不眠')) return;
   if (condition === 'Confused' && holderHasAbility('憨憨臉')) return;
+  // 皇帝之勢: unaffected by the opponent's attack EFFECTS (damage still applies normally) — this
+  // choke point has no attacker/source context, so approximated as blocking every Special
+  // Condition regardless of source, same simplification as the two entries above.
+  if (holderHasAbility('皇帝之勢')) return;
   // Asleep/Paralyzed/Confused are mutually exclusive with each other (but stack with Burned/Poisoned).
   if (['Asleep', 'Paralyzed', 'Confused'].includes(condition)) {
     card.statusConditions = card.statusConditions.filter(c => !['Asleep', 'Paralyzed', 'Confused'].includes(c));

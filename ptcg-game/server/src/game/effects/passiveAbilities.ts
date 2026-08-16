@@ -95,7 +95,7 @@ export function getPassiveDamageBonus(G: PtcgGameState, attackerIdx: 0 | 1, atta
  * "只要這隻寶可夢在備戰區，不會受到招式的傷害。" bundled into one of its attacks rather than as a
  * separate ability — real-rules Tera Pokémon are untouchable while Benched, regardless of which
  * specific Tera attack variant they have. */
-function hasTeraBenchedImmunity(card: GameCard): boolean {
+export function hasTeraBenchedImmunity(card: GameCard): boolean {
   return !!card.cardData.attacks?.some(a => a.text?.trim() === '只要這隻寶可夢在備戰區，不會受到招式的傷害。');
 }
 
@@ -113,6 +113,11 @@ export function isAttackLockedByTimedEffect(G: PtcgGameState, card: GameCard): b
 }
 export function isRetreatLockedByTimedEffect(G: PtcgGameState, card: GameCard): boolean {
   return hasTimedEffect(G, card, 'cantRetreat');
+}
+/** "在下個對手的回合，這隻寶可夢的弱點全部消除" — checked on the DEFENDER (the Pokémon that set
+ * this on itself, now being attacked on the opponent's next turn). */
+export function isWeaknessRemovedByTimedEffect(G: PtcgGameState, card: GameCard): boolean {
+  return !!card.timedEffects?.some(e => e.kind === 'weaknessRemoved' && e.appliesOnTurn === G.turn);
 }
 export function getOutgoingDamageReduction(G: PtcgGameState, attacker: GameCard): number {
   return getTimedEffectAmount(G, attacker, 'outgoingDamageReduction') - getTimedEffectAmount(G, attacker, 'outgoingDamageBoost');
@@ -261,6 +266,15 @@ export function isItemAndToolPlayBlocked(G: PtcgGameState, playerIndex: 0 | 1): 
 export function isItemPlayBlocked(G: PtcgGameState, playerIndex: 0 | 1): boolean {
   const oppActive = G.players[(1 - playerIndex) as 0 | 1].active;
   return !!oppActive && hasAbility(G, oppActive, '威迫目光');
+}
+
+/** ACE消弭: while its holder (anywhere on the opponent's field, not just Active — the printed
+ * text doesn't restrict to Active) has a Pokémon Tool attached, `playerIndex` can't play an ACE
+ * SPEC card from hand (ACE SPEC status is tracked via TCGdex's `rarity: 'ACE'`, the same marker
+ * client/src/stores/cardStore.ts's `ace-spec` tag uses). */
+export function isAceSpecPlayBlocked(G: PtcgGameState, playerIndex: 0 | 1): boolean {
+  const opponent = G.players[(1 - playerIndex) as 0 | 1];
+  return [opponent.active, ...opponent.bench].some(c => c !== null && !!c.attachedTool && hasAbility(G, c, 'ACE消弭'));
 }
 
 /** 瞪眼效用: while its holder is the OPPONENT's Active Pokémon, `playerIndex` can't play any
@@ -570,4 +584,5 @@ export const PASSIVE_ABILITY_NAMES = new Set([
   '勝利聲援', '憤怒穴', '原始心得', '鐵壁硬殼', '威迫目光', '瞪眼效用', '熔岩地域', '揚沙', '啟動限制', '黑暗脈衝',
   '高密度盔甲', '棉花搬運', '不朽身軀', '尖刺盔甲', '垃圾洩氣', '甲殼刺', '鬥志戰吼', '複眼', '無限之影',
   '大將', '岩石宮殿', '大晴天', '森林秘道', '守護之鐘', '憨憨臉',
+  '濕氣', '反等離子', 'ACE消弭', '藏青浪濤', '皇帝之勢',
 ]);
