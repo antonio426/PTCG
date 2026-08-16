@@ -380,7 +380,7 @@ export function parseBaseNumber(damageField: string): number {
  * fell out of sync as new templates were added to the resolver but not back-ported here, which
  * made coverage tooling under-report cards whose attacks actually already worked in real games
  * (e.g. 超級沙奈朵ex's 盈溢祈願 — resolved correctly, but reported as uncovered). */
-const NEUTRAL_BOARD: AttackBoardContext = {
+export const NEUTRAL_BOARD: AttackBoardContext = {
   ownFieldPokemonCount: 0, ownToolCount: 0, selfDamageCounters: 0, opponentEnergyCount: 0,
   opponentDamageCounters: 0, ownBenchCount: 0, opponentBenchCount: 0, ownRemainingPrizes: 0,
   opponentRemainingPrizes: 0, defenderStatusConditionCount: 0, defenderIsBurned: false,
