@@ -1144,6 +1144,157 @@ export default function Battle() {
         </div>
       )}
 
+      {/* Fixed-position overlays for forced one-shot prompts (game over, device handoff,
+          choose-first, choose-active, draw). These must NOT be nested inside the board panel's
+          `backdrop-blur-sm` "Middle: Actions" wrapper further below — `backdrop-filter` makes
+          that wrapper the containing block AND stacking context for `position: fixed`
+          descendants, so a `z-50` Modal nested inside it only outranks siblings *within that
+          same wrapper*; a later, unrelated sibling elsewhere in the board (e.g. the Player-area
+          panel) still paints on top of the whole thing and silently eats every click. Keeping
+          these overlays as direct children of the top-level layout root sidesteps that trap
+          entirely — confirmed via a real click landing on the Player-area header div instead of
+          the "先攻" button before this was moved out. */}
+      {handoffPending && !isOver && (
+        <div className="fixed inset-0 z-[70] bg-slate-950 flex flex-col items-center justify-center gap-6">
+          <div className="text-6xl">🔄</div>
+          <p className="text-xl font-bold text-slate-100">請將裝置交給 玩家 {viewerIndex + 1}</p>
+          <p className="text-sm text-slate-400">為避免看到對方手牌，畫面已遮蔽</p>
+          <button
+            onClick={() => setHandoffPending(false)}
+            className="px-8 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition-colors"
+          >
+            我是玩家 {viewerIndex + 1}，繼續
+          </button>
+        </div>
+      )}
+      {isOver && (
+        <Modal maxWidthClassName="max-w-md">
+          <div className="flex flex-col items-center animate-result-pop">
+            <div className={`text-6xl mb-2 ${viewerWon ? 'animate-glow-pulse' : 'opacity-60 grayscale'}`}>
+              {viewerWon ? '🏆' : '💀'}
+            </div>
+            <p
+              className={`text-3xl font-black tracking-wide mb-1 ${
+                viewerWon
+                  ? 'bg-gradient-to-b from-yellow-200 to-yellow-500 bg-clip-text text-transparent drop-shadow-[0_2px_16px_rgba(250,204,21,0.45)]'
+                  : 'text-slate-400'
+              }`}
+            >
+              {bs.mode === 'local' ? `玩家 ${(bs.winner ?? 0) + 1} 獲勝！` : viewerWon ? '勝利！' : '戰敗'}
+            </p>
+            <p className="text-xs text-slate-500 mb-5">{(bs.winReason && winReasonLabels[bs.winReason]) || bs.winReason}</p>
+            <div className="flex items-center gap-8 mb-6">
+              <div className="flex flex-col items-center gap-1.5">
+                <span className="text-xs font-medium text-blue-300">{bs.mode === 'local' ? `玩家 ${viewerIndex + 1}` : '你'}</span>
+                <PrizeDisplay count={bs.player.prizes} label="" />
+                <span className="text-[10px] text-slate-500">已奪 {bs.player.prizes}/6</span>
+              </div>
+              <div className="w-px h-10 bg-emerald-900/60" />
+              <div className="flex flex-col items-center gap-1.5">
+                <span className="text-xs font-medium text-red-300">{bs.mode === 'local' ? `玩家 ${2 - viewerIndex}` : '對手'}</span>
+                <PrizeDisplay count={bs.opponent.prizes} label="" />
+                <span className="text-[10px] text-slate-500">已奪 {bs.opponent.prizes}/6</span>
+              </div>
+            </div>
+            <button
+              onClick={handleRetry}
+              className="px-8 py-2.5 bg-gradient-to-b from-emerald-500 to-emerald-700 text-white rounded-xl font-medium hover:from-emerald-400 hover:to-emerald-600 transition-colors shadow-lg shadow-emerald-950/50"
+            >
+              返回大廳
+            </button>
+            <button
+              onClick={() => handleRematch(false)}
+              className="mt-2 px-8 py-2.5 bg-gradient-to-b from-sky-500 to-sky-700 text-white rounded-xl font-medium hover:from-sky-400 hover:to-sky-600 transition-colors shadow-lg shadow-sky-950/50"
+            >
+              🔄 再來一場
+            </button>
+            <div className="flex items-center gap-2 mt-3">
+              <button
+                onClick={() => exportTurnLogAsText(bs.turnLog)}
+                className="px-3 py-1.5 text-xs bg-black/30 border border-emerald-800/60 text-emerald-300 rounded-lg hover:bg-black/50 transition-colors"
+              >
+                匯出紀錄 (.txt)
+              </button>
+              <button
+                onClick={() => exportTurnLogAsJson(bs.turnLog)}
+                className="px-3 py-1.5 text-xs bg-black/30 border border-emerald-800/60 text-emerald-300 rounded-lg hover:bg-black/50 transition-colors"
+              >
+                匯出紀錄 (.json)
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Coin-flip won by the player: real rules let the winner choose first or second. */}
+      {!isOver && bs.isPlayerTurn && bs.phase === 'choose_first' && (
+        <Modal maxWidthClassName="max-w-md">
+          <div className="flex flex-col items-center gap-4 text-center animate-result-pop">
+            <div className="text-5xl">🪙</div>
+            <p className="text-lg font-semibold text-white">你贏得擲硬幣！要先攻還是後攻？</p>
+            <p className="text-xs text-slate-400 -mt-3">先攻的第一回合不能攻擊、進化、使用支援者</p>
+            <div className="flex gap-4">
+              {battleState.legalMoves.filter(m => m.type === 'choose_first').map((m, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleSubmitMove(m)}
+                  disabled={loading}
+                  className="px-8 py-3 bg-gradient-to-b from-emerald-500 to-emerald-700 text-white rounded-xl font-bold text-lg hover:from-emerald-400 hover:to-emerald-600 transition-colors shadow-lg shadow-emerald-950/50 disabled:opacity-40"
+                >
+                  {m.payload?.goFirst ? '⚡ 先攻' : '🛡️ 後攻'}
+                </button>
+              ))}
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Opening hand is dealt; pick which Basic Pokémon starts as Active */}
+      {!isOver && bs.isPlayerTurn && bs.phase === 'choose_active' && (
+        <Modal maxWidthClassName="max-w-lg">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <p className="text-lg font-semibold text-white">請選擇一張基礎寶可夢作為你的出戰寶可夢</p>
+            <p className="text-xs text-slate-400 -mt-3">點擊下方卡片即可上場（其餘的基礎寶可夢之後可在主要階段放上備戰區）</p>
+            <div className="flex flex-wrap justify-center gap-3">
+              {battleState.legalMoves.filter(m => m.type === 'choose_active').map((m, i) => {
+                const cardData = bs.player.hand.find(c => c.id === m.payload?.cardId);
+                if (!cardData) return null;
+                return (
+                  <button
+                    key={i}
+                    onClick={() => handleSubmitMove(m)}
+                    disabled={loading}
+                    className="flex flex-col items-center gap-1 group animate-card-enter disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <div className="w-16 sm:w-20 aspect-[63/88] bg-slate-900 border-2 border-emerald-600/60 rounded-lg overflow-hidden ring-1 ring-inset ring-white/10 group-hover:border-emerald-400 group-hover:-translate-y-1 transition-all shadow-lg shadow-emerald-950/50">
+                      <img src={cardData.images.small} alt={cardData.name} onError={handleCardImgError} className="w-full h-full object-contain" />
+                    </div>
+                    <span className="text-xs text-slate-200 font-medium max-w-20 truncate">{cardData.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {!isOver && bs.isPlayerTurn && bs.phase === 'draw' && (
+        <Modal maxWidthClassName="max-w-xs">
+          <div className="flex items-center justify-center">
+            <button
+              onClick={() => {
+                const drawMove = quickActions.find(m => m.type === 'draw_card');
+                if (drawMove) handleSubmitMove(drawMove);
+              }}
+              disabled={loading}
+              className="px-8 py-4 bg-gradient-to-b from-emerald-500 to-emerald-700 text-white rounded-xl text-lg font-medium hover:from-emerald-400 hover:to-emerald-600 transition-colors shadow-lg shadow-emerald-950/50 ring-1 ring-inset ring-white/15 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              抽牌
+            </button>
+          </div>
+        </Modal>
+      )}
+
       {/* Left column: battlefield — one continuous felt board instead of stacked boxed panels */}
       <div className="flex-1 flex flex-col min-h-0 rounded-2xl overflow-hidden border border-emerald-900/60 shadow-2xl relative bg-[radial-gradient(ellipse_at_top,theme(colors.battle.felt.from)_0%,theme(colors.battle.felt.via)_55%,theme(colors.battle.felt.to)_100%)]">
         <div
@@ -1157,6 +1308,17 @@ export default function Battle() {
           className="absolute inset-0 pointer-events-none"
           style={{ background: 'radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.45) 100%)' }}
         />
+
+        {/* Inner scroll wrapper: the opponent/player rows are flex-shrink-0 (sized to their
+            board-slot content, never compressed) and the outer panel is clamped to exactly the
+            viewport height, so on shorter/medium screens the middle actions row (Main/Attack
+            phase's attack/retreat/end-turn buttons, hand cards) had nowhere left to go and
+            silently collapsed to ~0px — invisible and unclickable, not just cramped. Scrolling
+            this inner wrapper instead of clipping via the outer `overflow-hidden` means that
+            content degrades to "scroll to see it" instead of "doesn't exist"; kept separate from
+            the outer container so the felt gradient/vignette backgrounds above stay pinned
+            instead of scrolling away with the content. */}
+        <div className="relative flex-1 flex flex-col min-h-0 overflow-y-auto">
 
         {/* Top status bar: turn/phase + legal-action availability at a glance. `flex-wrap` is a
             safety net (this bar sits inside a board wrapper with `overflow-hidden`, so anything
@@ -1335,93 +1497,17 @@ export default function Battle() {
           </div>
         </div>
 
-        {/* Middle: Actions */}
-        <div className="relative bg-black/25 backdrop-blur-sm p-3 flex-1 min-h-0 flex flex-col">
+        {/* Middle: Actions. `min-h-[130px]` guarantees room for at least the quick-action button
+            row (attack/retreat/end-turn) even when the opponent/player rows above/below are at
+            their full flex-shrink-0 size — the inner scroll wrapper above absorbs whatever
+            overflow that reservation causes instead of this panel collapsing to ~0px again. */}
+        <div className="relative bg-black/25 backdrop-blur-sm p-3 flex-1 min-h-[130px] flex flex-col">
 
           {/* Error display */}
           {error && (
             <div className="mb-2 p-2 bg-red-900/50 border border-red-700 rounded text-red-300 text-xs">
               {error}
             </div>
-          )}
-
-          {/* Game over — a fixed-position Modal overlay rather than inline content in this
-              flex-1/min-h-0 panel: this panel's height is whatever's left after the opponent/
-              player board rows above/below it, which can be too short for this block's natural
-              height (icon + title + prize display + buttons). Inline, that overflow wasn't
-              clipped or scrollable, so it visually bled into the board rows above and below
-              instead of being contained. The Modal shell is viewport-fixed with its own
-              max-h/overflow-y-auto, so it's never squeezed by board layout. */}
-          {handoffPending && !isOver && (
-            <div className="fixed inset-0 z-[70] bg-slate-950 flex flex-col items-center justify-center gap-6">
-              <div className="text-6xl">🔄</div>
-              <p className="text-xl font-bold text-slate-100">請將裝置交給 玩家 {viewerIndex + 1}</p>
-              <p className="text-sm text-slate-400">為避免看到對方手牌，畫面已遮蔽</p>
-              <button
-                onClick={() => setHandoffPending(false)}
-                className="px-8 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition-colors"
-              >
-                我是玩家 {viewerIndex + 1}，繼續
-              </button>
-            </div>
-          )}
-          {isOver && (
-            <Modal maxWidthClassName="max-w-md">
-              <div className="flex flex-col items-center animate-result-pop">
-                <div className={`text-6xl mb-2 ${viewerWon ? 'animate-glow-pulse' : 'opacity-60 grayscale'}`}>
-                  {viewerWon ? '🏆' : '💀'}
-                </div>
-                <p
-                  className={`text-3xl font-black tracking-wide mb-1 ${
-                    viewerWon
-                      ? 'bg-gradient-to-b from-yellow-200 to-yellow-500 bg-clip-text text-transparent drop-shadow-[0_2px_16px_rgba(250,204,21,0.45)]'
-                      : 'text-slate-400'
-                  }`}
-                >
-                  {bs.mode === 'local' ? `玩家 ${(bs.winner ?? 0) + 1} 獲勝！` : viewerWon ? '勝利！' : '戰敗'}
-                </p>
-                <p className="text-xs text-slate-500 mb-5">{(bs.winReason && winReasonLabels[bs.winReason]) || bs.winReason}</p>
-                <div className="flex items-center gap-8 mb-6">
-                  <div className="flex flex-col items-center gap-1.5">
-                    <span className="text-xs font-medium text-blue-300">{bs.mode === 'local' ? `玩家 ${viewerIndex + 1}` : '你'}</span>
-                    <PrizeDisplay count={bs.player.prizes} label="" />
-                    <span className="text-[10px] text-slate-500">已奪 {bs.player.prizes}/6</span>
-                  </div>
-                  <div className="w-px h-10 bg-emerald-900/60" />
-                  <div className="flex flex-col items-center gap-1.5">
-                    <span className="text-xs font-medium text-red-300">{bs.mode === 'local' ? `玩家 ${2 - viewerIndex}` : '對手'}</span>
-                    <PrizeDisplay count={bs.opponent.prizes} label="" />
-                    <span className="text-[10px] text-slate-500">已奪 {bs.opponent.prizes}/6</span>
-                  </div>
-                </div>
-                <button
-                  onClick={handleRetry}
-                  className="px-8 py-2.5 bg-gradient-to-b from-emerald-500 to-emerald-700 text-white rounded-xl font-medium hover:from-emerald-400 hover:to-emerald-600 transition-colors shadow-lg shadow-emerald-950/50"
-                >
-                  返回大廳
-                </button>
-                <button
-                  onClick={() => handleRematch(false)}
-                  className="mt-2 px-8 py-2.5 bg-gradient-to-b from-sky-500 to-sky-700 text-white rounded-xl font-medium hover:from-sky-400 hover:to-sky-600 transition-colors shadow-lg shadow-sky-950/50"
-                >
-                  🔄 再來一場
-                </button>
-                <div className="flex items-center gap-2 mt-3">
-                  <button
-                    onClick={() => exportTurnLogAsText(bs.turnLog)}
-                    className="px-3 py-1.5 text-xs bg-black/30 border border-emerald-800/60 text-emerald-300 rounded-lg hover:bg-black/50 transition-colors"
-                  >
-                    匯出紀錄 (.txt)
-                  </button>
-                  <button
-                    onClick={() => exportTurnLogAsJson(bs.turnLog)}
-                    className="px-3 py-1.5 text-xs bg-black/30 border border-emerald-800/60 text-emerald-300 rounded-lg hover:bg-black/50 transition-colors"
-                  >
-                    匯出紀錄 (.json)
-                  </button>
-                </div>
-              </div>
-            </Modal>
           )}
 
           {/* Waiting for AI */}
@@ -1432,76 +1518,9 @@ export default function Battle() {
             </div>
           )}
 
-          {/* Player actions */}
-          {!isOver && bs.isPlayerTurn && (
+          {/* Player actions: Main / Attack phase */}
+          {!isOver && bs.isPlayerTurn && (bs.phase === 'main' || bs.phase === 'attack') && (
             <div className="flex-1 overflow-y-auto min-h-0">
-
-              {/* Choose-active phase: opening hand is dealt, pick which Basic Pokémon starts as Active */}
-              {/* Coin-flip won by the player: real rules let the winner choose first or second. */}
-              {bs.phase === 'choose_first' && (
-                <div className="flex flex-col items-center justify-center h-full gap-4 text-center px-4 animate-result-pop">
-                  <div className="text-5xl">🪙</div>
-                  <p className="text-lg font-semibold text-white">你贏得擲硬幣！要先攻還是後攻？</p>
-                  <p className="text-xs text-slate-400 -mt-3">先攻的第一回合不能攻擊、進化、使用支援者</p>
-                  <div className="flex gap-4">
-                    {battleState.legalMoves.filter(m => m.type === 'choose_first').map((m, i) => (
-                      <button
-                        key={i}
-                        onClick={() => handleSubmitMove(m)}
-                        disabled={loading}
-                        className="px-8 py-3 bg-gradient-to-b from-emerald-500 to-emerald-700 text-white rounded-xl font-bold text-lg hover:from-emerald-400 hover:to-emerald-600 transition-colors shadow-lg shadow-emerald-950/50 disabled:opacity-40"
-                      >
-                        {m.payload?.goFirst ? '⚡ 先攻' : '🛡️ 後攻'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {bs.phase === 'choose_active' && (
-                <div className="flex flex-col items-center justify-center h-full gap-4 text-center px-4">
-                  <p className="text-lg font-semibold text-white">請選擇一張基礎寶可夢作為你的出戰寶可夢</p>
-                  <p className="text-xs text-slate-400 -mt-3">點擊下方卡片即可上場（其餘的基礎寶可夢之後可在主要階段放上備戰區）</p>
-                  <div className="flex flex-wrap justify-center gap-3">
-                    {battleState.legalMoves.filter(m => m.type === 'choose_active').map((m, i) => {
-                      const cardData = bs.player.hand.find(c => c.id === m.payload?.cardId);
-                      if (!cardData) return null;
-                      return (
-                        <button
-                          key={i}
-                          onClick={() => handleSubmitMove(m)}
-                          disabled={loading}
-                          className="flex flex-col items-center gap-1 group animate-card-enter disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                          <div className="w-16 sm:w-20 aspect-[63/88] bg-slate-900 border-2 border-emerald-600/60 rounded-lg overflow-hidden ring-1 ring-inset ring-white/10 group-hover:border-emerald-400 group-hover:-translate-y-1 transition-all shadow-lg shadow-emerald-950/50">
-                            <img src={cardData.images.small} alt={cardData.name} onError={handleCardImgError} className="w-full h-full object-contain" />
-                          </div>
-                          <span className="text-xs text-slate-200 font-medium max-w-20 truncate">{cardData.name}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Draw phase */}
-              {bs.phase === 'draw' && (
-                <div className="flex items-center justify-center h-full">
-                  <button
-                    onClick={() => {
-                      const drawMove = quickActions.find(m => m.type === 'draw_card');
-                      if (drawMove) handleSubmitMove(drawMove);
-                    }}
-                    disabled={loading}
-                    className="px-8 py-4 bg-gradient-to-b from-emerald-500 to-emerald-700 text-white rounded-xl text-lg font-medium hover:from-emerald-400 hover:to-emerald-600 transition-colors shadow-lg shadow-emerald-950/50 ring-1 ring-inset ring-white/15 disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    抽牌
-                  </button>
-                </div>
-              )}
-
-              {/* Main / Attack phase */}
-              {(bs.phase === 'main' || bs.phase === 'attack') && (
                 <div className="space-y-2">
 
                   {/* Quick actions section */}
@@ -1646,7 +1665,6 @@ export default function Battle() {
                     <p className="text-slate-500 text-xs text-center py-8">沒有可行的行動</p>
                   )}
                 </div>
-              )}
             </div>
           )}
         </div>
@@ -1771,6 +1789,7 @@ export default function Battle() {
               })
             )}
           </div>
+        </div>
         </div>
       </div>
 
