@@ -1330,15 +1330,31 @@ const teraOrb: EffectHandler = {
   resume: hibikisAdventure.resume,
 };
 
-/** 寶可夢中心的姐姐: heal 30 damage from each of your own Pokémon. */
+/** 寶可夢中心的姐姐: heal 60 on ONE chosen own Pokémon and clear all its Special Conditions.
+ * (The Standard print SV-214 reads 「將自己的1隻寶可夢恢復「60」HP，特殊狀態也全部恢復。」 — an
+ * older print healed a flat amount across the whole team, which is what this used to implement.) */
 const pokemonCenterLady: EffectHandler = {
-  // healing an undamaged team is a no-op play
-  canPlay(ctx) { return allPokemon(ctx.G, ctx.playerIndex).some(c => c.damage > 0); },
+  // Worth playing for the status cure alone, so an undamaged-but-Confused team still qualifies.
+  canPlay(ctx) { return allPokemon(ctx.G, ctx.playerIndex).some(c => c.damage > 0 || c.statusConditions.length > 0); },
   start(ctx) {
-    for (const c of allPokemon(ctx.G, ctx.playerIndex)) healDamage(c, 30);
+    const targets = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.damage > 0 || c.statusConditions.length > 0);
+    if (targets.length === 0) return 'done';
+    return {
+      prompt: '寶可夢中心的姐姐：選擇要恢復 60 HP 並解除特殊狀態的寶可夢',
+      choiceType: 'select_pokemon',
+      count: 1,
+      options: targets.map(c => ({ id: c.id, label: `${c.cardData.name}（${c.damage} 傷害${c.statusConditions.length ? `、${c.statusConditions.join('/')}` : ''}）` })),
+      context: {},
+    };
+  },
+  resume(ctx, _context, selection) {
+    const target = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === selection[0]);
+    if (target) {
+      healDamage(target, 60);
+      target.statusConditions = [];
+    }
     return 'done';
   },
-  resume() { return 'done'; },
 };
 
 /** 青木的手法: discard entire hand, then search 1 Pokémon + 1 Supporter + 1 Basic Energy (up to 3 total) from deck to hand. */
