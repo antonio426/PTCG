@@ -177,6 +177,7 @@ const customerMagnet: EffectHandler = {
 /** 突然削退 (Sudden Setback-style): discard the top card of the opponent's deck. */
 const suddenSetback: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const opp = opponent(ctx.G, ctx.playerIndex);
     const card = opp.deck.pop();
     if (card) opp.discardPile.push(card);
@@ -188,6 +189,7 @@ const suddenSetback: EffectHandler = {
 /** 亂咬 (Wild Bite-style): place 2 damage counters each on up to 2 of the opponent's Pokémon. */
 const wildBite: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const opp = opponent(ctx.G, ctx.playerIndex);
     const targets = [opp.active, ...opp.bench].filter((c): c is GameCard => c !== null);
     if (targets.length === 0) return 'done';
@@ -356,11 +358,12 @@ function attachEnergyFromDiscardAbility(opts: {
 /** 降霜: discard 1 Water Energy from discard pile, attach to any own Pokémon. */
 const frostDown = attachEnergyFromDiscardAbility({ promptLabel: '降霜', maxCount: 1, energyType: 'Water' });
 
-/** 合金建造: discard up to 2 Metal Energy from discard pile, attach to an own Metal-type Pokémon. */
-const alloyBuild = attachEnergyFromDiscardAbility({
+/** 合金建造: discard up to 2 Metal Energy from discard pile, attach to an own Metal-type Pokémon.
+ * Wrapped rather than guarded inline because it's factory-built — see onlyOnEntry. */
+const alloyBuild = onlyOnEntry(attachEnergyFromDiscardAbility({
   promptLabel: '合金建造', maxCount: 2, energyType: 'Metal',
   targetFilter: (t) => (t.cardData.types || []).includes('Metal'),
-});
+}));
 
 /** 太陽能量: discard 1 Psychic Energy from discard pile, attach to own "月石" if in play. */
 const solarEnergy = attachEnergyFromDiscardAbility({
@@ -429,6 +432,7 @@ const festivalDrum: EffectHandler = {
 /** 迅速游標: swap this (benched) Pokémon into Active, then optionally move any attached energy from any own Pokémon onto it. */
 const rapidCursor: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const p = player(ctx.G, ctx.playerIndex);
     const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
     if (!self || !p.active || p.active.id === self.id) return 'done';
@@ -550,6 +554,7 @@ const ripenCharge: EffectHandler = {
 /** 經驗法則: attach up to 2 Basic Fighting Energy from hand to THIS Pokémon (self only, no target choice). */
 const ruleOfExperience: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const p = player(ctx.G, ctx.playerIndex);
     const options = p.hand.filter(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes('Fighting'));
     if (options.length === 0) return 'done';
@@ -750,6 +755,7 @@ const flameDance: EffectHandler = {
 /** 搜尋寶石: on evolve, search deck for up to 2 Trainer cards to hand. (The printed "own Tera Pokémon in play" gate can't be checked — see 玻璃喇叭 in trainers.ts for the same documented simplification.) */
 const gemSearch: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const p = player(ctx.G, ctx.playerIndex);
     const options = p.deck.filter(c => c.cardData.supertype === 'Trainer');
     if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
@@ -806,6 +812,7 @@ const dominationChain: EffectHandler = {
 /** 精神抽出: on evolve, draw 3. */
 const mentalExtraction: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     if (player(ctx.G, ctx.playerIndex).deck.length === 0) return 'done';
     drawCards(ctx.G, ctx.playerIndex, 3);
     return 'done';
@@ -875,6 +882,7 @@ const mammothCarry: EffectHandler = {
 /** 邀請眨眼: on evolve, look at the opponent's hand and place every Basic Pokémon card found onto their Bench. */
 const invitingWink: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const opp = opponent(ctx.G, ctx.playerIndex);
     const movable = opp.hand.filter(c => c.cardData.supertype === 'Pokémon' && c.cardData.subtypes.includes('Basic'));
     for (const card of movable) {
@@ -892,6 +900,7 @@ const invitingWink: EffectHandler = {
 /** 飽腹時間: on evolve, fully heal every own evolved Pokémon, then discard all Energy attached to each healed Pokémon. */
 const bellyfulTime: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     for (const c of allPokemon(ctx.G, ctx.playerIndex)) {
       if (!hasEvolvesFrom(c.cardData)) continue;
       c.damage = 0;
@@ -941,6 +950,7 @@ const metalMaker: EffectHandler = {
 /** 暗中咬住: on evolve, place 2 damage counters on 1 opponent Pokémon. */
 const stealthBite: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const opp = opponent(ctx.G, ctx.playerIndex);
     const targets = [opp.active, ...opp.bench].filter((c): c is GameCard => c !== null);
     if (targets.length === 0) return 'done';
@@ -1158,6 +1168,7 @@ const metalSignal: EffectHandler = {
 /** 繁星花紋: on evolve, force-switch 1 opponent Benched Pokémon with 90 or less remaining HP into Active. */
 const starryPattern: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const opp = opponent(ctx.G, ctx.playerIndex);
     const targets = opp.bench.filter((c): c is GameCard => {
       if (!c) return false;
@@ -1183,6 +1194,7 @@ const starryPattern: EffectHandler = {
 /** 柔柔治癒: on evolve, fully heal the own Active Grass Pokémon, then discard all Energy attached to it. */
 const gentleHealing: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const p = player(ctx.G, ctx.playerIndex);
     if (p.active && (p.active.cardData.types || []).includes('Grass')) {
       p.active.damage = 0;
@@ -1318,6 +1330,7 @@ const skyCarry: EffectHandler = {
  * doesn't cleanly support). On evolve: discard the opponent's top 2 deck cards. */
 const sandWingbeat: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const opp = opponent(ctx.G, ctx.playerIndex);
     for (let i = 0; i < 2 && opp.deck.length > 0; i++) opp.discardPile.push(opp.deck.pop()!);
     return 'done';
@@ -1433,6 +1446,7 @@ const enticingLure: EffectHandler = {
  * not an attach), then reshuffle. */
 const franticDig: EffectHandler = {
   start(ctx) {
+    if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const p = player(ctx.G, ctx.playerIndex);
     const options = p.deck.filter(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes('Fighting'));
     if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
@@ -1517,6 +1531,11 @@ const rocketBrainpower: EffectHandler = {
  * 殺手鐧捕捉 (one of these) firing on turns 1, 3, and 5 of the same game. */
 function playedOrEvolvedThisTurn(ctx: EffectContext): boolean {
   return player(ctx.G, ctx.playerIndex).pokemonPlayedThisTurn.includes(ctx.sourceCardId);
+}
+
+/** Same gate as above, for factory-built entries where it can't be the first line of start(). */
+function onlyOnEntry(h: EffectHandler): EffectHandler {
+  return { ...h, start: (ctx) => (playedOrEvolvedThisTurn(ctx) ? h.start(ctx) : 'done') };
 }
 
 /** 尖刺纏身: real trigger is "on evolving via this card from hand" — simplified to a regular
