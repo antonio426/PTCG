@@ -1,6 +1,6 @@
 import { GameCard } from '@ptcg/shared';
 import { PtcgGameState } from '../GameState';
-import { handleKo } from '../damage';
+import { handleKo, resetCardForReentry } from '../damage';
 import { player, opponent, allPokemon, shuffleDeck } from './types';
 
 /** Draw up to `count` cards; returns how many were actually drawn (deck may run out). */
@@ -97,6 +97,11 @@ export function moveDiscardCardToHand(G: PtcgGameState, idx: 0 | 1, cardId: stri
   const i = p.discardPile.findIndex(c => c.id === cardId);
   if (i === -1) return null;
   const [card] = p.discardPile.splice(i, 1);
+  // A KO'd Pokémon sits in the discard pile still carrying its old damage/energy/tool/status
+  // (handleKo's normal-KO branch bundles them along rather than unpacking each into its own
+  // discard entry) — without this reset, retrieving it back to hand and replaying it puts a
+  // Pokémon with pre-existing lethal damage into play with nothing left to trigger a KO check.
+  resetCardForReentry(card);
   p.hand.push(card);
   return card;
 }

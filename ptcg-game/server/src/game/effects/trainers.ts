@@ -3,7 +3,7 @@ import { EffectContext, EffectHandler, EffectStep, allPokemon, normalizeCardName
 import { applyStatusCondition, discardAttachedEnergy, discardFromHand, drawCards, drawUpTo, flipCoin, hasNoRuleBox, healDamage, moveDiscardCardToHand } from './primitives';
 import { clearStatusConditionsOnLeaveActive } from '../statusConditions';
 import { isEnergyDiscardProtected } from './passiveAbilities';
-import { handleKo, stackAsPreEvolution, flushPreEvolutionsToDiscard } from '../damage';
+import { handleKo, stackAsPreEvolution, flushPreEvolutionsToDiscard, resetCardForReentry } from '../damage';
 import { hasEvolvesFrom, evolvesFromMatches, inferEvolvesFromSpecies, chainTracesBackTo } from '../evolutionChains';
 
 function deckOptions(deck: GameCard[], filter: (c: GameCard) => boolean): { id: string; label: string }[] {
@@ -198,7 +198,11 @@ const nightStretcher: EffectHandler = {
   resume(ctx, _context, selection) {
     const p = player(ctx.G, ctx.playerIndex);
     const i = p.discardPile.findIndex(c => c.id === selection[0]);
-    if (i >= 0) p.hand.push(p.discardPile.splice(i, 1)[0]);
+    if (i >= 0) {
+      const card = p.discardPile.splice(i, 1)[0];
+      resetCardForReentry(card);
+      p.hand.push(card);
+    }
     return 'done';
   },
 };
@@ -970,7 +974,11 @@ const holyAsh: EffectHandler = {
     const p = player(ctx.G, ctx.playerIndex);
     for (const id of selection) {
       const i = p.discardPile.findIndex(c => c.id === id);
-      if (i >= 0) p.deck.push(p.discardPile.splice(i, 1)[0]);
+      if (i >= 0) {
+        const card = p.discardPile.splice(i, 1)[0];
+        resetCardForReentry(card);
+        p.deck.push(card);
+      }
     }
     shuffleDeck(p.deck);
     return 'done';
@@ -1621,7 +1629,11 @@ const harvestNet: EffectHandler = {
     const p = player(ctx.G, ctx.playerIndex);
     for (const id of selection) {
       const i = p.discardPile.findIndex(c => c.id === id);
-      if (i >= 0) p.deck.push(p.discardPile.splice(i, 1)[0]);
+      if (i >= 0) {
+        const card = p.discardPile.splice(i, 1)[0];
+        resetCardForReentry(card);
+        p.deck.push(card);
+      }
     }
     shuffleDeck(p.deck);
     return 'done';

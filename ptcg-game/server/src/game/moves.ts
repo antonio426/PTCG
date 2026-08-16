@@ -2,7 +2,7 @@ import { DamageDetail, GameCard } from '@ptcg/shared';
 import { PtcgGameState, PendingChoice } from './GameState';
 import { canPlayPokemon, canEvolve, canAttachEnergy, canRetreat, canAttack, effectiveRetreatCost, FIRST_TURN_SUPPORTER_EXCEPTIONS } from './validation';
 import { clearStatusConditionsOnLeaveActive } from './statusConditions';
-import { calculateDamageBreakdown, effectiveMaxHp, flushPreEvolutionsToDiscard, handleKo, prizesForKo, promoteActiveIfNeeded, stackAsPreEvolution } from './damage';
+import { calculateDamageBreakdown, effectiveMaxHp, flushPreEvolutionsToDiscard, handleKo, prizesForKo, promoteActiveIfNeeded, resetCardForReentry, stackAsPreEvolution } from './damage';
 import { areAbilitiesNegated, getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasCoinFlipAttackMissDebuff, hasPassiveAbilityNamed, hasTeraBenchedImmunity, isRetreatBlockedByOpponent, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat, shouldDiscardAttackerEnergy } from './effects/passiveAbilities';
 import { isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
@@ -1223,7 +1223,11 @@ export const moves = {
           while (remaining > 0 && matches.length > 0) {
             const pick = matches.splice(Math.floor(Math.random() * matches.length), 1)[0];
             const i = player.discardPile.findIndex(c => c.id === pick.id);
-            if (i >= 0) player.hand.push(player.discardPile.splice(i, 1)[0]);
+            if (i >= 0) {
+              const card = player.discardPile.splice(i, 1)[0];
+              resetCardForReentry(card);
+              player.hand.push(card);
+            }
             remaining--;
           }
         }
@@ -1293,7 +1297,11 @@ export const moves = {
             if (slot === -1) break;
             const pick = matches.splice(Math.floor(Math.random() * matches.length), 1)[0];
             const i = player.discardPile.findIndex(c => c.id === pick.id);
-            if (i >= 0) player.bench[slot] = player.discardPile.splice(i, 1)[0];
+            if (i >= 0) {
+              const card = player.discardPile.splice(i, 1)[0];
+              resetCardForReentry(card);
+              player.bench[slot] = card;
+            }
             remaining--;
           }
         }

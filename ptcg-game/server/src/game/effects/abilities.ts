@@ -1,6 +1,6 @@
 import { EnergyType, GameCard } from '@ptcg/shared';
 import { EffectContext, EffectHandler, EffectStep, allPokemon, findOwnPokemon, opponent, player } from './types';
-import { handleKo, stackAsPreEvolution, flushPreEvolutionsToDiscard } from '../damage';
+import { handleKo, stackAsPreEvolution, flushPreEvolutionsToDiscard, resetCardForReentry } from '../damage';
 import { applyStatusCondition, discardAttachedEnergy, discardFromHand, drawCards, drawUpTo, flipCoin, flipCoins, moveDeckCardToBench, moveDeckCardToHand, shuffleDeck } from './primitives';
 import { clearStatusConditionsOnLeaveActive } from '../statusConditions';
 import { hasEvolvesFrom, evolvesFromMatches } from '../evolutionChains';
@@ -2201,7 +2201,11 @@ const gentleFin: EffectHandler = {
     const p = player(ctx.G, ctx.playerIndex);
     const slot = p.bench.findIndex(s => s === null);
     const i = p.discardPile.findIndex(c => c.id === selection[0]);
-    if (slot >= 0 && i >= 0) p.bench[slot] = p.discardPile.splice(i, 1)[0];
+    if (slot >= 0 && i >= 0) {
+      const card = p.discardPile.splice(i, 1)[0];
+      resetCardForReentry(card);
+      p.bench[slot] = card;
+    }
     return 'done';
   },
 };

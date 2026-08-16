@@ -56,6 +56,21 @@ export function flushPreEvolutionsToDiscard(card: GameCard, discardPile: GameCar
   }
 }
 
+/** Call whenever a card sitting in the discard pile re-enters hand/deck/bench (e.g. 夜間擔架,
+ * 聖灰, 溫柔鰭) — a KO'd Pokémon is pushed to the discard pile with its damage/energy/tool/status
+ * still attached (see handleKo's normal-KO branch, which bundles them along rather than
+ * unpacking each into its own discard entry), so without this reset a retrieved Pokémon carries
+ * its old lethal damage back into play with nothing left to re-trigger a KO check — it just sits
+ * on the board past 0 HP. Mirrors the reset handleKo already does for the 無限之影 return-to-hand
+ * case. Doesn't touch `preEvolutions`: any card in the discard pile already had that flushed by
+ * flushPreEvolutionsToDiscard before it got there. */
+export function resetCardForReentry(card: GameCard): void {
+  card.damage = 0;
+  card.statusConditions = [];
+  card.attachedEnergy = [];
+  card.attachedTool = null;
+}
+
 /**
  * Apply weakness (×2) / resistance (flat reduction) for `attacker`'s types onto a given base
  * damage number. `weaknessOverride`, when given, replaces `defender`'s printed weakness type
