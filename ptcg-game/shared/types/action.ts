@@ -11,7 +11,10 @@ export type GameActionType =
   | 'attack'
   | 'resolve_choice'
   | 'end_turn'
-  | 'forfeit';
+  | 'forfeit'
+  /** Voluntary, no cost: real rules let a "陳舊的○○化石" fossil's owner discard it from play
+   * (active or bench) on their own turn — see server/src/game/fossils.ts. */
+  | 'discard_fossil';
 
 export interface GameAction {
   type: GameActionType;

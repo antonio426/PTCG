@@ -9,6 +9,7 @@ import { getToolRetaliationDamage } from './effects/tools';
 import { applyStatusCondition, discardAttachedEnergy, drawCards, drawUpTo, shuffleDeck } from './effects/primitives';
 import { resolveGenericAttackEffect } from './effects/genericAttacks';
 import { inferEvolvesFromSpecies, evolvesFromMatches } from './evolutionChains';
+import { isFossilCard, fossilAsPokemon } from './fossils';
 import {
   EffectContext, EffectStep,
   hasTrainerEffect, canPlayTrainer, startTrainerEffect, resumeTrainerEffect,
@@ -184,6 +185,10 @@ export const moves = {
     if (cardIndex === -1) return;
 
     const card = player.hand.splice(cardIndex, 1)[0];
+    // Fossils are printed as Trainer/Item cards — swap in the Pokémon-shaped view (see
+    // fossils.ts) only for the copy that actually enters play; a card search/discard effect
+    // that later looks at this same card in the discard pile still sees the real Item card.
+    if (isFossilCard(card.cardData)) card.cardData = fossilAsPokemon(card.cardData);
     let pos = benchPosition;
     if (pos === undefined || pos < 0 || pos >= 5 || player.bench[pos] !== null) {
       pos = player.bench.findIndex(s => s === null);
@@ -535,6 +540,33 @@ export const moves = {
       G.phase = 'end';
       ctx.events?.endTurn?.();
     }
+  },
+
+  // Fossils ("陳舊的○○化石"): the printed rule lets the owner voluntarily discard one from play
+  // on their own turn, no cost, no prize awarded (this is NOT a KO — handleKo would wrongly
+  // hand the opponent a prize). Mirrors 寶可夢旋風回收機's own field-removal pattern in
+  // trainers.ts, but to the discard pile instead of hand.
+  discardFossil: ({ G }: { G: PtcgGameState; ctx: any }, cardId: string) => {
+    const player = G.players[G.currentPlayer];
+    const isActive = player.active?.id === cardId;
+    const benchIdx = isActive ? -1 : player.bench.findIndex(c => c?.id === cardId);
+    const target = isActive ? player.active : (benchIdx >= 0 ? player.bench[benchIdx] : null);
+    if (!target || !target.cardData.isFossil) return;
+    if (target.attachedTool) player.discardPile.push(target.attachedTool);
+    for (const energy of target.attachedEnergy.splice(0)) {
+      if (energy.cardData) {
+        player.discardPile.push({ id: energy.id, cardData: energy.cardData, owner: G.currentPlayer as 0 | 1, damage: 0, statusConditions: [], attachedEnergy: [] });
+      }
+    }
+    flushPreEvolutionsToDiscard(target, player.discardPile);
+    player.discardPile.push(target);
+    if (isActive) player.active = null; else player.bench[benchIdx] = null;
+    // Discarding the Active leaves the slot empty mid-turn — immediately promote from the
+    // Bench like a KO does, rather than leaving a gap until the next turn boundary. If the
+    // Bench is also empty, checkGameOver's usual "no Active and no Bench" loss condition
+    // takes it from here.
+    if (isActive) promoteActiveIfNeeded(G, G.currentPlayer as 0 | 1);
+    addLog(G, G.currentPlayer, 'discard_fossil', `Discarded ${target.cardData.name} from play`);
   },
 
   retreat: ({ G, ctx }: { G: PtcgGameState; ctx: any }, targetBenchPosition?: number, discardEnergyIds?: string[]) => {

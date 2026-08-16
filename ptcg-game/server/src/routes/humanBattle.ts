@@ -315,6 +315,7 @@ function executeGameAction(G: PtcgGameState, action: { type: string; payload?: R
     case 'use_ability': moves.useAbility({ G, ctx }, p.cardId as string); break;
     case 'resolve_choice': moves.resolveChoice({ G, ctx }, p.selection as string[]); break;
     case 'retreat': moves.retreat({ G, ctx }, p.targetBenchPosition as number, p.discardEnergyIds as string[]); break;
+    case 'discard_fossil': moves.discardFossil({ G, ctx }, p.cardId as string); break;
     case 'attack': moves.attack({ G, ctx }, p.attackIndex as number); break;
     case 'end_turn': moves.endTurn({ G, ctx }); break;
     case 'forfeit': moves.forfeit({ G, ctx }); break;

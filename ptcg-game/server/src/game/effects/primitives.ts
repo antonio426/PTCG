@@ -110,6 +110,9 @@ export function flipCoins(n: number): boolean[] {
 }
 
 export function applyStatusCondition(card: GameCard, condition: 'Asleep' | 'Burned' | 'Confused' | 'Paralyzed' | 'Poisoned'): void {
+  // Fossils ("陳舊的○○化石" played as a Basic Pokémon): real rules say they can never be
+  // affected by any Special Condition, unconditionally, from any source.
+  if (card.cardData.isFossil) return;
   // 不眠 / 憨憨臉: this Pokémon can never be made Asleep / Confused (respectively), from any source.
   const holderHasAbility = (name: string) => card.cardData.abilities?.some(a => a.text && a.name.replace(/^[‌​\s]+/, '').replace(/^\[特性\]\s*/, '').trim() === name);
   if (condition === 'Asleep' && holderHasAbility('不眠')) return;

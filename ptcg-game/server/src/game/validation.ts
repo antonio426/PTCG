@@ -6,6 +6,7 @@ import { getRetreatCostReduction, getColorlessCostReduction } from './effects/to
 import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatCostReduction, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, areAbilitiesNegated, isAttackLockedByTimedEffect, isItemAndToolPlayBlocked, isItemLockedByTimedEffect, isItemPlayBlocked, isNamedAttackLockedByTimedEffect, isRetreatLockedByTimedEffect } from './effects/passiveAbilities';
 import { normalizeAbilityName, normalizeCardName } from './effects/types';
 import { hasEvolvesFrom, evolvesFromMatches, inferEvolvesFromSpecies } from './evolutionChains';
+import { isFossilCard } from './fossils';
 
 /** All k-sized combinations of `items`, capped so huge hands can't explode the move list. */
 function combinations<T>(items: T[], k: number, cap = 40): T[][] {
@@ -108,8 +109,13 @@ export function canPlayPokemon(G: PtcgGameState, playerIndex: number, cardId: st
 
   const card = player.hand.find(c => c.id === cardId);
   if (!card) return false;
-  if (card.cardData.supertype !== 'Pokémon') return false;
-  if (!card.cardData.subtypes.includes('Basic')) return false;
+  // Fossils ("陳舊的○○化石") are printed as Trainer/Item cards but real rules let them be
+  // played straight to the bench as a Basic Pokémon instead — see fossils.ts.
+  const isFossil = isFossilCard(card.cardData);
+  if (!isFossil) {
+    if (card.cardData.supertype !== 'Pokémon') return false;
+    if (!card.cardData.subtypes.includes('Basic')) return false;
+  }
 
   const benchCount = player.bench.filter(s => s !== null).length;
   if (benchCount >= 5) return false;
@@ -184,6 +190,9 @@ export function canRetreat(G: PtcgGameState, playerIndex: number): boolean {
   if (player.retreatedThisTurn) return false;
   if (!player.bench.some(s => s !== null)) return false;
   if (player.active.statusConditions.includes('Asleep') || player.active.statusConditions.includes('Paralyzed')) return false;
+  // Fossils ("陳舊的○○化石" played as a Basic Pokémon): real rules say they can never retreat,
+  // regardless of retreat cost (which is 0 for them, so the cost check below wouldn't catch it).
+  if (player.active.cardData.isFossil) return false;
   if (isRetreatLockedByTimedEffect(G, player.active)) return false;
   // 霍米加的演奏: Poisoned Pokémon (including newly-poisoned ones) can't retreat this turn.
   if (player.active.statusConditions.includes('Poisoned') && player.poisonedCantRetreatUntilTurn === G.turn) return false;
@@ -297,7 +306,7 @@ export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalActio
 
   if (G.phase === 'main') {
     for (const card of player.hand) {
-      if (card.cardData.supertype === 'Pokémon' && canPlayPokemon(G, playerIndex, card.id)) {
+      if ((card.cardData.supertype === 'Pokémon' || isFossilCard(card.cardData)) && canPlayPokemon(G, playerIndex, card.id)) {
         legalMoves.push({
           type: 'play_pokemon',
           description: `Play ${card.cardData.name} to bench`,
@@ -331,7 +340,11 @@ export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalActio
         }
       }
 
-      if (card.cardData.supertype === 'Trainer') {
+      // Fossils are printed as Trainer/Item cards but their ONLY legal play is "as a Basic
+      // Pokémon" (offered above via canPlayPokemon) — they have no trainerEffects registration
+      // (nothing for them to search/discard/draw for), so falling through to the generic
+      // play_trainer path below would crash startTrainerEffect on a missing handler.
+      if (card.cardData.supertype === 'Trainer' && !isFossilCard(card.cardData)) {
         const isSupporter = card.cardData.subtypes.includes('Supporter');
         const blockedFirstTurn = isSupporter && isFirstTurnOfGame(G) && !FIRST_TURN_SUPPORTER_EXCEPTIONS.has(card.cardData.name);
         const blockedAlreadyPlayed = isSupporter && player.supporterPlayedThisTurn;
@@ -364,6 +377,16 @@ export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalActio
         // show the true, post-reduction cost (e.g. 氣球) as energy icons without duplicating
         // the reduction math client-side.
         payload: { retreatCost: effectiveRetreatCost(G, player.active) },
+      });
+    }
+
+    // Fossils ("陳舊的○○化石"): voluntary, no-cost discard from play on the owner's own turn —
+    // offered for every one currently in play (Active or Bench), independent of retreat/KO.
+    for (const fossil of [player.active, ...player.bench].filter((c): c is GameCard => c !== null && !!c.cardData.isFossil)) {
+      legalMoves.push({
+        type: 'discard_fossil',
+        description: `Discard ${fossil.cardData.name} from play`,
+        payload: { cardId: fossil.id },
       });
     }
 

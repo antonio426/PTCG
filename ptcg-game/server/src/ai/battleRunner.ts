@@ -124,6 +124,9 @@ function executeMove(G: PtcgGameState, action: { type: string; payload?: Record<
     case 'retreat':
       moves.retreat({ G, ctx }, payload.targetBenchPosition, payload.discardEnergyIds);
       break;
+    case 'discard_fossil':
+      moves.discardFossil({ G, ctx }, payload.cardId);
+      break;
     case 'attack':
       moves.attack({ G, ctx }, payload.attackIndex);
       break;

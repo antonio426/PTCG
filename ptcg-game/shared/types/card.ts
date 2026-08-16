@@ -73,6 +73,11 @@ export interface Card {
   images: CardImages;
   count?: number;
   quantity?: number;
+  /** Set only on the synthesized Pokémon-shaped view of a "陳舊的○○化石" Item card once it's in
+   * play (see server/src/game/fossils.ts) — real rules: immune to all Special Conditions and
+   * cannot retreat, regardless of the 0 retreat cost that view is given. The original card in
+   * hand/deck/discard is an ordinary Trainer/Item and never carries this flag. */
+  isFossil?: boolean;
 }
 
 export interface EnergyCard extends Card {
