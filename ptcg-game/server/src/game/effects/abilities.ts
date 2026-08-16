@@ -978,22 +978,34 @@ const happinessSwitch: EffectHandler = {
   },
 };
 
-/** 逃跑抽出: only while Active, once per turn: draw 3, then shuffle self (with attachments) back into the deck. */
+/** 逃跑抽出: once per turn, from Active OR Bench (printed text has no "只要在戰鬥場" restriction —
+ * unlike the previous version of this handler, which only worked from Active and therefore
+ * silently no-opped, still consuming the once-per-turn use, whenever this Pokémon was benched):
+ * draw 3, then shuffle self AND its attached Energy/Tool back into the deck. Printed text is
+ * "與附加的卡...放回自己的牌庫" (the attached cards go back into the DECK), not the discard pile —
+ * discardAttachedEnergy/pushing the Tool to discardPile would be the wrong destination. */
 const escapeDraw: EffectHandler = {
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
-    if (p.active?.id !== ctx.sourceCardId) return 'done';
+    const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
+    if (!self) return 'done';
     drawCards(ctx.G, ctx.playerIndex, 3);
-    const self = p.active;
-    for (const energy of self.attachedEnergy.splice(0)) discardAttachedEnergy(ctx.G, ctx.playerIndex, energy);
-    if (self.attachedTool) { p.discardPile.push(self.attachedTool); self.attachedTool = null; }
+    for (const energy of self.attachedEnergy.splice(0)) {
+      if (energy.cardData) p.deck.push({ id: energy.id, cardData: energy.cardData, owner: ctx.playerIndex, damage: 0, statusConditions: [], attachedEnergy: [] });
+    }
+    if (self.attachedTool) { p.deck.push(self.attachedTool); self.attachedTool = null; }
     self.damage = 0;
     self.statusConditions = [];
     flushPreEvolutionsToDiscard(self, p.discardPile);
     p.deck.push(self);
-    const promo = p.bench.find(c => c !== null);
-    p.active = promo || null;
-    if (promo) p.bench[p.bench.indexOf(promo)] = null;
+    if (p.active?.id === self.id) {
+      const promo = p.bench.find(c => c !== null);
+      p.active = promo || null;
+      if (promo) p.bench[p.bench.indexOf(promo)] = null;
+    } else {
+      const benchIdx = p.bench.findIndex(c => c?.id === self.id);
+      if (benchIdx >= 0) p.bench[benchIdx] = null;
+    }
     shuffleDeck(p.deck);
     return 'done';
   },
