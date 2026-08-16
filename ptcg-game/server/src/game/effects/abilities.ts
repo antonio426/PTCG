@@ -755,10 +755,18 @@ const gemSearch: EffectHandler = {
   },
 };
 
-/** 扭轉乾坤: once per turn, draw 3. (The printed "own Pokémon fainted last opponent-turn" gate can't be checked — same documented simplification as 不公印章 in trainers.ts.) */
+/** 扭轉乾坤: once per turn, but ONLY if this player had a Pokémon faint during the opponent's last
+ * turn — draw 3. Gated on PtcgPlayerState.lastPokemonFaintedTurn === G.turn - 1 (turns strictly
+ * alternate, so "the opponent's last turn" is always exactly one turn number behind this one). No
+ * `canPlay` exists for abilities (unlike Trainers) — getLegalMoves always offers a not-yet-used
+ * once-per-turn ability regardless of whether it'll do anything, and useAbility marks it used
+ * either way — so the gate lives here in start(), matching the same silent-no-op pattern already
+ * used elsewhere for conditional once-per-turn abilities. */
 const turnaround: EffectHandler = {
   start(ctx) {
-    if (player(ctx.G, ctx.playerIndex).deck.length === 0) return 'done';
+    const p = player(ctx.G, ctx.playerIndex);
+    if (p.lastPokemonFaintedTurn !== ctx.G.turn - 1) return 'done';
+    if (p.deck.length === 0) return 'done';
     drawCards(ctx.G, ctx.playerIndex, 3);
     return 'done';
   },
@@ -1239,14 +1247,16 @@ const heavyStepJump: EffectHandler = {
   resume() { return 'done'; },
 };
 
-/** 惡棍衝天: once per turn, from discard, 1 Basic Darkness Energy, attach to a Benched Darkness Pokémon, then place 2 damage counters on it. */
+/** 惡棍衝天: once per turn, from DECK (not discard — printed text is "從自己的牌庫選擇...並且重洗
+ * 牌庫"), 1 Basic Darkness Energy, attach to a Benched Darkness Pokémon, shuffle the deck, then
+ * place 2 damage counters on it. */
 const villainRise: EffectHandler = {
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     const targets = p.bench.filter((c): c is GameCard => c !== null && (c.cardData.types || []).includes('Darkness'));
-    const options = p.discardPile.filter(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes('Darkness'));
+    const options = p.deck.filter(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes('Darkness'));
     if (targets.length === 0 || options.length === 0) return 'done';
-    return { prompt: '惡棍衝天：從棄牌區選 1 張基本惡能量卡', choiceType: 'select_from_list', count: 1, options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: { step: 'pick_energy' } };
+    return { prompt: '惡棍衝天：從牌庫選 1 張基本惡能量卡', choiceType: 'select_from_list', count: 1, options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: { step: 'pick_energy' } };
   },
   resume(ctx, context, selection) {
     const p = player(ctx.G, ctx.playerIndex);
@@ -1256,12 +1266,13 @@ const villainRise: EffectHandler = {
     }
     const target = p.bench.find(c => c?.id === selection[0]);
     const energyId = context.energyId as string;
-    const i = p.discardPile.findIndex(c => c.id === energyId);
+    const i = p.deck.findIndex(c => c.id === energyId);
     if (target && i >= 0) {
-      const energy = p.discardPile.splice(i, 1)[0];
+      const energy = p.deck.splice(i, 1)[0];
       target.attachedEnergy.push({ id: energy.id, type: 'Darkness' });
       target.damage += 20;
     }
+    shuffleDeck(p.deck);
     return 'done';
   },
 };

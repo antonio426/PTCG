@@ -43,6 +43,12 @@ export interface PtcgPlayerState {
    * extra one, not currently modeled). Reset at this player's own turn-begin, same as the other
    * *ThisTurn flags. */
   retreatedThisTurn: boolean;
+  /** Turn number on which this player last had one of their own Pokémon Knocked Out (any cause —
+   * attack, Poison/Burn, self-damage, ability effect). Since turns strictly alternate, "did my
+   * Pokémon faint during the opponent's last turn" (e.g. 吉雉雞ex's 扭轉乾坤) is just this value
+   * === G.turn - 1 once it's this player's turn again. Never reset — a stale value from turns ago
+   * simply won't equal G.turn - 1, so it naturally stops mattering on its own. */
+  lastPokemonFaintedTurn: number | null;
   /** Instance id of whoever was Active when this turn began. Anything else standing in the
    * Active spot later in the turn therefore got there from the Bench this turn — which is what
    * "在這個回合，若從備戰區將這隻寶可夢放置於戰鬥場" keys off. Recorded once per turn instead

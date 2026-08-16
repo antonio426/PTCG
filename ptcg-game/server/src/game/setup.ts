@@ -78,6 +78,7 @@ function createPlayerState(deckCardIds: string[], cardData: Record<string, Card>
     itemLockedUntilTurn: null,
     poisonedCantRetreatUntilTurn: null,
     retreatedThisTurn: false,
+    lastPokemonFaintedTurn: null,
   };
 }
 

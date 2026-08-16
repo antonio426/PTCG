@@ -214,6 +214,11 @@ export function handleKo(G: PtcgGameState, koPlayerIndex: number, koCardId: stri
   const attackingPlayer = G.players[(1 - koPlayerIndex) as 0 | 1];
   let koCard: GameCard | undefined;
   const wasActive = koPlayer.active?.id === koCardId;
+  // Feeds "did my Pokémon faint during the opponent's last turn"-gated abilities (e.g. 吉雉雞ex's
+  // 扭轉乾坤) — recorded for every KO cause (attack, Poison/Burn, self-damage, ability), including
+  // the 無限之影 return-to-hand branch below, which is still a real KO (prizes awarded) even
+  // though the card doesn't end up in the discard pile.
+  koPlayer.lastPokemonFaintedTurn = G.turn;
 
   // 無限之影: when KO'd by an attack specifically, this card returns to hand (reset to a fresh
   // state) instead of the discard pile — its attachments still go to the discard pile as normal.
