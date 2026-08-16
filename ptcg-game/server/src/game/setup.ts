@@ -68,6 +68,7 @@ function createPlayerState(deckCardIds: string[], cardData: Record<string, Card>
     energyAttachedThisTurn: 0,
     basicPokemonPlayedThisTurn: 0,
     supporterPlayedThisTurn: false,
+    supporterNamesPlayedThisTurn: [],
     pokemonPlayedThisTurn: [],
     cardsPlayedThisTurn: 0,
     abilitiesUsedThisTurn: [],

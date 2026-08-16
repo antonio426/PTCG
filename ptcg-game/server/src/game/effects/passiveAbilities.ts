@@ -2,6 +2,7 @@ import { EnergyType, GameCard } from '@ptcg/shared';
 import { PtcgGameState } from '../GameState';
 import { normalizeAbilityName } from './types';
 import { hasEvolvesFrom } from '../evolutionChains';
+import { isStadiumActive } from './stadiums';
 
 /**
  * Most real Pokémon abilities are NOT "use once per turn" triggered effects (the shape
@@ -22,8 +23,12 @@ import { hasEvolvesFrom } from '../evolutionChains';
  * the exported areAbilitiesNegated.
  */
 export function areAbilitiesNegated(G: PtcgGameState, card: GameCard): boolean {
+  // 火箭隊的監視塔 Stadium: while in play, negates EVERY Colorless Pokémon's abilities on BOTH
+  // sides, Active or Benched — unlike 暗夜羽擊 below, not restricted to the Active spot.
+  if (isStadiumActive(G, '火箭隊的監視塔') && (card.cardData.types || []).includes('Colorless')) return true;
+
   const owner = card.owner;
-  if (G.players[owner].active?.id !== card.id) return false; // only the Active is ever negated
+  if (G.players[owner].active?.id !== card.id) return false; // only the Active is ever negated by 暗夜羽擊
   const oppActive = G.players[(1 - owner) as 0 | 1].active;
   // Direct .some() on purpose — going through hasAbility here would recurse.
   return !!oppActive?.cardData.abilities?.some(a => a.text && normalizeAbilityName(a.name) === '暗夜羽擊');
@@ -333,6 +338,8 @@ export function getPassiveRetreatWaiver(G: PtcgGameState, idx: 0 | 1, card: Game
     const oppIdx = (1 - idx) as 0 | 1;
     if (teamOf(G, oppIdx).some(c => c.cardData.subtypes.includes('V'))) return true;
   }
+  // N的城堡 Stadium: retreat cost fully waived for every "N的" Pokémon on BOTH sides.
+  if (isStadiumActive(G, 'N的城堡') && card.cardData.name.includes('N的')) return true;
   return false;
 }
 
@@ -389,14 +396,22 @@ export function hasPassiveColorlessCostWaiver(G: PtcgGameState, card: GameCard):
   return ['龍捲雲', '雷電雲', '土地雲', '眷戀雲'].every(n => names.has(n));
 }
 
-/** Extra max-HP `card` gains from its own passive ability. */
+/** Extra max-HP `card` gains from its own passive ability, plus any Stadium-wide HP modifier —
+ * these can legitimately stack (e.g. a Basic Pokémon with an HP-boosting ability while 激動競技場
+ * is also in play), so accumulated rather than early-returned like the single-ability checks
+ * above it in this file. */
 export function getPassiveMaxHpBonus(G: PtcgGameState, card: GameCard): number {
-  if (hasAbility(G, card, '腎上腺力量') && card.attachedEnergy.some(e => e.type === 'Darkness')) return 100;
-  if (hasAbility(G, card, '雜草魂')) return G.players[(1 - ownerIndexOf(G, card)) as 0 | 1].takenPrizes * 50;
-  if (hasAbility(G, card, '大師工藝')) return card.attachedEnergy.filter(e => e.type === 'Fighting').length * 40;
+  let bonus = 0;
+  if (hasAbility(G, card, '腎上腺力量') && card.attachedEnergy.some(e => e.type === 'Darkness')) bonus += 100;
+  if (hasAbility(G, card, '雜草魂')) bonus += G.players[(1 - ownerIndexOf(G, card)) as 0 | 1].takenPrizes * 50;
+  if (hasAbility(G, card, '大師工藝')) bonus += card.attachedEnergy.filter(e => e.type === 'Fighting').length * 40;
   // 生機森巴: +40 max HP for every own Pokémon, doesn't stack across multiple holders.
-  if (teamOf(G, ownerIndexOf(G, card)).some(c => hasAbility(G, c, '生機森巴'))) return 40;
-  return 0;
+  if (teamOf(G, ownerIndexOf(G, card)).some(c => hasAbility(G, c, '生機森巴'))) bonus += 40;
+  // 激動競技場 Stadium: +30 max HP for every Basic Pokémon on BOTH sides.
+  if (isStadiumActive(G, '激動競技場') && card.cardData.subtypes.includes('Basic')) bonus += 30;
+  // 引力山岳 Stadium: -30 max HP for every Stage 2 Pokémon on BOTH sides.
+  if (isStadiumActive(G, '引力山岳') && card.cardData.subtypes.includes('Stage 2')) bonus -= 30;
+  return bonus;
 }
 
 /** False if `card`'s passive ability makes its own attacks currently unusable (e.g. 力量抑制者's family-count gate). */

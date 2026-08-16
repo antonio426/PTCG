@@ -114,6 +114,7 @@ export const PtcgGame: Game<PtcgGameState> = {
           player.energyAttachedThisTurn = 0;
           player.basicPokemonPlayedThisTurn = 0;
           player.supporterPlayedThisTurn = false;
+          player.supporterNamesPlayedThisTurn = [];
           player.pokemonPlayedThisTurn = [];
           player.cardsPlayedThisTurn = 0;
           player.abilitiesUsedThisTurn = [];

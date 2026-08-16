@@ -4,7 +4,7 @@ import { canPlayPokemon, canEvolve, canAttachEnergy, canRetreat, canAttack, effe
 import { clearStatusConditionsOnLeaveActive } from './statusConditions';
 import { calculateDamageBreakdown, effectiveMaxHp, flushPreEvolutionsToDiscard, handleKo, prizesForKo, promoteActiveIfNeeded, resetCardForReentry, stackAsPreEvolution } from './damage';
 import { areAbilitiesNegated, getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasCoinFlipAttackMissDebuff, hasPassiveAbilityNamed, hasTeraBenchedImmunity, isRetreatBlockedByOpponent, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat, shouldDiscardAttackerEnergy } from './effects/passiveAbilities';
-import { isStadiumActive } from './effects/stadiums';
+import { benchDamageFromEffectsBlocked, isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
 import { applyStatusCondition, discardAttachedEnergy, drawCards, drawUpTo, shuffleDeck } from './effects/primitives';
 import { resolveGenericAttackEffect } from './effects/genericAttacks';
@@ -90,6 +90,17 @@ function performRetreat(G: PtcgGameState, targetBenchPosition: number | undefine
   if (shouldBurnOnOpponentRetreat(G, G.currentPlayer as 0 | 1) && player.active) {
     applyStatusCondition(player.active, 'Burned');
   }
+}
+
+/** Plain Active<->Bench swap, no retreat cost — same shape as playTrainer's 'Switch' handling.
+ * Used by 衝浪海灘 Stadium's own-turn action. */
+function performActiveBenchSwap(G: PtcgGameState, benchIdx: number): void {
+  const player = G.players[G.currentPlayer];
+  if (!player.active || !player.bench[benchIdx]) return;
+  const benchPokemon = player.bench[benchIdx];
+  clearStatusConditionsOnLeaveActive(player.active);
+  player.bench[benchIdx] = player.active;
+  player.active = benchPokemon;
 }
 
 /** After every human Active is placed: raise the next queued mulligan compensation (one at a
@@ -203,6 +214,14 @@ export const moves = {
     player.basicPokemonPlayedThisTurn++;
     player.pokemonPlayedThisTurn.push(card.id);
     addLog(G, G.currentPlayer, 'play_pokemon', `Played ${card.cardData.name} to bench`);
+
+    // 險惡廢墟 Stadium: every Basic Pokémon (except Darkness-type) placed on the Bench takes 2
+    // damage counters immediately, including a freshly-played one — so this can KO on arrival.
+    if (isStadiumActive(G, '險惡廢墟') && card.cardData.subtypes.includes('Basic') && !(card.cardData.types || []).includes('Darkness')) {
+      card.damage += 20;
+      const hp = effectiveMaxHp(G, card);
+      if (hp > 0 && card.damage >= hp) handleKo(G, G.currentPlayer, card.id);
+    }
   },
 
   evolvePokemon: ({ G, ctx }: { G: PtcgGameState; ctx: any }, cardId: string, targetId: string) => {
@@ -376,7 +395,10 @@ export const moves = {
 
     player.discardPile.push(trainerCard);
     player.cardsPlayedThisTurn++;
-    if (isSupporter) player.supporterPlayedThisTurn = true;
+    if (isSupporter) {
+      player.supporterPlayedThisTurn = true;
+      player.supporterNamesPlayedThisTurn.push(cardName);
+    }
     addLog(G, G.currentPlayer, 'play_trainer', `Played ${cardName}`);
   },
 
@@ -427,6 +449,88 @@ export const moves = {
         options: player.hand.map(c => ({ id: c.id, label: c.cardData.name })),
         context: {},
       };
+    }
+
+    if (effectKey === 'mystery_garden_draw') {
+      const energyOptions = player.hand.filter(c => c.cardData.supertype === 'Energy');
+      if (!isStadiumActive(G, '神秘花園') || energyOptions.length === 0) return;
+      G.pendingChoice = {
+        player: G.currentPlayer as 0 | 1,
+        effectKey: 'stadium:mystery_garden_draw',
+        prompt: '神秘花園：選擇要丟棄的 1 張能量卡',
+        choiceType: 'select_from_list',
+        count: 1,
+        options: energyOptions.map(c => ({ id: c.id, label: c.cardData.name })),
+        context: {},
+      };
+    }
+
+    if (effectKey === 'spike_town_gym_search') {
+      const options = player.deck.filter(c => c.cardData.supertype === 'Pokémon' && c.cardData.name.includes('瑪俐的'));
+      if (!isStadiumActive(G, '尖釘鎮道館') || options.length === 0) return;
+      G.pendingChoice = {
+        player: G.currentPlayer as 0 | 1,
+        effectKey: 'stadium:spike_town_gym_search',
+        prompt: '尖釘鎮道館：從牌庫選 1 張「瑪俐的寶可夢」加入手牌',
+        choiceType: 'select_from_list',
+        count: 1,
+        options: options.map(c => ({ id: c.id, label: c.cardData.name })),
+        context: {},
+      };
+    }
+
+    if (effectKey === 'night_school_topdeck') {
+      if (!isStadiumActive(G, '夜間學院') || player.hand.length === 0) return;
+      G.pendingChoice = {
+        player: G.currentPlayer as 0 | 1,
+        effectKey: 'stadium:night_school_topdeck',
+        prompt: '夜間學院：選擇 1 張手牌放回牌庫上方',
+        choiceType: 'select_hand_cards',
+        count: 1,
+        options: player.hand.map(c => ({ id: c.id, label: c.cardData.name })),
+        context: {},
+      };
+    }
+
+    if (effectKey === 'surf_beach_swap') {
+      if (!isStadiumActive(G, '衝浪海灘') || !player.active || !(player.active.cardData.types || []).includes('Water')) return;
+      const waterBench = player.bench
+        .map((c, i) => ({ c, i }))
+        .filter((x): x is { c: GameCard; i: number } => x.c !== null && (x.c.cardData.types || []).includes('Water'));
+      if (waterBench.length === 0) return;
+      if (waterBench.length === 1) {
+        performActiveBenchSwap(G, waterBench[0].i);
+        player.stadiumActionUsedThisTurn = true;
+        addLog(G, G.currentPlayer, 'resolve_choice', `衝浪海灘：與 ${waterBench[0].c.cardData.name} 互換`);
+        return;
+      }
+      G.pendingChoice = {
+        player: G.currentPlayer as 0 | 1,
+        effectKey: 'stadium:surf_beach_swap',
+        prompt: '衝浪海灘：選擇要與戰鬥場互換的【水】寶可夢',
+        choiceType: 'select_bench_pokemon',
+        count: 1,
+        options: waterBench.map(({ c }) => ({ id: c.id, label: c.cardData.name })),
+        context: {},
+      };
+    }
+
+    if (effectKey === 'rocket_factory_draw') {
+      if (!isStadiumActive(G, '火箭隊的工廠') || !player.supporterNamesPlayedThisTurn.some(n => n.includes('火箭隊'))) return;
+      drawCards(G, G.currentPlayer as 0 | 1, 2);
+      player.stadiumActionUsedThisTurn = true;
+      addLog(G, G.currentPlayer, 'resolve_choice', '火箭隊的工廠：抽 2 張卡');
+      return;
+    }
+
+    if (effectKey === 'resident_hall_heal') {
+      if (!isStadiumActive(G, '居民會館') || !player.supporterPlayedThisTurn) return;
+      for (const c of [player.active, ...player.bench]) {
+        if (c) c.damage = Math.max(0, c.damage - 10);
+      }
+      player.stadiumActionUsedThisTurn = true;
+      addLog(G, G.currentPlayer, 'resolve_choice', '居民會館：自己的所有寶可夢各恢復 10 HP');
+      return;
     }
   },
 
@@ -551,6 +655,50 @@ export const moves = {
       player.stadiumActionUsedThisTurn = true;
       G.pendingChoice = null;
       addLog(G, G.currentPlayer, 'resolve_choice', '稜鏡塔：丟棄2張手牌，抽1張卡');
+      return;
+    }
+
+    if (effectKey === 'stadium:mystery_garden_draw') {
+      const player = G.players[G.currentPlayer];
+      const idx = player.hand.findIndex(c => c.id === selection[0]);
+      if (idx >= 0) player.discardPile.push(player.hand.splice(idx, 1)[0]);
+      const ownPsychicCount = [player.active, ...player.bench].filter((c): c is GameCard => c !== null && (c.cardData.types || []).includes('Psychic')).length;
+      const toDraw = Math.max(0, ownPsychicCount - player.hand.length);
+      drawCards(G, G.currentPlayer as 0 | 1, toDraw);
+      player.stadiumActionUsedThisTurn = true;
+      G.pendingChoice = null;
+      addLog(G, G.currentPlayer, 'resolve_choice', `神秘花園：丟棄能量卡，抽${toDraw}張卡`);
+      return;
+    }
+
+    if (effectKey === 'stadium:spike_town_gym_search') {
+      const player = G.players[G.currentPlayer];
+      const idx = player.deck.findIndex(c => c.id === selection[0]);
+      if (idx >= 0) player.hand.push(player.deck.splice(idx, 1)[0]);
+      shuffleDeck(player.deck);
+      player.stadiumActionUsedThisTurn = true;
+      G.pendingChoice = null;
+      addLog(G, G.currentPlayer, 'resolve_choice', '尖釘鎮道館：搜尋「瑪俐的寶可夢」加入手牌');
+      return;
+    }
+
+    if (effectKey === 'stadium:night_school_topdeck') {
+      const player = G.players[G.currentPlayer];
+      const idx = player.hand.findIndex(c => c.id === selection[0]);
+      if (idx >= 0) player.deck.push(player.hand.splice(idx, 1)[0]);
+      player.stadiumActionUsedThisTurn = true;
+      G.pendingChoice = null;
+      addLog(G, G.currentPlayer, 'resolve_choice', '夜間學院：將手牌放回牌庫上方');
+      return;
+    }
+
+    if (effectKey === 'stadium:surf_beach_swap') {
+      const player = G.players[G.currentPlayer];
+      const benchIdx = player.bench.findIndex(c => c?.id === selection[0]);
+      if (benchIdx >= 0) performActiveBenchSwap(G, benchIdx);
+      player.stadiumActionUsedThisTurn = true;
+      G.pendingChoice = null;
+      addLog(G, G.currentPlayer, 'resolve_choice', '衝浪海灘：與備戰區的【水】寶可夢互換');
       return;
     }
 
@@ -1439,7 +1587,9 @@ export const moves = {
           shuffleDeck(player.deck);
         }
         if (genericOutcome.damageToEachDamagedOpponentAmount) {
-          for (const target of [opponent.active, ...opponent.bench].filter((c): c is GameCard => c !== null && c.damage > 0)) {
+          const benchBlocked = benchDamageFromEffectsBlocked(G);
+          const pool = benchBlocked ? [opponent.active] : [opponent.active, ...opponent.bench];
+          for (const target of pool.filter((c): c is GameCard => c !== null && c.damage > 0)) {
             target.damage += genericOutcome.damageToEachDamagedOpponentAmount * 10;
             const hp = effectiveMaxHp(G, target);
             if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id);
@@ -1451,7 +1601,8 @@ export const moves = {
         }
         if (genericOutcome.multiTargetOpponentFlatDamage) {
           const { count, amount } = genericOutcome.multiTargetOpponentFlatDamage;
-          const pool = [opponent.active, ...opponent.bench].filter((c): c is GameCard => c !== null);
+          const benchBlocked = benchDamageFromEffectsBlocked(G);
+          const pool = (benchBlocked ? [opponent.active] : [opponent.active, ...opponent.bench]).filter((c): c is GameCard => c !== null);
           const picked = [...pool].sort(() => Math.random() - 0.5).slice(0, count);
           for (const target of picked) {
             target.damage += amount;
@@ -1571,7 +1722,7 @@ export const moves = {
             discardAttachedEnergy(G, G.currentPlayer as 0 | 1, energy);
           }
         }
-        if (genericOutcome.opponentAllBenchSplashDamage) {
+        if (genericOutcome.opponentAllBenchSplashDamage && !benchDamageFromEffectsBlocked(G)) {
           for (const target of opponent.bench.filter((c): c is GameCard => c !== null)) {
             target.damage += genericOutcome.opponentAllBenchSplashDamage;
             const hp = effectiveMaxHp(G, target);

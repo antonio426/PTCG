@@ -160,7 +160,12 @@ export function canEvolve(G: PtcgGameState, playerIndex: number, cardId: string,
   const nameMatches = evolvesFromMatches(card.cardData, target.cardData.name);
   const effectiveEvolvesFrom = card.cardData.evolvesFrom || inferEvolvesFromSpecies(card.cardData.name);
   if (!nameMatches && !canEvolveViaPassive(G, target, effectiveEvolvesFrom)) return false;
-  if (!bypassTiming && player.pokemonPlayedThisTurn.includes(target.id)) return false;
+  // 活力森林 Stadium: a Grass Pokémon may evolve into a Grass Pokémon even the turn it was
+  // played — printed text explicitly still excludes the player's OWN first turn of the game, so
+  // this only bypasses the "just played" check above, never the isFirstTurnOfGame one.
+  const bypassJustPlayed = bypassTiming || (isStadiumActive(G, '活力森林')
+    && (target.cardData.types || []).includes('Grass') && (card.cardData.types || []).includes('Grass'));
+  if (!bypassJustPlayed && player.pokemonPlayedThisTurn.includes(target.id)) return false;
 
   return true;
 }
@@ -312,6 +317,49 @@ export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalActio
         type: 'use_stadium_action',
         description: '稜鏡塔：丟棄2張手牌，抽1張卡',
         payload: { effectKey: 'prism_tower_draw' },
+      });
+    }
+    if (isStadiumActive(G, '神秘花園') && player.hand.some(c => c.cardData.supertype === 'Energy')) {
+      legalMoves.push({
+        type: 'use_stadium_action',
+        description: '神秘花園：丟棄1張能量卡，抽卡至手牌與場上【超】寶可夢數量相同',
+        payload: { effectKey: 'mystery_garden_draw' },
+      });
+    }
+    if (isStadiumActive(G, '尖釘鎮道館') && player.deck.some(c => c.cardData.supertype === 'Pokémon' && c.cardData.name.includes('瑪俐的'))) {
+      legalMoves.push({
+        type: 'use_stadium_action',
+        description: '尖釘鎮道館：從牌庫選1張「瑪俐的寶可夢」加入手牌',
+        payload: { effectKey: 'spike_town_gym_search' },
+      });
+    }
+    if (isStadiumActive(G, '夜間學院') && player.hand.length >= 1) {
+      legalMoves.push({
+        type: 'use_stadium_action',
+        description: '夜間學院：選1張手牌放回牌庫上方',
+        payload: { effectKey: 'night_school_topdeck' },
+      });
+    }
+    if (isStadiumActive(G, '衝浪海灘') && player.active && (player.active.cardData.types || []).includes('Water')
+      && player.bench.some(c => c !== null && (c.cardData.types || []).includes('Water'))) {
+      legalMoves.push({
+        type: 'use_stadium_action',
+        description: '衝浪海灘：將戰鬥場的【水】寶可夢與備戰區的【水】寶可夢互換',
+        payload: { effectKey: 'surf_beach_swap' },
+      });
+    }
+    if (isStadiumActive(G, '火箭隊的工廠') && player.supporterNamesPlayedThisTurn.some(n => n.includes('火箭隊'))) {
+      legalMoves.push({
+        type: 'use_stadium_action',
+        description: '火箭隊的工廠：抽2張卡',
+        payload: { effectKey: 'rocket_factory_draw' },
+      });
+    }
+    if (isStadiumActive(G, '居民會館') && player.supporterPlayedThisTurn) {
+      legalMoves.push({
+        type: 'use_stadium_action',
+        description: '居民會館：自己的所有寶可夢各恢復10 HP',
+        payload: { effectKey: 'resident_hall_heal' },
       });
     }
   }

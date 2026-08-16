@@ -15,6 +15,9 @@ export interface PtcgPlayerState {
   energyAttachedThisTurn: number;
   basicPokemonPlayedThisTurn: number;
   supporterPlayedThisTurn: boolean;
+  /** Names of every Supporter card played this turn — 供 family-scoped "if you played a X-named
+   * Supporter this turn" conditions (e.g. 火箭隊的工廠 Stadium) that a plain boolean can't answer. */
+  supporterNamesPlayedThisTurn: string[];
   pokemonPlayedThisTurn: string[];
   cardsPlayedThisTurn: number;
   /** Instance ids of Pokémon whose once-per-turn ability has already been used this turn. */
