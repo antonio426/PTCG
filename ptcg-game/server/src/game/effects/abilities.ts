@@ -1,5 +1,5 @@
 import { EnergyType, GameCard } from '@ptcg/shared';
-import { EffectContext, EffectHandler, EffectStep, allPokemon, findOwnPokemon, opponent, player } from './types';
+import { EffectContext, EffectHandler, EffectStep, allPokemon, findOwnPokemon, normalizeAbilityName, opponent, player } from './types';
 import { handleKo, stackAsPreEvolution, flushPreEvolutionsToDiscard, resetCardForReentry } from '../damage';
 import { applyStatusCondition, discardAttachedEnergy, discardFromHand, drawCards, drawUpTo, flipCoin, flipCoins, moveDeckCardToBench, moveDeckCardToHand, shuffleDeck } from './primitives';
 import { clearStatusConditionsOnLeaveActive } from '../statusConditions';
@@ -45,7 +45,11 @@ const strategicCommand: EffectHandler = {
  */
 function curseBombCounters(ctx: EffectContext): number {
   const source = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
-  const text = source?.cardData.abilities?.find(a => a.name === '咒詛炸彈')?.text || '';
+  // Raw === here silently broke this for any print whose scraped ability name carries a stray
+  // leading zero-width character (e.g. 黑夜魔靈's SV6a-020/SV6a-070 prints) — the lookup missed,
+  // text stayed '', and the count fell back to 5 (50 damage) instead of that print's real 13
+  // (130 damage). Must go through normalizeAbilityName like every other name-keyed lookup.
+  const text = source?.cardData.abilities?.find(a => normalizeAbilityName(a.name) === '咒詛炸彈')?.text || '';
   const m = text.match(/放置\s*(\d+)\s*個傷害指示物/);
   return m ? parseInt(m[1], 10) : 5; // 5 is the lowest real printed value if text parsing ever fails
 }
