@@ -15,6 +15,7 @@ import { matchesGenericAttackTemplate } from '../game/effects/genericAttacks';
 import { hasToolEffect } from '../game/effects/tools';
 import { PASSIVE_ABILITY_NAMES } from '../game/effects/passiveAbilities';
 import { normalizeAbilityName, normalizeCardName } from '../game/effects/types';
+import { isFossilCard } from '../game/fossils';
 
 function isAbilityCovered(name: string): boolean {
   const n = normalizeAbilityName(name);
@@ -22,10 +23,26 @@ function isAbilityCovered(name: string): boolean {
 }
 
 const CARDS_CACHE = path.resolve(__dirname, '../../data/cards.json');
+const PRESET_DECKS = path.resolve(__dirname, '../../data/preset-decks.json');
+
+interface PresetDeck { id: string; name: string; entries: { cardId: string; count: number }[] }
+
+/** Card ids a player can actually meet in a real match here, i.e. anything the 56 preset decks
+ * reference. The Standard-wide numbers below are the honest denominator, but most of that pool
+ * is on cards nobody can draw in this game — the reachable subset is the actionable worklist.
+ * Computed in-memory rather than by re-reading the JSON output: those files go stale the moment
+ * a handler is added, and reading them back has already produced wrong gap counts twice. */
+function reachableCardIds(): Set<string> {
+  const decks = JSON.parse(fs.readFileSync(PRESET_DECKS, 'utf-8')) as PresetDeck[];
+  const ids = new Set<string>();
+  for (const d of decks) for (const e of d.entries) ids.add(e.cardId);
+  return ids;
+}
 
 function main() {
   const cards = (JSON.parse(fs.readFileSync(CARDS_CACHE, 'utf-8')).data as MapCard[])
     .filter(c => c.legalities?.standard === 'Legal');
+  const reachable = reachableCardIds();
 
   // ── Trainers ──
   // Pokémon Tool / Stadium cards get generic handling (attach-to-Pokémon / field-slot) even
@@ -37,7 +54,13 @@ function main() {
   const toolOrStadiumNames = new Set(
     trainers.filter(c => c.subtypes.includes('Pokémon Tool') || c.subtypes.includes('Stadium')).map(c => c.name)
   );
-  const uncoveredTrainers = trainerNames.filter(n => !(normalizeCardName(n) in trainerEffects) && !toolOrStadiumNames.has(n));
+  // "陳舊的○○化石" are fully implemented, but as an engine-level data transform (fossils.ts +
+  // playPokemon/discardFossil) rather than a trainerEffects entry — they deliberately never get
+  // one. Without this exclusion they'd be reported uncovered forever.
+  const fossilNames = new Set(trainers.filter(c => isFossilCard(c as never)).map(c => c.name));
+  const uncoveredTrainers = trainerNames.filter(
+    n => !(normalizeCardName(n) in trainerEffects) && !toolOrStadiumNames.has(n) && !fossilNames.has(n)
+  );
   const toolNamesWithCustomEffect = [...toolOrStadiumNames].filter(hasToolEffect);
 
   console.log('=== Trainer Cards ===');
@@ -59,6 +82,10 @@ function main() {
   for (const p of pokemon) {
     for (const a of p.attacks || []) {
       if (!a.text?.trim()) continue; // plain flat-damage attacks don't need a handler
+      // "太晶" is the Tera rule reminder text scraped into the attacks array as if it were an
+      // attack — same pseudo-attack class as the "[特性]" entries. It's already implemented as a
+      // passive (hasTeraBenchedImmunity, passiveAbilities.ts), so no attack handler should match it.
+      if (normalizeCardName(a.name) === '太晶') continue;
       const key = `${p.name}::${a.name}`;
       if (!attackKeys.has(key)) { attackKeys.add(key); attackKeysWithText.push(key); attackTextByKey[key] = a.text; }
     }
@@ -90,6 +117,36 @@ function main() {
 
   console.log('\n=== Top 30 uncovered abilities (by reprint count) ===');
   for (const [name, count] of topUncoveredAbilities) console.log(`  ${count}\t${name}`);
+
+  // ── Narrowed to what the preset decks can actually put on the table ──
+  const uncoveredTrainerSet = new Set(uncoveredTrainers.map(normalizeCardName));
+  const uncoveredAbilitySet = new Set(abilityNames.filter(n => !isAbilityCovered(n)).map(normalizeAbilityName));
+  const uncoveredAttackSet = new Set(attackKeysWithText.filter(k => !isAttackCovered(k)));
+
+  const hits = { trainers: new Map<string, string[]>(), abilities: new Map<string, string[]>(), attacks: new Map<string, string[]>() };
+  const add = (m: Map<string, string[]>, key: string, where: string) => {
+    const arr = m.get(key); if (arr) arr.push(where); else m.set(key, [where]);
+  };
+  for (const c of cards) {
+    if (!reachable.has(c.id)) continue;
+    if (c.supertype === 'Trainer' && uncoveredTrainerSet.has(normalizeCardName(c.name))) add(hits.trainers, normalizeCardName(c.name), c.id);
+    for (const a of c.abilities || []) {
+      if (uncoveredAbilitySet.has(normalizeAbilityName(a.name))) add(hits.abilities, normalizeAbilityName(a.name), `${c.id} ${c.name}`);
+    }
+    for (const a of c.attacks || []) {
+      if (uncoveredAttackSet.has(`${c.name}::${a.name}`)) add(hits.attacks, `${normalizeCardName(c.name)}::${normalizeCardName(a.name)}`, c.id);
+    }
+  }
+
+  console.log('\n=== Reachable in the 56 preset decks (the actionable worklist) ===');
+  for (const [label, m, total] of [
+    ['Trainers', hits.trainers, uncoveredTrainerSet.size],
+    ['Abilities', hits.abilities, uncoveredAbilitySet.size],
+    ['Attacks', hits.attacks, uncoveredAttackSet.size],
+  ] as const) {
+    console.log(`  ${label}: ${m.size} reachable / ${total} Standard-wide`);
+    for (const [name, where] of [...m].sort((a, b) => b[1].length - a[1].length)) console.log(`    ${name}\t[${where.join(', ')}]`);
+  }
 
   // ── Save the full lists for future work ──
   const outDir = path.resolve(__dirname, '../../../data-scraped');
