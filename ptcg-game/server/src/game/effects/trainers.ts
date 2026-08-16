@@ -3,7 +3,7 @@ import { EffectContext, EffectHandler, EffectStep, allPokemon, normalizeCardName
 import { applyStatusCondition, discardAttachedEnergy, discardFromHand, drawCards, drawUpTo, flipCoin, hasNoRuleBox, healDamage, moveDiscardCardToHand } from './primitives';
 import { clearStatusConditionsOnLeaveActive } from '../statusConditions';
 import { isEnergyDiscardProtected } from './passiveAbilities';
-import { handleKo, stackAsPreEvolution, flushPreEvolutionsToDiscard, resetCardForReentry } from '../damage';
+import { handleKo, stackAsPreEvolution, flushPreEvolutionsTo, flushPreEvolutionsToDiscard, resetCardForReentry } from '../damage';
 import { hasEvolvesFrom, evolvesFromMatches, inferEvolvesFromSpecies, chainTracesBackTo } from '../evolutionChains';
 
 function deckOptions(deck: GameCard[], filter: (c: GameCard) => boolean): { id: string; label: string }[] {
@@ -2133,11 +2133,16 @@ const pokemonCyclone: EffectHandler = {
     const target = isActive ? p.active : (benchIdx >= 0 ? p.bench[benchIdx] : null);
     if (!target) return 'done';
     if (target.attachedTool) p.hand.push(target.attachedTool);
-    // Attached Energy is represented on the Pokémon as {id,type} only, not a full Card object,
-    // so it can't be reconstructed back into hand — discarded instead (documented simplification).
-    // Only the top card returns to hand — any stacked pre-evolution history is discarded, not
-    // carried along as a hidden freebie.
-    flushPreEvolutionsToDiscard(target, p.discardPile);
+    // 「將那隻寶可夢與附加的卡，全部放回手牌」 — everything on the Pokémon follows it to hand.
+    // AttachedEnergy keeps the card it came from in `cardData`, so Energy can be rebuilt into a
+    // hand card (an older comment here claimed it couldn't and discarded it instead); only an
+    // entry missing `cardData` is unrecoverable, and those are dropped rather than guessed at.
+    for (const energy of target.attachedEnergy.splice(0)) {
+      if (energy.cardData) p.hand.push({ id: energy.id, cardData: energy.cardData, owner: ctx.playerIndex, damage: 0, statusConditions: [], attachedEnergy: [] });
+    }
+    // The lower Stages stacked underneath are "附加的卡" too, so a Stage 2 returns as its whole
+    // stack instead of leaving the Basic and Stage 1 behind in the discard pile.
+    flushPreEvolutionsTo(target, p.hand);
     p.hand.push({ ...target, damage: 0, statusConditions: [], attachedEnergy: [], attachedTool: null, preEvolutions: undefined });
     if (isActive) p.active = null; else p.bench[benchIdx] = null;
     return 'done';

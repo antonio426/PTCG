@@ -44,16 +44,27 @@ export function stackAsPreEvolution(newTop: GameCard, oldCard: GameCard): void {
   oldCard.preEvolutions = undefined;
 }
 
-/** Flushes `card`'s stacked pre-evolution history (see `stackAsPreEvolution`) into `discardPile`
- * — call this at every point a top card permanently leaves play into the discard pile (KO'd,
- * discarded by an effect), or bounces to hand/deck (in which case ONLY the top card moves; its
- * stacked history is lost/discarded same as real rules, never carried along). No-op if the card
- * never evolved (`preEvolutions` unset). */
-export function flushPreEvolutionsToDiscard(card: GameCard, discardPile: GameCard[]): void {
+/** Moves `card`'s stacked pre-evolution history (see `stackAsPreEvolution`) into `zone`, and
+ * detaches it from the card so the caller can move the top card separately. No-op if the card
+ * never evolved (`preEvolutions` unset).
+ *
+ * Which zone is correct is decided by the printed text of the effect doing the moving, NOT by
+ * where the top card is going — 「將這隻寶可夢與附加的卡，全部放回自己的牌庫」 counts the lower
+ * Stages stacked underneath as part of "附加的卡", so 土龍節節 takes 土龍弟弟 back into the deck
+ * with it. Pass the destination the text names. */
+export function flushPreEvolutionsTo(card: GameCard, zone: GameCard[]): void {
   if (card.preEvolutions) {
-    discardPile.push(...card.preEvolutions);
+    zone.push(...card.preEvolutions);
     card.preEvolutions = undefined;
   }
+}
+
+/** The discard-pile case of `flushPreEvolutionsTo` — call this wherever a top card permanently
+ * leaves play into the discard pile (KO'd, discarded by an effect). An effect that bounces the
+ * Pokémon to hand/deck usually wants `flushPreEvolutionsTo(card, hand|deck)` instead; read the
+ * card's printed text before assuming the stack is discarded. */
+export function flushPreEvolutionsToDiscard(card: GameCard, discardPile: GameCard[]): void {
+  flushPreEvolutionsTo(card, discardPile);
 }
 
 /** Call whenever a card sitting in the discard pile re-enters hand/deck/bench (e.g. 夜間擔架,

@@ -2,7 +2,7 @@ import { DamageDetail, GameCard } from '@ptcg/shared';
 import { PtcgGameState, PendingChoice } from './GameState';
 import { canPlayPokemon, canEvolve, canAttachEnergy, canRetreat, canAttack, effectiveRetreatCost, FIRST_TURN_SUPPORTER_EXCEPTIONS } from './validation';
 import { clearStatusConditionsOnLeaveActive } from './statusConditions';
-import { calculateDamageBreakdown, effectiveMaxHp, flushPreEvolutionsToDiscard, handleKo, prizesForKo, promoteActiveIfNeeded, resetCardForReentry, stackAsPreEvolution } from './damage';
+import { calculateDamageBreakdown, effectiveMaxHp, flushPreEvolutionsTo, flushPreEvolutionsToDiscard, handleKo, prizesForKo, promoteActiveIfNeeded, resetCardForReentry, stackAsPreEvolution } from './damage';
 import { areAbilitiesNegated, getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasCoinFlipAttackMissDebuff, hasPassiveAbilityNamed, hasTeraBenchedImmunity, isRetreatBlockedByOpponent, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat, shouldDiscardAttackerEnergy } from './effects/passiveAbilities';
 import { benchDamageFromEffectsBlocked, isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
@@ -1252,15 +1252,15 @@ export const moves = {
           G.activeStadium = null;
         }
         // 喵喵ex::夾尾巴逃跑 — the attacker itself bounces to hand after dealing damage. Only
-        // meaningful while it is still the Active (a KO from recoil already removed it), and the
-        // stacked pre-evolution history does NOT ride along into hand — same rule as handleKo's
-        // 無限之影 path, so reuse flushPreEvolutionsToDiscard rather than losing the stack.
+        // meaningful while it is still the Active (a KO from recoil already removed it). Printed
+        // text is 「將這隻寶可夢與附加的卡，全部放回手牌」, and "附加的卡" covers the lower Stages
+        // stacked underneath, so the whole stack goes to hand — not to the discard pile.
         if (genericOutcome.returnSelfAndAttachmentsToHand && player.active?.id === attacker.id) {
           for (const energy of attacker.attachedEnergy.splice(0)) {
             if (energy.cardData) player.hand.push({ id: energy.id, cardData: energy.cardData, owner: G.currentPlayer as 0 | 1, damage: 0, statusConditions: [], attachedEnergy: [] });
           }
           if (attacker.attachedTool) { player.hand.push(attacker.attachedTool); attacker.attachedTool = null; }
-          flushPreEvolutionsToDiscard(attacker, player.discardPile);
+          flushPreEvolutionsTo(attacker, player.hand);
           attacker.damage = 0;
           attacker.statusConditions = [];
           player.hand.push(attacker);
@@ -1722,7 +1722,10 @@ export const moves = {
             for (const energy of target.attachedEnergy.splice(0)) {
               if (energy.cardData) opponent.deck.push({ id: energy.id, cardData: energy.cardData, owner: (1 - G.currentPlayer) as 0 | 1, damage: 0, statusConditions: [], attachedEnergy: [] });
             }
-            flushPreEvolutionsToDiscard(target, opponent.discardPile);
+            // 「將那隻寶可夢與附加的卡，全部放回對手的牌庫」 (甜甜螢::慢芬香, 仙子伊布::奧密迴旋,
+            // 狡猾天狗::驅趕龍捲風…) — an evolved Bench target takes its lower Stages back into the
+            // deck with it, so a Stage 2 is not silently stripped down to a one-card return.
+            flushPreEvolutionsTo(target, opponent.deck);
             opponent.deck.push({ ...target, damage: 0, statusConditions: [], attachedEnergy: [], attachedTool: null, preEvolutions: undefined });
           }
           while (opponent.bench.length < 5) opponent.bench.push(null);

@@ -1,6 +1,6 @@
 import { EnergyType, GameCard } from '@ptcg/shared';
 import { EffectContext, EffectHandler, EffectStep, allPokemon, findOwnPokemon, normalizeAbilityName, opponent, player } from './types';
-import { handleKo, stackAsPreEvolution, flushPreEvolutionsToDiscard, resetCardForReentry } from '../damage';
+import { handleKo, stackAsPreEvolution, flushPreEvolutionsTo, flushPreEvolutionsToDiscard, resetCardForReentry } from '../damage';
 import { applyStatusCondition, discardAttachedEnergy, discardFromHand, drawCards, drawUpTo, flipCoin, flipCoins, moveDeckCardToBench, moveDeckCardToHand, shuffleDeck } from './primitives';
 import { clearStatusConditionsOnLeaveActive } from '../statusConditions';
 import { hasEvolvesFrom, evolvesFromMatches } from '../evolutionChains';
@@ -461,17 +461,23 @@ const rapidCursor: EffectHandler = {
   },
 };
 
-/** 瞬間移動者: must be Active; shuffle self (with attached cards) back into the deck, promote from bench if possible. */
+/** 瞬間移動者: must be Active; shuffle self (with attached cards) back into the deck, promote from
+ * bench if possible. Printed text is the same clause as 逃跑抽出 above —
+ * 「將這隻寶可夢與附加的卡，全部放回自己的牌庫並重洗」 — so the Energy, Tool and stacked lower
+ * Stages all follow the Pokémon into the DECK. This used to discard all three, which turned a
+ * free reset into a permanent loss of everything attached. */
 const teleporter: EffectHandler = {
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     if (p.active?.id !== ctx.sourceCardId) return 'done';
     const self = p.active;
-    for (const energy of self.attachedEnergy.splice(0)) discardAttachedEnergy(ctx.G, ctx.playerIndex, energy);
-    if (self.attachedTool) { p.discardPile.push(self.attachedTool); self.attachedTool = null; }
+    for (const energy of self.attachedEnergy.splice(0)) {
+      if (energy.cardData) p.deck.push({ id: energy.id, cardData: energy.cardData, owner: ctx.playerIndex, damage: 0, statusConditions: [], attachedEnergy: [] });
+    }
+    if (self.attachedTool) { p.deck.push(self.attachedTool); self.attachedTool = null; }
     self.damage = 0;
     self.statusConditions = [];
-    flushPreEvolutionsToDiscard(self, p.discardPile);
+    flushPreEvolutionsTo(self, p.deck);
     p.deck.push(self);
     const promo = p.bench.find(c => c !== null);
     p.active = promo || null;
@@ -1001,7 +1007,11 @@ const happinessSwitch: EffectHandler = {
  * silently no-opped, still consuming the once-per-turn use, whenever this Pokémon was benched):
  * draw 3, then shuffle self AND its attached Energy/Tool back into the deck. Printed text is
  * "與附加的卡...放回自己的牌庫" (the attached cards go back into the DECK), not the discard pile —
- * discardAttachedEnergy/pushing the Tool to discardPile would be the wrong destination. */
+ * discardAttachedEnergy/pushing the Tool to discardPile would be the wrong destination.
+ *
+ * "附加的卡" includes the lower Stage stacked underneath, so 土龍弟弟 is shuffled back in together
+ * with 土龍節節 rather than being discarded — flushPreEvolutionsToDiscard was sending it to the
+ * wrong zone, quietly costing the player the Basic every time the ability was used. */
 const escapeDraw: EffectHandler = {
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
@@ -1014,7 +1024,7 @@ const escapeDraw: EffectHandler = {
     if (self.attachedTool) { p.deck.push(self.attachedTool); self.attachedTool = null; }
     self.damage = 0;
     self.statusConditions = [];
-    flushPreEvolutionsToDiscard(self, p.discardPile);
+    flushPreEvolutionsTo(self, p.deck);
     p.deck.push(self);
     if (p.active?.id === self.id) {
       const promo = p.bench.find(c => c !== null);
