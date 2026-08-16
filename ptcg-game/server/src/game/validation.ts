@@ -7,6 +7,7 @@ import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPas
 import { normalizeAbilityName, normalizeCardName } from './effects/types';
 import { hasEvolvesFrom, evolvesFromMatches, inferEvolvesFromSpecies } from './evolutionChains';
 import { isFossilCard } from './fossils';
+import { isStadiumActive } from './effects/stadiums';
 
 /** All k-sized combinations of `items`, capped so huge hands can't explode the move list. */
 function combinations<T>(items: T[], k: number, cap = 40): T[][] {
@@ -297,6 +298,21 @@ export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalActio
           });
         }
       }
+    }
+  }
+
+  // 稜鏡塔-style once-per-own-turn Stadium actions — a field effect, not tied to any specific
+  // Pokémon/hand card, so it needs its own legal-move entry rather than piggybacking on
+  // use_ability/play_trainer. `effectKey` is a discriminator so future once-per-turn Stadiums
+  // (夜間學院, 神秘花園, 尖釘鎮道館, 化石採掘場, … — see stadiums.ts) can share this same move
+  // type instead of each inventing their own.
+  if (G.phase === 'main' && !player.stadiumActionUsedThisTurn) {
+    if (isStadiumActive(G, '稜鏡塔') && player.hand.length >= 2) {
+      legalMoves.push({
+        type: 'use_stadium_action',
+        description: '稜鏡塔：丟棄2張手牌，抽1張卡',
+        payload: { effectKey: 'prism_tower_draw' },
+      });
     }
   }
 

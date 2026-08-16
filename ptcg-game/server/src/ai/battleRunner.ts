@@ -79,6 +79,7 @@ function applyTurnBegin(G: PtcgGameState): void {
   player.bonusPrizeNextKo = 0;
   player.incomingDamageReduction = [];
   player.retreatedThisTurn = false;
+  player.stadiumActionUsedThisTurn = false;
 }
 
 function advanceTurn(G: PtcgGameState): void {
@@ -129,6 +130,9 @@ function executeMove(G: PtcgGameState, action: { type: string; payload?: Record<
       break;
     case 'attack':
       moves.attack({ G, ctx }, payload.attackIndex);
+      break;
+    case 'use_stadium_action':
+      moves.useStadiumAction({ G, ctx }, payload.effectKey);
       break;
     case 'end_turn':
       moves.endTurn({ G, ctx });

@@ -122,6 +122,7 @@ export const PtcgGame: Game<PtcgGameState> = {
           player.bonusPrizeNextKo = 0;
           player.incomingDamageReduction = [];
           player.retreatedThisTurn = false;
+          player.stadiumActionUsedThisTurn = false;
         },
       },
     },

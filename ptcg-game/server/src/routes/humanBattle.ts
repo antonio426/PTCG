@@ -295,6 +295,7 @@ function applyTurnBegin(G: PtcgGameState): void {
   player.bonusPrizeNextKo = 0;
   player.incomingDamageReduction = [];
   player.retreatedThisTurn = false;
+  player.stadiumActionUsedThisTurn = false;
 }
 
 function executeGameAction(G: PtcgGameState, action: { type: string; payload?: Record<string, any> }): void {
@@ -317,6 +318,7 @@ function executeGameAction(G: PtcgGameState, action: { type: string; payload?: R
     case 'retreat': moves.retreat({ G, ctx }, p.targetBenchPosition as number, p.discardEnergyIds as string[]); break;
     case 'discard_fossil': moves.discardFossil({ G, ctx }, p.cardId as string); break;
     case 'attack': moves.attack({ G, ctx }, p.attackIndex as number); break;
+    case 'use_stadium_action': moves.useStadiumAction({ G, ctx }, p.effectKey as string); break;
     case 'end_turn': moves.endTurn({ G, ctx }); break;
     case 'forfeit': moves.forfeit({ G, ctx }); break;
   }

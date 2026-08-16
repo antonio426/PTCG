@@ -406,6 +406,30 @@ export const moves = {
     addLog(G, G.currentPlayer, 'use_ability', `Used ability "${ability.name}" on ${source.cardData.name}`);
   },
 
+  /** Once-per-own-turn Stadium field actions (see validation.ts's getLegalMoves for the
+   * eligibility check this mirrors) — `effectKey` picks which Stadium's behavior to run. Opens a
+   * pendingChoice for whatever the player needs to pick; stadiumActionUsedThisTurn is set once
+   * resolveChoice actually finishes the effect, not here, same as how useAbility only marks
+   * abilitiesUsedThisTurn after a real effect (not a rejected/no-op attempt). */
+  useStadiumAction: ({ G }: { G: PtcgGameState; ctx: any }, effectKey: string) => {
+    if (G.phase !== 'main' || G.pendingChoice) return;
+    const player = G.players[G.currentPlayer];
+    if (player.stadiumActionUsedThisTurn) return;
+
+    if (effectKey === 'prism_tower_draw') {
+      if (!isStadiumActive(G, '稜鏡塔') || player.hand.length < 2) return;
+      G.pendingChoice = {
+        player: G.currentPlayer as 0 | 1,
+        effectKey: 'stadium:prism_tower_draw',
+        prompt: '稜鏡塔：選擇要丟棄的 2 張手牌',
+        choiceType: 'select_hand_cards',
+        count: 2,
+        options: player.hand.map(c => ({ id: c.id, label: c.cardData.name })),
+        context: {},
+      };
+    }
+  },
+
   resolveChoice: ({ G, ctx }: { G: PtcgGameState; ctx: any }, selection: string[]) => {
     if (!G.pendingChoice) return;
     if (G.pendingChoice.player !== G.currentPlayer) return;
@@ -514,6 +538,19 @@ export const moves = {
       }
       G.pendingChoice = null;
       addLog(G, G.currentPlayer, 'resolve_choice', `Set ${player.active?.cardData.name ?? '?'} as new Active Pokémon`);
+      return;
+    }
+
+    if (effectKey === 'stadium:prism_tower_draw') {
+      const player = G.players[G.currentPlayer];
+      for (const id of selection) {
+        const idx = player.hand.findIndex(c => c.id === id);
+        if (idx >= 0) player.discardPile.push(player.hand.splice(idx, 1)[0]);
+      }
+      drawCards(G, G.currentPlayer as 0 | 1, 1);
+      player.stadiumActionUsedThisTurn = true;
+      G.pendingChoice = null;
+      addLog(G, G.currentPlayer, 'resolve_choice', '稜鏡塔：丟棄2張手牌，抽1張卡');
       return;
     }
 

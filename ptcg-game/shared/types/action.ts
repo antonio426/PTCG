@@ -14,7 +14,10 @@ export type GameActionType =
   | 'forfeit'
   /** Voluntary, no cost: real rules let a "陳舊的○○化石" fossil's owner discard it from play
    * (active or bench) on their own turn — see server/src/game/fossils.ts. */
-  | 'discard_fossil';
+  | 'discard_fossil'
+  /** Once-per-own-turn Stadium field actions not tied to a specific Pokémon/hand card (e.g.
+   * 稜鏡塔) — `effectKey` in the payload discriminates which Stadium behavior to run. */
+  | 'use_stadium_action';
 
 export interface GameAction {
   type: GameActionType;

@@ -719,7 +719,7 @@ export default function Battle() {
   const quickActions = useMemo(() => {
     if (!battleState) return [];
     return battleState.legalMoves.filter(m =>
-      m.type === 'draw_card' || m.type === 'retreat' || m.type === 'end_turn' || m.type === 'attack'
+      m.type === 'draw_card' || m.type === 'retreat' || m.type === 'end_turn' || m.type === 'attack' || m.type === 'use_stadium_action'
     );
   }, [battleState]);
 
@@ -1573,6 +1573,17 @@ export default function Battle() {
                           </button>
                         );
                       })}
+                      {quickActions.filter(m => m.type === 'use_stadium_action').map((m, i) => (
+                        <button
+                          key={i}
+                          onClick={() => handleSubmitMove(m)}
+                          disabled={loading}
+                          className="px-3 py-2 bg-purple-800 text-white rounded-lg text-xs font-medium hover:bg-purple-700 transition-colors border border-purple-500/30 flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          <IconBuilding className="w-3.5 h-3.5" />
+                          <span>{m.description}</span>
+                        </button>
+                      ))}
                       {quickActions.filter(m => m.type === 'end_turn').map((m, i) => (
                         <button
                           key={i}

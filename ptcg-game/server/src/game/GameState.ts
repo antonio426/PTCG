@@ -49,6 +49,11 @@ export interface PtcgPlayerState {
    * === G.turn - 1 once it's this player's turn again. Never reset — a stale value from turns ago
    * simply won't equal G.turn - 1, so it naturally stops mattering on its own. */
   lastPokemonFaintedTurn: number | null;
+  /** Once-per-own-turn Stadium field action (e.g. 稜鏡塔's "discard 2, draw 1") already used this
+   * turn. A single flag suffices regardless of which Stadium grants it, since only one Stadium is
+   * ever in play at a time (see stadiums.ts) — reset every turn-begin like the other *ThisTurn
+   * flags. */
+  stadiumActionUsedThisTurn: boolean;
   /** Instance id of whoever was Active when this turn began. Anything else standing in the
    * Active spot later in the turn therefore got there from the Bench this turn — which is what
    * "在這個回合，若從備戰區將這隻寶可夢放置於戰鬥場" keys off. Recorded once per turn instead
