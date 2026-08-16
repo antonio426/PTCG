@@ -167,6 +167,11 @@ export interface GenericAttackOutcome {
   deckSearchTypedEnergyToOwnPokemonCount?: { type: string; count: number };
   /** Place N damage counters split onto opponent Pokémon — simplified to all N on 1 random target. */
   placeCountersOnRandomOpponent?: number;
+  /** Place N damage counters on the opponent's Active specifically (斯魔茶::無聲加害). Counters, not
+   * damage — Weakness/Resistance never apply, so this can't go through the damage pipeline. */
+  placeCountersOnOpponentActive?: number;
+  /** Place N damage counters on EVERY opponent Pokémon (來悲粗茶::抹茶旋濺). */
+  placeCountersOnAllOpponent?: number;
   /** Flat damage applied to the opponent's Active AFTER a forced switch resolves (hits the newly-promoted Pokémon). */
   splashDamageAfterSwitch?: number;
   /** Search the discard pile for 1 Energy card of any type, attach to self. */
@@ -1096,6 +1101,20 @@ export function resolveGenericAttackEffect(text: string, damageField: string, bo
   // 將N個傷害指示物以任意方式放置於對手的寶可夢身上。(any distribution -> simplified to 1 random target)
   m = t.match(/^將(\d+)個傷害指示物以任意方式放置於對手的寶可夢身上。$/);
   if (m) return { baseDamage: parseBaseNumber(damageField), placeCountersOnRandomOpponent: parseInt(m[1], 10) };
+
+  // 在對手的戰鬥寶可夢身上放置N個傷害指示物。(斯魔茶::無聲加害)
+  m = t.match(/^在對手的戰鬥寶可夢身上放置(\d+)個傷害指示物。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), placeCountersOnOpponentActive: parseInt(m[1], 10) };
+
+  // 若自己的棄牌區有N張以上擁有特性「X」的寶可夢卡，則在對手的所有寶可夢身上各放置M個傷害指示物。
+  // (來悲粗茶::抹茶旋濺 — same discard-pile condition as 破破舵輪::悔念錨 above, different payoff.)
+  m = t.match(/^若自己的棄牌區有(\d+)張以上擁有特性「(.+?)」的寶可夢卡，則在對手的所有寶可夢身上各放置(\d+)個傷害指示物。$/);
+  if (m) {
+    const have = board.ownDiscardAbilityCounts[normalizeAbilityName(m[2])] || 0;
+    return have >= parseInt(m[1], 10)
+      ? { baseDamage: parseBaseNumber(damageField), placeCountersOnAllOpponent: parseInt(m[3], 10) }
+      : { baseDamage: parseBaseNumber(damageField) };
+  }
 
   // 若對手剩餘獎賞卡的張數為N張以下，則增加M點傷害。
   m = t.match(/^若對手剩餘獎賞卡的張數為(\d+)張以下，則增加(\d+)點傷害。$/);

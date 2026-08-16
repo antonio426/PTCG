@@ -1605,6 +1605,22 @@ export const moves = {
             if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id);
           }
         }
+        if (genericOutcome.placeCountersOnOpponentActive && opponent.active) {
+          opponent.active.damage += genericOutcome.placeCountersOnOpponentActive * 10;
+          const hp = effectiveMaxHp(G, opponent.active);
+          if (hp > 0 && opponent.active.damage >= hp) handleKo(G, 1 - G.currentPlayer, opponent.active.id);
+        }
+        if (genericOutcome.placeCountersOnAllOpponent) {
+          // Same Bench guard as damageToEachDamagedOpponentAmount below: 對戰圓形競技場 stops
+          // effect-placed counters from reaching the Bench, leaving only the Active hit.
+          const benchBlocked = benchDamageFromEffectsBlocked(G);
+          const pool = benchBlocked ? [opponent.active] : [opponent.active, ...opponent.bench];
+          for (const target of pool.filter((c): c is GameCard => c !== null)) {
+            target.damage += genericOutcome.placeCountersOnAllOpponent * 10;
+            const hp = effectiveMaxHp(G, target);
+            if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id);
+          }
+        }
         if (genericOutcome.splashDamageAfterSwitch && opponent.active) {
           opponent.active.damage += genericOutcome.splashDamageAfterSwitch;
           const hp = effectiveMaxHp(G, opponent.active);
