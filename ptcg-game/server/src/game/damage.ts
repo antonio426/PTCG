@@ -75,11 +75,28 @@ export function flushPreEvolutionsToDiscard(card: GameCard, discardPile: GameCar
  * on the board past 0 HP. Mirrors the reset handleKo already does for the 無限之影 return-to-hand
  * case. Doesn't touch `preEvolutions`: any card in the discard pile already had that flushed by
  * flushPreEvolutionsToDiscard before it got there. */
-export function resetCardForReentry(card: GameCard): void {
+export function resetCardForReentry(card: GameCard, discardPile: GameCard[]): void {
   card.damage = 0;
   card.statusConditions = [];
-  card.attachedEnergy = [];
-  card.attachedTool = null;
+  // The attachments have to go SOMEWHERE. Clearing the fields outright deleted them from the
+  // game: a KO'd Pokémon reaches the discard pile still carrying its energy (handleKo's
+  // normal-KO branch bundles them rather than unpacking each into its own entry), so retrieving
+  // it with 夜間擔架 / 水蓮的照顧 silently destroyed every energy card that had been on it.
+  // Unbundling into the discard pile here reproduces the real-rules end state, where those cards
+  // were discarded separately the moment the Pokémon was Knocked Out.
+  // `discardPile` is required rather than optional so a new call site can't quietly drop them.
+  for (const energy of card.attachedEnergy.splice(0)) {
+    if (energy.cardData) {
+      discardPile.push({
+        id: energy.id, cardData: energy.cardData, owner: card.owner,
+        damage: 0, statusConditions: [], attachedEnergy: [],
+      });
+    }
+  }
+  if (card.attachedTool) {
+    discardPile.push(card.attachedTool);
+    card.attachedTool = null;
+  }
 }
 
 /**
@@ -235,7 +252,16 @@ export function handleKo(G: PtcgGameState, koPlayerIndex: number, koCardId: stri
   // state) instead of the discard pile — its attachments still go to the discard pile as normal.
   const returnsToHand = (c: GameCard) => !!attackerCard && hasPassiveAbilityNamed(G, c, '無限之影');
   const retireCard = (c: GameCard) => {
-    if (c.attachedTool) koPlayer.discardPile.push(c.attachedTool);
+    if (c.attachedTool) {
+      koPlayer.discardPile.push(c.attachedTool);
+      // Detach after unpacking it. Attached ENERGY deliberately rides along on the card into the
+      // discard pile (see the normal-KO branch below) rather than becoming its own entry, but the
+      // Tool is unpacked into its own entry here — so leaving the field set put the same card in
+      // the pile twice: once standalone, once still hanging off the KO'd Pokémon. Discard piles
+      // are public, so the duplicate was visible, and any effect that retrieves or counts Tools
+      // in the discard could act on it twice.
+      c.attachedTool = null;
+    }
     if (returnsToHand(c)) {
       // Inlined rather than imported from effects/primitives.ts — that file imports handleKo
       // from here, so importing back would be circular.
@@ -296,6 +322,33 @@ export function handleKo(G: PtcgGameState, koPlayerIndex: number, koCardId: stri
       attackingPlayer.takenPrizes++;
     }
   }
+}
+
+/**
+ * State-based Knock Out check for both sides: any Pokémon whose damage has reached its CURRENT
+ * effective max HP is Knocked Out, even though nothing just damaged it.
+ *
+ * Damage is checked at the moment it's dealt, but max HP is not fixed — it moves when a
+ * modifier arrives or leaves: 激動競技場 gives every Basic +30 and 引力山岳 takes 30 off every
+ * Stage 2, so replacing one Stadium with another can drop a Pokémon's ceiling below the damage
+ * already on it. The same goes for an HP-granting Tool being removed, or 阻礙之塔 arriving and
+ * switching every Tool off. Without this sweep those Pokémon just kept playing at, say, 130/120.
+ *
+ * Victims are collected before any KO is applied, since handleKo mutates the board it's read
+ * from. One pass is enough: a KO can only lower the board's HP modifiers further in ways this
+ * sweep's own callers (turn transitions, Stadium changes) will re-check.
+ */
+export function sweepKnockedOut(G: PtcgGameState): void {
+  const victims: { owner: 0 | 1; id: string }[] = [];
+  for (let idx = 0 as 0 | 1; idx <= 1; idx = (idx + 1) as 0 | 1) {
+    const p = G.players[idx];
+    for (const card of [p.active, ...p.bench]) {
+      if (!card) continue;
+      const hp = effectiveMaxHp(G, card);
+      if (hp > 0 && card.damage >= hp) victims.push({ owner: idx, id: card.id });
+    }
+  }
+  for (const v of victims) handleKo(G, v.owner, v.id);
 }
 
 /** Fills `playerIndex`'s empty Active slot at the start of their own turn (see handleKo's KO

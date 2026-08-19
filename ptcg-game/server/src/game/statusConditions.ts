@@ -1,5 +1,5 @@
 import { PtcgGameState } from './GameState';
-import { effectiveMaxHp, flushPreEvolutionsTo, handleKo } from './damage';
+import { effectiveMaxHp, flushPreEvolutionsTo, handleKo, sweepKnockedOut } from './damage';
 import { getBurnCounterBonus, getColdCurtainVictims, getPoisonCounterBonus, getSandstormVictims } from './effects/passiveAbilities';
 import { enforceBenchLimit, sweepStadiumStatusCures } from './effects/stadiums';
 
@@ -20,6 +20,9 @@ export function processBetweenTurns(G: PtcgGameState): void {
   // back to 5. Re-checking once per turn transition covers every way it can happen without
   // hooking each of them.
   enforceBenchLimit(G, flushPreEvolutionsTo);
+  // Backstop for every other way an HP modifier can come and go during a turn (a Tool removed,
+  // a passive-ability holder leaving play) — see sweepKnockedOut.
+  sweepKnockedOut(G);
   // The player whose turn just ended — i.e. whoever was G.currentPlayer up until this call
   // (applyTurnBegin/turn.onBegin already flip G.currentPlayer to the new turn's player before
   // calling this). Needed for Paralysis below.

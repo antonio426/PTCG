@@ -57,7 +57,7 @@ export function checkEndCondition(G: PtcgGameState): void {
   }
 }
 
-function applyTurnBegin(G: PtcgGameState): void {
+export function applyTurnBegin(G: PtcgGameState): void {
   // Before promoteActiveIfNeeded: a KO replacement promoted now also counts as
   // "placed from the Bench this turn".
   G.players[G.currentPlayer].activeIdAtTurnStart = G.players[G.currentPlayer].active?.id;
@@ -88,12 +88,12 @@ function applyTurnBegin(G: PtcgGameState): void {
   player.stadiumActionUsedThisTurn = false;
 }
 
-function advanceTurn(G: PtcgGameState): void {
+export function advanceTurn(G: PtcgGameState): void {
   G.currentPlayer = (1 - G.currentPlayer) as 0 | 1;
   G.turn++;
 }
 
-function executeMove(G: PtcgGameState, action: { type: string; payload?: Record<string, any> }): boolean {
+export function executeMove(G: PtcgGameState, action: { type: string; payload?: Record<string, any> }): boolean {
   let turnEnded = false;
   const ctx = {
     currentPlayer: String(G.currentPlayer),

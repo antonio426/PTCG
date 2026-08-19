@@ -2296,7 +2296,7 @@ const gentleFin: EffectHandler = {
     const i = p.discardPile.findIndex(c => c.id === selection[0]);
     if (slot >= 0 && i >= 0) {
       const card = p.discardPile.splice(i, 1)[0];
-      resetCardForReentry(card);
+      resetCardForReentry(card, p.discardPile);
       p.bench[slot] = card;
     }
     return 'done';

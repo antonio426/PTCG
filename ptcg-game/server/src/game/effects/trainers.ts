@@ -219,7 +219,7 @@ const nightStretcher: EffectHandler = {
     const i = p.discardPile.findIndex(c => c.id === selection[0]);
     if (i >= 0) {
       const card = p.discardPile.splice(i, 1)[0];
-      resetCardForReentry(card);
+      resetCardForReentry(card, p.discardPile);
       p.hand.push(card);
     }
     return 'done';
@@ -1046,7 +1046,7 @@ const holyAsh: EffectHandler = {
       const i = p.discardPile.findIndex(c => c.id === id);
       if (i >= 0) {
         const card = p.discardPile.splice(i, 1)[0];
-        resetCardForReentry(card);
+        resetCardForReentry(card, p.discardPile);
         p.deck.push(card);
       }
     }
@@ -1717,7 +1717,7 @@ const harvestNet: EffectHandler = {
       const i = p.discardPile.findIndex(c => c.id === id);
       if (i >= 0) {
         const card = p.discardPile.splice(i, 1)[0];
-        resetCardForReentry(card);
+        resetCardForReentry(card, p.discardPile);
         p.deck.push(card);
       }
     }

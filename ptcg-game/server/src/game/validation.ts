@@ -1,7 +1,7 @@
 import { GameCard, EnergyType, LegalAction } from '@ptcg/shared';
 import { PtcgGameState, GamePhase, PendingChoice } from './GameState';
 import { hasAbilityEffect, canUseAbility } from './effects/abilities';
-import { canPlayTrainer } from './effects/trainers';
+import { canPlayTrainer, hasTrainerEffect } from './effects/trainers';
 import { getRetreatCostReduction, getColorlessCostReduction } from './effects/tools';
 import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostOverride, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatCostReduction, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, isAceSpecPlayBlocked, areAbilitiesNegated, isAttackLockedByTimedEffect, isItemAndToolPlayBlocked, isItemLockedByTimedEffect, isItemPlayBlocked, isNamedAttackLockedByTimedEffect, isRetreatLockedByTimedEffect } from './effects/passiveAbilities';
 import { normalizeAbilityName, normalizeCardName } from './effects/types';
@@ -439,7 +439,16 @@ export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalActio
         // discards the card even though its handler bailed out immediately, i.e. the item
         // "failed" but still cost the card.
         const blockedByGate = !canPlayTrainer(card.cardData.name, { G, playerIndex: playerIndex as 0 | 1, sourceCardId: card.id });
-        if (!blockedFirstTurn && !blockedAlreadyPlayed && !blockedByOpponentAbility && !blockedByGate) {
+        // A Pokémon Tool with no registered trainerEffects entry takes moves.ts's generic
+        // attach path, which refunds the card to hand when every Pokémon already holds one —
+        // so the move was offered, changed nothing, and could be picked again immediately. An
+        // AI re-picking it spins until the turn safety cap (playtest-soak caught one game
+        // burning all 2000 moves on 竹蘭的力量負重), and a human could click it forever.
+        // `canPlayTrainer` can't cover this: these cards have no handler to carry a canPlay.
+        const isGenericTool = card.cardData.subtypes.includes('Pokémon Tool') && !hasTrainerEffect(card.cardData.name);
+        const noToolTarget = isGenericTool
+          && ![player.active, ...player.bench].some(c => c !== null && !c.attachedTool);
+        if (!blockedFirstTurn && !blockedAlreadyPlayed && !blockedByOpponentAbility && !blockedByGate && !noToolTarget) {
           legalMoves.push({
             type: 'play_trainer',
             description: `Play ${card.cardData.name}`,

@@ -123,7 +123,7 @@ export function moveDiscardCardToHand(G: PtcgGameState, idx: 0 | 1, cardId: stri
   // (handleKo's normal-KO branch bundles them along rather than unpacking each into its own
   // discard entry) — without this reset, retrieving it back to hand and replaying it puts a
   // Pokémon with pre-existing lethal damage into play with nothing left to trigger a KO check.
-  resetCardForReentry(card);
+  resetCardForReentry(card, p.discardPile);
   p.hand.push(card);
   return card;
 }

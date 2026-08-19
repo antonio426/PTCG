@@ -2,7 +2,7 @@ import { DamageDetail, GameCard } from '@ptcg/shared';
 import { PtcgGameState, PendingChoice } from './GameState';
 import { canPlayPokemon, canEvolve, canAttachEnergy, canRetreat, canAttack, effectiveRetreatCost, FIRST_TURN_SUPPORTER_EXCEPTIONS } from './validation';
 import { clearStatusConditionsOnLeaveActive } from './statusConditions';
-import { calculateDamageBreakdown, effectiveMaxHp, flushPreEvolutionsTo, flushPreEvolutionsToDiscard, handleKo, prizesForKo, promoteActiveIfNeeded, resetCardForReentry, stackAsPreEvolution } from './damage';
+import { calculateDamageBreakdown, effectiveMaxHp, flushPreEvolutionsTo, flushPreEvolutionsToDiscard, handleKo, prizesForKo, promoteActiveIfNeeded, resetCardForReentry, stackAsPreEvolution, sweepKnockedOut } from './damage';
 import { areAbilitiesNegated, getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasCoinFlipAttackMissDebuff, hasPassiveAbilityNamed, hasTeraBenchedImmunity, isRetreatBlockedByOpponent, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat, shouldDiscardAttackerEnergy } from './effects/passiveAbilities';
 import { benchDamageFromEffectsBlocked, benchLimit, enforceBenchLimit, isStadiumActive, sweepStadiumStatusCures } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
@@ -124,7 +124,7 @@ function raiseNextMulliganBonusOrFinish(G: PtcgGameState): void {
   if (G.firstPlayer !== undefined) G.currentPlayer = G.firstPlayer;
 }
 
-export const moves = {
+const rawMoves = {
   /** The coin-flip winner (an interactive player — AI winners decide in setup) picks first/second. */
   chooseFirst: ({ G, ctx }: { G: PtcgGameState; ctx: any }, goFirst: boolean) => {
     if (G.phase !== 'choose_first') return;
@@ -358,6 +358,9 @@ export const moves = {
       sweepStadiumStatusCures(G);
       // 零之大空洞 leaving (or arriving) changes both sides' Bench limits immediately.
       enforceBenchLimit(G, flushPreEvolutionsTo);
+      // A Stadium arriving or leaving can move max HP (激動競技場 +30 to Basics, 引力山岳 -30 to
+      // Stage 2s), so re-check for Pokémon the change has just pushed past their ceiling.
+      sweepKnockedOut(G);
       player.cardsPlayedThisTurn++;
       addLog(G, G.currentPlayer, 'play_trainer', `使出競技場「${cardName}」`);
       return;
@@ -1503,7 +1506,7 @@ export const moves = {
             const i = player.discardPile.findIndex(c => c.id === pick.id);
             if (i >= 0) {
               const card = player.discardPile.splice(i, 1)[0];
-              resetCardForReentry(card);
+              resetCardForReentry(card, player.discardPile);
               player.hand.push(card);
             }
             remaining--;
@@ -1577,7 +1580,7 @@ export const moves = {
             const i = player.discardPile.findIndex(c => c.id === pick.id);
             if (i >= 0) {
               const card = player.discardPile.splice(i, 1)[0];
-              resetCardForReentry(card);
+              resetCardForReentry(card, player.discardPile);
               player.bench[slot] = card;
             }
             remaining--;
@@ -1837,3 +1840,31 @@ export const moves = {
     addLog(G, G.currentPlayer, 'forfeit', '玩家投降');
   },
 };
+
+/**
+ * Every move runs a state-based Knock Out sweep afterwards.
+ *
+ * Damage is checked when it lands, but a Pokémon's max HP is not fixed: discarding a Tool that
+ * granted HP (道具拆除器), swapping the Stadium (激動競技場 / 引力山岳), or an HP-granting
+ * ability holder leaving play can all drop the ceiling below the damage already on a Pokémon.
+ * playtest-soak found survivors sitting at 130/120 after a dozen different moves, so hooking
+ * each cause individually would keep missing new ones.
+ *
+ * Wrapping the shared `moves` object is deliberate: all three engines (battleRunner,
+ * humanBattle, PtcgGame) call these same functions, so this is the one place that covers every
+ * path without adding a fourth copy of anything — the failure mode CLAUDE.md warns about.
+ *
+ * Skipped while a pendingChoice is open: a multi-step effect is mid-resolution and the real
+ * rules only apply state-based checks between actions, so the sweep runs on the move that
+ * finally clears the choice.
+ */
+export const moves = Object.fromEntries(
+  Object.entries(rawMoves).map(([name, fn]) => [
+    name,
+    (arg: { G: PtcgGameState; ctx: any }, ...rest: unknown[]) => {
+      const result = (fn as (...a: unknown[]) => unknown)(arg, ...rest);
+      if (arg.G.winner === null && !arg.G.pendingChoice) sweepKnockedOut(arg.G);
+      return result;
+    },
+  ]),
+) as typeof rawMoves;
