@@ -41,7 +41,7 @@ npm run start                # server only — runs dist/index.js (after build)
 npm run preview              # client only — preview the production build
 ```
 
-Tests: `npm test` from the workspace root (delegates to `server`), or `npm run test:watch` from `server/`. Vitest, config in `server/vitest.config.ts`, specs in `server/tests/`. No workspace has a lint command configured — don't invent `npm run lint`.
+Tests: `npm test` from the workspace root runs both suites (`server` then `client`); `npm run test:watch` inside either workspace watches just that one. Vitest, configs in `server/vitest.config.ts` and `client/vitest.config.ts`, specs in `server/tests/` and `client/tests/`. No workspace has a lint command configured — don't invent `npm run lint`.
 
 ### Test suite (`server/tests/`)
 The suite exists to catch the bug classes listed under "Recurring pitfalls" — write new specs in that spirit rather than chasing line coverage.
@@ -54,6 +54,13 @@ The suite exists to catch the bug classes listed under "Recurring pitfalls" — 
 - `damage.test.ts` — weakness/resistance modifiers, including the two shipped bugs: the printed multiplication sign varies (`x2`/`×2`/`X2`) and a Resistance value is a signed correction that must be added, not subtracted.
 - `status-conditions.test.ts` — Poison/Burn ticks, the Burn cure and Asleep wake coin flips (`Math.random` stubbed via `vi.spyOn`), the Paralysis clearing-timing rule, and the between-turns KO. Note when writing board fixtures: `handleKo` increments `takenPrizes` only when it actually pops a prize card, so a board built with an empty `prizes` array records no prize taken.
 - `board-actions.test.ts` — `canPayEnergyCost`, energy-attach and retreat limits, bench cap, and `getLegalMoves` gating (`forfeit` is deliberately offered in every phase).
+- `moves.test.ts` / `attack.test.ts` — the per-turn actions and the attack contract (damage, weakness/resistance, KO + prize payout, the Confusion flip). The hundreds of generic-attack template branches stay the domain of `attack-clause-audit.ts`, which checks them from the text side.
+- `trainer-gating.test.ts` — asserts the `canPlay` contract for **every** gated Trainer in the registry, not a hand-picked few: a gated card must be neither offered by `getLegalMoves` nor consumed by a forced `playTrainer`. New gated cards are covered automatically.
+- `print-remap.test.ts` — the shared legacy-id remapping behind `/api/cards/remap` and `audit-preset-decks-standard.ts`: an exact attack signature beats a newer set, results are deterministic, supertype/stage are never crossed, and an unresolvable id returns null rather than a guess.
+
+### Test suite (`client/tests/`)
+`environment: 'node'` with `tests/setup.ts` stubbing `localStorage`/`fetch` in a few lines, rather than taking on jsdom/happy-dom as a dependency just to import a Zustand store. Note `deckStore` fires `migrateLegacyDeckIds()` as a module-load side effect; the setup file pre-sets the migration flag so it bails out before reaching `fetch`.
+- `deck-validation.test.ts` — deck size, the "at least 1 Basic" rule, and the 4-copy limit. **That limit is per card NAME, not per print** (`sameNameCopyCount`): counting by id let a deck hold 4 of each of two prints of the same Pokémon. Basic Energy is exempt; ids the catalog doesn't know are tolerated, not rejected.
 
 `server/tsconfig.json` only includes `src/**/*.ts`, so `tsc` does not typecheck `tests/` and Vitest doesn't typecheck either — a type error in a spec surfaces only as a runtime failure.
 

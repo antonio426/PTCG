@@ -24,7 +24,7 @@ interface DeckState {
   presetDecks: Deck[];
   presetDecksLoading: boolean;
   createDeck: (name: string) => void;
-  addCard: (cardId: string, skipCopyLimit?: boolean) => void;
+  addCard: (cardId: string, skipCopyLimit?: boolean, allCards?: Card[]) => void;
   removeCard: (cardId: string) => void;
   saveDeck: () => void;
   loadDeck: (id: string) => void;
@@ -37,6 +37,29 @@ interface DeckState {
 
 function generateId(): string {
   return crypto.randomUUID?.() ?? Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+
+export function isBasicEnergyCard(card: Card | undefined): boolean {
+  return !!card && card.subtypes.includes('Basic Energy' as Subtype);
+}
+
+/**
+ * How many cards in `deckCardIds` share `cardId`'s printed NAME. The real 4-copy limit is per
+ * name, not per print — counting by id let a deck hold 4 of each of two prints of the same
+ * Pokémon (8 total, illegal). Basic Energy is exempt from the limit entirely and reports 0.
+ *
+ * Falls back to counting the exact id when the catalog isn't loaded yet or doesn't know the
+ * card: legacy ids are deliberately tolerated everywhere in this store, and an unknown id has
+ * no name to group by.
+ */
+export function sameNameCopyCount(deckCardIds: string[], cardId: string, allCards?: Card[]): number {
+  const target = allCards?.find((c) => c.id === cardId);
+  if (!target) return deckCardIds.filter((id) => id === cardId).length;
+  if (isBasicEnergyCard(target)) return 0;
+  return deckCardIds.filter((id) => {
+    const card = allCards!.find((c) => c.id === id);
+    return card ? card.name === target.name : id === cardId;
+  }).length;
 }
 
 function loadDecks(): Deck[] {
@@ -119,9 +142,10 @@ export const useDeckStore = create<DeckState>((set, get) => ({
     });
   },
 
-  addCard: (cardId: string, skipCopyLimit?: boolean) => {
+  addCard: (cardId: string, skipCopyLimit?: boolean, allCards?: Card[]) => {
     const { currentDeck } = get();
-    const cardCount = currentDeck.cards.filter((id) => id === cardId).length;
+    // Per NAME when the catalog is available — see sameNameCopyCount.
+    const cardCount = sameNameCopyCount(currentDeck.cards, cardId, allCards);
 
     if (currentDeck.cards.length >= MAX_DECK_SIZE) return;
     if (!skipCopyLimit && cardCount >= MAX_COPIES_PER_CARD) return;
@@ -210,21 +234,25 @@ export const useDeckStore = create<DeckState>((set, get) => ({
       errors.push(`牌組最多只能有 ${MAX_DECK_SIZE} 張卡牌`);
     }
 
+    // The limit is 4 per NAME, not per print — grouping by id let a deck hold 4 of each of two
+    // prints of the same Pokémon. Cards the catalog doesn't know (legacy scr-* ids) have no name
+    // to group by, so they keep falling back to their own id, which is also what makes them
+    // tolerated rather than rejected.
     const countMap = new Map<string, number>();
+    const labels = new Map<string, string>();
     for (const id of currentDeck.cards) {
-      countMap.set(id, (countMap.get(id) || 0) + 1);
+      const card = allCards?.find((c) => c.id === id);
+      if (isBasicEnergyCard(card)) continue; // Basic Energy 不受 4 張上限限制
+      // 卡片不在當前目錄中（可能是舊格式 scr-* ID）時跳過檢查，與其他驗證一致地容忍舊 ID
+      if (allCards && !card) continue;
+      const key = card ? `name:${card.name}` : `id:${id}`;
+      countMap.set(key, (countMap.get(key) || 0) + 1);
+      labels.set(key, card?.name ?? id);
     }
 
-    for (const [id, count] of countMap) {
+    for (const [key, count] of countMap) {
       if (count > MAX_COPIES_PER_CARD) {
-        // Basic Energy 不受 4 張上限限制
-        if (allCards) {
-          const card = allCards.find((c) => c.id === id);
-          if (card?.subtypes.includes('Basic Energy' as Subtype)) continue;
-          // 如果卡片不在當前目錄中（可能是舊格式 scr-* ID），跳過檢查
-          if (!card) continue;
-        }
-        errors.push(`卡牌 ${id} 超過了 ${MAX_COPIES_PER_CARD} 張的上限（目前 ${count} 張）`);
+        errors.push(`卡牌 ${labels.get(key)} 超過了 ${MAX_COPIES_PER_CARD} 張的上限（目前 ${count} 張）`);
       }
     }
 

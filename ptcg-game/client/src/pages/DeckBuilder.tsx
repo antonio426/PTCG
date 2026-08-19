@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useCardStore, CARD_TAG_DEFS, ensureEvolutionChains } from '../stores/cardStore';
 import type { SearchScope, CardTag } from '../stores/cardStore';
-import { useDeckStore } from '../stores/deckStore';
+import { useDeckStore, sameNameCopyCount } from '../stores/deckStore';
 import { MAX_DECK_SIZE } from '@ptcg/shared';
 import type { Card, Supertype, EnergyType, Subtype } from '@ptcg/shared';
 import type { SortOrder } from '../stores/cardStore';
@@ -660,7 +660,9 @@ export default function DeckBuilder() {
             </div>
             <div className="flex-1 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 pr-1">
               {pagedCards.map((card) => {
-                const inDeckCount = currentDeck.cards.filter((id) => id === card.id).length;
+                // Per NAME, not per print — 4 of one print plus 4 of another print of the same
+                // Pokémon is 8 copies of that name, which the rules don't allow.
+                const inDeckCount = sameNameCopyCount(currentDeck.cards, card.id, cards);
                 const basic = isBasicEnergy(card);
                 const copyLimited = !basic && inDeckCount >= 4;
                 const maxed = copyLimited || deckCardCount >= MAX_DECK_SIZE;
@@ -673,7 +675,7 @@ export default function DeckBuilder() {
                 return (
                   <button
                     key={card.id}
-                    onClick={() => !maxed && addCard(card.id, basic)}
+                    onClick={() => !maxed && addCard(card.id, basic, cards)}
                     disabled={maxed}
                     className={`bg-slate-800/80 border rounded-xl overflow-hidden text-left transition-all duration-200 group relative ${
                       maxed
