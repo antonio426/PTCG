@@ -50,16 +50,20 @@ function main() {
   // need a dedicated registration, so "no trainerEffects entry" alone doesn't mean "uncovered"
   // for them the way it does for a plain Item/Supporter.
   const trainers = cards.filter(c => c.supertype === 'Trainer');
-  const trainerNames = [...new Set(trainers.map(c => c.name))];
+  // Group by NORMALIZED name throughout: scraped names carry zero-width chars, so grouping by
+  // the raw name splits one card into two entries -- inflating the unique-name denominator and
+  // halving each half's reprint count, which is the number the worklist is sorted by. Commit
+  // a0cde71 fixed the same class of bug on the comparison side; this is the grouping side.
+  const trainerNames = [...new Set(trainers.map(c => normalizeCardName(c.name)))];
   const toolOrStadiumNames = new Set(
-    trainers.filter(c => c.subtypes.includes('Pokémon Tool') || c.subtypes.includes('Stadium')).map(c => c.name)
+    trainers.filter(c => c.subtypes.includes('Pokémon Tool') || c.subtypes.includes('Stadium')).map(c => normalizeCardName(c.name))
   );
   // "陳舊的○○化石" are fully implemented, but as an engine-level data transform (fossils.ts +
   // playPokemon/discardFossil) rather than a trainerEffects entry — they deliberately never get
   // one. Without this exclusion they'd be reported uncovered forever.
-  const fossilNames = new Set(trainers.filter(c => isFossilCard(c as never)).map(c => c.name));
+  const fossilNames = new Set(trainers.filter(c => isFossilCard(c as never)).map(c => normalizeCardName(c.name)));
   const uncoveredTrainers = trainerNames.filter(
-    n => !(normalizeCardName(n) in trainerEffects) && !toolOrStadiumNames.has(n) && !fossilNames.has(n)
+    n => !(n in trainerEffects) && !toolOrStadiumNames.has(n) && !fossilNames.has(n)
   );
   const toolNamesWithCustomEffect = [...toolOrStadiumNames].filter(hasToolEffect);
 
@@ -69,7 +73,7 @@ function main() {
 
   // ── Abilities ──
   const pokemon = cards.filter(c => c.supertype === 'Pokémon');
-  const abilityNames = [...new Set(pokemon.flatMap(c => (c.abilities || []).map(a => a.name)))];
+  const abilityNames = [...new Set(pokemon.flatMap(c => (c.abilities || []).map(a => normalizeAbilityName(a.name))))];
   const coveredAbilities = abilityNames.filter(isAbilityCovered);
 
   console.log('\n=== Abilities ===');
@@ -86,7 +90,7 @@ function main() {
       // attack — same pseudo-attack class as the "[特性]" entries. It's already implemented as a
       // passive (hasTeraBenchedImmunity, passiveAbilities.ts), so no attack handler should match it.
       if (normalizeCardName(a.name) === '太晶') continue;
-      const key = `${p.name}::${a.name}`;
+      const key = `${normalizeCardName(p.name)}::${normalizeCardName(a.name)}`;
       if (!attackKeys.has(key)) { attackKeys.add(key); attackKeysWithText.push(key); attackTextByKey[key] = a.text; }
     }
   }
@@ -98,7 +102,7 @@ function main() {
 
   // ── Weighted by how many printed cards each uncovered name affects (reprint count = play frequency proxy) ──
   const trainerCounts: Record<string, number> = {};
-  for (const t of trainers) trainerCounts[t.name] = (trainerCounts[t.name] || 0) + 1;
+  for (const t of trainers) { const n = normalizeCardName(t.name); trainerCounts[n] = (trainerCounts[n] || 0) + 1; }
   const topUncoveredTrainers = uncoveredTrainers
     .map(n => [n, trainerCounts[n]] as const)
     .sort((a, b) => b[1] - a[1])
@@ -108,7 +112,7 @@ function main() {
   for (const [name, count] of topUncoveredTrainers) console.log(`  ${count}\t${name}`);
 
   const abilityCounts: Record<string, number> = {};
-  for (const p of pokemon) for (const a of p.abilities || []) abilityCounts[a.name] = (abilityCounts[a.name] || 0) + 1;
+  for (const p of pokemon) for (const a of p.abilities || []) { const n = normalizeAbilityName(a.name); abilityCounts[n] = (abilityCounts[n] || 0) + 1; }
   const topUncoveredAbilities = abilityNames
     .filter(n => !isAbilityCovered(n))
     .map(n => [n, abilityCounts[n]] as const)
@@ -119,8 +123,8 @@ function main() {
   for (const [name, count] of topUncoveredAbilities) console.log(`  ${count}\t${name}`);
 
   // ── Narrowed to what the preset decks can actually put on the table ──
-  const uncoveredTrainerSet = new Set(uncoveredTrainers.map(normalizeCardName));
-  const uncoveredAbilitySet = new Set(abilityNames.filter(n => !isAbilityCovered(n)).map(normalizeAbilityName));
+  const uncoveredTrainerSet = new Set(uncoveredTrainers);
+  const uncoveredAbilitySet = new Set(abilityNames.filter(n => !isAbilityCovered(n)));
   const uncoveredAttackSet = new Set(attackKeysWithText.filter(k => !isAttackCovered(k)));
 
   const hits = { trainers: new Map<string, string[]>(), abilities: new Map<string, string[]>(), attacks: new Map<string, string[]>() };
@@ -134,7 +138,11 @@ function main() {
       if (uncoveredAbilitySet.has(normalizeAbilityName(a.name))) add(hits.abilities, normalizeAbilityName(a.name), `${c.id} ${c.name}`);
     }
     for (const a of c.attacks || []) {
-      if (uncoveredAttackSet.has(`${c.name}::${a.name}`)) add(hits.attacks, `${normalizeCardName(c.name)}::${normalizeCardName(a.name)}`, c.id);
+      // Must build the lookup key exactly like attackKeysWithText does above (both sides
+      // normalized) — a raw-name lookup silently misses every card whose scraped name carries a
+      // zero-width prefix, which is the whole reason this file normalizes.
+      const key = `${normalizeCardName(c.name)}::${normalizeCardName(a.name)}`;
+      if (uncoveredAttackSet.has(key)) add(hits.attacks, key, c.id);
     }
   }
 
