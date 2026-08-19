@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { isAceSpec } from '@ptcg/shared';
 import type { Card, CardSet, Supertype, Subtype } from '@ptcg/shared';
 
 interface CardFilters {
@@ -80,7 +81,9 @@ export const CARD_TAG_DEFS: { tag: CardTag; label: string }[] = [
 export function cardMatchesTag(c: Card, tag: CardTag): boolean {
   switch (tag) {
     case 'ace-spec':
-      return c.rarity === 'ACE';
+      // Shared with the server's 「ACE消弭」 lock — the rarity field alone misses 23 Standard
+      // prints, two of them in preset decks.
+      return isAceSpec(c);
     case 'tera':
       // Same marker the server's passive-ability logic uses (hasTeraBenchedImmunity): every
       // Tera print carries this fixed rules line inside an attack, plus the few 太晶-named cards.

@@ -2,21 +2,13 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useCardStore, CARD_TAG_DEFS, ensureEvolutionChains } from '../stores/cardStore';
 import type { SearchScope, CardTag } from '../stores/cardStore';
 import { useDeckStore, sameNameCopyCount } from '../stores/deckStore';
-import { MAX_DECK_SIZE } from '@ptcg/shared';
+import { MAX_DECK_SIZE, ACE_SPEC_NAMES } from '@ptcg/shared';
 import type { Card, Supertype, EnergyType, Subtype } from '@ptcg/shared';
 import type { SortOrder } from '../stores/cardStore';
 import { handleCardImgError } from '../utils/cardImageFallback';
 import { deckToText, deckToJson, textToDeck, jsonToDeck } from '../utils/deckTransfer';
 import CardArtDetail from '../components/CardArtDetail';
 
-/** 29 ACE SPEC card names (zh-tw) — matched by name like the MEGA prefix tag */
-const ACE_SPEC_NAMES = [
-  '危險光線', '中立中心', '寶可生機劑A', '釣竿MAX', '極限腰帶', '頂尖捕捉器',
-  '寶可夢旋風回收機', '璀璨結晶', '珍寶配件', '奢華炸彈', '壯偉碩木', '覺醒戰鼓',
-  '英雄斗篷', '高級香氛', '大師球', '重新啟動箱', '倖存鍛鍊器', '不公印章',
-  '古舊能量', '能量輸送PRO', '百萬噸吹風機', '奇跡耳麥', '貴重手推車', '急進開關',
-  '富裕能量', '完全體攪拌器', '希望護身符', '秘密箱', '新衝天能量',
-] as const;
 
 // ---- Card type filter defs (same as CardBrowser) ----
 const CARD_TYPE_DEFS = [

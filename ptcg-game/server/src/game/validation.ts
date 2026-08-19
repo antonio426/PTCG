@@ -1,4 +1,4 @@
-import { GameCard, EnergyType, LegalAction } from '@ptcg/shared';
+import { GameCard, EnergyType, LegalAction, isAceSpec } from '@ptcg/shared';
 import { PtcgGameState, GamePhase, PendingChoice } from './GameState';
 import { hasAbilityEffect, canUseAbility } from './effects/abilities';
 import { canPlayTrainer, hasTrainerEffect } from './effects/trainers';
@@ -432,7 +432,7 @@ export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalActio
         const isItem = card.cardData.subtypes.includes('Item');
         const blockedByOpponentAbility = ((isItem || card.cardData.subtypes.includes('Pokémon Tool')) && isItemAndToolPlayBlocked(G, playerIndex as 0 | 1))
           || (isItem && (isItemPlayBlocked(G, playerIndex as 0 | 1) || isItemLockedByTimedEffect(G, playerIndex as 0 | 1)))
-          || (card.cardData.rarity === 'ACE' && isAceSpecPlayBlocked(G, playerIndex as 0 | 1));
+          || (isAceSpec(card.cardData) && isAceSpecPlayBlocked(G, playerIndex as 0 | 1));
         // Per-handler canPlay gate (EffectHandler.canPlay, co-located with each trainer's own
         // effect logic in effects/trainers.ts): a Trainer whose effect could not do anything
         // right now is not offered as a move at all — otherwise the generic trainer-play flow
