@@ -152,6 +152,79 @@ export function checkPerTurnLimits(G: PtcgGameState): Violation[] {
   return violations;
 }
 
+/**
+ * Things that must be true of the board's SHAPE, independent of any particular card's rules:
+ * only Pokémon occupy Pokémon slots, only Energy is attached as energy, damage comes in
+ * counters, and Special Conditions live only where the rules put them.
+ *
+ * These are the checks most likely to catch an effect that moves a card into the wrong place —
+ * the kind of bug that produces a board no amount of coverage tooling would flag, because every
+ * handler involved "exists".
+ */
+export function checkBoardShape(G: PtcgGameState): Violation[] {
+  const violations: Violation[] = [];
+  const isPokemon = (c: GameCard) => c.cardData.supertype === 'Pokémon' || c.cardData.isFossil;
+
+  for (const [i, p] of G.players.entries()) {
+    const idx = i as 0 | 1;
+    const inPlay: [GameCard | null, string][] = [
+      [p.active, 'active'],
+      ...p.bench.map((c, n) => [c, `bench[${n}]`] as [GameCard | null, string]),
+    ];
+
+    for (const [card, where] of inPlay) {
+      if (!card) continue;
+      if (!isPokemon(card)) {
+        violations.push({ rule: 'non-pokemon-in-play', detail: `player ${idx} ${where}: ${card.cardData.name} is a ${card.cardData.supertype}` });
+      }
+      if (card.damage < 0 || card.damage % 10 !== 0) {
+        violations.push({ rule: 'damage-not-in-counters', detail: `player ${idx} ${where}: ${card.cardData.name} at ${card.damage}` });
+      }
+      if (card.attachedTool && !card.attachedTool.cardData.subtypes.includes('Pokémon Tool')) {
+        violations.push({ rule: 'non-tool-attached', detail: `player ${idx} ${where}: ${card.attachedTool.cardData.name} attached as a Tool` });
+      }
+      for (const e of card.attachedEnergy) {
+        if (e.cardData && e.cardData.supertype !== 'Energy') {
+          violations.push({ rule: 'non-energy-attached', detail: `player ${idx} ${where}: ${e.cardData.name} attached as energy` });
+        }
+      }
+      // Asleep / Paralyzed / Confused are mutually exclusive; only Burned and Poisoned stack.
+      const exclusive = card.statusConditions.filter(c => ['Asleep', 'Paralyzed', 'Confused'].includes(c));
+      if (exclusive.length > 1) {
+        violations.push({ rule: 'conflicting-status', detail: `player ${idx} ${where}: ${exclusive.join('+')}` });
+      }
+      // Stacked lower Stages are inert markers — the top card owns every live attachment.
+      for (const pre of card.preEvolutions ?? []) {
+        if (pre.attachedEnergy.length > 0 || pre.attachedTool || pre.damage !== 0 || pre.statusConditions.length > 0) {
+          violations.push({ rule: 'pre-evolution-not-inert', detail: `player ${idx} ${where}: stacked ${pre.cardData.name} still carries state` });
+        }
+      }
+    }
+
+    // Real rules: Special Conditions only ever apply to the Active Pokémon, and leaving the
+    // Active spot clears them (clearStatusConditionsOnLeaveActive).
+    for (const [n, card] of p.bench.entries()) {
+      if (card && card.statusConditions.length > 0) {
+        violations.push({ rule: 'status-on-bench', detail: `player ${idx} bench[${n}]: ${card.cardData.name} has ${card.statusConditions.join('+')}` });
+      }
+    }
+
+    // Cards waiting in hand or deck are not in play and carry no board state.
+    for (const [zone, name] of [[p.hand, 'hand'], [p.deck, 'deck']] as [GameCard[], string][]) {
+      for (const card of zone) {
+        if (card.damage !== 0 || card.attachedEnergy.length > 0 || card.attachedTool || card.statusConditions.length > 0) {
+          violations.push({ rule: 'in-play-state-off-board', detail: `player ${idx} ${name}: ${card.cardData.name} carries damage/attachments` });
+        }
+      }
+    }
+  }
+
+  if (G.activeStadium && !G.activeStadium.cardData.subtypes.includes('Stadium')) {
+    violations.push({ rule: 'non-stadium-in-field-slot', detail: `${G.activeStadium.cardData.name} occupies the Stadium slot` });
+  }
+  return violations;
+}
+
 /** Every state-level invariant, for a board whose two decks total `expectedTotal` cards. */
 export function checkAllInvariants(G: PtcgGameState, expectedTotal: number): Violation[] {
   return [
@@ -160,6 +233,7 @@ export function checkAllInvariants(G: PtcgGameState, expectedTotal: number): Vio
     ...checkNoOverkillSurvivors(G),
     ...checkPrizeAccounting(G),
     ...checkPerTurnLimits(G),
+    ...checkBoardShape(G),
   ];
 }
 

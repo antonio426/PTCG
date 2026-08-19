@@ -19,6 +19,7 @@ import { setup } from '../game/setup';
 import { getLegalMoves } from '../game/validation';
 import { applyTurnBegin, advanceTurn, checkEndCondition, executeMove } from '../ai/battleRunner';
 import { HeuristicAI } from '../ai/heuristicAI';
+import { RandomAI } from '../ai/aiPlayer';
 import { boardFingerprint, checkAllInvariants, checkMoveHadEffect, Violation } from '../game/invariants';
 import type { PtcgGameState } from '../game/GameState';
 
@@ -47,6 +48,7 @@ async function main() {
   const deckCount = arg('--decks', 12);
   const baseSeed = arg('--seed', 1000);
   const verbose = process.argv.includes('--verbose');
+  const aiKind = process.argv.includes('--ai') ? process.argv[process.argv.indexOf('--ai') + 1] : 'heuristic';
 
   const cards = JSON.parse(fs.readFileSync(path.join(dataDir, 'cards.json'), 'utf-8')).data as any[];
   const cardData: Record<string, any> = {};
@@ -69,7 +71,9 @@ async function main() {
     for (let g = 0; g < gamesPerPair; g++) {
       const seed = baseSeed + i * 1000 + g;
       const G: PtcgGameState = setup({ decks: [deckA, deckB], cardData, seed });
-      const ai = new HeuristicAI();
+      // RandomAI explores states a heuristic never walks into — the point of a soak is odd
+      // boards, not good play. HeuristicAI stays available for realistic-line coverage.
+      const ai = aiKind === 'random' ? new RandomAI() : new HeuristicAI();
       const recent: string[] = [];
       let lastCulprit = '(setup)';
 

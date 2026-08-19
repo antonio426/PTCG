@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   boardFingerprint, checkAllInvariants, checkCardConservation, checkMoveHadEffect,
   checkNoOverkillSurvivors, checkPendingChoiceResolvable, checkPerTurnLimits, checkPrizeAccounting,
+  checkBoardShape,
 } from '../src/game/invariants';
 import { handleKo, resetCardForReentry, sweepKnockedOut } from '../src/game/damage';
 import { moves } from '../src/game/moves';
@@ -191,5 +192,82 @@ describe('regressions the playtest soak caught', () => {
     });
     moves.endTurn({ G, ctx: ctxFor(G) } as any);
     expect(checkNoOverkillSurvivors(G)).toEqual([]);
+  });
+});
+
+describe('board shape rules', () => {
+  it('passes on a healthy board', () => {
+    expect(checkBoardShape(healthyBoard())).toEqual([]);
+  });
+
+  it('fires when a non-Pokémon occupies a Pokémon slot', () => {
+    const G = healthyBoard();
+    G.players[0].bench[0] = makeGameCard(TOOL, 0);
+    expect(checkBoardShape(G).map(v => v.rule)).toContain('non-pokemon-in-play');
+  });
+
+  it('fires on damage that is not a whole number of counters', () => {
+    const G = healthyBoard();
+    G.players[0].active!.damage = 15;
+    expect(checkBoardShape(G).map(v => v.rule)).toContain('damage-not-in-counters');
+  });
+
+  it('fires when something that is not a Tool is attached as one', () => {
+    const G = healthyBoard();
+    G.players[0].active!.attachedTool = makeGameCard(BASIC_MON, 0);
+    expect(checkBoardShape(G).map(v => v.rule)).toContain('non-tool-attached');
+  });
+
+  it('fires on mutually exclusive Special Conditions', () => {
+    const G = healthyBoard();
+    G.players[0].active!.statusConditions = ['Asleep', 'Confused'] as any;
+    expect(checkBoardShape(G).map(v => v.rule)).toContain('conflicting-status');
+  });
+
+  it('allows Burned and Poisoned together', () => {
+    const G = healthyBoard();
+    G.players[0].active!.statusConditions = ['Burned', 'Poisoned'] as any;
+    expect(checkBoardShape(G)).toEqual([]);
+  });
+
+  it('fires when a stacked pre-evolution still carries state', () => {
+    const G = healthyBoard();
+    const pre = makeGameCard(BASIC_MON, 0, { damage: 20 });
+    G.players[0].active!.preEvolutions = [pre];
+    expect(checkBoardShape(G).map(v => v.rule)).toContain('pre-evolution-not-inert');
+  });
+
+  it('fires when a card waiting in hand carries board state', () => {
+    const G = healthyBoard();
+    G.players[0].hand.push(makeGameCard(BASIC_MON, 0, { damage: 30 }));
+    expect(checkBoardShape(G).map(v => v.rule)).toContain('in-play-state-off-board');
+  });
+
+  /**
+   * Special Conditions belong to the Active Pokémon only. 43 sites reassign `.active` and each
+   * has to clear them off whatever it displaces; the soak found several that don't, so the rule
+   * is now enforced centrally rather than trusted to every call site.
+   */
+  it('fires when a Benched Pokémon carries a Special Condition', () => {
+    const G = healthyBoard();
+    G.players[0].bench[0] = makeGameCard(BASIC_MON, 0, { statusConditions: ['Poisoned'] as any });
+    expect(checkBoardShape(G).map(v => v.rule)).toContain('status-on-bench');
+  });
+
+  it('every move sweeps Conditions off the Bench', () => {
+    const G = makeState({
+      turn: 3, currentPlayer: 0, phase: 'main',
+      players: [
+        makePlayer({
+          active: makeGameCard(BASIC_MON, 0),
+          bench: [makeGameCard(BASIC_MON, 0, { statusConditions: ['Poisoned'] as any }), null, null, null, null],
+          deck: [makeGameCard(BASIC_MON, 0)],
+        }),
+        makePlayer({ active: makeGameCard(BASIC_MON, 1) }),
+      ],
+    });
+    expect(checkBoardShape(G).map(v => v.rule)).toContain('status-on-bench');
+    moves.endTurn({ G, ctx: ctxFor(G) } as any);
+    expect(checkBoardShape(G)).toEqual([]);
   });
 });

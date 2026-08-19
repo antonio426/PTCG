@@ -87,3 +87,21 @@ export function processWakeUpCheck(G: PtcgGameState, playerIndex: 0 | 1): void {
 export function clearStatusConditionsOnLeaveActive(card: { statusConditions: string[] } | null | undefined): void {
   if (card) card.statusConditions = [];
 }
+
+/**
+ * Enforces "Special Conditions only ever sit on the Active Pokémon" across the whole board.
+ *
+ * 43 different sites reassign `.active`, and each is individually responsible for calling
+ * clearStatusConditionsOnLeaveActive on the Pokémon it displaces. Most do; playtest-soak found
+ * the ones that don't by spotting Poisoned Pokémon sitting on the Bench after 老大的指令, KO
+ * promotion, 集客, 喵喵ex, 莉莉艾的決意, 超級信號 and 艾莉絲的鬥志 — and any future switch effect
+ * would join them. Since the rule is a property of the board rather than of any one card, it's
+ * enforced here instead of chased through every call site.
+ */
+export function clearBenchStatusConditions(G: PtcgGameState): void {
+  for (const p of G.players) {
+    for (const card of p.bench) {
+      if (card && card.statusConditions.length > 0) card.statusConditions = [];
+    }
+  }
+}

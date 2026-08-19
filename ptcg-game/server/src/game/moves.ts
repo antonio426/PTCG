@@ -1,7 +1,7 @@
 import { DamageDetail, GameCard } from '@ptcg/shared';
 import { PtcgGameState, PendingChoice } from './GameState';
 import { canPlayPokemon, canEvolve, canAttachEnergy, canRetreat, canAttack, effectiveRetreatCost, FIRST_TURN_SUPPORTER_EXCEPTIONS } from './validation';
-import { clearStatusConditionsOnLeaveActive } from './statusConditions';
+import { clearBenchStatusConditions, clearStatusConditionsOnLeaveActive } from './statusConditions';
 import { calculateDamageBreakdown, effectiveMaxHp, flushPreEvolutionsTo, flushPreEvolutionsToDiscard, handleKo, prizesForKo, promoteActiveIfNeeded, resetCardForReentry, stackAsPreEvolution, sweepKnockedOut } from './damage';
 import { areAbilitiesNegated, getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasCoinFlipAttackMissDebuff, hasPassiveAbilityNamed, hasTeraBenchedImmunity, isRetreatBlockedByOpponent, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat, shouldDiscardAttackerEnergy } from './effects/passiveAbilities';
 import { benchDamageFromEffectsBlocked, benchLimit, enforceBenchLimit, isStadiumActive, sweepStadiumStatusCures } from './effects/stadiums';
@@ -1891,7 +1891,12 @@ export const moves = Object.fromEntries(
     name,
     (arg: { G: PtcgGameState; ctx: any }, ...rest: unknown[]) => {
       const result = (fn as (...a: unknown[]) => unknown)(arg, ...rest);
-      if (arg.G.winner === null && !arg.G.pendingChoice) sweepKnockedOut(arg.G);
+      if (arg.G.winner === null && !arg.G.pendingChoice) {
+        // Order matters: clear Conditions off the Bench first, then check for Knock Outs, so a
+        // Pokémon that was just switched out isn't KO'd on Poison damage it should no longer have.
+        clearBenchStatusConditions(arg.G);
+        sweepKnockedOut(arg.G);
+      }
       return result;
     },
   ]),
