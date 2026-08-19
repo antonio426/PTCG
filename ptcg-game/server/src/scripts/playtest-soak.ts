@@ -21,6 +21,7 @@ import { applyTurnBegin, advanceTurn, checkEndCondition, executeMove } from '../
 import { HeuristicAI } from '../ai/heuristicAI';
 import { RandomAI } from '../ai/aiPlayer';
 import { boardFingerprint, checkAllInvariants, checkMoveHadEffect, Violation } from '../game/invariants';
+import { inferEvolvesFromSpecies, extractSpeciesName } from '../game/evolutionChains';
 import type { PtcgGameState } from '../game/GameState';
 
 const dataDir = path.resolve(__dirname, '../../data');
@@ -56,15 +57,33 @@ async function main() {
   const presets = JSON.parse(fs.readFileSync(path.join(dataDir, 'preset-decks.json'), 'utf-8')) as any[];
   const expand = (d: any) => d.entries.flatMap((e: any) => Array(e.count).fill(e.cardId));
 
-  const pool = presets.slice(0, deckCount);
+  // Preset decks are all well-built and similar in shape, so they exercise a narrow slice of the
+  // engine. `--synthetic` swaps in deliberately lopsided decks that a player could legally build:
+  // barely any Basics, nothing but Tools, deep evolution lines, a pile of Stadiums. Those are the
+  // boards where "every Pokémon already has a Tool" or "nothing left to evolve into" actually
+  // happen, which is where the last few bugs were hiding.
+  const synthetic = process.argv.includes('--synthetic');
+  const pool = synthetic
+    ? buildAdversarialDecks(cards)
+    : presets.slice(0, deckCount);
   const findings: Finding[] = [];
   const byCulprit = new Map<string, number>();
   const nameOf = (instanceId: string) => cardData[instanceId.replace(/_\d+$/, '')]?.name ?? instanceId;
   const seenRules = new Map<string, number>();
   let games = 0, movesChecked = 0;
 
-  for (let i = 0; i + 1 < pool.length; i += 2) {
-    const a = pool[i], b = pool[i + 1];
+  // Adjacent pairing (0v1, 2v3, …) only ever tests each deck against one opponent. With the
+  // small adversarial pool a full round robin is cheap and puts every lopsided deck against every
+  // other — Tool overload vs Stadium churn is exactly the sort of interaction worth reaching.
+  const pairs: [number, number][] = [];
+  if (synthetic) {
+    for (let x = 0; x < pool.length; x++) for (let y = x + 1; y < pool.length; y++) pairs.push([x, y]);
+  } else {
+    for (let x = 0; x + 1 < pool.length; x += 2) pairs.push([x, x + 1]);
+  }
+
+  for (const [i, j] of pairs) {
+    const a = pool[i], b = pool[j];
     const deckA = expand(a), deckB = expand(b);
     const expectedTotal = deckA.length + deckB.length;
 
@@ -158,3 +177,72 @@ async function main() {
 }
 
 main();
+
+/**
+ * Legal but deliberately lopsided decks, built from real Standard cards. Each targets a board
+ * state the preset decks rarely reach.
+ */
+function buildAdversarialDecks(cards: any[]): { name: string; entries: { cardId: string; count: number }[] }[] {
+  const std = cards.filter(c => c.legalities?.standard === 'Legal');
+  // Dedupe by printed name: several prints share a name (three 高級球, two 寶可夢交替), and four
+  // copies of each would put twelve of one name in a deck.
+  const take = (pred: (c: any) => boolean, n: number) => {
+    const seen = new Set<string>();
+    return std.filter(pred).filter(c => !seen.has(c.name) && seen.add(c.name)).slice(0, n).map(c => c.id);
+  };
+
+  const basicEnergy = take(c => c.supertype === 'Energy' && c.subtypes?.includes('Basic Energy'), 1)[0];
+  const basics = take(c => c.supertype === 'Pokémon' && c.subtypes?.includes('Basic') && (c.attacks?.length ?? 0) > 0, 8);
+  const tools = take(c => c.subtypes?.includes('Pokémon Tool'), 6);
+  const stadiums = take(c => c.subtypes?.includes('Stadium'), 6);
+  const items = take(c => c.subtypes?.includes('Item') && !c.subtypes?.includes('Pokémon Tool'), 8);
+  // A real evolution family. TCGdex's zh-tw locale never populates evolvesFrom (every Stage 1/2
+  // card in the dataset is missing it), so this has to go through the same species-chain fallback
+  // the engine itself uses — reading the field directly found no families at all and quietly
+  // dropped this deck from the pool.
+  const stage1 = std.filter(c => c.subtypes?.includes('Stage 1'));
+  const family: string[] = [];
+  for (const s1 of stage1) {
+    const from = s1.evolvesFrom || inferEvolvesFromSpecies(s1.name);
+    if (!from) continue;
+    const base = std.find(c => c.subtypes?.includes('Basic') && extractSpeciesName(c.name) === from);
+    if (base) { family.push(base.id, s1.id); if (family.length >= 4) break; }
+  }
+
+  /** Pads to exactly 60 with basic energy, which has no 4-copy limit. */
+  const deck = (name: string, parts: { cardId: string; count: number }[]) => {
+    const used = parts.reduce((n, p) => n + p.count, 0);
+    return { name, entries: [...parts, { cardId: basicEnergy, count: Math.max(0, 60 - used) }] };
+  };
+
+  const out: { name: string; entries: { cardId: string; count: number }[] }[] = [];
+  if (basics.length) out.push(deck('adversarial: one Basic, all energy', [{ cardId: basics[0], count: 1 }]));
+  if (basics.length && tools.length) {
+    out.push(deck('adversarial: Tool overload', [
+      { cardId: basics[0], count: 4 },
+      ...tools.map(t => ({ cardId: t, count: 4 })),
+    ]));
+  }
+  if (basics.length && stadiums.length) {
+    out.push(deck('adversarial: Stadium churn', [
+      { cardId: basics[0], count: 4 },
+      ...stadiums.map(s => ({ cardId: s, count: 4 })),
+    ]));
+  }
+  if (family.length >= 4) {
+    out.push(deck('adversarial: evolution lines', [
+      { cardId: family[0], count: 4 }, { cardId: family[1], count: 4 },
+      { cardId: family[2], count: 4 }, { cardId: family[3], count: 4 },
+    ]));
+  }
+  if (basics.length >= 8) {
+    out.push(deck('adversarial: all Basics, no energy', basics.map(b => ({ cardId: b, count: 4 }))));
+  }
+  if (basics.length && items.length) {
+    out.push(deck('adversarial: Item pile', [
+      { cardId: basics[0], count: 4 },
+      ...items.map(t => ({ cardId: t, count: 4 })),
+    ]));
+  }
+  return out;
+}
