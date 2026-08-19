@@ -21,6 +21,12 @@ node_modules/
 .DS_Store
 Thumbs.db
 
+# Scratch / one-off run artifacts (see CLAUDE.md: _-prefixed audit scripts are
+# deleted once done, not committed)
+*.err
+tmp-*
+temp-verify/
+
 # Misc
 .omo/
 .claude/

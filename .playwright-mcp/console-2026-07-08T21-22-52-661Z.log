@@ -1,3 +1,0 @@
-[     135ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=a15a11a9:20100
-[     161ms] [WARNING] No routes matched location "/decks"  @ http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=a15a11a9:651
-[     162ms] [WARNING] No routes matched location "/decks"  @ http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=a15a11a9:651

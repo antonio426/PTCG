@@ -1,7 +1,0 @@
-npm warn exec The following package was not found and will be installed: vite@8.1.3
-Port 5173 is in use, trying another one...
-
-  [32m[1mVITE[22m v8.1.3[39m  [2mready in [0m[1m1240[22m[2m[0m ms[22m
-
-  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5174[22m/[39m
-[2m  [32m➜[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m

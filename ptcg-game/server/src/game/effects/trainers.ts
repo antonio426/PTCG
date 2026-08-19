@@ -940,7 +940,7 @@ const bugCatchingSet: EffectHandler = {
 /* ============================================================ */
 /*  Added for goal: match ptcg-tw-sim.com coverage for Item/     */
 /*  Supporter/Stadium/Tool cards actually used in the preset      */
-/*  decks (see coverage-report.ts + _deck-coverage-gap.ts).       */
+/*  decks (see coverage-report.ts).                               */
 /* ============================================================ */
 
 /** 道具拆除器: discard up to 2 Pokémon Tool cards attached to EITHER side's Pokémon. */
