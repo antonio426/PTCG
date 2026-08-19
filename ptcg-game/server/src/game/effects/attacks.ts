@@ -1,5 +1,5 @@
 import { GameCard } from '@ptcg/shared';
-import { EffectContext, EffectHandler, EffectStep, opponent, player } from './types';
+import { EffectContext, EffectHandler, EffectStep, normalizeCardName, opponent, player, shuffleDeck } from './types';
 import { applyWeaknessResistance, handleKo } from '../damage';
 import { discardAttachedEnergy } from './primitives';
 
@@ -81,13 +81,84 @@ const floralRay: EffectHandler = {
   },
 };
 
+/**
+ * 惡棍衝擊 (火箭隊的袋獸ex): 120+, and +100 more if a Supporter whose name contains 「火箭隊」
+ * was played from hand this turn. `supporterNamesPlayedThisTurn` exists for exactly this
+ * family-scoped question, which a plain "played a Supporter" boolean can't answer.
+ */
+const villainousShock: EffectHandler = {
+  start(ctx) {
+    const played = player(ctx.G, ctx.playerIndex).supporterNamesPlayedThisTurn;
+    const bonus = played.some(n => normalizeCardName(n).includes('火箭隊')) ? 100 : 0;
+    damageDefenderActive(ctx, 120 + bonus);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
+/**
+ * 阿賽斯特萊石 (太陽伊布ex): remove one evolution card from EVERY evolved Pokémon the opponent
+ * has in play, de-evolving each by exactly one stage, then shuffle the removed cards into their
+ * deck.
+ *
+ * The removed card is the current top of the stack; the newest entry in `preEvolutions` takes
+ * its place and inherits the live attachments, since stacked entries are deliberately kept
+ * attachment-free (see stackAsPreEvolution). Damage counters stay on the Pokémon — which is what
+ * can make this lethal, so each de-evolved Pokémon is KO-checked against its NEW, lower HP.
+ * Special Conditions come off, the same as when a Pokémon evolves.
+ */
+const alolanVulpixStone: EffectHandler = {
+  start(ctx) {
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    const oppIdx = (1 - ctx.playerIndex) as 0 | 1;
+    const inPlay: { card: GameCard; place: 'active' | number }[] = [];
+    if (opp.active) inPlay.push({ card: opp.active, place: 'active' });
+    opp.bench.forEach((c, i) => { if (c) inPlay.push({ card: c, place: i }); });
+
+    let deEvolved = 0;
+    for (const { card, place } of inPlay) {
+      const stack = card.preEvolutions;
+      if (!stack || stack.length === 0) continue; // never evolved — nothing to remove
+
+      const newTop = stack[stack.length - 1];
+      newTop.preEvolutions = stack.slice(0, -1);
+      newTop.attachedEnergy = card.attachedEnergy;
+      newTop.attachedTool = card.attachedTool ?? null;
+      newTop.damage = card.damage;
+      newTop.statusConditions = [];
+
+      card.preEvolutions = undefined;
+      card.attachedEnergy = [];
+      card.attachedTool = null;
+      card.damage = 0;
+      card.statusConditions = [];
+      opp.deck.push(card);
+
+      if (place === 'active') opp.active = newTop; else opp.bench[place] = newTop;
+      deEvolved++;
+
+      const hp = parseInt(newTop.cardData.hp || '0', 10);
+      if (hp > 0 && newTop.damage >= hp) handleKo(ctx.G, oppIdx, newTop.id);
+    }
+
+    if (deEvolved > 0) shuffleDeck(opp.deck);
+    return 'done';
+  },
+  resume() { return 'done'; },
+};
+
 export const attackEffects: Record<string, EffectHandler> = {
   '多龍巴魯托ex::幻影奇襲': phantomDive,
   '超級蒂安希ex::花冠射線': floralRay,
+  '火箭隊的袋獸ex::惡棍衝擊': villainousShock,
+  '太陽伊布ex::阿賽斯特萊石': alolanVulpixStone,
 };
 
+/** Both halves normalized — a scraped name can carry a zero-width prefix, and a raw-name key
+ * would then silently miss its registered handler, which is invisible in testing because the
+ * offending character doesn't print (see CLAUDE.md, "Recurring pitfalls"). */
 export function attackEffectKey(pokemonName: string, attackName: string): string {
-  return `${pokemonName}::${attackName}`;
+  return `${normalizeCardName(pokemonName)}::${normalizeCardName(attackName)}`;
 }
 
 export function hasAttackEffect(pokemonName: string, attackName: string): boolean {
