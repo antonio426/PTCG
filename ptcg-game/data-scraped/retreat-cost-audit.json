@@ -1,0 +1,4170 @@
+{
+  "checked": 8307,
+  "agree": 3167,
+  "mismatches": [],
+  "nameOnly": [
+    {
+      "id": "SV1S-001",
+      "name": "刺球仙人掌",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SVAW-001",
+      "name": "保母曼波",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SVC-001",
+      "name": "皮卡丘ex",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S10D-001",
+      "name": "蜻蜻蜓",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S6H-001",
+      "name": "雪笠怪",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SH-001",
+      "name": "小木靈",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV3-002",
+      "name": "臭臭花",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV3a-002",
+      "name": "拉普拉斯",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SVEM-002",
+      "name": "蛋蛋",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SVHK-002",
+      "name": "烈焰馬",
+      "ours": 0,
+      "official": 1,
+      "standard": true
+    },
+    {
+      "id": "S10D-002",
+      "name": "遠古巨蜓",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SN-002",
+      "name": "電飛鼠",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S9a-002",
+      "name": "臭臭花",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S6H-002",
+      "name": "暴雪王",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "SDP-002",
+      "name": "小貓怪",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SH-002",
+      "name": "朽木妖",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SVD-003",
+      "name": "刺球仙人掌",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SVEL-003",
+      "name": "加熱洛托姆",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S11a-003",
+      "name": "遠古巨蜓",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S10D-003",
+      "name": "葉伊布",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SJ-003",
+      "name": "阿利多斯",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S4-003",
+      "name": "狡猾天狗",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV2P-004",
+      "name": "蜂女王",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV4K-004",
+      "name": "石居蟹",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S11-004",
+      "name": "向日花怪",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S11a-004",
+      "name": "尖牙籠",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC1D-005",
+      "name": "暴雪王",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "SV5K-006",
+      "name": "謝米",
+      "ours": 0,
+      "official": 1,
+      "standard": true
+    },
+    {
+      "id": "SVP1-006",
+      "name": "墓仔狗",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SV2P-006",
+      "name": "暴雪王",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "SVC-006",
+      "name": "啪嚓海膽",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SLD-006",
+      "name": "飯匙蛇",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S9-006",
+      "name": "草苗龜",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S12a-006",
+      "name": "草苗龜",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SI-006",
+      "name": "遠古巨蜓",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S6H-006",
+      "name": "萌芽鹿",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV3-007",
+      "name": "小木靈",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SVAW-007",
+      "name": "飄飄雛",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SCB-007",
+      "name": "遠古巨蜓",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S9-007",
+      "name": "樹林龜",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "S12a-007",
+      "name": "樹林龜",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "SC1a-007",
+      "name": "燈籠魚",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S9a-007",
+      "name": "羅絲雷朵",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S8b-007",
+      "name": "雪笠怪",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SVF-007",
+      "name": "奇魯莉安",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SVEM-008",
+      "name": "風妖精",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV4K-008",
+      "name": "豆蟋蟀",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC2b-008",
+      "name": "力壯雞",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SLL-008",
+      "name": "列陣兵",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S4a-008",
+      "name": "轟擂金剛猩",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "S8b-008",
+      "name": "暴雪王",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "SDL-008",
+      "name": "炎帝",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S6K-008",
+      "name": "轟擂金剛猩",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "SV-P-009",
+      "name": "超能豔鴕",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S7D-009",
+      "name": "冰砌鵝",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S11-009",
+      "name": "敗露球菇",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S5I-009",
+      "name": "炎帝",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SDL-009",
+      "name": "煤炭龜",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S6K-009",
+      "name": "可達鴨",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SCA-009",
+      "name": "轟擂金剛猩",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "S5R-009",
+      "name": "蘭螳花",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC2D-009",
+      "name": "遠古巨蜓",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV3-010",
+      "name": "熱辣娃",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV1V-010",
+      "name": "原野水母",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S11-010",
+      "name": "鐵蟻",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SLD-010",
+      "name": "胡帕",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S8a-010",
+      "name": "萊希拉姆",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S5R-010",
+      "name": "卡璞・哞哞",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SC2D-010",
+      "name": "尖牙籠",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV4a-011",
+      "name": "暴雪王",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "SV3a-012",
+      "name": "燈籠魚",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S10b-012",
+      "name": "火焰鳥",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S11a-012",
+      "name": "卡蒂狗",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SN-012",
+      "name": "毛毛角羊",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S10P-013",
+      "name": "煤炭龜",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S8a-013",
+      "name": "伊裴爾塔爾",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S6a-013",
+      "name": "熔岩蝸牛",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "SC1b-013",
+      "name": "羅絲雷朵",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV4M-014",
+      "name": "美納斯",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SCB-014",
+      "name": "蘭螳花",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S10b-014",
+      "name": "噴火駝",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S11a-014",
+      "name": "炎帝",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S6a-014",
+      "name": "炎帝",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SCC-014",
+      "name": "轟擂金剛猩",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "SCA-014",
+      "name": "力壯雞",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV1V-015",
+      "name": "卡蒂狗",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SCB-015",
+      "name": "卡璞・哞哞",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S6K-015",
+      "name": "圓蝌蚪",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S5R-015",
+      "name": "燒火蚣",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC1b-015",
+      "name": "暴雪王",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "S4-015",
+      "name": "熔岩蝸牛",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "SC2a-015",
+      "name": "遠古巨蜓",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV3-016",
+      "name": "炎帝",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S11-016",
+      "name": "熔岩蝸牛",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "SH-016",
+      "name": "暴噬龜",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SV2P-017",
+      "name": "瑪力露麗",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC1b-017",
+      "name": "小木靈",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC2a-017",
+      "name": "尖牙籠",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV-P-018",
+      "name": "卡蒂狗",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV1a-018",
+      "name": "呆火鱷",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S10D-018",
+      "name": "舞天鵝",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S6H-018",
+      "name": "拉普拉斯",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S10a-019",
+      "name": "皮皮",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV3a-020",
+      "name": "索財靈",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV2a-020",
+      "name": "拉達",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S11-020",
+      "name": "小海獅",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC1a-020",
+      "name": "毒電嬰",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S5a-020",
+      "name": "燈籠魚",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SVD-021",
+      "name": "紅蓮鎧騎",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV1V-021",
+      "name": "鐵臂槍蝦",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SCB-021",
+      "name": "炎帝",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S4a-021",
+      "name": "萊希拉姆",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S10a-021",
+      "name": "鬼斯",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SCC-021",
+      "name": "熔岩蝸牛",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "S4-021",
+      "name": "雙刃丸",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SVD-022",
+      "name": "拉普拉斯",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV2D-022",
+      "name": "啪嚓海膽",
+      "ours": 3,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV2a-022",
+      "name": "大嘴雀",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S7D-022",
+      "name": "幕下力士",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SCC-022",
+      "name": "炎帝",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SCA-022",
+      "name": "雙刃丸",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC1b-022",
+      "name": "轟擂金剛猩",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "SC2a-022",
+      "name": "敏捷蟲",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV3a-023",
+      "name": "天蠍王",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV1V-023",
+      "name": "走鯨",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SV2a-023",
+      "name": "阿柏蛇",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S7D-023",
+      "name": "鐵掌力士",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S5I-023",
+      "name": "噗噗豬",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S12-023",
+      "name": "凱路迪歐",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S6a-023",
+      "name": "美納斯",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S10a-023",
+      "name": "耿鬼",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S6H-023",
+      "name": "海魔獅",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S6K-023",
+      "name": "電飛鼠",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S10b-024",
+      "name": "急凍鳥",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S10a-024",
+      "name": "魔牆人偶",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S6H-024",
+      "name": "帝牙海獅",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SC2D-024",
+      "name": "燒火蚣",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC1a-025",
+      "name": "啪嚓海膽",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S4a-025",
+      "name": "燒火蚣",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SVD-026",
+      "name": "保母曼波",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV4M-026",
+      "name": "毒電嬰",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SCB-026",
+      "name": "燒火蚣",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S9-026",
+      "name": "波皇子",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SH-026",
+      "name": "火爆猴",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S4-026",
+      "name": "暴噬龜",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SC2b-027",
+      "name": "茸茸羊",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S6a-027",
+      "name": "雷丘",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV2a-028",
+      "name": "穿山王",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV4a-028",
+      "name": "炎帝",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SC1D-028",
+      "name": "燒火蚣",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S11a-028",
+      "name": "美納斯",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SCA-028",
+      "name": "暴噬龜",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S5R-028",
+      "name": "胖嘟嘟",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV6a-029",
+      "name": "叉字蝠",
+      "ours": 0,
+      "official": 1,
+      "standard": true
+    },
+    {
+      "id": "SV2P-029",
+      "name": "呆呆獸",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC1D-029",
+      "name": "燒火蚣",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S8-029",
+      "name": "雪絨蛾",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SH-029",
+      "name": "八爪武師",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SCB-030",
+      "name": "墨海馬",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC2b-030",
+      "name": "雷公",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SH-030",
+      "name": "列陣兵",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV1V-031",
+      "name": "毒電嬰",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S10D-031",
+      "name": "蚊香泳士",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S7R-031",
+      "name": "毒電嬰",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SCC-031",
+      "name": "可達鴨",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV3-032",
+      "name": "班基拉斯ex",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SV1S-032",
+      "name": "狗仔包",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S9-032",
+      "name": "噴嚏熊",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S5I-032",
+      "name": "小炭仔",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S12-032",
+      "name": "捷拉奧拉",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S8-032",
+      "name": "蟲電寶",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC2D-032",
+      "name": "美納斯",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV2D-033",
+      "name": "小鍛匠",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV1a-033",
+      "name": "大電海燕",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SI-033",
+      "name": "蘭螳花",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SCA-033",
+      "name": "雷電獸",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S11a-034",
+      "name": "迷唇姐",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S10D-034",
+      "name": "樹才怪",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S10P-034",
+      "name": "幕下力士",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC2b-034",
+      "name": "雷電獸",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SI-034",
+      "name": "卡璞・哞哞",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S8b-034",
+      "name": "雪童子",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S6K-034",
+      "name": "萌虻",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S5R-034",
+      "name": "天秤偶",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV4M-035",
+      "name": "小鍛匠",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S11-035",
+      "name": "燈籠魚",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC1D-035",
+      "name": "拉普拉斯",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S5I-035",
+      "name": "巨石丁",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S7R-035",
+      "name": "穿山王",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S4a-035",
+      "name": "美納斯",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV3-036",
+      "name": "雷電雲",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV2D-036",
+      "name": "幼基拉斯",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV1V-036",
+      "name": "巴布土撥",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV4K-036",
+      "name": "八爪武師",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SH-036",
+      "name": "索羅亞克",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV1S-037",
+      "name": "超能豔鴕",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV1a-037",
+      "name": "噗噗豬",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S11a-037",
+      "name": "奇魯莉安",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S9-037",
+      "name": "小貓怪",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC1a-037",
+      "name": "耿鬼",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SI-037",
+      "name": "轟擂金剛猩",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "S7R-037",
+      "name": "天秤偶",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S10a-037",
+      "name": "樹才怪",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SVD-038",
+      "name": "自爆磁怪",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SV1V-038",
+      "name": "催眠貘",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV4K-038",
+      "name": "鹽石寶",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S11-038",
+      "name": "電飛鼠",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S9a-038",
+      "name": "鑽角犀獸",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "S12-038",
+      "name": "恰雷姆",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S5a-038",
+      "name": "石丸子",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S6K-038",
+      "name": "藍蟾蜍",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV3a-039",
+      "name": "伊裴爾塔爾",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC2b-039",
+      "name": "卡璞・鳴鳴",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S5a-039",
+      "name": "地幔岩",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S10a-039",
+      "name": "天蠍王",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SVD-040",
+      "name": "啪嚓海膽",
+      "ours": 3,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV3-040",
+      "name": "光蚪仔",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S7D-040",
+      "name": "七夕青鳥",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC2b-040",
+      "name": "捷拉奧拉",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S5I-040",
+      "name": "叉字蝠",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S5a-040",
+      "name": "龐岩怪",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SC2b-041",
+      "name": "毒電嬰",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S10a-041",
+      "name": "超音蝠",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S6K-041",
+      "name": "好勝毛蟹",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SVD-042",
+      "name": "電肚蛙",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SV6-042",
+      "name": "電飛鼠",
+      "ours": 0,
+      "official": 1,
+      "standard": true
+    },
+    {
+      "id": "S9-042",
+      "name": "皮可西",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S10a-042",
+      "name": "大嘴蝠",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SCA-042",
+      "name": "哥德小童",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC2a-042",
+      "name": "美納斯",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC2D-042",
+      "name": "茸茸羊",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV2D-043",
+      "name": "好勝毛蟹",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SV4M-043",
+      "name": "獨劍鞘",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV4K-043",
+      "name": "古鼎鹿",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SC2b-043",
+      "name": "啪嚓海膽",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S9-043",
+      "name": "天秤偶",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S5I-043",
+      "name": "烏鴉頭頭",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S10a-043",
+      "name": "叉字蝠",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC1a-044",
+      "name": "夢夢蝕",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S7R-044",
+      "name": "甲殼龍",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SCC-044",
+      "name": "美納斯",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV3-045",
+      "name": "波克基斯",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV3a-045",
+      "name": "獨劍鞘",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S10a-045",
+      "name": "烏鴉頭頭",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S4-045",
+      "name": "黑夜魔靈",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SC2D-045",
+      "name": "雷電獸",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SVD-046",
+      "name": "密勒頓ex",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV2D-046",
+      "name": "鹽石寶",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV1V-046",
+      "name": "墓仔狗",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SV2a-046",
+      "name": "派拉斯",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV4K-046",
+      "name": "叉字蝠",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S10D-046",
+      "name": "自爆磁怪",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S12a-046",
+      "name": "鬼斯",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S8-046",
+      "name": "食夢夢",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV1a-047",
+      "name": "幕下力士",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV2P-047",
+      "name": "偶叫獒",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S12-047",
+      "name": "天秤偶",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S10a-047",
+      "name": "花岩怪",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV2D-048",
+      "name": "鹽石巨靈",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "SV-P-048",
+      "name": "普隆隆姆",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S12a-048",
+      "name": "耿鬼",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S5a-048",
+      "name": "飯匙蛇",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S10a-048",
+      "name": "不良蛙",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S6K-048",
+      "name": "狡猾天狗",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SVD-049",
+      "name": "布魯",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SCD-049",
+      "name": "雪絨蛾",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S4a-049",
+      "name": "冰砌鵝",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S10a-049",
+      "name": "毒骷蛙",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SCC-049",
+      "name": "圓蝌蚪",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC2D-049",
+      "name": "毒電嬰",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV1V-050",
+      "name": "火爆猴",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SCD-050",
+      "name": "冰砌鵝",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC1D-050",
+      "name": "燈籠魚",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC2b-050",
+      "name": "沼王",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S5a-050",
+      "name": "百足蜈蚣",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S6a-050",
+      "name": "索羅亞克",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S6H-050",
+      "name": "波士可多拉",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S4-050",
+      "name": "風妖精",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S7D-051",
+      "name": "過動猿",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SCD-051",
+      "name": "冰砌鵝",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S10b-051",
+      "name": "吉利蛋",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S6a-051",
+      "name": "流氓熊貓",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SV3-052",
+      "name": "墓仔狗",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S10P-052",
+      "name": "大舌頭",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S9-052",
+      "name": "朝北鼻",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SV1S-053",
+      "name": "飯匙蛇",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV1a-053",
+      "name": "帕底亞 烏波",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC2b-053",
+      "name": "沙基拉斯",
+      "ours": 3,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S6a-053",
+      "name": "詐唬魔",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S4a-053",
+      "name": "卡璞・鳴鳴",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC2D-053",
+      "name": "皮可西",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV1V-054",
+      "name": "偶叫獒",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC2b-054",
+      "name": "班基拉斯",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SI-054",
+      "name": "熔岩蝸牛",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "SCA-054",
+      "name": "沙基拉斯",
+      "ours": 3,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV4M-055",
+      "name": "一對鼠",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S12-055",
+      "name": "巨石丁",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SI-055",
+      "name": "炎帝",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SCC-055",
+      "name": "雷丘",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SCA-055",
+      "name": "班基拉斯",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SC2D-055",
+      "name": "布魯",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SVD-056",
+      "name": "超能豔鴕",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S9-056",
+      "name": "投摔鬼",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S5I-056",
+      "name": "大嘴雀",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S5a-056",
+      "name": "貓鼬斬",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SCD-057",
+      "name": "蟲電寶",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S5I-057",
+      "name": "大舌頭",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S4a-057",
+      "name": "毒電嬰",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S6K-057",
+      "name": "烈箭鷹",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC1b-057",
+      "name": "燒火蚣",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC2a-057",
+      "name": "皮可西",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV2D-058",
+      "name": "音波龍ex",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SCB-058",
+      "name": "噗噗豬",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC1D-058",
+      "name": "逐電犬",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S11a-058",
+      "name": "聒噪鳥",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S10D-058",
+      "name": "藏飽栗鼠",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S9-058",
+      "name": "泥偶小人",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SI-058",
+      "name": "煤炭龜",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S5R-058",
+      "name": "東施喵",
+      "ours": 3,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV3-059",
+      "name": "泥巴魚",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV2D-059",
+      "name": "麒麟奇",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SCB-059",
+      "name": "天秤偶",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC1D-059",
+      "name": "毒電嬰",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S5a-059",
+      "name": "哈約克",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S6K-059",
+      "name": "藏飽栗鼠",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SCA-059",
+      "name": "八爪武師",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SCD-060",
+      "name": "毒電嬰",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S9a-060",
+      "name": "東施喵",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S8-060",
+      "name": "伽勒爾 直衝熊",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SCC-060",
+      "name": "燈籠魚",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S5R-060",
+      "name": "愛管侍",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S4-060",
+      "name": "代拉基翁",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SC2D-060",
+      "name": "哥德小童",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV2a-061",
+      "name": "蚊香君",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S11-061",
+      "name": "龜足巨鎧",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S4a-061",
+      "name": "啪嚓海膽",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV1S-062",
+      "name": "貓鼬斬",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV2a-062",
+      "name": "蚊香泳士",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SC1D-062",
+      "name": "啪嚓海膽",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SCA-062",
+      "name": "伽勒爾 蛇紋熊",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC1b-062",
+      "name": "金魚王",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC2a-062",
+      "name": "布魯",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV1a-063",
+      "name": "貓鼬探長",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV4a-063",
+      "name": "雷電雲",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S11-064",
+      "name": "噬沙堡爺",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "S4-064",
+      "name": "八爪武師",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SCD-065",
+      "name": "食夢夢",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S11-065",
+      "name": "巨石丁",
+      "ours": 4,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC2b-065",
+      "name": "掘地兔",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "SCC-065",
+      "name": "電飛鼠",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S9-067",
+      "name": "大朝北鼻",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S12-067",
+      "name": "波士可多拉",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SV3-068",
+      "name": "帕底亞 烏波",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV1V-068",
+      "name": "摩托蜥",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV4a-068",
+      "name": "巴布土撥",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S8b-068",
+      "name": "黑夜魔靈",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S11-069",
+      "name": "混混鱷",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S12-069",
+      "name": "托戈德瑪爾",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV4a-070",
+      "name": "大電海燕",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC2a-070",
+      "name": "哥德小童",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV3a-071",
+      "name": "伊裴爾塔爾",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC1D-071",
+      "name": "夢夢蝕",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S4a-071",
+      "name": "耿鬼",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SCA-073",
+      "name": "鐵啞鈴",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SI-074",
+      "name": "燒火蚣",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SCA-074",
+      "name": "金屬怪",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC2D-075",
+      "name": "掘地兔",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "SVD-076",
+      "name": "偶叫獒",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC1a-076",
+      "name": "天秤偶",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SI-076",
+      "name": "可達鴨",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S8-076",
+      "name": "黏黏寶",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SCA-076",
+      "name": "種子鐵球",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S11-077",
+      "name": "堅果啞鈴",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S4-077",
+      "name": "龍頭地鼠",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SCB-078",
+      "name": "小炭仔",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S11-078",
+      "name": "伽勒爾 泥巴魚",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S4-078",
+      "name": "種子鐵球",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV3-079",
+      "name": "大朝北鼻",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SCD-079",
+      "name": "幕下力士",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV2a-080",
+      "name": "呆殼獸",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SCD-080",
+      "name": "鐵掌力士",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SCB-081",
+      "name": "巨石丁",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SCD-081",
+      "name": "天秤偶",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SCC-081",
+      "name": "萌虻",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC1a-082",
+      "name": "龜足巨鎧",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC1a-083",
+      "name": "小炭仔",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S12a-084",
+      "name": "花岩怪",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SVD-085",
+      "name": "美錄梅塔ex",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SV7-085",
+      "name": "烈箭鷹",
+      "ours": 0,
+      "official": 1,
+      "standard": true
+    },
+    {
+      "id": "SC1D-085",
+      "name": "獨角犀牛",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SC2b-085",
+      "name": "鐵啞鈴",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC2D-085",
+      "name": "阿利多斯",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SCB-086",
+      "name": "叉字蝠",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC2b-086",
+      "name": "金屬怪",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC2D-087",
+      "name": "伽勒爾 蛇紋熊",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SVD-088",
+      "name": "迷你龍",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SCD-088",
+      "name": "八爪武師",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SV8a-089",
+      "name": "古鼎鹿",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SV4a-089",
+      "name": "狗仔包",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SCC-089",
+      "name": "藍蟾蜍",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S11-090",
+      "name": "小箭雀",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC1D-090",
+      "name": "天秤偶",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC1a-090",
+      "name": "八爪武師",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "S8b-090",
+      "name": "巨石丁",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S12a-091",
+      "name": "索羅亞克",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC1a-091",
+      "name": "列陣兵",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC1b-092",
+      "name": "冰砌鵝",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC2a-092",
+      "name": "阿柏怪",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV3-093",
+      "name": "直衝熊",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC1a-093",
+      "name": "巨石丁",
+      "ours": 4,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SCC-093",
+      "name": "好勝毛蟹",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SV2a-094",
+      "name": "耿鬼",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SCD-094",
+      "name": "伽勒爾 直衝熊",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S4a-094",
+      "name": "小炭仔",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SVD-095",
+      "name": "哈約克",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC2b-095",
+      "name": "伽勒爾 泥巴魚",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S12a-096",
+      "name": "自爆磁怪",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SV3-097",
+      "name": "愛吃豚",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV4a-097",
+      "name": "墓仔狗",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SC2a-097",
+      "name": "阿利多斯",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV-P-098",
+      "name": "拉帝亞斯",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S8b-098",
+      "name": "阿利多斯",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV4a-099",
+      "name": "索財靈",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC2a-099",
+      "name": "伽勒爾 蛇紋熊",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S4a-100",
+      "name": "八爪武師",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SV4a-101",
+      "name": "火爆猴",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SCD-101",
+      "name": "伊裴爾塔爾",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S4a-101",
+      "name": "列陣兵",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SCC-101",
+      "name": "流氓熊貓",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SC1b-101",
+      "name": "坦克臭鼬",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SVD-102",
+      "name": "愛吃豚",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC1b-102",
+      "name": "花岩怪",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SCB-103",
+      "name": "大嘴雀",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S4a-103",
+      "name": "巨石丁",
+      "ours": 4,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SCC-103",
+      "name": "詐唬魔",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SCB-104",
+      "name": "大舌頭",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SC1D-104",
+      "name": "坦克臭鼬",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S12a-104",
+      "name": "七夕青鳥",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC1a-104",
+      "name": "大朝北鼻",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SC2D-104",
+      "name": "鐵啞鈴",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC2D-105",
+      "name": "金屬怪",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC1a-106",
+      "name": "堅果啞鈴",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SV4a-107",
+      "name": "鹽石寶",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S4a-107",
+      "name": "阿利多斯",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SCC-107",
+      "name": "波士可多拉",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SC1b-107",
+      "name": "破破袋",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV2a-108",
+      "name": "大舌頭",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SC1b-108",
+      "name": "灰塵山",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SV3-109",
+      "name": "臭臭花",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV8a-109",
+      "name": "獨劍鞘",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV4a-109",
+      "name": "鹽石巨靈",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "SCB-110",
+      "name": "東施喵",
+      "ours": 3,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC1a-111",
+      "name": "獨劍鞘",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC2D-111",
+      "name": "伽勒爾 泥巴魚",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC1D-114",
+      "name": "詐唬魔",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S4a-115",
+      "name": "破破袋",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV4a-116",
+      "name": "帕底亞 烏波",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SCB-116",
+      "name": "愛管侍",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S4a-116",
+      "name": "灰塵山",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SC1b-116",
+      "name": "詐唬魔",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S4a-117",
+      "name": "伊裴爾塔爾",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV2a-119",
+      "name": "金魚王",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC1b-121",
+      "name": "烈空坐",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV3-122",
+      "name": "班基拉斯ex",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SC2b-122",
+      "name": "舞天鵝",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S4a-122",
+      "name": "詐唬魔",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV2a-123",
+      "name": "飛天螳螂",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC1D-123",
+      "name": "堅果啞鈴",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SI-123",
+      "name": "冰砌鵝",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV4a-125",
+      "name": "偶叫獒",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC1D-125",
+      "name": "獨劍鞘",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC2a-126",
+      "name": "烈空坐",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SC1b-127",
+      "name": "掘地兔",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "SI-128",
+      "name": "雷丘",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV8a-129",
+      "name": "土龍弟弟",
+      "ours": 0,
+      "official": 1,
+      "standard": true
+    },
+    {
+      "id": "SC2b-129",
+      "name": "藏飽栗鼠",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S4a-129",
+      "name": "獨劍鞘",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC2D-130",
+      "name": "藏飽栗鼠",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV2a-131",
+      "name": "拉普拉斯",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SI-131",
+      "name": "燈籠魚",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC1a-133",
+      "name": "藏飽栗鼠",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SC1D-134",
+      "name": "烈空坐",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV2a-144",
+      "name": "急凍鳥",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SI-144",
+      "name": "電飛鼠",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SI-145",
+      "name": "電飛鼠",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S4a-145",
+      "name": "舞天鵝",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV2a-146",
+      "name": "火焰鳥",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV2a-147",
+      "name": "迷你龍",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S4a-149",
+      "name": "藏飽栗鼠",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SI-157",
+      "name": "毒電嬰",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV2a-176",
+      "name": "蚊香君",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SI-179",
+      "name": "噗噗豬",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SI-180",
+      "name": "天秤偶",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "S12a-193",
+      "name": "自爆磁怪",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SI-193",
+      "name": "萌虻",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "S12a-194",
+      "name": "七夕青鳥",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV4a-200",
+      "name": "暴雪王",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "S12a-206",
+      "name": "草苗龜",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SI-209",
+      "name": "火爆猴",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV4a-213",
+      "name": "炎帝",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SI-219",
+      "name": "幕下力士",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SI-220",
+      "name": "鐵掌力士",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SI-238",
+      "name": "小炭仔",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SV4a-244",
+      "name": "雷電雲",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SI-246",
+      "name": "巨石丁",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV4a-249",
+      "name": "巴布土撥",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV4a-251",
+      "name": "大電海燕",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SI-251",
+      "name": "叉字蝠",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SI-265",
+      "name": "伽勒爾 直衝熊",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV4a-266",
+      "name": "狗仔包",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV4a-274",
+      "name": "墓仔狗",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SI-274",
+      "name": "百足蜈蚣",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SV4a-277",
+      "name": "火爆猴",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SV4a-283",
+      "name": "鹽石寶",
+      "ours": 3,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SI-284",
+      "name": "流氓熊貓",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SV4a-285",
+      "name": "鹽石巨靈",
+      "ours": 3,
+      "official": 4,
+      "standard": false
+    },
+    {
+      "id": "SI-285",
+      "name": "伊裴爾塔爾",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV4a-287",
+      "name": "帕底亞 烏波",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SI-287",
+      "name": "詐唬魔",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV4a-295",
+      "name": "偶叫獒",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SI-298",
+      "name": "波士可多拉",
+      "ours": 4,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "SI-314",
+      "name": "七夕青鳥",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SI-317",
+      "name": "牙牙",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SI-329",
+      "name": "大嘴雀",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SV4a-334",
+      "name": "音波龍ex",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SI-345",
+      "name": "過動猿",
+      "ours": 1,
+      "official": 2,
+      "standard": false
+    },
+    {
+      "id": "SI-355",
+      "name": "烈箭鷹",
+      "ours": 0,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "SI-363",
+      "name": "愛管侍",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT06-001",
+      "name": "願增猿",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT06-002",
+      "name": "利牙魚",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT06-005",
+      "name": "毒電嬰",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT06-004",
+      "name": "飯匙蛇",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT06-007",
+      "name": "吉雉雞ex",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT06-008",
+      "name": "桃歹郎ex",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT02-005",
+      "name": "捷拉奧拉",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT02-009",
+      "name": "米立龍",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT02-010",
+      "name": "喵喵ex",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT02-011",
+      "name": "超級袋獸ex",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "EXT03-004",
+      "name": "比克提尼",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT03-007",
+      "name": "花舞鳥ex",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT03-008",
+      "name": "吉雉雞ex",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT04-001",
+      "name": "莉莉艾的皮皮ex",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT04-002",
+      "name": "拉魯拉絲",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT04-003",
+      "name": "奇魯莉安",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT04-008",
+      "name": "超級蒂安希ex",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT04-007",
+      "name": "胖嘟嘟ex",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "EXT04-009",
+      "name": "米立龍",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT04-010",
+      "name": "喵喵ex",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT05-002",
+      "name": "時拉比",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT05-003",
+      "name": "新葉喵ex",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT05-004",
+      "name": "豆蟋蟀",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT05-005",
+      "name": "烈腿蝗",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT05-008",
+      "name": "皮卡丘ex",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT05-012",
+      "name": "斑斑馬",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT05-013",
+      "name": "雷電斑馬",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT10-010",
+      "name": "厄鬼椪 火灶面具",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT18-001",
+      "name": "巨翅飛魚",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT18-007",
+      "name": "花舞鳥",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT19-001",
+      "name": "六尾",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT18-008",
+      "name": "伊布",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT19-004",
+      "name": "花舞鳥",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT19-008",
+      "name": "雷吉斯奇魯",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "EXT01-001",
+      "name": "時拉比",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT19-007",
+      "name": "象徵鳥",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT01-003",
+      "name": "豆蟋蟀",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT01-005",
+      "name": "原野水母",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT01-002",
+      "name": "新葉喵ex",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT01-004",
+      "name": "烈腿蝗",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT01-007",
+      "name": "小火馬",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT01-008",
+      "name": "烈焰馬",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT01-015",
+      "name": "呱呱泡蛙",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT01-016",
+      "name": "呱頭蛙",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT01-018",
+      "name": "皮卡丘ex",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT01-022",
+      "name": "布撥",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT01-025",
+      "name": "飄飄雛",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT01-026",
+      "name": "超能豔鴕",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT01-027",
+      "name": "墓仔狗",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "EXT01-029",
+      "name": "瑪沙那",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT01-028",
+      "name": "墓揚犬ex",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "EXT01-030",
+      "name": "恰雷姆",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT01-035",
+      "name": "駒刀小兵",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT01-038",
+      "name": "下石鳥",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT01-039",
+      "name": "基拉祈",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT01-041",
+      "name": "美錄梅塔ex",
+      "ours": 2,
+      "official": 3,
+      "standard": false
+    },
+    {
+      "id": "EXT01-047",
+      "name": "愛吃豚",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT01-045",
+      "name": "伊布",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT01-048",
+      "name": "摩托蜥",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT13-003",
+      "name": "鐵啞鈴",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT26-006",
+      "name": "捷拉奧拉",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT02-002",
+      "name": "電飛鼠",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT05-006",
+      "name": "原野水母",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT10-007",
+      "name": "爆香猴",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT10-008",
+      "name": "爆香猿",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    },
+    {
+      "id": "EXT13-001",
+      "name": "飛天螳螂",
+      "ours": 2,
+      "official": 1,
+      "standard": false
+    }
+  ],
+  "notComparable": {
+    "missingOfficial": 5136,
+    "ambiguous": 0,
+    "nameMismatch": 4
+  }
+}
