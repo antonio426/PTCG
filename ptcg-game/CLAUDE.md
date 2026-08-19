@@ -50,6 +50,10 @@ The suite exists to catch the bug classes listed under "Recurring pitfalls" — 
 - `first-turn-rules.test.ts` — turn-1 restrictions (no attack/evolve/Supporter, with the `FIRST_TURN_SUPPORTER_EXCEPTIONS` override) and that the first turn still draws.
 - `pre-evolution-stack.test.ts` — `stackAsPreEvolution` / `flushPreEvolutionsTo` ordering and KO flush.
 - `name-normalization.test.ts` — the zero-width / `[特性] ` prefix normalizer, plus an assertion that every registry key is itself already normalized (an un-normalized key can never be hit).
+- `win-conditions.test.ts` — the second three-copy drift guard. The win check is hand-copied into all three engines with three different signatures (`endIf` returns the winner; the other two mutate `G`), so this normalizes each to "who won, or null" and holds all three to one table of cases. That table caught `PtcgGame`/`battleRunner` missing the setup-phase guard that `humanBattle` had, which ended every interactive boardgame.io match before its first move. **When adding a win condition, add it to the table, not just to one engine.**
+- `damage.test.ts` — weakness/resistance modifiers, including the two shipped bugs: the printed multiplication sign varies (`x2`/`×2`/`X2`) and a Resistance value is a signed correction that must be added, not subtracted.
+- `status-conditions.test.ts` — Poison/Burn ticks, the Burn cure and Asleep wake coin flips (`Math.random` stubbed via `vi.spyOn`), the Paralysis clearing-timing rule, and the between-turns KO. Note when writing board fixtures: `handleKo` increments `takenPrizes` only when it actually pops a prize card, so a board built with an empty `prizes` array records no prize taken.
+- `board-actions.test.ts` — `canPayEnergyCost`, energy-attach and retreat limits, bench cap, and `getLegalMoves` gating (`forfeit` is deliberately offered in every phase).
 
 `server/tsconfig.json` only includes `src/**/*.ts`, so `tsc` does not typecheck `tests/` and Vitest doesn't typecheck either — a type error in a spec surfaces only as a runtime failure.
 
