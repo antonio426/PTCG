@@ -23,8 +23,17 @@ const bgioMoves = Object.fromEntries(Object.entries(moves).map(([name, fn]) => [
 
 /** Shared game-over check, independent of phase — reused as the top-level `endIf` so it's
  * evaluated after every move regardless of which phase (setup or play) is active. */
-function checkGameOver({ G }: { G: PtcgGameState; ctx: Ctx }): number | undefined {
+export function checkGameOver({ G }: { G: PtcgGameState; ctx?: Ctx }): number | undefined {
   if (G.winner !== null) return G.winner;
+  // During the setup phases a player legitimately has no Pokémon in play yet, so the "opponent
+  // has no pokemon" condition below is meaningless there — and because this is the top-level
+  // endIf, it runs before the first move of an interactive game, where setup() deliberately
+  // leaves the interactive seat's Active null for it to choose. Without this guard boardgame.io
+  // ended every human match instantly, handing the win to the opposite seat. humanBattle.ts's
+  // checkAndApplyWin has carried the same guard since it hit exactly this bug; battleRunner.ts's
+  // checkEndCondition carries it too so all three copies agree. Direct winners (forfeit) are
+  // still honored by the G.winner check above.
+  if (G.phase === 'choose_first' || G.phase === 'choose_active') return undefined;
   for (let p = 0; p < 2; p++) {
     const player = G.players[p as 0 | 1];
     const opponent = G.players[(1 - p) as 0 | 1];

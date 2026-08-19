@@ -29,8 +29,13 @@ export interface BattleStats {
   gameResults: AIPlayerResult[];
 }
 
-function checkEndCondition(G: PtcgGameState): void {
+export function checkEndCondition(G: PtcgGameState): void {
   if (G.winner !== null) return;
+  // A player legitimately has no Pokémon in play during the setup phases — see the fuller
+  // comment on PtcgGame.ts's checkGameOver. Headless runs auto-place both Actives in setup() so
+  // this is unreachable today, but the three win-check copies are kept identical on purpose:
+  // the documented failure mode here is one copy getting a rule right that the others don't.
+  if (G.phase === 'choose_first' || G.phase === 'choose_active') return;
   for (let p = 0; p < 2; p++) {
     const player = G.players[p as 0 | 1];
     const opponent = G.players[(1 - p) as 0 | 1];

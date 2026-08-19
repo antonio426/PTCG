@@ -239,7 +239,7 @@ function enrichPendingChoice(G: PtcgGameState, choice: PendingChoice | null): Pe
   return enriched;
 }
 
-function checkAndApplyWin(G: PtcgGameState): boolean {
+export function checkAndApplyWin(G: PtcgGameState): boolean {
   if (G.winner !== null) return true;
   // During setup phases the human legitimately has no Pokémon in play yet — evaluating the
   // "opponent has no pokemon" condition here declared the AI winner right after the new
