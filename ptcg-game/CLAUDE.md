@@ -41,7 +41,17 @@ npm run start                # server only — runs dist/index.js (after build)
 npm run preview              # client only — preview the production build
 ```
 
-No workspace currently has a test suite or lint command configured — don't invent `npm test` or `npm run lint`.
+Tests: `npm test` from the workspace root (delegates to `server`), or `npm run test:watch` from `server/`. Vitest, config in `server/vitest.config.ts`, specs in `server/tests/`. No workspace has a lint command configured — don't invent `npm run lint`.
+
+### Test suite (`server/tests/`)
+The suite exists to catch the bug classes listed under "Recurring pitfalls" — write new specs in that spirit rather than chasing line coverage.
+- `fixtures.ts` — hand-built synthetic cards and state builders. **Deliberately does not read `server/data/cards.json`**: that file is a curated dataset the one-off scripts keep patching, so specs keyed to it would break for reasons unrelated to the rule under test. Add a fixture card rather than reaching for real data.
+- `turn-lifecycle.test.ts` — the drift guard for the three hand-copied turn-begin blocks (`battleRunner.ts` / `humanBattle.ts` / `PtcgGame.ts`): it extracts each block from source and compares them as normalized text, so a rule that only one copy gets right fails the build. Also covers `setup()` invariants, including **card conservation** (total cards per player must stay at 60 — this caught `placeBasics` silently destroying a leftover Basic when the bench filled up).
+- `first-turn-rules.test.ts` — turn-1 restrictions (no attack/evolve/Supporter, with the `FIRST_TURN_SUPPORTER_EXCEPTIONS` override) and that the first turn still draws.
+- `pre-evolution-stack.test.ts` — `stackAsPreEvolution` / `flushPreEvolutionsTo` ordering and KO flush.
+- `name-normalization.test.ts` — the zero-width / `[特性] ` prefix normalizer, plus an assertion that every registry key is itself already normalized (an un-normalized key can never be hit).
+
+`server/tsconfig.json` only includes `src/**/*.ts`, so `tsc` does not typecheck `tests/` and Vitest doesn't typecheck either — a type error in a spec surfaces only as a runtime failure.
 
 Type checking: server uses `tsc` (emits to `dist/`), client uses `tsc -b` (project references, achieving a `noEmit`-like effect via build mode). `shared` has no build step — it's referenced directly as TypeScript source (`"main": "index.ts"`), linked into client/server via workspace symlink, so edits are picked up immediately by both without a rebuild.
 
