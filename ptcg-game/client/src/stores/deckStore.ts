@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { MAX_DECK_SIZE, MIN_DECK_SIZE, MAX_COPIES_PER_CARD } from '@ptcg/shared';
+import { MAX_DECK_SIZE, MIN_DECK_SIZE, MAX_COPIES_PER_CARD, isAceSpec } from '@ptcg/shared';
 import type { Card, Subtype } from '@ptcg/shared';
 
 interface Deck {
@@ -266,6 +266,17 @@ export const useDeckStore = create<DeckState>((set, get) => ({
       });
       const anyResolved = currentDeck.cards.some((id) => allCards.some((c) => c.id === id));
       if (anyResolved && !hasBasic) errors.push('牌組至少需要 1 隻基礎寶可夢');
+
+      // Real rules: at most ONE ACE SPEC card per deck, counted across all of them together
+      // rather than per name. Only checkable with the catalog in hand, same as the rules above.
+      // Verified against the shipped data before adding: 0 of the 56 preset decks break it.
+      const aceSpecs = currentDeck.cards
+        .map((id) => allCards.find((c) => c.id === id))
+        .filter((c): c is Card => !!c && isAceSpec(c));
+      if (aceSpecs.length > 1) {
+        const names = [...new Set(aceSpecs.map((c) => c.name))].join('、');
+        errors.push(`ACE SPEC 卡整副牌組只能放 1 張（目前 ${aceSpecs.length} 張：${names}）`);
+      }
     }
 
     return { valid: errors.length === 0, errors };

@@ -142,3 +142,36 @@ describe('addCard respects the per-name limit', () => {
     expect(useDeckStore.getState().currentDeck.cards).toHaveLength(60);
   });
 });
+
+/**
+ * Real rules cap a deck at ONE ACE SPEC card in total — not one per name. Checked against the
+ * shipped data before adding: none of the 56 preset decks break it.
+ */
+describe('the one-ACE-SPEC-per-deck rule', () => {
+  const ACE_A = card('SV1-200', '大師球', { supertype: 'Trainer', subtypes: ['Item'] as Subtype[] });
+  const ACE_B = card('SV1-201', '極限腰帶', { supertype: 'Trainer', subtypes: ['Pokémon Tool'] as Subtype[] });
+  const CATALOG_WITH_ACE = [...CATALOG, ACE_A, ACE_B];
+  const validate = () => useDeckStore.getState().validateDeck(CATALOG_WITH_ACE);
+
+  it('accepts exactly one', () => {
+    setDeck([ACE_A.id, ...repeat(PIKA_A.id, 4), ...repeat(GRASS_ENERGY.id, 55)]);
+    expect(validate().valid).toBe(true);
+  });
+
+  it('rejects two of the same ACE SPEC', () => {
+    setDeck([...repeat(ACE_A.id, 2), ...repeat(PIKA_A.id, 4), ...repeat(GRASS_ENERGY.id, 54)]);
+    expect(validate().errors.some(e => e.includes('ACE SPEC'))).toBe(true);
+  });
+
+  it('rejects two DIFFERENT ACE SPECs — the cap is across all of them, not per name', () => {
+    setDeck([ACE_A.id, ACE_B.id, ...repeat(PIKA_A.id, 4), ...repeat(GRASS_ENERGY.id, 54)]);
+    const { valid, errors } = validate();
+    expect(valid).toBe(false);
+    expect(errors.some(e => e.includes('大師球') && e.includes('極限腰帶'))).toBe(true);
+  });
+
+  it('says nothing about ACE SPEC for a deck without any', () => {
+    setDeck(legalDeck());
+    expect(validate().errors.some(e => e.includes('ACE SPEC'))).toBe(false);
+  });
+});
