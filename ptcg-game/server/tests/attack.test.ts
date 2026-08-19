@@ -167,3 +167,46 @@ describe('Confusion', () => {
     expect(defender.damage).toBe(50);
   });
 });
+
+/**
+ * The battle log is player-facing prose in Traditional Chinese, so nothing may parse it for
+ * data. The damage floater in Battle.tsx used to regex the English sentence "... for N damage
+ * to ...", which would have silently stopped rendering the moment the log was translated —
+ * leaving an attack that visibly does nothing, which is exactly what gets reported as "the
+ * attack dealt no damage".
+ */
+describe('the attack log carries structured damage, not just prose', () => {
+  it('records finalDamage on the log entry', () => {
+    const { G } = board();
+    doAttack(G);
+    const entry = G.turnLog.filter(e => e.action === 'attack').pop();
+    expect(entry).toBeDefined();
+    expect(entry!.damageDetail?.finalDamage).toBe(50);
+  });
+
+  it('reports the post-weakness number, not the printed one', () => {
+    const { G } = board(WEAK_DEFENDER);
+    doAttack(G);
+    const entry = G.turnLog.filter(e => e.action === 'attack').pop();
+    expect(entry!.damageDetail?.finalDamage).toBe(100);
+    expect(entry!.damageDetail?.weaknessApplied).toBe(true);
+  });
+
+  it('writes the log in Traditional Chinese', () => {
+    const { G } = board();
+    doAttack(G);
+    const entry = G.turnLog.filter(e => e.action === 'attack').pop();
+    expect(entry!.details).toMatch(/[一-鿿]/);
+    expect(entry!.details).not.toMatch(/\bdamage to\b/);
+  });
+
+  it('explains a Confusion failure in the log rather than going silent', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.1);
+    const { G, attacker } = board();
+    attacker.statusConditions = ['Confused'] as any;
+    doAttack(G);
+    const entry = G.turnLog.filter(e => e.action === 'attack').pop();
+    expect(entry!.details).toContain('混亂');
+    expect(entry!.details).toMatch(/[一-鿿]/);
+  });
+});

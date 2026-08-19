@@ -688,8 +688,14 @@ export default function Battle() {
     const additions: typeof floaters = [];
     for (const entry of newEntries) {
       if (entry.action === 'attack') {
-        const m = entry.details.match(/for (\d+) damage to/);
-        if (m) additions.push({ id: floaterIdRef.current++, side: entry.player === 0 ? 'opponent' : 'player', text: `-${m[1]}`, kind: 'damage' });
+        // Read the structured breakdown, not the log prose. This used to regex the English
+        // sentence ("... for 70 damage to ..."), which silently stopped producing a floater the
+        // moment the log was translated — and an attack that visibly does nothing is exactly
+        // what a player reports as "the attack dealt no damage".
+        const dealt = entry.damageDetail?.finalDamage;
+        if (typeof dealt === 'number' && dealt > 0) {
+          additions.push({ id: floaterIdRef.current++, side: entry.player === 0 ? 'opponent' : 'player', text: `-${dealt}`, kind: 'damage' });
+        }
       } else if (entry.action === 'ko') {
         additions.push({ id: floaterIdRef.current++, side: entry.player === 0 ? 'opponent' : 'player', text: 'KO!', kind: 'ko' });
       }

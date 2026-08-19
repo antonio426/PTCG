@@ -94,8 +94,10 @@ export interface TurnAction {
   action: string;
   details: string;
   timestamp: number;
-  /** Optional structured breakdown for 'attack' actions — `details` stays the source of truth
-   * for display/parsing (e.g. Battle.tsx's damage-floater regex), this is additive only. */
+  /** Structured breakdown for 'attack' actions. This — not `details` — is what consumers must
+   * read for the damage number: `details` is human-facing prose in Traditional Chinese and is
+   * free to be reworded, so anything parsing it (Battle.tsx's damage floater used to) breaks
+   * silently the next time the wording changes. */
   damageDetail?: DamageDetail;
   /** Optional coin-flip summary for actions whose `details` text mentions a coin flip. */
   coinFlipNote?: string;

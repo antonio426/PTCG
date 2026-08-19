@@ -73,7 +73,7 @@ function performRetreat(G: PtcgGameState, targetBenchPosition: number | undefine
   player.bench[benchIdx] = player.active;
   player.active = benchPokemon;
   player.retreatedThisTurn = true;
-  addLog(G, G.currentPlayer, 'retreat', `Retreated to ${benchPokemon!.cardData.name}`);
+  addLog(G, G.currentPlayer, 'retreat', `撤退，換上 ${benchPokemon!.cardData.name}`);
 
   // 凹洞: 2 damage counters land on the Pokémon that just retreated (now benched).
   const punishCounters = getRetreatPunishmentCounters(G, G.currentPlayer as 0 | 1);
@@ -149,7 +149,7 @@ export const moves = {
 
     player.hand.splice(idx, 1);
     player.active = card;
-    addLog(G, parseInt(ctx.currentPlayer), 'choose_active', `Set ${card.cardData.name} as Active Pokémon`);
+    addLog(G, parseInt(ctx.currentPlayer), 'choose_active', `將 ${card.cardData.name} 放置為戰鬥寶可夢`);
     // Local 2P: the other human seat may still need to place its Active — hand the phase over.
     const next = (G.interactivePlayers ?? []).find(p => !G.players[p].active);
     if (next !== undefined) {
@@ -177,7 +177,7 @@ export const moves = {
       // since by the time any of them run, G.phase has already moved on to 'main' below.
       G.winner = (1 - G.currentPlayer) as 0 | 1;
       G.winReason = 'deck empty at draw';
-      addLog(G, G.currentPlayer, 'draw_card', 'Deck is empty — cannot draw');
+      addLog(G, G.currentPlayer, 'draw_card', '牌庫已空，無法抽牌');
       G.phase = 'main';
       return;
     }
@@ -185,7 +185,7 @@ export const moves = {
     const card = player.deck.pop()!;
     player.hand.push(card);
     G.phase = 'main';
-    addLog(G, G.currentPlayer, 'draw_card', `Drew ${card.cardData.name}`);
+    addLog(G, G.currentPlayer, 'draw_card', `抽到 ${card.cardData.name}`);
   },
 
   playPokemon: ({ G, ctx }: { G: PtcgGameState; ctx: any }, cardId: string, benchPosition?: number) => {
@@ -217,7 +217,7 @@ export const moves = {
     player.cardsPlayedThisTurn++;
     player.basicPokemonPlayedThisTurn++;
     player.pokemonPlayedThisTurn.push(card.id);
-    addLog(G, G.currentPlayer, 'play_pokemon', `Played ${card.cardData.name} to bench`);
+    addLog(G, G.currentPlayer, 'play_pokemon', `將 ${card.cardData.name} 放置於備戰區`);
 
     // 險惡廢墟 Stadium: every Basic Pokémon (except Darkness-type) placed on the Bench takes 2
     // damage counters immediately, including a freshly-played one — so this can KO on arrival.
@@ -266,7 +266,7 @@ export const moves = {
     // card's id, so a Pokémon that just evolved could illegally evolve again the same turn
     // (e.g. Basic -> Stage 1 -> Stage 2 in one turn) whenever the next evolution card was in hand.
     player.pokemonPlayedThisTurn.push(evolution.id);
-    addLog(G, G.currentPlayer, 'evolve', `Evolved into ${evolution.cardData.name}`);
+    addLog(G, G.currentPlayer, 'evolve', `進化成 ${evolution.cardData.name}`);
 
     // 黑暗脈衝: the opponent's ability may place 4 damage counters on the newly evolved Pokémon.
     const evolveCounters = getEvolveCountersFromOpponent(G, G.currentPlayer as 0 | 1);
@@ -306,7 +306,7 @@ export const moves = {
 
     player.energyAttachedThisTurn++;
     player.cardsPlayedThisTurn++;
-    addLog(G, G.currentPlayer, 'attach_energy', `Attached ${energyCard.cardData.name} to ${target.cardData.name}`);
+    addLog(G, G.currentPlayer, 'attach_energy', `將 ${energyCard.cardData.name} 附加於 ${target.cardData.name}`);
   },
 
   playTrainer: ({ G, ctx }: { G: PtcgGameState; ctx: any }, cardId: string) => {
@@ -359,7 +359,7 @@ export const moves = {
       // 零之大空洞 leaving (or arriving) changes both sides' Bench limits immediately.
       enforceBenchLimit(G, flushPreEvolutionsTo);
       player.cardsPlayedThisTurn++;
-      addLog(G, G.currentPlayer, 'play_trainer', `Played ${cardName} (stadium)`);
+      addLog(G, G.currentPlayer, 'play_trainer', `使出競技場「${cardName}」`);
       return;
     }
 
@@ -377,7 +377,7 @@ export const moves = {
         context: { toolCard: trainerCard },
       };
       player.cardsPlayedThisTurn++;
-      addLog(G, G.currentPlayer, 'play_trainer', `Played ${cardName} (attaching)`);
+      addLog(G, G.currentPlayer, 'play_trainer', `使出「${cardName}」（附加中）`);
       return;
     }
 
@@ -409,7 +409,7 @@ export const moves = {
       player.supporterPlayedThisTurn = true;
       player.supporterNamesPlayedThisTurn.push(cardName);
     }
-    addLog(G, G.currentPlayer, 'play_trainer', `Played ${cardName}`);
+    addLog(G, G.currentPlayer, 'play_trainer', `使出「${cardName}」`);
   },
 
   useAbility: ({ G, ctx }: { G: PtcgGameState; ctx: any }, cardId: string) => {
@@ -439,7 +439,7 @@ export const moves = {
     // safety cap in humanBattle.ts/battleRunner.ts — for ClaudeAI that's hundreds of sequential
     // API calls, which reads to the human opponent as the game just hanging/timing out.
     if (!isAbilityUnlimitedUse(name) || step === 'done') player.abilitiesUsedThisTurn.push(source.id);
-    addLog(G, G.currentPlayer, 'use_ability', `Used ability "${ability.name}" on ${source.cardData.name}`);
+    addLog(G, G.currentPlayer, 'use_ability', `${source.cardData.name} 使用特性「${ability.name}」`);
   },
 
   /** Once-per-own-turn Stadium field actions (see validation.ts's getLegalMoves for the
@@ -611,7 +611,7 @@ export const moves = {
       if (target && !target.attachedTool) target.attachedTool = toolCard;
       else player.hand.push(toolCard);
       G.pendingChoice = null;
-      addLog(G, G.currentPlayer, 'resolve_choice', `Attached ${toolCard.cardData.name} to ${target?.cardData.name ?? '?'}`);
+      addLog(G, G.currentPlayer, 'resolve_choice', `將道具「${toolCard.cardData.name}」附加於 ${target?.cardData.name ?? '?'}`);
       return;
     }
 
@@ -630,7 +630,7 @@ export const moves = {
             options: player.active.attachedEnergy.map(e => ({ id: e.id, label: ENERGY_TYPE_ZH_LABEL[e.type] || e.type })),
             context: { step: 'pick_energy', benchIdx },
           };
-          addLog(G, G.currentPlayer, 'resolve_choice', 'Retreat: selected bench Pokémon');
+          addLog(G, G.currentPlayer, 'resolve_choice', '撤退：已選擇要換上場的備戰寶可夢');
         } else {
           G.pendingChoice = null;
           performRetreat(G, benchIdx, undefined);
@@ -655,7 +655,7 @@ export const moves = {
         player.bench[idx] = null;
       }
       G.pendingChoice = null;
-      addLog(G, G.currentPlayer, 'resolve_choice', `Set ${player.active?.cardData.name ?? '?'} as new Active Pokémon`);
+      addLog(G, G.currentPlayer, 'resolve_choice', `${player.active?.cardData.name ?? '?'} 上場成為新的戰鬥寶可夢`);
       return;
     }
 
@@ -731,7 +731,7 @@ export const moves = {
         }
       }
       G.pendingChoice = null;
-      addLog(G, G.currentPlayer, 'resolve_choice', `Discarded ${selection.length} Energy from ${attacker?.cardData.name ?? '?'}`);
+      addLog(G, G.currentPlayer, 'resolve_choice', `從 ${attacker?.cardData.name ?? '?'} 身上丟棄了 ${selection.length} 張能量`);
       G.phase = 'end';
       ctx.events?.endTurn?.();
       return;
@@ -748,7 +748,7 @@ export const moves = {
       const idx = player.bench.findIndex(c => c?.id === selection[0]);
       if (idx >= 0) { player.active = player.bench[idx]; player.bench[idx] = null; }
       G.pendingChoice = null;
-      addLog(G, G.currentPlayer, 'resolve_choice', `Set ${player.active?.cardData.name ?? '?'} as new Active Pokémon`);
+      addLog(G, G.currentPlayer, 'resolve_choice', `${player.active?.cardData.name ?? '?'} 上場成為新的戰鬥寶可夢`);
       G.phase = 'end';
       ctx.events?.endTurn?.();
       return;
@@ -769,7 +769,7 @@ export const moves = {
       step = resumeAttackEffect(pokemonName, attackName, ctxInfo, context, selection);
     }
     applyEffectStep(G, G.currentPlayer as 0 | 1, effectKey, step, ctxInfo.sourceCardId);
-    addLog(G, G.currentPlayer, 'resolve_choice', `Resolved ${effectKey}: ${selection.join(', ') || '(none)'}`);
+    addLog(G, G.currentPlayer, 'resolve_choice', `結算 ${effectKey}：${selection.join('、') || '(未選擇)'}`);
 
     // An attack's pending choices (e.g. distributing damage counters) block the rest of the
     // turn; once they're all resolved, finish the turn exactly like a normal attack would.
@@ -803,7 +803,7 @@ export const moves = {
     // Bench is also empty, checkGameOver's usual "no Active and no Bench" loss condition
     // takes it from here.
     if (isActive) promoteActiveIfNeeded(G, G.currentPlayer as 0 | 1);
-    addLog(G, G.currentPlayer, 'discard_fossil', `Discarded ${target.cardData.name} from play`);
+    addLog(G, G.currentPlayer, 'discard_fossil', `將場上的 ${target.cardData.name} 丟棄`);
   },
 
   retreat: ({ G, ctx }: { G: PtcgGameState; ctx: any }, targetBenchPosition?: number, discardEnergyIds?: string[]) => {
@@ -880,7 +880,7 @@ export const moves = {
     // Confused: flip a coin before the attack connects. Tails = it fails and hits its own user for 30 instead.
     if (attacker.statusConditions.includes('Confused') && Math.random() < 0.5) {
       attacker.damage += 30;
-      addLog(G, G.currentPlayer, 'attack', `${attacker.cardData.name} is Confused and hurt itself for 30 damage!`);
+      addLog(G, G.currentPlayer, 'attack', `${attacker.cardData.name} 因【混亂】攻擊失敗，對自己造成 30 點傷害！`);
       const selfHp = effectiveMaxHp(G, attacker);
       if (selfHp > 0 && attacker.damage >= selfHp) handleKo(G, G.currentPlayer, attacker.id);
       G.phase = 'end';
@@ -894,7 +894,7 @@ export const moves = {
     if (hasCoinFlipAttackMissDebuff(G, attacker)) {
       attacker.timedEffects = (attacker.timedEffects || []).filter(e => !(e.kind === 'coinFlipAttackMiss' && e.appliesOnTurn === G.turn));
       if (Math.random() < 0.5) {
-        addLog(G, G.currentPlayer, 'attack', `${attacker.cardData.name}'s attack failed!`);
+        addLog(G, G.currentPlayer, 'attack', `${attacker.cardData.name} 的攻擊失敗了！`);
         G.phase = 'end';
         ctx.events?.endTurn?.();
         return;
@@ -905,7 +905,7 @@ export const moves = {
       const ctxInfo: EffectContext = { G, playerIndex: G.currentPlayer as 0 | 1, sourceCardId: attacker.id };
       const step = startAttackEffect(attacker.cardData.name, attack.name, ctxInfo);
       applyEffectStep(G, G.currentPlayer as 0 | 1, `attack:${attacker.cardData.name}::${attack.name}`, step, attacker.id);
-      addLog(G, G.currentPlayer, 'attack', `${attacker.cardData.name} used "${attack.name}"!`);
+      addLog(G, G.currentPlayer, 'attack', `${attacker.cardData.name} 使用了「${attack.name}」！`);
     } else {
       // Generic attack-text templates (coin-flip-scaled damage, status infliction, self-heal,
       // draw, energy discard, board-scaled damage, timed self-protection/lockout) — resolved
@@ -1086,7 +1086,7 @@ export const moves = {
       const damage = damageBreakdown.finalDamage;
       const defenderWasFullHp = defender.damage === 0;
       defender.damage += damage;
-      addLog(G, G.currentPlayer, 'attack', `${attacker.cardData.name} used ${attack.name} for ${damage} damage to ${defender.cardData.name}`, damageBreakdown, genericOutcome?.coinFlipNote);
+      addLog(G, G.currentPlayer, 'attack', `${attacker.cardData.name} 使用「${attack.name}」，對 ${defender.cardData.name} 造成 ${damage} 點傷害`, damageBreakdown, genericOutcome?.coinFlipNote);
 
       // 龐克頭盔-style retaliation Tool: damages the attacker back when its holder is hit,
       // regardless of whether the hit also knocked the holder out.
@@ -1142,7 +1142,7 @@ export const moves = {
       const defenderHp = effectiveMaxHp(G, defender);
       if (defender.damage >= defenderHp && defenderHp > 0) {
         handleKo(G, 1 - G.currentPlayer, defender.id, attacker);
-        addLog(G, G.currentPlayer, 'ko', `Knocked out ${defender.cardData.name}`);
+        addLog(G, G.currentPlayer, 'ko', `${defender.cardData.name} 昏厥`);
         // 貪婪食客: this Pokémon's own attack KOing an opponent's Basic Pokémon awards 1 extra prize.
         const bonus = getBonusPrizesForAttackKo(G, G.currentPlayer as 0 | 1, attacker, defender);
         for (let i = 0; i < bonus; i++) {
@@ -1826,7 +1826,7 @@ export const moves = {
   },
 
   endTurn: ({ G, ctx }: { G: PtcgGameState; ctx: any }) => {
-    addLog(G, G.currentPlayer, 'end_turn', 'Turn ended');
+    addLog(G, G.currentPlayer, 'end_turn', '回合結束');
     G.phase = 'end';
     ctx.events?.endTurn?.();
   },
@@ -1834,6 +1834,6 @@ export const moves = {
   forfeit: ({ G, ctx }: { G: PtcgGameState; ctx: any }) => {
     G.winner = (1 - G.currentPlayer) as 0 | 1;
     G.winReason = 'forfeit';
-    addLog(G, G.currentPlayer, 'forfeit', 'Player forfeited');
+    addLog(G, G.currentPlayer, 'forfeit', '玩家投降');
   },
 };
