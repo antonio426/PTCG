@@ -13,7 +13,7 @@ import { isFossilCard, fossilAsPokemon } from './fossils';
 import {
   EffectContext, EffectStep,
   hasTrainerEffect, canPlayTrainer, startTrainerEffect, resumeTrainerEffect,
-  hasAbilityEffect, startAbilityEffect, resumeAbilityEffect, isAbilityUnlimitedUse,
+  hasAbilityEffect, startAbilityEffect, resumeAbilityEffect, isAbilityUnlimitedUse, canUseAbility,
   hasAttackEffect, startAttackEffect, resumeAttackEffect,
   normalizeAbilityName,
 } from './effects';
@@ -415,6 +415,10 @@ export const moves = {
     if (player.abilitiesUsedThisTurn.includes(source.id) && !isAbilityUnlimitedUse(name)) return;
 
     const ctxInfo: EffectContext = { G, playerIndex: G.currentPlayer as 0 | 1, sourceCardId: source.id };
+    // Belt-and-braces re-check of the handler's own gate — getLegalMoves already filters these
+    // out, but useAbility is reachable from paths that never consulted it. Returning here (rather
+    // than letting start() bail out below) is what keeps the once-per-turn use unspent.
+    if (!canUseAbility(name, ctxInfo)) return;
     const step = startAbilityEffect(name, ctxInfo);
     applyEffectStep(G, G.currentPlayer as 0 | 1, `ability:${name}`, step, source.id);
     // An unlimited-use ability that immediately resolves to 'done' (no interactive step at all)

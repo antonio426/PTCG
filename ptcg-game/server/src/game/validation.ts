@@ -1,6 +1,6 @@
 import { GameCard, EnergyType, LegalAction } from '@ptcg/shared';
 import { PtcgGameState, GamePhase, PendingChoice } from './GameState';
-import { hasAbilityEffect } from './effects/abilities';
+import { hasAbilityEffect, canUseAbility } from './effects/abilities';
 import { canPlayTrainer } from './effects/trainers';
 import { getRetreatCostReduction, getColorlessCostReduction } from './effects/tools';
 import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostOverride, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatCostReduction, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, isAceSpecPlayBlocked, areAbilitiesNegated, isAttackLockedByTimedEffect, isItemAndToolPlayBlocked, isItemLockedByTimedEffect, isItemPlayBlocked, isNamedAttackLockedByTimedEffect, isRetreatLockedByTimedEffect } from './effects/passiveAbilities';
@@ -305,7 +305,11 @@ export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalActio
         // multi-step use never adds it, so it's safe to respect the flag uniformly here rather
         // than exempting unlimited-use abilities from it entirely.
         const alreadyUsed = player.abilitiesUsedThisTurn.includes(pokemon.id);
-        if (!alreadyUsed) {
+        // Per-handler gate, same contract as the Trainer canPlay gate below: an ability whose
+        // printed condition isn't met right now isn't offered, instead of being offered and then
+        // silently burning its once-per-turn use on a no-op.
+        const gated = !canUseAbility(name, { G, playerIndex: playerIndex as 0 | 1, sourceCardId: pokemon.id });
+        if (!alreadyUsed && !gated) {
           legalMoves.push({
             type: 'use_ability',
             description: `Use ${pokemon.cardData.name}'s ability "${ability.name}"`,

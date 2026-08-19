@@ -88,6 +88,14 @@ const curseBomb: EffectHandler = {
  * 【惡】能量卡") — move up to 3 damage counters off a damaged Pokémon of yours, then place that
  * many on 1 opponent Pokémon. */
 const adrenalineBrain: EffectHandler = {
+  // Mirrors start()'s two bail-outs, both of which read public board state. Without this the
+  // ability was offered with no Darkness Energy attached (or with nothing damaged to move), and
+  // using it silently consumed the once-per-turn slot while doing nothing.
+  canPlay(ctx) {
+    const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
+    if (!self || !self.attachedEnergy.some(e => e.type === 'Darkness')) return false;
+    return allPokemon(ctx.G, ctx.playerIndex).some(c => c.damage >= 10);
+  },
   start(ctx) {
     const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
     if (!self || !self.attachedEnergy.some(e => e.type === 'Darkness')) return 'done';
@@ -777,12 +785,14 @@ const gemSearch: EffectHandler = {
 
 /** 扭轉乾坤: once per turn, but ONLY if this player had a Pokémon faint during the opponent's last
  * turn — draw 3. Gated on PtcgPlayerState.lastPokemonFaintedTurn === G.turn - 1 (turns strictly
- * alternate, so "the opponent's last turn" is always exactly one turn number behind this one). No
- * `canPlay` exists for abilities (unlike Trainers) — getLegalMoves always offers a not-yet-used
- * once-per-turn ability regardless of whether it'll do anything, and useAbility marks it used
- * either way — so the gate lives here in start(), matching the same silent-no-op pattern already
- * used elsewhere for conditional once-per-turn abilities. */
+ * alternate, so "the opponent's last turn" is always exactly one turn number behind this one).
+ * The gate is mirrored into `canPlay` so the ability isn't offered when its condition isn't met;
+ * start() keeps the same checks as the belt-and-braces half (see canUseAbility). */
 const turnaround: EffectHandler = {
+  canPlay(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    return p.lastPokemonFaintedTurn === ctx.G.turn - 1 && p.deck.length > 0;
+  },
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     if (p.lastPokemonFaintedTurn !== ctx.G.turn - 1) return 'done';
@@ -3098,6 +3108,22 @@ export function hasAbilityEffect(name: string): boolean {
 
 export function isAbilityUnlimitedUse(name: string): boolean {
   return !!abilityEffects[name]?.unlimitedUse;
+}
+
+/**
+ * True when the named ability either defines no `canPlay` gate or its gate passes — the ability
+ * counterpart of `canPlayTrainer`, with the same contract (see EffectHandler.canPlay in types.ts:
+ * gate only on PUBLIC state, never on deck contents).
+ *
+ * Abilities used to have no gate at all: `getLegalMoves` offered any not-yet-used once-per-turn
+ * ability regardless of whether it could do anything, and `useAbility` burned the once-per-turn
+ * slot even when `start()` bailed out immediately — so using a conditional ability whose condition
+ * wasn't met looked, correctly, like it simply failed to fire. A handler whose `start()` opens
+ * with condition checks should mirror them here so the ability isn't offered in the first place.
+ */
+export function canUseAbility(name: string, ctx: EffectContext): boolean {
+  const handler = abilityEffects[name];
+  return handler?.canPlay ? handler.canPlay(ctx) : true;
 }
 
 export function startAbilityEffect(name: string, ctx: EffectContext): EffectStep {
