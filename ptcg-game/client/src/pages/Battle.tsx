@@ -1490,7 +1490,7 @@ export default function Battle() {
             </div>
             <div className="w-px self-stretch bg-emerald-900/40 flex-shrink-0" />
             <div className="flex gap-1.5 sm:gap-2 overflow-x-auto sm:overflow-visible sm:flex-none min-w-0 flex-1 py-0.5">
-              {Array.from({ length: 5 }, (_, i) => {
+              {Array.from({ length: Math.max(5, bs.opponent.bench.length) }, (_, i) => {
                 const c = bs.opponent.bench[i];
                 return c ? (
                   <PokemonCardView key={i} card={c} size="small" showHp={false} side="opponent" previewPlacement="below" loading={loading} onShowDetail={setFullDetailCard} {...targetProps(c.id)} />
@@ -1741,7 +1741,7 @@ export default function Battle() {
             </div>
             <div className="w-px self-stretch bg-emerald-900/40 flex-shrink-0" />
             <div className="flex gap-1.5 sm:gap-2 overflow-x-auto sm:overflow-visible sm:flex-none min-w-0 flex-1 py-0.5">
-              {Array.from({ length: 5 }, (_, i) => {
+              {Array.from({ length: Math.max(5, bs.player.bench.length) }, (_, i) => {
                 const c = bs.player.bench[i];
                 return c ? (
                   <div key={i} className={`flex-shrink-0${dropRing(dragTargetIds.has(c.id))}`} {...dropZoneProps(c.id, dragTargetIds.has(c.id))}>

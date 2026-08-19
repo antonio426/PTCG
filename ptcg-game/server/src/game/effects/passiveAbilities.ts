@@ -2,7 +2,7 @@ import { EnergyType, GameCard } from '@ptcg/shared';
 import { PtcgGameState } from '../GameState';
 import { normalizeAbilityName, normalizeCardName } from './types';
 import { hasEvolvesFrom } from '../evolutionChains';
-import { isStadiumActive } from './stadiums';
+import { isStadiumActive, isTeraPokemon } from './stadiums';
 
 /**
  * Most real Pokémon abilities are NOT "use once per turn" triggered effects (the shape
@@ -123,7 +123,7 @@ export function getPassiveDamageBonus(G: PtcgGameState, attackerIdx: 0 | 1, atta
  * separate ability — real-rules Tera Pokémon are untouchable while Benched, regardless of which
  * specific Tera attack variant they have. */
 export function hasTeraBenchedImmunity(card: GameCard): boolean {
-  return !!card.cardData.attacks?.some(a => a.text?.trim() === '只要這隻寶可夢在備戰區，不會受到招式的傷害。');
+  return isTeraPokemon(card);
 }
 
 /** True if any of `card`'s active TimedCardEffect entries (set by attack text like "在下個對手

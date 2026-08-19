@@ -4,7 +4,7 @@ import { canPlayPokemon, canEvolve, canAttachEnergy, canRetreat, canAttack, effe
 import { clearStatusConditionsOnLeaveActive } from './statusConditions';
 import { calculateDamageBreakdown, effectiveMaxHp, flushPreEvolutionsTo, flushPreEvolutionsToDiscard, handleKo, prizesForKo, promoteActiveIfNeeded, resetCardForReentry, stackAsPreEvolution } from './damage';
 import { areAbilitiesNegated, getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasCoinFlipAttackMissDebuff, hasPassiveAbilityNamed, hasTeraBenchedImmunity, isRetreatBlockedByOpponent, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat, shouldDiscardAttackerEnergy } from './effects/passiveAbilities';
-import { benchDamageFromEffectsBlocked, isStadiumActive } from './effects/stadiums';
+import { benchDamageFromEffectsBlocked, benchLimit, enforceBenchLimit, isStadiumActive, sweepStadiumStatusCures } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
 import { applyStatusCondition, discardAttachedEnergy, drawCards, drawUpTo, shuffleDeck, asAttachedEnergy } from './effects/primitives';
 import { resolveGenericAttackEffect } from './effects/genericAttacks';
@@ -84,11 +84,11 @@ function performRetreat(G: PtcgGameState, targetBenchPosition: number | undefine
   }
   // 漩渦言靈: the newly promoted Pokémon gets Confused.
   if (shouldConfuseOnOpponentRetreat(G, G.currentPlayer as 0 | 1) && player.active) {
-    applyStatusCondition(player.active, 'Confused');
+    applyStatusCondition(G, player.active, 'Confused');
   }
   // 熔岩地域: the newly promoted Pokémon gets Burned.
   if (shouldBurnOnOpponentRetreat(G, G.currentPlayer as 0 | 1) && player.active) {
-    applyStatusCondition(player.active, 'Burned');
+    applyStatusCondition(G, player.active, 'Burned');
   }
 }
 
@@ -200,11 +200,15 @@ export const moves = {
     // fossils.ts) only for the copy that actually enters play; a card search/discard effect
     // that later looks at this same card in the discard pile still sees the real Item card.
     if (isFossilCard(card.cardData)) card.cardData = fossilAsPokemon(card.cardData);
+    // 零之大空洞 can raise this player's limit to 8; the bench array is created at the default
+    // size, so grow it to match before looking for a slot.
+    const limit = benchLimit(G, G.currentPlayer as 0 | 1);
+    while (player.bench.length < limit) player.bench.push(null);
     let pos = benchPosition;
-    if (pos === undefined || pos < 0 || pos >= 5 || player.bench[pos] !== null) {
+    if (pos === undefined || pos < 0 || pos >= limit || player.bench[pos] !== null) {
       pos = player.bench.findIndex(s => s === null);
     }
-    if (pos === -1 || pos >= 5) {
+    if (pos === -1 || pos >= limit) {
       player.hand.push(card);
       return;
     }
@@ -297,6 +301,8 @@ export const moves = {
       cardData: energyCard.cardData,
     });
     onEnergyAttachedFromHand(G, G.currentPlayer as 0 | 1, target);
+    // 祭典會場: this Pokémon now has Energy, so any Condition already on it is cured.
+    sweepStadiumStatusCures(G);
 
     player.energyAttachedThisTurn++;
     player.cardsPlayedThisTurn++;
@@ -348,6 +354,10 @@ export const moves = {
         G.players[ownerIdx].discardPile.push(G.activeStadium);
       }
       G.activeStadium = trainerCard;
+      // 祭典會場's cure half applies the moment it hits the field, to Pokémon already Conditioned.
+      sweepStadiumStatusCures(G);
+      // 零之大空洞 leaving (or arriving) changes both sides' Bench limits immediately.
+      enforceBenchLimit(G, flushPreEvolutionsTo);
       player.cardsPlayedThisTurn++;
       addLog(G, G.currentPlayer, 'play_trainer', `Played ${cardName} (stadium)`);
       return;
@@ -1150,10 +1160,10 @@ export const moves = {
       // self-protection) apply regardless, matching their printed text having no damage gate.
       if (genericOutcome) {
         if (damage > 0 && genericOutcome.statusToInflict) {
-          for (const status of genericOutcome.statusToInflict) applyStatusCondition(defender, status);
+          for (const status of genericOutcome.statusToInflict) applyStatusCondition(G, defender, status);
         }
         if (genericOutcome.selfStatusToInflict) {
-          for (const status of genericOutcome.selfStatusToInflict) applyStatusCondition(attacker, status);
+          for (const status of genericOutcome.selfStatusToInflict) applyStatusCondition(G, attacker, status);
         }
         if (genericOutcome.healSelfAmount) attacker.damage = Math.max(0, attacker.damage - genericOutcome.healSelfAmount);
         if (genericOutcome.drawCards) drawCards(G, G.currentPlayer as 0 | 1, genericOutcome.drawCards);

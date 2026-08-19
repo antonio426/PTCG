@@ -7,7 +7,7 @@ import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPas
 import { normalizeAbilityName, normalizeCardName } from './effects/types';
 import { hasEvolvesFrom, evolvesFromMatches, inferEvolvesFromSpecies } from './evolutionChains';
 import { isFossilCard } from './fossils';
-import { isStadiumActive } from './effects/stadiums';
+import { benchLimit, isStadiumActive } from './effects/stadiums';
 
 /** All k-sized combinations of `items`, capped so huge hands can't explode the move list. */
 function combinations<T>(items: T[], k: number, cap = 40): T[][] {
@@ -124,8 +124,9 @@ export function canPlayPokemon(G: PtcgGameState, playerIndex: number, cardId: st
     if (!card.cardData.subtypes.includes('Basic')) return false;
   }
 
+  // 零之大空洞 raises this to 8 for a player who has a 太晶 Pokémon in play.
   const benchCount = player.bench.filter(s => s !== null).length;
-  if (benchCount >= 5) return false;
+  if (benchCount >= benchLimit(G, playerIndex as 0 | 1)) return false;
 
   // 瞪眼效用: the opponent's Active may block this player from playing ability-holding Pokémon.
   if (isAbilityPokemonPlayBlocked(G, playerIndex as 0 | 1, card)) return false;

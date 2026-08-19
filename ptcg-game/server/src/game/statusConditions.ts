@@ -1,6 +1,7 @@
 import { PtcgGameState } from './GameState';
-import { effectiveMaxHp, handleKo } from './damage';
+import { effectiveMaxHp, flushPreEvolutionsTo, handleKo } from './damage';
 import { getBurnCounterBonus, getColdCurtainVictims, getPoisonCounterBonus, getSandstormVictims } from './effects/passiveAbilities';
+import { enforceBenchLimit, sweepStadiumStatusCures } from './effects/stadiums';
 
 /**
  * "Between Turns" processing (runs once per turn transition, checking BOTH
@@ -10,6 +11,15 @@ import { getBurnCounterBonus, getColdCurtainVictims, getPoisonCounterBonus, getS
  * validation.canAttack); this only covers the two condition are damage tick.
  */
 export function processBetweenTurns(G: PtcgGameState): void {
+  // 祭典會場 backstop: energy can also arrive on an already-Conditioned Pokémon through an
+  // ability or Trainer effect, not just the one attach-from-hand path, so sweep once per turn
+  // transition rather than trying to hook every energy-moving effect individually.
+  sweepStadiumStatusCures(G);
+  // 零之大空洞 backstop: its extra Bench slots are conditional on that player still having a 太晶
+  // Pokémon in play, and losing the last one (KO, evolution away, bounce) has to shrink the Bench
+  // back to 5. Re-checking once per turn transition covers every way it can happen without
+  // hooking each of them.
+  enforceBenchLimit(G, flushPreEvolutionsTo);
   // The player whose turn just ended — i.e. whoever was G.currentPlayer up until this call
   // (applyTurnBegin/turn.onBegin already flip G.currentPlayer to the new turn's player before
   // calling this). Needed for Paralysis below.

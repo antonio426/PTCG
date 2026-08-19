@@ -2,6 +2,7 @@ import { AttachedEnergy, GameCard } from '@ptcg/shared';
 import { PtcgGameState } from '../GameState';
 import { handleKo, resetCardForReentry } from '../damage';
 import { player, opponent, allPokemon, shuffleDeck } from './types';
+import { immuneToStatusByStadium } from './stadiums';
 
 /** Draw up to `count` cards; returns how many were actually drawn (deck may run out). */
 export function drawCards(G: PtcgGameState, idx: 0 | 1, count: number): number {
@@ -135,10 +136,17 @@ export function flipCoins(n: number): boolean[] {
   return Array.from({ length: n }, () => flipCoin());
 }
 
-export function applyStatusCondition(card: GameCard, condition: 'Asleep' | 'Burned' | 'Confused' | 'Paralyzed' | 'Poisoned'): void {
+/**
+ * `G` is required rather than optional on purpose: a field-wide immunity (祭典會場) can only be
+ * consulted with the game state in hand, and an optional parameter would let a new call site
+ * silently opt out of it. Making it mandatory turns "forgot the immunity" into a compile error.
+ */
+export function applyStatusCondition(G: PtcgGameState, card: GameCard, condition: 'Asleep' | 'Burned' | 'Confused' | 'Paralyzed' | 'Poisoned'): void {
   // Fossils ("陳舊的○○化石" played as a Basic Pokémon): real rules say they can never be
   // affected by any Special Condition, unconditionally, from any source.
   if (card.cardData.isFossil) return;
+  // 祭典會場 Stadium: any Pokémon with Energy attached, on either side, can't be Conditioned.
+  if (immuneToStatusByStadium(G, card)) return;
   // 不眠 / 憨憨臉: this Pokémon can never be made Asleep / Confused (respectively), from any source.
   const holderHasAbility = (name: string) => card.cardData.abilities?.some(a => a.text && a.name.replace(/^[‌​\s]+/, '').replace(/^\[特性\]\s*/, '').trim() === name);
   if (condition === 'Asleep' && holderHasAbility('不眠')) return;

@@ -1968,7 +1968,7 @@ const lucasShowcase: EffectHandler = {
       clearStatusConditionsOnLeaveActive(opp.active);
       opp.bench[idx] = opp.active;
       opp.active = chosen;
-      applyStatusCondition(chosen, 'Confused');
+      applyStatusCondition(ctx.G, chosen, 'Confused');
     } else if (idx >= 0 && !opp.active) {
       opp.active = opp.bench[idx];
       opp.bench[idx] = null;
@@ -2653,7 +2653,7 @@ const darkBell: EffectHandler = {
     for (const idx of [0, 1] as const) {
       const active = ctx.G.players[idx].active;
       if (!active || (active.cardData.types || []).includes('Darkness')) continue;
-      applyStatusCondition(active, 'Confused');
+      applyStatusCondition(ctx.G, active, 'Confused');
     }
     return 'done';
   },

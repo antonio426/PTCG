@@ -704,7 +704,7 @@ const tranquilLight: EffectHandler = {
     const p = player(ctx.G, ctx.playerIndex);
     if (p.active?.id !== ctx.sourceCardId) return 'done';
     const opp = opponent(ctx.G, ctx.playerIndex);
-    if (opp.active) applyStatusCondition(opp.active, 'Asleep');
+    if (opp.active) applyStatusCondition(ctx.G, opp.active, 'Asleep');
     return 'done';
   },
   resume() { return 'done'; },
@@ -1453,7 +1453,7 @@ const enticingLure: EffectHandler = {
       clearStatusConditionsOnLeaveActive(opp.active);
       opp.bench[idx] = opp.active;
       opp.active = chosen;
-      applyStatusCondition(opp.active, 'Confused');
+      applyStatusCondition(ctx.G, opp.active, 'Confused');
     }
     return 'done';
   },
@@ -2387,7 +2387,7 @@ const pickAnyMucus: EffectHandler = {
   resume(ctx, _context, selection) {
     const opp = opponent(ctx.G, ctx.playerIndex);
     const condition = selection[0] as 'Poisoned' | 'Burned' | 'Confused';
-    if (opp.active) applyStatusCondition(opp.active, condition);
+    if (opp.active) applyStatusCondition(ctx.G, opp.active, condition);
     return 'done';
   },
 };
@@ -2848,7 +2848,7 @@ const panicCage: EffectHandler = {
   start(ctx) {
     if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const opp = opponent(ctx.G, ctx.playerIndex);
-    if (opp.active) applyStatusCondition(opp.active, 'Confused');
+    if (opp.active) applyStatusCondition(ctx.G, opp.active, 'Confused');
     return 'done';
   },
   resume() { return 'done'; },
