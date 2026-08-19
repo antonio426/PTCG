@@ -6,6 +6,7 @@ import { MAX_DECK_SIZE } from '@ptcg/shared';
 import type { Card, Supertype, EnergyType, Subtype } from '@ptcg/shared';
 import type { SortOrder } from '../stores/cardStore';
 import { handleCardImgError } from '../utils/cardImageFallback';
+import { deckToText, deckToJson, textToDeck, jsonToDeck } from '../utils/deckTransfer';
 import CardArtDetail from '../components/CardArtDetail';
 
 /** 29 ACE SPEC card names (zh-tw) — matched by name like the MEGA prefix tag */
@@ -236,52 +237,33 @@ export default function DeckBuilder() {
    * shape back — the trailing id wins when present; otherwise the name resolves to its
    * Standard-legal print. Lines starting with # or ## are decoration and ignored. */
   const exportAsText = () => {
-    const counts = new Map<string, number>();
-    for (const id of currentDeck.cards) counts.set(id, (counts.get(id) ?? 0) + 1);
-    const groups: Record<string, string[]> = { 'Pokémon': [], 'Trainer': [], 'Energy': [], '其他': [] };
-    for (const [id, count] of counts) {
-      const card = cards.find(c => c.id === id);
-      const line = `${count} ${card?.name ?? '未知卡片'} ${id}`;
-      (groups[card?.supertype ?? '其他'] ?? groups['其他']).push(line);
-    }
-    const zh: Record<string, string> = { 'Pokémon': '寶可夢', 'Trainer': '訓練家', 'Energy': '能量', '其他': '其他' };
-    const text = [`# ${currentDeck.name || '未命名牌組'}（${currentDeck.cards.length} 張）`,
-      ...Object.entries(groups).filter(([, ls]) => ls.length).flatMap(([g, ls]) => [`## ${zh[g]}`, ...ls])].join('\n');
+    const text = deckToText(currentDeck.name, currentDeck.cards, cards);
     void navigator.clipboard?.writeText(text).catch(() => {});
     downloadFile(`${currentDeck.name || 'deck'}.txt`, text, 'text/plain');
   };
 
   const exportAsJson = () => {
     downloadFile(`${currentDeck.name || 'deck'}.json`,
-      JSON.stringify({ name: currentDeck.name, cards: currentDeck.cards }, null, 2), 'application/json');
+      deckToJson(currentDeck.name, currentDeck.cards), 'application/json');
   };
 
   const runTextImport = () => {
-    const lines = importText.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#'));
-    const ids: string[] = [];
-    const misses: string[] = [];
-    for (const line of lines) {
-      const m = line.match(/^(\d+)[x×]?\s+(.+?)(?:\s+([A-Za-z0-9]+(?:-[A-Za-z0-9]+)+))?$/);
-      if (!m) { misses.push(line); continue; }
-      const count = Math.min(parseInt(m[1], 10) || 0, 60);
-      const name = m[2].trim();
-      let card = m[3] ? cards.find(c => c.id === m[3]) : undefined;
-      card ??= cards.find(c => c.name === name && c.legalities?.standard === 'Legal') ?? cards.find(c => c.name === name);
-      if (!card) { misses.push(line); continue; }
-      for (let i = 0; i < count; i++) ids.push(card.id);
-    }
-    if (ids.length === 0) { setImportMsg('沒有解析到任何卡片'); return; }
-    useDeckStore.setState({ currentDeck: { id: null, name: currentDeck.name || '匯入的牌組', cards: ids.slice(0, 60) }, dirty: true });
-    setImportMsg(`匯入 ${Math.min(ids.length, 60)} 張${misses.length ? `；無法解析 ${misses.length} 行：${misses.slice(0, 3).join(' / ')}` : ''}`);
-    if (misses.length === 0) { setShowImport(false); setImportText(''); }
+    const { cardIds, unresolved, truncated } = textToDeck(importText, cards);
+    if (cardIds.length === 0) { setImportMsg('沒有解析到任何卡片'); return; }
+    useDeckStore.setState({ currentDeck: { id: null, name: currentDeck.name || '匯入的牌組', cards: cardIds }, dirty: true });
+    setImportMsg(
+      `匯入 ${cardIds.length} 張`
+      + (truncated ? '（超過 60 張，已截斷）' : '')
+      + (unresolved.length ? `；無法解析 ${unresolved.length} 行：${unresolved.slice(0, 3).join(' / ')}` : '')
+    );
+    if (unresolved.length === 0) { setShowImport(false); setImportText(''); }
   };
 
   const onJsonFile = async (file: File | undefined) => {
     if (!file) return;
     try {
-      const j = JSON.parse(await file.text());
-      if (!Array.isArray(j.cards) || !j.cards.every((c: unknown) => typeof c === 'string')) throw new Error('bad shape');
-      useDeckStore.setState({ currentDeck: { id: null, name: String(j.name || file.name.replace(/\.json$/i, '')), cards: j.cards.slice(0, 60) }, dirty: true });
+      const { name, cardIds } = jsonToDeck(await file.text(), file.name.replace(/\.json$/i, ''));
+      useDeckStore.setState({ currentDeck: { id: null, name, cards: cardIds }, dirty: true });
     } catch { setImportMsg('JSON 格式不正確（需要 { name, cards: string[] }）'); setShowImport(true); }
   };
 
