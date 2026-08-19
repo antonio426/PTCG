@@ -487,9 +487,22 @@ function PokemonCardView({
   );
 }
 
+/** TurnAction.action is an internal identifier (draw_card, resolve_choice, ko, …) that the log
+ *  panel was rendering straight to screen — English snake_case in an otherwise Chinese UI.
+ *  Unknown keys fall through to the raw value so a newly added action is visible rather than
+ *  silently blank. */
+const ACTION_LABELS: Record<string, string> = {
+  coin_flip: '擲硬幣', choose_first: '選擇先後攻', choose_active: '選擇出戰寶可夢',
+  mulligan: '重抽', mulligan_reveal: '公開手牌', mulligan_bonus_draw: '重抽補償抽牌',
+  mulligan_bonus_bench: '重抽補償上場',
+  draw_card: '抽牌', play_pokemon: '放置寶可夢', evolve: '進化', attach_energy: '附加能量',
+  play_trainer: '使出訓練家卡', use_ability: '使用特性', ability: '特性',
+  resolve_choice: '選擇結算', retreat: '撤退', discard_fossil: '丟棄化石',
+  attack: '攻擊', ko: '昏厥', end_turn: '結束回合', forfeit: '投降',
+};
 function PrizeDisplay({ count, label }: { count: number; label: string }) {
   return (
-    <div className="flex items-center gap-1.5" title={`獎賞卡 ${count}/6`}>
+    <div className="flex items-center gap-1.5" title={`剩餘獎賞卡 ${count}/6`}>
       {label && <span className="text-xs text-slate-400">{label}</span>}
       <div className="flex gap-0.5">
         {Array.from({ length: 6 }, (_, i) => (
@@ -541,7 +554,7 @@ function TurnLogEntries({ turnLog }: { turnLog: TurnAction[] }) {
           <span className={`font-medium ${entry.player === 0 ? 'text-blue-400' : 'text-red-400'}`}>
             [{entry.turn}]
           </span>{' '}
-          <span className="text-emerald-50">{entry.action}</span>
+          <span className="text-emerald-50">{ACTION_LABELS[entry.action] ?? entry.action}</span>
           {entry.details && <p className="text-emerald-700/80 mt-0.5">{entry.details}</p>}
         </div>
       ))}
@@ -1193,13 +1206,17 @@ export default function Battle() {
               <div className="flex flex-col items-center gap-1.5">
                 <span className="text-xs font-medium text-blue-300">{bs.mode === 'local' ? `玩家 ${viewerIndex + 1}` : '你'}</span>
                 <PrizeDisplay count={bs.player.prizes} label="" />
-                <span className="text-[10px] text-slate-500">已奪 {bs.player.prizes}/6</span>
+                {/* `prizes` is how many are LEFT (that's what the pips show, and what the
+                    in-battle board uses); "已奪" is how many were taken, so it has to be the
+                    complement. Printing the raw field under this label told a player who took
+                    none that they had taken all six. */}
+                <span className="text-[10px] text-slate-500">已奪 {6 - bs.player.prizes}/6</span>
               </div>
               <div className="w-px h-10 bg-emerald-900/60" />
               <div className="flex flex-col items-center gap-1.5">
                 <span className="text-xs font-medium text-red-300">{bs.mode === 'local' ? `玩家 ${2 - viewerIndex}` : '對手'}</span>
                 <PrizeDisplay count={bs.opponent.prizes} label="" />
-                <span className="text-[10px] text-slate-500">已奪 {bs.opponent.prizes}/6</span>
+                <span className="text-[10px] text-slate-500">已奪 {6 - bs.opponent.prizes}/6</span>
               </div>
             </div>
             <button

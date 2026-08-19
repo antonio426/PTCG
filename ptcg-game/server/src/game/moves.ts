@@ -26,6 +26,28 @@ function applyEffectStep(G: PtcgGameState, player: 0 | 1, effectKey: string, ste
   }
 }
 
+/** Best-effort card name for an instance id anywhere on the board, for log messages that would
+ *  otherwise print a raw id like "SV6a-050_101" to the player. Returns null when the id names
+ *  something not in a visible zone (a pending-choice option key, a deck card, a plain string). */
+function findCardNameById(G: PtcgGameState, id: string): string | null {
+  for (const p of G.players) {
+    for (const zone of [p.hand, p.discardPile, p.deck, p.prizes, p.exileZone]) {
+      const hit = zone.find(c => c.id === id);
+      if (hit) return hit.cardData.name;
+    }
+    for (const card of [p.active, ...p.bench]) {
+      if (!card) continue;
+      if (card.id === id) return card.cardData.name;
+      if (card.attachedTool?.id === id) return card.attachedTool.cardData.name;
+      const e = card.attachedEnergy.find(x => x.id === id);
+      if (e?.cardData) return e.cardData.name;
+      // Lower Stages stacked under an evolved Pokémon are still real cards a choice can name.
+      const pre = card.preEvolutions?.find(x => x.id === id);
+      if (pre) return pre.cardData.name;
+    }
+  }
+  return null;
+}
 function addLog(G: PtcgGameState, player: number, action: string, details: string, damageDetail?: DamageDetail, coinFlipNote?: string) {
   G.turnLog.push({
     player: player as 0 | 1,
@@ -772,7 +794,13 @@ const rawMoves = {
       step = resumeAttackEffect(pokemonName, attackName, ctxInfo, context, selection);
     }
     applyEffectStep(G, G.currentPlayer as 0 | 1, effectKey, step, ctxInfo.sourceCardId);
-    addLog(G, G.currentPlayer, 'resolve_choice', `結算 ${effectKey}：${selection.join('、') || '(未選擇)'}`);
+    // Fallback line for effects with no custom log message. `effectKey` is an internal
+    // discriminator ("ability:支配鎖鏈", "trainer:艾莉絲的鬥志") and `selection` holds instance ids
+    // ("SV6a-050_101") — both were going straight to the player's battle log. Show the card name
+    // and resolve each selected id to a name where the board knows one.
+    const prettyName = name.replace('::', '的');
+    const chosenLabels = selection.map(id => findCardNameById(G, id) ?? id);
+    addLog(G, G.currentPlayer, 'resolve_choice', `「${prettyName}」結算：${chosenLabels.join('、') || '(未選擇)'}`);
 
     // An attack's pending choices (e.g. distributing damage counters) block the rest of the
     // turn; once they're all resolved, finish the turn exactly like a normal attack would.
