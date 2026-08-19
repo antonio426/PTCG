@@ -36,11 +36,17 @@ function legalMovesForPendingChoice(G: PtcgGameState, playerIndex: number, choic
   }
   const pool = [...labelById.keys()];
 
+  // Clamp every requested count to what's actually selectable. combinations(pool, n) returns []
+  // for n > pool.length, so an unclamped fixed count produced ZERO legal moves while a
+  // pendingChoice was still standing — no move could resolve it and the match soft-locked behind
+  // a modal with nothing to click. Asking for "as many as you can" is the least-bad reading when
+  // a handler raises a choice its own board can't satisfy, and with an empty pool it degrades to
+  // the single "(不選)" move, which always clears the choice.
   const counts: number[] = [];
-  if (choice.count !== undefined) counts.push(choice.count);
+  if (choice.count !== undefined) counts.push(Math.min(choice.count, pool.length));
   else {
-    const min = choice.minCount ?? 0;
-    const max = choice.maxCount ?? pool.length;
+    const min = Math.min(choice.minCount ?? 0, pool.length);
+    const max = Math.min(choice.maxCount ?? pool.length, pool.length);
     for (let n = min; n <= max; n++) counts.push(n);
   }
 

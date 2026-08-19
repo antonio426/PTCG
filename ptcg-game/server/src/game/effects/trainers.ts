@@ -10,6 +10,19 @@ function deckOptions(deck: GameCard[], filter: (c: GameCard) => boolean): { id: 
   return deck.filter(filter).map(c => ({ id: c.id, label: c.cardData.name }));
 }
 
+/**
+ * The player's hand WITHOUT the Trainer currently being played — the only count a `canPlay` gate
+ * for a "discard/return N cards from your hand" cost may use.
+ *
+ * The two call sites disagree about whether the card is still in hand: `getLegalMoves` asks while
+ * iterating the hand (card still there), `playTrainer` asks after splicing it out. A bare
+ * `hand.length >= N` is therefore off by one in one of them, and would either offer a card that
+ * can't pay its own cost or hide one that can.
+ */
+function handExcludingSource(ctx: EffectContext): GameCard[] {
+  return player(ctx.G, ctx.playerIndex).hand.filter(c => c.id !== ctx.sourceCardId);
+}
+
 function moveFromDeckToHand(G: EffectContext['G'], idx: 0 | 1, cardId: string, reshuffle = true): GameCard | null {
   const p = player(G, idx);
   const i = p.deck.findIndex(c => c.id === cardId);
@@ -22,6 +35,12 @@ function moveFromDeckToHand(G: EffectContext['G'], idx: 0 | 1, cardId: string, r
 
 /** 高級球 Ultra Ball: discard 2 cards, then search any 1 Pokémon from deck to hand. */
 const ultraBall: EffectHandler = {
+  // Real rules: the discard is a COST, so with fewer than 2 other cards in hand this can't be
+  // played at all. start() already bailed out, but without a matching gate the card was still
+  // offered and then thrown away for nothing. Note the deck search deliberately has no gate —
+  // playing it with no Pokémon left in the deck is legal, and paying 2 cards purely to thin the
+  // deck / fill the discard pile is a real play.
+  canPlay(ctx) { return handExcludingSource(ctx).length >= 2; },
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     if (p.hand.length < 2) return 'done';
@@ -2241,6 +2260,8 @@ const hazaku: EffectHandler = {
 
 /** 海岱: return 2 hand cards to the bottom of the deck, then draw 4. */
 const haidai: EffectHandler = {
+  // Same cost-shaped gate as 高級球: returning 2 cards is a cost, not an optional extra.
+  canPlay(ctx) { return handExcludingSource(ctx).length >= 2; },
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     if (p.hand.length < 2) return 'done';
