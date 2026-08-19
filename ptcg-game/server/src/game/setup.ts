@@ -114,11 +114,14 @@ function placeBasics(player: PtcgPlayerState): void {
   for (const basic of otherBasics) {
     const idx = player.hand.indexOf(basic);
     if (idx === -1) continue;
-    player.hand.splice(idx, 1);
+    // Find the bench slot BEFORE removing the card from hand. Splicing first meant that once the
+    // bench filled up (an opening hand of 7 Basics: 1 Active + 5 benched + 1 left over), the
+    // extra was spliced out of hand and then placed nowhere — it vanished from the game
+    // entirely, leaving that player with 59 cards. Extras just stay in hand, as the rules have it.
     const freeSlot = player.bench.findIndex(s => s === null);
-    if (freeSlot >= 0 && freeSlot < 5) {
-      player.bench[freeSlot] = basic;
-    }
+    if (freeSlot === -1 || freeSlot >= 5) break;
+    player.hand.splice(idx, 1);
+    player.bench[freeSlot] = basic;
   }
 }
 
