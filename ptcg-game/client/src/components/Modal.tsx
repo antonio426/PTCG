@@ -20,7 +20,7 @@ export default function Modal({
       onClick={onClose}
     >
       <div
-        className={`relative bg-[radial-gradient(ellipse_at_top,theme(colors.battle.felt.from)_0%,theme(colors.battle.felt.via)_60%,theme(colors.battle.felt.to)_100%)] border border-emerald-800/60 rounded-2xl p-5 w-full mx-4 max-h-[80vh] overflow-y-auto shadow-2xl ${maxWidthClassName}`}
+        className={`relative bg-[radial-gradient(ellipse_at_top,theme(colors.battle.felt.from)_0%,theme(colors.battle.felt.via)_60%,theme(colors.battle.felt.to)_100%)] border border-emerald-800/60 ring-1 ring-inset ring-white/10 rounded-2xl p-5 w-full mx-4 max-h-[80vh] overflow-y-auto shadow-2xl shadow-black/60 ${maxWidthClassName}`}
         onClick={(e) => e.stopPropagation()}
       >
         {(title || onClose) && (

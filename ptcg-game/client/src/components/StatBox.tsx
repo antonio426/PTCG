@@ -13,7 +13,7 @@ export default function StatBox({ value, label, icon, onClick, colorClassName = 
   return (
     <Tag
       onClick={onClick}
-      className={`flex flex-col items-center justify-center w-14 h-14 rounded-lg border shadow-inner leading-none ${colorClassName} ${onClick ? 'hover:brightness-110 transition-all cursor-pointer' : ''}`}
+      className={`flex flex-col items-center justify-center w-11 h-11 sm:w-14 sm:h-14 rounded-lg border ring-1 ring-inset ring-white/5 shadow-inner leading-none ${colorClassName} ${onClick ? 'hover:brightness-110 transition-all cursor-pointer' : ''}`}
     >
       {icon}
       <span className="text-lg font-bold tabular-nums">{value}</span>

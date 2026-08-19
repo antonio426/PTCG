@@ -11,12 +11,19 @@ export default {
         // Battle.tsx's board/panel/modal backgrounds into one place. `feltFrom` is the variant
         // used only by the turn-log panel background (slightly darker top stop than `felt.from`).
         battle: {
+          // Deeper contrast than the original flat green (brighter highlight up top, near-black
+          // at the rim) for a "spotlit table" feel rather than a uniform tint — paired with the
+          // vignette overlay in Battle.tsx's board/select-deck backgrounds.
           felt: {
-            from: '#14532d',
+            from: '#1c6b3c',
             via: '#052e16',
-            to: '#031f0f',
+            to: '#020a06',
           },
-          feltFrom: '#0f2e1c',
+          feltFrom: '#0a2417',
+          // Warm accent reserved for "premium"/reward moments (win screen, prize gems) — kept
+          // separate from the functional status colors (sky=target, emerald=selected, red=danger)
+          // so it never gets mistaken for an interactive affordance.
+          gold: '#f5c451',
         },
         // Light theme reserved for the home page — the one intentionally light-on-dark exception
         // in an otherwise dark app; do not use these outside Home.tsx.
