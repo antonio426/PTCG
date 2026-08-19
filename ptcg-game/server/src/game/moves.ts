@@ -6,7 +6,7 @@ import { calculateDamageBreakdown, effectiveMaxHp, flushPreEvolutionsTo, flushPr
 import { areAbilitiesNegated, getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasCoinFlipAttackMissDebuff, hasPassiveAbilityNamed, hasTeraBenchedImmunity, isRetreatBlockedByOpponent, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat, shouldDiscardAttackerEnergy } from './effects/passiveAbilities';
 import { benchDamageFromEffectsBlocked, isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
-import { applyStatusCondition, discardAttachedEnergy, drawCards, drawUpTo, shuffleDeck } from './effects/primitives';
+import { applyStatusCondition, discardAttachedEnergy, drawCards, drawUpTo, shuffleDeck, asAttachedEnergy } from './effects/primitives';
 import { resolveGenericAttackEffect } from './effects/genericAttacks';
 import { inferEvolvesFromSpecies, evolvesFromMatches } from './evolutionChains';
 import { isFossilCard, fossilAsPokemon } from './fossils';
@@ -1373,7 +1373,7 @@ export const moves = {
             while (remaining > 0 && matches.length > 0) {
               const pick = matches.splice(Math.floor(Math.random() * matches.length), 1)[0];
               const deckIdx = player.deck.findIndex(c => c.id === pick.id);
-              if (deckIdx >= 0) target.attachedEnergy.push({ id: pick.id, type: pick.cardData.types?.[0] || 'Colorless' });
+              if (deckIdx >= 0) target.attachedEnergy.push(asAttachedEnergy(pick));
               if (deckIdx >= 0) player.deck.splice(deckIdx, 1);
               remaining--;
             }
@@ -1389,7 +1389,7 @@ export const moves = {
             const deckIdx = player.deck.findIndex(c => c.id === pick.id);
             if (deckIdx >= 0) {
               player.deck.splice(deckIdx, 1);
-              attacker.attachedEnergy.push({ id: pick.id, type: type as any });
+              attacker.attachedEnergy.push(asAttachedEnergy(pick, type));
             }
             remaining--;
           }
@@ -1405,7 +1405,7 @@ export const moves = {
             const deckIdx = player.deck.findIndex(c => c.id === pick.id);
             if (deckIdx >= 0) {
               player.deck.splice(deckIdx, 1);
-              target.attachedEnergy.push({ id: pick.id, type: type as any });
+              target.attachedEnergy.push(asAttachedEnergy(pick, type));
             }
           }
           shuffleDeck(player.deck);
@@ -1510,7 +1510,7 @@ export const moves = {
             const i = player.discardPile.findIndex(c => c.id === pick.id);
             if (i >= 0) {
               const energy = player.discardPile.splice(i, 1)[0];
-              attacker.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+              attacker.attachedEnergy.push(asAttachedEnergy(energy));
             }
           }
         }
@@ -1589,7 +1589,7 @@ export const moves = {
               const deckIdx = player.deck.findIndex(c => c.id === pick.id);
               if (deckIdx >= 0) {
                 player.deck.splice(deckIdx, 1);
-                target.attachedEnergy.push({ id: pick.id, type: type as any });
+                target.attachedEnergy.push(asAttachedEnergy(pick, type));
               }
               remaining--;
             }

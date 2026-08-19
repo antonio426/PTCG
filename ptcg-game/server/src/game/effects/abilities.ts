@@ -1,7 +1,7 @@
-import { EnergyType, GameCard } from '@ptcg/shared';
+import { EnergyType, GameCard, AttachedEnergy } from '@ptcg/shared';
 import { EffectContext, EffectHandler, EffectStep, allPokemon, findOwnPokemon, normalizeAbilityName, opponent, player } from './types';
 import { handleKo, stackAsPreEvolution, flushPreEvolutionsTo, flushPreEvolutionsToDiscard, resetCardForReentry } from '../damage';
-import { applyStatusCondition, discardAttachedEnergy, discardFromHand, drawCards, drawUpTo, flipCoin, flipCoins, moveDeckCardToBench, moveDeckCardToHand, shuffleDeck } from './primitives';
+import { applyStatusCondition, discardAttachedEnergy, discardFromHand, drawCards, drawUpTo, flipCoin, flipCoins, moveDeckCardToBench, moveDeckCardToHand, shuffleDeck, asAttachedEnergy } from './primitives';
 import { clearStatusConditionsOnLeaveActive } from '../statusConditions';
 import { hasEvolvesFrom, evolvesFromMatches } from '../evolutionChains';
 
@@ -251,7 +251,7 @@ function attachEnergyFromHandAbility(promptLabel: string, energyType: string, ma
           const i = p.hand.findIndex(c => c.id === id);
           if (i === -1) continue;
           const energy = p.hand.splice(i, 1)[0];
-          target.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+          target.attachedEnergy.push(asAttachedEnergy(energy));
         }
         if (thenDraw) drawCards(ctx.G, ctx.playerIndex, 1);
       }
@@ -275,7 +275,7 @@ const wingbeat: EffectHandler = {
       const i = p.deck.findIndex(c => c.id === id);
       if (i === -1 || !source) continue;
       const energy = p.deck.splice(i, 1)[0];
-      source.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+      source.attachedEnergy.push(asAttachedEnergy(energy));
     }
     shuffleDeck(p.deck);
     return 'done';
@@ -347,7 +347,7 @@ function attachEnergyFromDiscardAbility(opts: {
           const i = p.discardPile.findIndex(c => c.id === id);
           if (i === -1) continue;
           const energy = p.discardPile.splice(i, 1)[0];
-          target.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+          target.attachedEnergy.push(asAttachedEnergy(energy));
         }
       }
       return 'done';
@@ -550,7 +550,7 @@ const ripenCharge: EffectHandler = {
     const i = p.hand.findIndex(c => c.id === energyId);
     if (target && i >= 0) {
       const energy = p.hand.splice(i, 1)[0];
-      target.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+      target.attachedEnergy.push(asAttachedEnergy(energy));
       target.damage = Math.max(0, target.damage - 30);
     }
     return 'done';
@@ -574,7 +574,7 @@ const ruleOfExperience: EffectHandler = {
         const i = p.hand.findIndex(c => c.id === id);
         if (i === -1) continue;
         const energy = p.hand.splice(i, 1)[0];
-        self.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+        self.attachedEnergy.push(asAttachedEnergy(energy));
       }
     }
     return 'done';
@@ -672,7 +672,7 @@ const electricGenerator: EffectHandler = {
     const i = p.discardPile.findIndex(c => c.id === energyId);
     if (target && i >= 0) {
       const energy = p.discardPile.splice(i, 1)[0];
-      target.attachedEnergy.push({ id: energy.id, type: 'Lightning' });
+      target.attachedEnergy.push(asAttachedEnergy(energy, 'Lightning'));
     }
     return 'done';
   },
@@ -752,7 +752,7 @@ const flameDance: EffectHandler = {
     const i = p.hand.findIndex(c => c.id === energyId);
     if (target && i >= 0) {
       const energy = p.hand.splice(i, 1)[0];
-      target.attachedEnergy.push({ id: energy.id, type: 'Fire' });
+      target.attachedEnergy.push(asAttachedEnergy(energy, 'Fire'));
     }
     return 'done';
   },
@@ -863,7 +863,7 @@ const flameStepDance: EffectHandler = {
         const i = p.hand.findIndex(c => c.id === id);
         if (i === -1) continue;
         const energy = p.hand.splice(i, 1)[0];
-        target.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+        target.attachedEnergy.push(asAttachedEnergy(energy));
       }
     }
     return 'done';
@@ -945,7 +945,7 @@ const metalMaker: EffectHandler = {
         const i = p.deck.findIndex(c => c.id === id);
         if (i === -1) continue;
         const energy = p.deck.splice(i, 1)[0];
-        target.attachedEnergy.push({ id: energy.id, type: 'Metal' });
+        target.attachedEnergy.push(asAttachedEnergy(energy, 'Metal'));
       }
     }
     shuffleDeck(p.deck);
@@ -1229,7 +1229,7 @@ const charge: EffectHandler = {
     const i = p.discardPile.findIndex(c => c.id === selection[0]);
     if (self && i >= 0) {
       const energy = p.discardPile.splice(i, 1)[0];
-      self.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+      self.attachedEnergy.push(asAttachedEnergy(energy));
     }
     return 'done';
   },
@@ -1311,7 +1311,7 @@ const villainRise: EffectHandler = {
     const i = p.deck.findIndex(c => c.id === energyId);
     if (target && i >= 0) {
       const energy = p.deck.splice(i, 1)[0];
-      target.attachedEnergy.push({ id: energy.id, type: 'Darkness' });
+      target.attachedEnergy.push(asAttachedEnergy(energy, 'Darkness'));
       target.damage += 20;
     }
     shuffleDeck(p.deck);
@@ -1412,7 +1412,7 @@ const overdischarge: EffectHandler = {
         const i = p.discardPile.findIndex(c => c.id === id);
         if (i === -1) continue;
         const energy = p.discardPile.splice(i, 1)[0];
-        target.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+        target.attachedEnergy.push(asAttachedEnergy(energy));
       }
     }
     return 'done';
@@ -1575,7 +1575,7 @@ const spikeCling: EffectHandler = {
         const i = p.discardPile.findIndex(c => c.id === id);
         if (i === -1) continue;
         const energy = p.discardPile.splice(i, 1)[0];
-        self.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+        self.attachedEnergy.push(asAttachedEnergy(energy));
       }
     }
     return 'done';
@@ -1765,7 +1765,7 @@ const excitedTurbine: EffectHandler = {
     const i = p.hand.findIndex(c => c.id === energyId);
     if (target && i >= 0) {
       const energy = p.hand.splice(i, 1)[0];
-      target.attachedEnergy.push({ id: energy.id, type: 'Fire' });
+      target.attachedEnergy.push(asAttachedEnergy(energy, 'Fire'));
     }
     return 'done';
   },
@@ -1867,7 +1867,7 @@ const partnerBoost: EffectHandler = {
         const i = p.hand.findIndex(c => c.id === id);
         if (i === -1) continue;
         const energy = p.hand.splice(i, 1)[0];
-        target.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+        target.attachedEnergy.push(asAttachedEnergy(energy));
       }
     }
     return 'done';
@@ -2098,13 +2098,13 @@ const energyDance: EffectHandler = {
         choiceType: 'select_pokemon',
         count: 1,
         options: targets.map(t => ({ id: t.id, label: t.cardData.name })),
-        context: { step: 'pick_target', energyCards: selection.map(id => seen.find(c => c.id === id)).filter((c): c is GameCard => !!c).map(c => ({ id: c.id, type: c.cardData.types?.[0] || 'Colorless' })) },
+        context: { step: 'pick_target', energyCards: selection.map(id => seen.find(c => c.id === id)).filter((c): c is GameCard => !!c).map(c => asAttachedEnergy(c)) },
       };
     }
     const target = allPokemon(ctx.G, ctx.playerIndex).find(t => t.id === selection[0]);
-    const energyCards = context.energyCards as { id: string; type: string }[];
+    const energyCards = context.energyCards as AttachedEnergy[];
     if (target) {
-      for (const e of energyCards) target.attachedEnergy.push({ id: e.id, type: e.type as any });
+      for (const e of energyCards) target.attachedEnergy.push(e);
     }
     return 'done';
   },
@@ -2158,7 +2158,7 @@ const napeUmbrellaGenerator: EffectHandler = {
         const i = p.deck.findIndex(c => c.id === id);
         if (i === -1) continue;
         const energy = p.deck.splice(i, 1)[0];
-        self.attachedEnergy.push({ id: energy.id, type: 'Lightning' });
+        self.attachedEnergy.push(asAttachedEnergy(energy, 'Lightning'));
       }
     }
     shuffleDeck(p.deck);
@@ -2262,7 +2262,7 @@ const returnReload: EffectHandler = {
         const i = p.hand.findIndex(c => c.id === id);
         if (i === -1) continue;
         const energy = p.hand.splice(i, 1)[0];
-        self.attachedEnergy.push({ id: energy.id, type: 'Water' });
+        self.attachedEnergy.push(asAttachedEnergy(energy, 'Water'));
       }
     }
     return 'done';
@@ -2499,13 +2499,13 @@ const scaleRhythm: EffectHandler = {
         choiceType: 'select_pokemon',
         count: 1,
         options: targets.map(t => ({ id: t.id, label: t.cardData.name })),
-        context: { step: 'pick_target', energyCards: selection.map(id => seen.find(c => c.id === id)).filter((c): c is GameCard => !!c).map(c => ({ id: c.id, type: c.cardData.types?.[0] || 'Colorless' })) },
+        context: { step: 'pick_target', energyCards: selection.map(id => seen.find(c => c.id === id)).filter((c): c is GameCard => !!c).map(c => asAttachedEnergy(c)) },
       };
     }
     const target = allPokemon(ctx.G, ctx.playerIndex).find(t => t.id === selection[0]);
-    const energyCards = context.energyCards as { id: string; type: string }[];
+    const energyCards = context.energyCards as AttachedEnergy[];
     if (target) {
-      for (const e of energyCards) target.attachedEnergy.push({ id: e.id, type: e.type as any });
+      for (const e of energyCards) target.attachedEnergy.push(e);
     }
     return 'done';
   },
@@ -2542,7 +2542,7 @@ const overlordRoar: EffectHandler = {
     p.deck.unshift(...rest);
     shuffleDeck(p.deck);
     const self = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
-    if (self && chosen) self.attachedEnergy.push({ id: chosen.id, type: chosen.cardData.types?.[0] || 'Colorless' });
+    if (self && chosen) self.attachedEnergy.push(asAttachedEnergy(chosen));
     return 'done';
   },
 };
@@ -2745,7 +2745,7 @@ const powerlessCharge: EffectHandler = {
     const i = p.hand.findIndex(c => c.id === selection[0]);
     if (i >= 0 && p.active) {
       const energy = p.hand.splice(i, 1)[0];
-      p.active.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+      p.active.attachedEnergy.push(asAttachedEnergy(energy));
     }
     return 'done';
   },
@@ -2791,7 +2791,7 @@ const punkMuscleUp: EffectHandler = {
         const i = p.deck.findIndex(c => c.id === id);
         if (i === -1) continue;
         const energy = p.deck.splice(i, 1)[0];
-        target.attachedEnergy.push({ id: energy.id, type: 'Darkness' });
+        target.attachedEnergy.push(asAttachedEnergy(energy, 'Darkness'));
       }
     }
     shuffleDeck(p.deck);
@@ -2824,7 +2824,7 @@ const xActivation: EffectHandler = {
         const i = p.deck.findIndex(c => c.id === id);
         if (i === -1) continue;
         const energy = p.deck.splice(i, 1)[0];
-        target.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+        target.attachedEnergy.push(asAttachedEnergy(energy));
       }
     }
     shuffleDeck(p.deck);

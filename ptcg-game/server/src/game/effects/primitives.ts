@@ -1,4 +1,4 @@
-import { GameCard } from '@ptcg/shared';
+import { AttachedEnergy, GameCard } from '@ptcg/shared';
 import { PtcgGameState } from '../GameState';
 import { handleKo, resetCardForReentry } from '../damage';
 import { player, opponent, allPokemon, shuffleDeck } from './types';
@@ -15,6 +15,27 @@ export function drawCards(G: PtcgGameState, idx: 0 | 1, count: number): number {
 export function drawUpTo(G: PtcgGameState, idx: 0 | 1, target: number): void {
   const p = player(G, idx);
   while (p.hand.length < target && p.deck.length > 0) p.hand.push(p.deck.pop()!);
+}
+
+/**
+ * The one way to build an `AttachedEnergy` when an energy card enters play on a Pokémon.
+ *
+ * Always carries `cardData`. Constructing the object inline as `{ id, type }` compiles fine —
+ * the field is optional purely for backward compatibility — but the energy then has no card
+ * behind it, so `discardAttachedEnergy` silently drops it and the card leaves the game instead
+ * of reaching the discard pile. Every ability/Trainer attach site used to do exactly that, which
+ * meant any energy NOT attached by hand vanished the moment an attack or retreat cost discarded
+ * it. Use this helper rather than an object literal so that can't come back.
+ *
+ * `typeOverride` is for effects that attach an energy card AS a specific type regardless of what
+ * it prints (e.g. an ability that attaches any energy as Lightning).
+ */
+export function asAttachedEnergy(card: GameCard, typeOverride?: string): AttachedEnergy {
+  return {
+    id: card.id,
+    type: typeOverride ?? card.cardData.types?.[0] ?? 'Colorless',
+    cardData: card.cardData,
+  };
 }
 
 /** Moves a discarded AttachedEnergy into its owner's discard pile as a real card. Energy removed

@@ -1,6 +1,6 @@
 import { GameCard } from '@ptcg/shared';
 import { EffectContext, EffectHandler, EffectStep, allPokemon, normalizeCardName, opponent, player, shuffleDeck } from './types';
-import { applyStatusCondition, discardAttachedEnergy, discardFromHand, drawCards, drawUpTo, flipCoin, hasNoRuleBox, healDamage, moveDiscardCardToHand } from './primitives';
+import { applyStatusCondition, discardAttachedEnergy, discardFromHand, drawCards, drawUpTo, flipCoin, hasNoRuleBox, healDamage, moveDiscardCardToHand, asAttachedEnergy } from './primitives';
 import { clearStatusConditionsOnLeaveActive } from '../statusConditions';
 import { isEnergyDiscardProtected } from './passiveAbilities';
 import { handleKo, stackAsPreEvolution, flushPreEvolutionsTo, flushPreEvolutionsToDiscard, resetCardForReentry } from '../damage';
@@ -343,7 +343,7 @@ const akamatsu: EffectHandler = {
         : ctx.G.players[ctx.playerIndex].bench.find(c => c?.id === selection[0]);
       if (!target) return 'done';
       const energy = p.hand.splice(cardIdx, 1)[0];
-      target.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+      target.attachedEnergy.push(asAttachedEnergy(energy));
     }
     return 'done';
   },
@@ -1050,7 +1050,7 @@ const asuNoHiketsu: EffectHandler = {
       const i = p.deck.findIndex(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes('Darkness'));
       if (!target || i === -1) continue;
       const energy = p.deck.splice(i, 1)[0];
-      target.attachedEnergy.push({ id: energy.id, type: 'Darkness' });
+      target.attachedEnergy.push(asAttachedEnergy(energy, 'Darkness'));
       if (target.id === p.active?.id) {
         target.statusConditions = target.statusConditions.filter(c => c !== 'Poisoned');
         target.statusConditions.push('Poisoned');
@@ -1190,7 +1190,7 @@ const nsBooster: EffectHandler = {
     const i = p.discardPile.findIndex(c => c.id === energyId);
     if (target && i >= 0) {
       const energy = p.discardPile.splice(i, 1)[0];
-      target.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+      target.attachedEnergy.push(asAttachedEnergy(energy));
     }
     return 'done';
   },
@@ -1215,7 +1215,7 @@ const glassHorn: EffectHandler = {
       const i = p.discardPile.findIndex(c => c.cardData.subtypes.includes('Basic Energy'));
       if (!target || i === -1) continue;
       const energy = p.discardPile.splice(i, 1)[0];
-      target.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+      target.attachedEnergy.push(asAttachedEnergy(energy));
     }
     return 'done';
   },
@@ -1440,7 +1440,7 @@ const miracleCipher: EffectHandler = {
     const i = p.discardPile.findIndex(c => c.id === energyId);
     if (target && i >= 0) {
       const energy = p.discardPile.splice(i, 1)[0];
-      target.attachedEnergy.push({ id: energy.id, type: 'Psychic' });
+      target.attachedEnergy.push(asAttachedEnergy(energy, 'Psychic'));
     }
     return 'done';
   },
@@ -1495,7 +1495,7 @@ const naeisEncouragement: EffectHandler = {
         const i = p.discardPile.findIndex(c => c.id === id);
         if (i === -1) continue;
         const energy = p.discardPile.splice(i, 1)[0];
-        target.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+        target.attachedEnergy.push(asAttachedEnergy(energy));
       }
     }
     return 'done';
@@ -1525,7 +1525,7 @@ const jipuso: EffectHandler = {
         const i = p.discardPile.findIndex(c => c.id === id);
         if (i === -1) continue;
         const energy = p.discardPile.splice(i, 1)[0];
-        target.attachedEnergy.push({ id: energy.id, type: 'Metal' });
+        target.attachedEnergy.push(asAttachedEnergy(energy, 'Metal'));
       }
     }
     return 'done';
@@ -1730,7 +1730,7 @@ const kasumisSpirit: EffectHandler = {
         const i = p.deck.findIndex(c => c.id === id);
         if (i === -1) continue;
         const energy = p.deck.splice(i, 1)[0];
-        target.attachedEnergy.push({ id: energy.id, type: 'Water' });
+        target.attachedEnergy.push(asAttachedEnergy(energy, 'Water'));
       }
     }
     shuffleDeck(p.deck);
@@ -1967,7 +1967,7 @@ const restartBox: EffectHandler = {
       const i = p.discardPile.findIndex(c => c.cardData.subtypes.includes('Basic Energy'));
       if (i === -1) break;
       const energy = p.discardPile.splice(i, 1)[0];
-      target.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+      target.attachedEnergy.push(asAttachedEnergy(energy));
     }
     return 'done';
   },
@@ -2739,7 +2739,7 @@ const energyCoin: EffectHandler = {
     const i = p.deck.findIndex(c => c.id === energyId);
     if (target && i >= 0) {
       const energy = p.deck.splice(i, 1)[0];
-      target.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+      target.attachedEnergy.push(asAttachedEnergy(energy));
     }
     shuffleDeck(p.deck);
     return 'done';
@@ -2791,7 +2791,7 @@ const waitress: EffectHandler = {
     const i = p.deck.findIndex(c => c.id === energyId);
     if (target && i >= 0) {
       const energy = p.deck.splice(i, 1)[0];
-      target.attachedEnergy.push({ id: energy.id, type: energy.cardData.types?.[0] || 'Colorless' });
+      target.attachedEnergy.push(asAttachedEnergy(energy));
     }
     shuffleDeck(p.deck);
     return 'done';
