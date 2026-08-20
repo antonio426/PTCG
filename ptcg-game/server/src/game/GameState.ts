@@ -18,6 +18,10 @@ export interface PtcgPlayerState {
   /** Names of every Supporter card played this turn — 供 family-scoped "if you played a X-named
    * Supporter this turn" conditions (e.g. 火箭隊的工廠 Stadium) that a plain boolean can't answer. */
   supporterNamesPlayedThisTurn: string[];
+  /** Attacks declared by this side, rotated ThisTurn -> LastTurn once per turn transition in
+   * processBetweenTurns — feeds 「在上個自己的回合，若…使用了「X」」 attack templates. */
+  attacksUsedThisTurn: { cardId: string; attackName: string; ancient: boolean }[];
+  attacksUsedLastTurn: { cardId: string; attackName: string; ancient: boolean }[];
   pokemonPlayedThisTurn: string[];
   cardsPlayedThisTurn: number;
   /** Instance ids of Pokémon whose once-per-turn ability has already been used this turn. */
@@ -38,6 +42,10 @@ export interface PtcgPlayerState {
    * timedEffects). Set on the LOCKED side (the attacker's opponent), so validation just checks
    * the locked player's own field. */
   itemLockedUntilTurn: number | null;
+  /** Same convention as itemLockedUntilTurn, for the three other lock kinds attack texts print. */
+  supporterLockedUntilTurn: number | null;
+  stadiumLockedUntilTurn: number | null;
+  evolutionLockedUntilTurn: number | null;
   /** 霍米加的演奏-style "opponent's Poisoned Pokémon can't retreat next turn (including newly
    * poisoned ones)" — set on the AFFECTED side (mirrors itemLockedUntilTurn's convention), since
    * it's a condition-based check (any Poisoned Pokémon) rather than tied to one specific card. */

@@ -201,7 +201,15 @@ export function isDamageBlocked(G: PtcgGameState, attacker: GameCard, defender: 
   // 這隻寶可夢不會受到招式的傷害"). `vsSubtype`, when present, restricts the immunity to
   // attackers of that printed Subtype only (e.g. "Basic").
   const immuneEffect = defender.timedEffects?.find(e => e.kind === 'damageImmune' && e.appliesOnTurn === G.turn);
-  if (immuneEffect && (!immuneEffect.vsSubtype || attacker.cardData.subtypes.includes(immuneEffect.vsSubtype as any))
+  // vsSubtype takes printed Subtypes plus two derived classes: 'Evolved' (any evolution stage)
+  // and 'HasAbility' (the attacker prints an ability).
+  const vsSubtypeHit = (vs: string | undefined): boolean => {
+    if (!vs) return true;
+    if (vs === 'Evolved') return attacker.cardData.subtypes.some(s => ['Stage 1', 'Stage 2', 'VMAX', 'VSTAR'].includes(s));
+    if (vs === 'HasAbility') return !!attacker.cardData.abilities?.some(a => a.text);
+    return attacker.cardData.subtypes.includes(vs as any);
+  };
+  if (immuneEffect && vsSubtypeHit(immuneEffect.vsSubtype)
     && (immuneEffect.maxImmuneDamage === undefined || (attackPrintedDamage ?? 0) <= immuneEffect.maxImmuneDamage)) return true;
   // 礎石之勢: immune to damage from any Pokémon that itself has an ability.
   if (hasAbility(G, defender, '礎石之勢') && attacker.cardData.abilities?.some(a => a.text)) return true;

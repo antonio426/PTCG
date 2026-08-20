@@ -323,6 +323,14 @@ const rawMoves = {
       cardData: energyCard.cardData,
     });
     onEnergyAttachedFromHand(G, G.currentPlayer as 0 | 1, target, energyCard);
+    // 「每次對手從手牌將能量卡附於受到這個招式的寶可夢身上時，在那隻寶可夢身上放置N個傷害指示物」
+    for (const e of target.timedEffects ?? []) {
+      if (e.kind === 'attachPunishCounters' && e.appliesOnTurn === G.turn) {
+        target.damage += (e.amount ?? 0) * 10;
+        const hp = effectiveMaxHp(G, target);
+        if (hp > 0 && target.damage >= hp) handleKo(G, G.currentPlayer, target.id);
+      }
+    }
     // 祭典會場: this Pokémon now has Energy, so any Condition already on it is cured.
     sweepStadiumStatusCures(G);
 
@@ -992,6 +1000,14 @@ const rawMoves = {
     // 回力鏢能量/燃料【火】能量: record the attacker's copies before the attack resolves, so the
     // post-move wrapper can return whichever ones the attack's own effect discards.
     watchAttackEnergyReturns(G, G.currentPlayer as 0 | 1, attacker);
+
+    // Feeds 「在上個自己的回合，若…使用了「X」」 templates; rotated ThisTurn -> LastTurn once
+    // per turn transition in processBetweenTurns.
+    player.attacksUsedThisTurn.push({
+      cardId: attacker.id,
+      attackName: attack.name,
+      ancient: attacker.cardData.subtypes.includes('Ancient'),
+    });
 
     if (hasAttackEffect(attacker.cardData.name, attack.name)) {
       const ctxInfo: EffectContext = { G, playerIndex: G.currentPlayer as 0 | 1, sourceCardId: attacker.id };

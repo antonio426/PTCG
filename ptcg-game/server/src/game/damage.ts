@@ -195,9 +195,12 @@ export function calculateDamageBreakdown(G: PtcgGameState, attackerIdx: 0 | 1, a
   // 的寶可夢使用招式的傷害「-N」點" — printed on the DEFENDER at the time, so it reduces THEIR
   // outgoing damage once it becomes their turn to attack).
   baseDamage = Math.max(0, baseDamage - getOutgoingDamageReduction(G, attacker));
+  // 「弱點改為【T】屬性」 timed override set by an earlier attack takes precedence; otherwise
   // 妖精領域-style added weakness is an opponent ABILITY's effect on the defender — 光之翼 ignores it.
-  const weaknessOverride = isProtectedFromOpponentAbility(G, defender)
-    ? undefined : getWeaknessTypeOverride(G, (1 - attackerIdx) as 0 | 1, defender);
+  const timedWeakness = defender.timedEffects?.find(e => e.kind === 'weaknessBecomes' && e.appliesOnTurn === G.turn)?.vsSubtype;
+  const weaknessOverride = timedWeakness
+    ?? (isProtectedFromOpponentAbility(G, defender)
+      ? undefined : getWeaknessTypeOverride(G, (1 - attackerIdx) as 0 | 1, defender));
   const weaknessRemoved = ignoreWeakness || isWeaknessRemovedByTimedEffect(G, defender);
   const afterWeakness = applyWeaknessResistance(baseDamage, attacker, defender, weaknessOverride, ignoreResistance, weaknessRemoved, attackerEffectiveTypes);
   const defenderIdx = (1 - attackerIdx) as 0 | 1;

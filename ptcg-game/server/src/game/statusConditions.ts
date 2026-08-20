@@ -67,6 +67,9 @@ export function processBetweenTurns(G: PtcgGameState): void {
   // (applyTurnBegin/turn.onBegin already flip G.currentPlayer to the new turn's player before
   // calling this). Needed for Paralysis below.
   const justFinishedIdx = (1 - G.currentPlayer) as 0 | 1;
+  // Their attacks-this-turn record becomes 「上個自己的回合」 for the attack templates.
+  G.players[justFinishedIdx].attacksUsedLastTurn = G.players[justFinishedIdx].attacksUsedThisTurn;
+  G.players[justFinishedIdx].attacksUsedThisTurn = [];
 
   for (let idx = 0 as 0 | 1; idx <= 1; idx = (idx + 1) as 0 | 1) {
     const p = G.players[idx];

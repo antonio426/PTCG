@@ -174,6 +174,9 @@ export function canEvolve(G: PtcgGameState, playerIndex: number, cardId: string,
   // played by evolving; the only door is the 全能變身 deck swap in moves.resolveChoice.
   if (card.cardData.abilities?.some(a => a.text && normalizeAbilityName(a.name) === '全能靈魂')) return false;
 
+  // 「在下個對手的回合，對手無法從手牌使出寶可夢並完成進化」 — an attack-set evolution lock.
+  if (player.evolutionLockedUntilTurn === G.turn) return false;
+
   // TCGdex's zh-tw locale never populates `evolvesFrom` (confirmed: every Stage 1/Stage 2/VMAX/
   // VSTAR card in the dataset is missing it, not just some) — hasEvolvesFrom/evolvesFromMatches
   // fall back to a static species-chain table built from PokeAPI (see evolutionChains.ts) so
@@ -211,6 +214,8 @@ export function canAttachEnergy(G: PtcgGameState, playerIndex: number, cardId: s
 
   const target = findPokemon(player, targetId);
   if (!target) return false;
+  // 「在下個對手的回合，受到這個招式的寶可夢，無法附上從手牌使出的能量卡」 — a timed per-card lock.
+  if (target.timedEffects?.some(e => e.kind === 'cantAttachEnergy' && e.appliesOnTurn === G.turn)) return false;
 
   return true;
 }
@@ -287,6 +292,11 @@ export function canAttack(G: PtcgGameState, playerIndex: number, attackIndex: nu
   if (attack.text?.trim() === '只要這隻寶可夢在備戰區，不會受到招式的傷害。' && !parseInt(attack.damage || '0', 10)) return false;
   // 「這個招式只可在後攻玩家的最初回合使用」 — usable ONLY on the second player's first turn.
   if (attack.text?.includes('只可在後攻玩家的最初回合使用') && G.turn !== 2) return false;
+  // 「這個招式在後攻玩家的最初回合無法使用」 — the mirror restriction.
+  if (attack.text?.includes('這個招式在後攻玩家的最初回合無法使用') && G.turn === 2) return false;
+  // 「在上個自己的回合，若自己的寶可夢使用了「X」，則無法使用這個招式」
+  const banAfter = attack.text?.match(/在上個自己的回合，若自己的寶可夢使用了「[‌​]*(.+?)」，則無法使用這個招式/);
+  if (banAfter && player.attacksUsedLastTurn.some(e => e.attackName.replace(/^[‌​\s]+/, '') === banAfter[1])) return false;
   if (firstTurnBlocked && !/這個招式(?:在先攻玩家的最初回合也可使用|可在先攻玩家的最初回合使用)/.test(attack.text ?? '')) return false;
   // Old-scraper residue stored ability text as `[特性]`-prefixed pseudo-ATTACKS with an empty
   // cost — always payable, so selecting one silently wasted the turn's attack. The data has
@@ -510,7 +520,10 @@ export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalActio
           || (isItem && (isItemPlayBlocked(G, playerIndex as 0 | 1) || isItemLockedByTimedEffect(G, playerIndex as 0 | 1)))
           || (isAceSpec(card.cardData) && isAceSpecPlayBlocked(G, playerIndex as 0 | 1))
           // 爆大身軀: no Stadium plays while it sits in the opponent's Active Spot.
-          || (card.cardData.subtypes.includes('Stadium') && isStadiumPlayBlocked(G, playerIndex as 0 | 1));
+          || (card.cardData.subtypes.includes('Stadium') && isStadiumPlayBlocked(G, playerIndex as 0 | 1))
+          // Attack-set locks (mirror itemLockedUntilTurn's shape).
+          || (isSupporter && player.supporterLockedUntilTurn === G.turn)
+          || (card.cardData.subtypes.includes('Stadium') && player.stadiumLockedUntilTurn === G.turn);
         // Per-handler canPlay gate (EffectHandler.canPlay, co-located with each trainer's own
         // effect logic in effects/trainers.ts): a Trainer whose effect could not do anything
         // right now is not offered as a move at all — otherwise the generic trainer-play flow

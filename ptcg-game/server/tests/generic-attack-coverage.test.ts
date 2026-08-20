@@ -266,3 +266,53 @@ describe('round-4 mechanisms', () => {
     expect(victim.damage).toBe(70);
   });
 });
+
+describe('round-4 late mechanisms', () => {
+  it('supporter/evolution locks gate the opponent for exactly their next turn', () => {
+    const atk = mkAttack('封鎖', ['Colorless'], '', '這個招式只可在後攻玩家的最初回合使用。在下個對手的回合，對手無法從手牌使出支援者卡。');
+    const attacker = makeGameCard(makeCard({ name: '封鎖者', hp: '120', subtypes: ['Basic'] as Subtype[], attacks: [atk] }), 0, { attachedEnergy: [colorless('l4-1')] });
+    const G = battle(attacker, makeGameCard(BASIC_MON, 1));
+    G.turn = 2; // the printed only-on-turn-2 window
+    moves.attack({ G, ctx: { ...ctx0, turn: 2 } } as any, 0);
+    expect(G.players[1].supporterLockedUntilTurn).toBe(3);
+    // On their locked turn the Supporter is not offered…
+    const supporter = makeGameCard(makeCard({ name: '某支援者', supertype: 'Trainer', subtypes: ['Supporter'] as Subtype[] }), 1);
+    G.players[1].hand = [supporter];
+    G.currentPlayer = 1;
+    G.turn = 3;
+    G.phase = 'main' as any;
+    expect(getLegalMoves(G, 1).some(mv => mv.type === 'play_trainer' && (mv.payload as any)?.cardId === supporter.id)).toBe(false);
+    // …and offered again the turn after.
+    G.turn = 5;
+    expect(getLegalMoves(G, 1).some(mv => mv.type === 'play_trainer' && (mv.payload as any)?.cardId === supporter.id)).toBe(true);
+  });
+
+  it('timed weakness override doubles the hit while active', () => {
+    const mark = mkAttack('標記', ['Colorless'], '', '在下個自己的回合結束前，受到這個招式的寶可夢弱點改爲【無】屬性。[弱點以「×2」計算傷害。]');
+    const hit = mkAttack('撞', ['Colorless'], '50');
+    const attacker = makeGameCard(makeCard({ name: '標記者', hp: '200', subtypes: ['Basic'] as Subtype[], types: ['Colorless'] as any, attacks: [mark, hit] }), 0, { attachedEnergy: [colorless('l4-2')] });
+    const victim = makeGameCard(makeCard({ name: '被標記者', hp: '300', subtypes: ['Basic'] as Subtype[] }), 1);
+    const G = battle(attacker, victim);
+    moves.attack({ G, ctx: ctx0 } as any, 0); // marks: weakness becomes Colorless on turns 4 and 5
+    G.turn = 5;
+    G.phase = 'main' as any;
+    moves.attack({ G, ctx: { ...ctx0, turn: 5 } } as any, 1);
+    expect(victim.damage).toBe(100); // 50 doubled into the overridden weakness
+  });
+
+  it('attack-name memory: the last-own-turn bonus reads the rotated record', () => {
+    const gas = mkAttack('充滿瓦斯', ['Colorless'], '10');
+    const boom = mkAttack('爆炸', ['Colorless'], '50', '在上個自己的回合，若這隻寶可夢使出了「充滿瓦斯」，則增加120點傷害。');
+    const attacker = makeGameCard(makeCard({ name: '瓦斯彈手', hp: '120', subtypes: ['Basic'] as Subtype[], attacks: [gas, boom] }), 0, { attachedEnergy: [colorless('l4-3')] });
+    const victim = makeGameCard(makeCard({ name: '標靶', hp: '400', subtypes: ['Basic'] as Subtype[] }), 1);
+    const G = battle(attacker, victim);
+    moves.attack({ G, ctx: ctx0 } as any, 0); // 充滿瓦斯
+    // Simulate the two turn transitions that bring the attacker's own next turn around.
+    G.currentPlayer = 1; processBetweenTurns(G);
+    G.currentPlayer = 0; processBetweenTurns(G);
+    G.turn = 5;
+    G.phase = 'main' as any;
+    moves.attack({ G, ctx: { ...ctx0, turn: 5 } } as any, 1); // 爆炸
+    expect(victim.damage).toBe(10 + 50 + 120);
+  });
+});
