@@ -299,6 +299,37 @@ export function isReturnToHandBlocked(G: PtcgGameState, ownerIdx: 0 | 1): boolea
   return teamOf(G, (1 - ownerIdx) as 0 | 1).some(c => hasAbility(G, c, '平穩境地'));
 }
 
+const ZH_TYPE_CHAR: Record<string, EnergyType> = {
+  '草': 'Grass', '火': 'Fire', '水': 'Water', '雷': 'Lightning', '超': 'Psychic',
+  '鬥': 'Fighting', '惡': 'Darkness', '鋼': 'Metal', '龍': 'Dragon', '無': 'Colorless',
+};
+
+/**
+ * 雙重屬性 (小碎鑽 etc.) / 二重核心 (鐵轍跡): the holder's printed type is REPLACED by the two
+ * types its own ability text names (「改為【X】與【Y】2種屬性」) — each print pairs different
+ * types, so they're parsed from the text rather than tabled. 二重核心 additionally requires
+ * 「驅勁能量 未來」 attached. Consulted by the damage pipeline (weakness/resistance matching and
+ * type-filtered damage boosts); the many other raw `cardData.types` reads (energy-attach gates,
+ * heal filters) intentionally still see the printed type — migrate a site here only when a real
+ * interaction demands it.
+ */
+export function effectiveTypes(G: PtcgGameState, card: GameCard): EnergyType[] {
+  const dualName = hasAbility(G, card, '雙重屬性') ? '雙重屬性'
+    : hasAbility(G, card, '二重核心') ? '二重核心' : null;
+  if (dualName) {
+    const gated = dualName === '二重核心'
+      && !card.attachedEnergy.some(e => e.cardData?.name?.startsWith('驅勁能量') && e.cardData.name.includes('未來'));
+    if (!gated) {
+      const text = (card.cardData.abilities || []).find(a => a.text && normalizeAbilityName(a.name) === dualName)?.text || '';
+      const m = text.match(/改為【(.)】與【(.)】2種屬性/);
+      const t1 = m && ZH_TYPE_CHAR[m[1]];
+      const t2 = m && ZH_TYPE_CHAR[m[2]];
+      if (t1 && t2) return [t1, t2];
+    }
+  }
+  return card.cardData.types || [];
+}
+
 /** Rule-box Pokémon (ex/V/VMAX/VSTAR/GX/Mega/TAG TEAM) — local copy to avoid a cross-module import cycle. */
 function isRuleBoxPokemon(card: GameCard): boolean {
   const subs = card.cardData.subtypes || [];
@@ -761,4 +792,5 @@ export const PASSIVE_ABILITY_NAMES = new Set([
   // 瞬間爆發力 lives in setup.ts's canOpenAsSetupActive (a setup-placement right, not a
   // usable-in-turn effect); 緊急迴轉/激動俯衝 are real abilityEffects entries used from hand.
   '瞬間爆發力',
+  '雙重屬性', '二重核心',
 ]);

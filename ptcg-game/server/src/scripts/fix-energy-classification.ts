@@ -41,6 +41,28 @@ function patchFile(filePath: string) {
     apply(); patched++; console.log(`  ${what}: ${c.id} ${c.name}`);
   };
 
+  // Class 4: 驅勁能量 (ブーストエナジー) 未來/古代 — real Special Energy cards that came through
+  // the scrape as Trainer/Pokémon Tool with no rules text at all, so they could never be attached
+  // and the engine's Special-Energy hooks never saw them. Reclassified by exact name, keeping the
+  // paradox tag, and carrying the official text (asia.pokemon-card.com detail 11683 / 11682).
+  const BOOST_ENERGY_TEXT: Record<string, string> = {
+    '驅勁能量 未來': '附有這張卡的「未來」寶可夢【撤退】所需的能量全部消除，那隻寶可夢使用的招式，對對手的戰鬥寶可夢造成的傷害「+20」點。',
+    '驅勁能量 古代': '附有這張卡的「古代」寶可夢的最大HP「+60」，那隻寶可夢不會陷入特殊狀態，並將受到的特殊狀態全部恢復。',
+  };
+  for (const c of cards) {
+    const text = BOOST_ENERGY_TEXT[c.name];
+    if (!text) continue;
+    if (c.supertype === 'Energy' && c.subtypes?.includes('Special Energy') && c.rules?.[0] === text) continue;
+    const tag = (c.subtypes || []).find((s: string) => s === 'Ancient' || s === 'Future')
+      ?? (c.name.includes('未來') ? 'Future' : 'Ancient');
+    fix(c, `reclassify as Energy/Special Energy (${tag})`, () => {
+      c.supertype = 'Energy';
+      c.subtypes = ['Special Energy', tag];
+      c.rules = [text];
+      delete c.hp;
+    });
+  }
+
   for (const c of cards) {
     if (c.supertype !== 'Energy') continue;
     const subs: string[] = c.subtypes || [];

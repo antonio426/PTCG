@@ -392045,9 +392045,9 @@
     {
       "id": "SVHM-016",
       "name": "驅勁能量 未來",
-      "supertype": "Trainer",
+      "supertype": "Energy",
       "subtypes": [
-        "Pokémon Tool",
+        "Special Energy",
         "Future"
       ],
       "abilities": [],
@@ -392072,7 +392072,10 @@
         "large": "/api/images/SVHM/SVHM/016/high"
       },
       "localId": "016",
-      "_enriched": true
+      "_enriched": true,
+      "rules": [
+        "附有這張卡的「未來」寶可夢【撤退】所需的能量全部消除，那隻寶可夢使用的招式，對對手的戰鬥寶可夢造成的傷害「+20」點。"
+      ]
     },
     {
       "id": "SVAW-016",
@@ -392145,9 +392148,9 @@
     {
       "id": "SVHK-016",
       "name": "驅勁能量 古代",
-      "supertype": "Trainer",
+      "supertype": "Energy",
       "subtypes": [
-        "Pokémon Tool",
+        "Special Energy",
         "Ancient"
       ],
       "abilities": [],
@@ -392172,7 +392175,10 @@
         "large": "/api/images/SVHK/SVHK/016/high"
       },
       "localId": "016",
-      "_enriched": true
+      "_enriched": true,
+      "rules": [
+        "附有這張卡的「古代」寶可夢的最大HP「+60」，那隻寶可夢不會陷入特殊狀態，並將受到的特殊狀態全部恢復。"
+      ]
     },
     {
       "id": "SVC-016",
@@ -400053,9 +400059,9 @@
     {
       "id": "SV4K-061",
       "name": "驅勁能量 古代",
-      "supertype": "Trainer",
+      "supertype": "Energy",
       "subtypes": [
-        "Pokémon Tool",
+        "Special Energy",
         "Ancient"
       ],
       "abilities": [],
@@ -400081,7 +400087,10 @@
         "large": "/api/images/SV/SV4K/061/high"
       },
       "localId": "061",
-      "_enriched": true
+      "_enriched": true,
+      "rules": [
+        "附有這張卡的「古代」寶可夢的最大HP「+60」，那隻寶可夢不會陷入特殊狀態，並將受到的特殊狀態全部恢復。"
+      ]
     },
     {
       "id": "S11a-061",
@@ -400514,9 +400523,9 @@
     {
       "id": "SV4M-062",
       "name": "驅勁能量 未來",
-      "supertype": "Trainer",
+      "supertype": "Energy",
       "subtypes": [
-        "Pokémon Tool",
+        "Special Energy",
         "Future"
       ],
       "abilities": [],
@@ -400542,7 +400551,10 @@
         "large": "/api/images/SV/SV4M/062/high"
       },
       "localId": "062",
-      "_enriched": true
+      "_enriched": true,
+      "rules": [
+        "附有這張卡的「未來」寶可夢【撤退】所需的能量全部消除，那隻寶可夢使用的招式，對對手的戰鬥寶可夢造成的傷害「+20」點。"
+      ]
     },
     {
       "id": "SV7a-062",
@@ -402440,9 +402452,9 @@
     {
       "id": "SV5M-065",
       "name": "驅勁能量 未來",
-      "supertype": "Trainer",
+      "supertype": "Energy",
       "subtypes": [
-        "Pokémon Tool",
+        "Special Energy",
         "Future"
       ],
       "abilities": [],
@@ -402467,7 +402479,10 @@
         "large": "/api/images/SV/SV5M/065/high"
       },
       "localId": "065",
-      "_enriched": true
+      "_enriched": true,
+      "rules": [
+        "附有這張卡的「未來」寶可夢【撤退】所需的能量全部消除，那隻寶可夢使用的招式，對對手的戰鬥寶可夢造成的傷害「+20」點。"
+      ]
     },
     {
       "id": "SV4K-065",
@@ -421973,9 +421988,9 @@
     {
       "id": "SV8a-157",
       "name": "驅勁能量 古代",
-      "supertype": "Trainer",
+      "supertype": "Energy",
       "subtypes": [
-        "Pokémon Tool",
+        "Special Energy",
         "Ancient"
       ],
       "abilities": [],
@@ -422001,7 +422016,10 @@
         "large": "/api/images/SV/SV8a/157/high"
       },
       "localId": "157",
-      "_enriched": true
+      "_enriched": true,
+      "rules": [
+        "附有這張卡的「古代」寶可夢的最大HP「+60」，那隻寶可夢不會陷入特殊狀態，並將受到的特殊狀態全部恢復。"
+      ]
     },
     {
       "id": "SV2a-157",
@@ -422197,9 +422215,9 @@
     {
       "id": "SV8a-158",
       "name": "驅勁能量 未來",
-      "supertype": "Trainer",
+      "supertype": "Energy",
       "subtypes": [
-        "Pokémon Tool",
+        "Special Energy",
         "Future"
       ],
       "abilities": [],
@@ -422225,7 +422243,10 @@
         "large": "/api/images/SV/SV8a/158/high"
       },
       "localId": "158",
-      "_enriched": true
+      "_enriched": true,
+      "rules": [
+        "附有這張卡的「未來」寶可夢【撤退】所需的能量全部消除，那隻寶可夢使用的招式，對對手的戰鬥寶可夢造成的傷害「+20」點。"
+      ]
     },
     {
       "id": "SV2a-158",

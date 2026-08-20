@@ -592,10 +592,16 @@ const ruleOfExperience: EffectHandler = {
   },
 };
 
-/** 劇毒粉塵: poison both Active Pokémon. (Simplified: the printed "must have 驅勁能量 古代 attached"
- * condition can't be checked — attachedEnergy only stores {id,type}, not the original card's
- * name — so this is available whenever the ability's own Pokémon is in play instead.) */
+/** 劇毒粉塵: poison both Active Pokémon, gated on the holder having 驅勁能量 古代 attached.
+ * (The gate used to be a documented simplification — attachedEnergy once stored only {id,type} —
+ * but the card now rides along in `cardData`, and 驅勁能量 was reclassified from Trainer junk
+ * into a real attachable Special Energy, so the printed condition is checkable.) */
 const poisonDust: EffectHandler = {
+  canPlay(ctx) {
+    const holder = findOwnPokemon(ctx.G, ctx.playerIndex, ctx.sourceCardId);
+    return !!holder && holder.attachedEnergy.some(e =>
+      String(e.cardData?.name ?? '').replace(/^[‌​\s]+/, '').trim() === '驅勁能量 古代');
+  },
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     const opp = opponent(ctx.G, ctx.playerIndex);

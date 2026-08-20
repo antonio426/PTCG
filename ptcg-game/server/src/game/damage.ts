@@ -1,6 +1,6 @@
 import { Attack, DamageDetail, GameCard } from '@ptcg/shared';
 import { PtcgGameState } from './GameState';
-import { getOutgoingDamageReduction, getPassiveDamageBonus, getPassiveDamageReduction, getPassiveMaxHpBonus, getPrizeReduction, getWeaknessTypeOverride, hasPassiveAbilityNamed, isDamageBlocked, isWeaknessRemovedByTimedEffect, rollBonusPrizeOnActiveKo, shouldExilePrizes, isProtectedFromOpponentAbility } from './effects/passiveAbilities';
+import { getOutgoingDamageReduction, getPassiveDamageBonus, getPassiveDamageReduction, getPassiveMaxHpBonus, getPrizeReduction, getWeaknessTypeOverride, hasPassiveAbilityNamed, isDamageBlocked, isWeaknessRemovedByTimedEffect, rollBonusPrizeOnActiveKo, shouldExilePrizes, isProtectedFromOpponentAbility, effectiveTypes } from './effects/passiveAbilities';
 import { getToolDamageBonus, getToolHpBonus } from './effects/tools';
 import { parseBaseNumber } from './effects/genericAttacks';
 import { shuffleDeck } from './effects/types';
@@ -122,9 +122,11 @@ function parseResistanceValue(value: string | undefined): number {
   return isNaN(n) ? 0 : n;
 }
 
-export function applyWeaknessResistance(baseDamageIn: number, attacker: GameCard, defender: GameCard, weaknessOverride?: string, ignoreResistance?: boolean, ignoreWeakness?: boolean): number {
+export function applyWeaknessResistance(baseDamageIn: number, attacker: GameCard, defender: GameCard, weaknessOverride?: string, ignoreResistance?: boolean, ignoreWeakness?: boolean, attackerTypesOverride?: string[]): number {
   let baseDamage = baseDamageIn;
-  const attackerTypes = attacker.cardData.types || [];
+  // 雙重屬性/二重核心 replace the attacker's printed type — calculateDamageBreakdown passes the
+  // effective list in; direct callers without a G in hand fall back to the printed one.
+  const attackerTypes = attackerTypesOverride ?? (attacker.cardData.types || []);
 
   for (const attackerType of attackerTypes) {
     if (!ignoreWeakness) {
@@ -178,8 +180,9 @@ export function calculateDamageBreakdown(G: PtcgGameState, attackerIdx: 0 | 1, a
   }
   baseDamage += getPassiveDamageBonus(G, attackerIdx, attacker, defender);
   baseDamage += getToolDamageBonus(G, attacker, defender);
+  const attackerEffectiveTypes = effectiveTypes(G, attacker);
   for (const boost of G.players[attackerIdx].turnDamageBoosts) {
-    if (boost.typeFilter && !(attacker.cardData.types || []).includes(boost.typeFilter as any)) continue;
+    if (boost.typeFilter && !attackerEffectiveTypes.includes(boost.typeFilter as any)) continue;
     if (boost.vsBigOnly && !isBigPokemon(defender)) continue;
     if (boost.excludeRuleBoxAttacker && isBigPokemon(attacker)) continue;
     baseDamage += boost.amount;
@@ -192,7 +195,7 @@ export function calculateDamageBreakdown(G: PtcgGameState, attackerIdx: 0 | 1, a
   const weaknessOverride = isProtectedFromOpponentAbility(G, defender)
     ? undefined : getWeaknessTypeOverride(G, (1 - attackerIdx) as 0 | 1, defender);
   const weaknessRemoved = ignoreWeakness || isWeaknessRemovedByTimedEffect(G, defender);
-  const afterWeakness = applyWeaknessResistance(baseDamage, attacker, defender, weaknessOverride, ignoreResistance, weaknessRemoved);
+  const afterWeakness = applyWeaknessResistance(baseDamage, attacker, defender, weaknessOverride, ignoreResistance, weaknessRemoved, attackerEffectiveTypes);
   const defenderIdx = (1 - attackerIdx) as 0 | 1;
   // 藏青浪濤: this attacker's damage ignores every "attached effect" (Tool/ability-based
   // incoming-damage reduction) the defender has — both incoming-reduction pipelines below.

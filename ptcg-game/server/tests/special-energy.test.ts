@@ -448,3 +448,52 @@ describe('回力鏢能量 / 燃料【火】能量 return after their own attack 
     expect(G.attackEnergyReturns).toBeNull();
   });
 });
+
+describe('boost energies 驅勁能量 未來/古代 (reclassified from Trainer junk)', () => {
+  // Rotated out of Standard, so the standard-filtered special() helper above cannot see them.
+  const anyPrint = (name: string) => {
+    const card = cards.find(c => norm(c.name) === name && (c.subtypes ?? []).includes('Special Energy'));
+    if (!card) throw new Error(`no Special Energy print of ${name} in cards.json`);
+    return { id: `e-${name}`, type: 'Colorless', cardData: card };
+  };
+  const paradoxHolder = (tag: 'Ancient' | 'Future') => makeGameCard(makeCard({
+    name: tag === 'Ancient' ? '古代持有者' : '未來持有者', hp: '100', types: ['Colorless'],
+    subtypes: ['Basic', tag] as Subtype[], retreatCost: ['Colorless', 'Colorless'] as any,
+  }), 0);
+  const boardWith = (mon: any) => makeState({
+    turn: 3, currentPlayer: 0, phase: 'main',
+    players: [
+      makePlayer({ active: mon }),
+      makePlayer({ active: makeGameCard(BASIC_MON, 1) }),
+    ],
+  });
+
+  it('古代: +60 max HP and Special-Condition immunity, only on an Ancient holder', () => {
+    const ancient = paradoxHolder('Ancient');
+    ancient.attachedEnergy = [anyPrint('驅勁能量 古代')];
+    const G = boardWith(ancient);
+    expect(effectiveMaxHp(G, ancient)).toBe(160);
+    applyStatusCondition(G, ancient, 'Poisoned');
+    expect(ancient.statusConditions).toEqual([]);
+    // The same card on a non-Ancient holder is inert.
+    const future = paradoxHolder('Future');
+    future.attachedEnergy = [anyPrint('驅勁能量 古代')];
+    const G2 = boardWith(future);
+    expect(effectiveMaxHp(G2, future)).toBe(100);
+    applyStatusCondition(G2, future, 'Poisoned');
+    expect(future.statusConditions).toEqual(['Poisoned']);
+  });
+
+  it('未來: retreat cost fully waived and attacks hit +20, only on a Future holder', () => {
+    const future = paradoxHolder('Future');
+    future.attachedEnergy = [anyPrint('驅勁能量 未來')];
+    const G = boardWith(future);
+    expect(effectiveRetreatCost(G, future)).toBe(0);
+    expect(getPassiveDamageBonus(G, 0, future, G.players[1].active!)).toBe(20);
+    const ancient = paradoxHolder('Ancient');
+    ancient.attachedEnergy = [anyPrint('驅勁能量 未來')];
+    const G2 = boardWith(ancient);
+    expect(effectiveRetreatCost(G2, ancient)).toBe(2);
+    expect(getPassiveDamageBonus(G2, 0, ancient, G2.players[1].active!)).toBe(0);
+  });
+});

@@ -6,6 +6,7 @@ import { effectiveMaxHp } from '../src/game/damage';
 import {
   areAbilitiesNegated, isDamageBlocked, isImmuneToOpponentAttackEffects, isStadiumPlayBlocked,
   isProtectedFromOpponentTrainer, isProtectedFromOpponentAbility, isReturnToHandBlocked,
+  effectiveTypes,
 } from '../src/game/effects/passiveAbilities';
 import { BASIC_MON, attack as mkAttack, makeCard, makeGameCard, makePlayer, makeState } from './fixtures';
 
@@ -486,5 +487,57 @@ describe('瞬間爆發力: an evolved card may open as the setup Active', () => 
     expect(G.players[0].active).toBeNull();
     moves.chooseActive({ G, ctx: { currentPlayer: '0' } } as any, burst.id);
     expect(G.players[0].active?.id).toBe(burst.id);
+  });
+});
+
+/* ---------- Batch E: type-changing abilities ---------- */
+
+describe('雙重屬性/二重核心: printed type replaced by the two types in the ability text', () => {
+  const dualStone = makeCard({
+    name: '小碎鑽', hp: '70', subtypes: ['Basic'] as Subtype[], types: ['Fighting'] as any,
+    abilities: [{ name: '雙重屬性', type: 'Ability', text: '只要這隻寶可夢在場上，改為【鬥】與【超】2種屬性。' }],
+  });
+
+  it('雙重屬性 yields both parsed types; a plain card keeps its printed one', () => {
+    const stone = makeGameCard(dualStone, 0);
+    const G = plainBoard(stone, makeGameCard(BASIC_MON, 1));
+    expect(effectiveTypes(G, stone)).toEqual(['Fighting', 'Psychic']);
+    expect(effectiveTypes(G, G.players[1].active!)).toEqual(G.players[1].active!.cardData.types);
+  });
+
+  it('二重核心 only switches on while 驅勁能量 未來 is attached', () => {
+    const treads = makeGameCard(makeCard({
+      name: '鐵轍跡', hp: '130', subtypes: ['Basic', 'Future'] as Subtype[], types: ['Metal'] as any,
+      abilities: [{ name: '二重核心', type: 'Ability', text: '只要這隻寶可夢身上附有「驅勁能量 未來」，這隻寶可夢改為【鬥】與【鋼】2種屬性。' }],
+    }), 0);
+    const G = plainBoard(treads, makeGameCard(BASIC_MON, 1));
+    expect(effectiveTypes(G, treads)).toEqual(['Metal']);
+    treads.attachedEnergy = [{
+      id: 'boost-1', type: 'Colorless',
+      cardData: makeCard({ name: '驅勁能量 未來', supertype: 'Energy', subtypes: ['Special Energy'] as Subtype[] }),
+    }];
+    expect(effectiveTypes(G, treads)).toEqual(['Fighting', 'Metal']);
+  });
+
+  it('the damage pipeline doubles into a weakness only the second type hits', () => {
+    const hit = mkAttack('撞擊', ['Colorless'], '30');
+    const attacker = makeGameCard(makeCard({ ...dualStone, attacks: [hit] }), 0, {
+      attachedEnergy: [{ id: 'e-d1', type: 'Colorless', cardData: makeCard({ name: '基本無能量', supertype: 'Energy', subtypes: ['Basic Energy'] as Subtype[] }) }],
+    });
+    const psychicWeak = makeGameCard(makeCard({
+      name: '弱超者', hp: '120', subtypes: ['Basic'] as Subtype[],
+      weaknesses: [{ type: 'Psychic', value: '×2' }] as any,
+    }), 1);
+    const G = plainBoard(attacker, psychicWeak);
+    moves.attack({ G, ctx: battleCtx } as any, 0);
+    expect(psychicWeak.damage).toBe(60);
+    // Control: same board, ability stripped from the attacker — printed Fighting misses the weakness.
+    const plainAttacker = makeGameCard(makeCard({ name: '純鬥者', hp: '70', subtypes: ['Basic'] as Subtype[], types: ['Fighting'] as any, attacks: [hit] }), 0, {
+      attachedEnergy: [{ id: 'e-d2', type: 'Colorless', cardData: makeCard({ name: '基本無能量', supertype: 'Energy', subtypes: ['Basic Energy'] as Subtype[] }) }],
+    });
+    const psychicWeak2 = makeGameCard(psychicWeak.cardData, 1);
+    const G2 = plainBoard(plainAttacker, psychicWeak2);
+    moves.attack({ G: G2, ctx: battleCtx } as any, 0);
+    expect(psychicWeak2.damage).toBe(30);
   });
 });

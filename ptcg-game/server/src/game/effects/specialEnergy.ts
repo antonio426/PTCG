@@ -109,20 +109,33 @@ export function hasSpecialEnergy(holder: GameCard, name: string): boolean {
 }
 
 const holderTypes = (holder: GameCard) => holder.cardData.types ?? [];
+// 驅勁能量 未來/古代 gate on the holder's paradox tag, not its energy type.
+const isFutureHolder = (holder: GameCard) => holder.cardData.subtypes.includes('Future');
+const isAncientHolder = (holder: GameCard) => holder.cardData.subtypes.includes('Ancient');
 
-/** 增強【草】能量: 「附有這張卡的【草】寶可夢的最大HP「+20」」 */
+/** 增強【草】能量: 「附有這張卡的【草】寶可夢的最大HP「+20」」;
+ *  驅勁能量 古代: 「附有這張卡的「古代」寶可夢的最大HP「+60」」. Additive if somehow both apply. */
 export function specialEnergyMaxHpBonus(holder: GameCard): number {
-  return hasSpecialEnergy(holder, '增強【草】能量') && holderTypes(holder).includes('Grass') ? 20 : 0;
+  let bonus = 0;
+  if (hasSpecialEnergy(holder, '增強【草】能量') && holderTypes(holder).includes('Grass')) bonus += 20;
+  if (hasSpecialEnergy(holder, '驅勁能量 古代') && isAncientHolder(holder)) bonus += 60;
+  return bonus;
 }
 
-/** 磁鐵【鋼】能量: 「附有這張卡的【鋼】寶可夢【撤退】所需的能量全部消除」 */
+/** 磁鐵【鋼】能量: 「附有這張卡的【鋼】寶可夢【撤退】所需的能量全部消除」;
+ *  驅勁能量 未來: same clause for a 「未來」 holder. */
 export function specialEnergyWaivesRetreat(holder: GameCard): boolean {
-  return hasSpecialEnergy(holder, '磁鐵【鋼】能量') && holderTypes(holder).includes('Metal');
+  if (hasSpecialEnergy(holder, '磁鐵【鋼】能量') && holderTypes(holder).includes('Metal')) return true;
+  return hasSpecialEnergy(holder, '驅勁能量 未來') && isFutureHolder(holder);
 }
 
-/** 伏特【雷】能量: 「附有這張卡的【雷】寶可夢使用的招式…傷害「+20」點」 */
+/** 伏特【雷】能量: 「附有這張卡的【雷】寶可夢使用的招式…傷害「+20」點」;
+ *  驅勁能量 未來: +20 for a 「未來」 holder's attacks on the opponent's Active. */
 export function specialEnergyDamageBonus(attacker: GameCard): number {
-  return hasSpecialEnergy(attacker, '伏特【雷】能量') && holderTypes(attacker).includes('Lightning') ? 20 : 0;
+  let bonus = 0;
+  if (hasSpecialEnergy(attacker, '伏特【雷】能量') && holderTypes(attacker).includes('Lightning')) bonus += 20;
+  if (hasSpecialEnergy(attacker, '驅勁能量 未來') && isFutureHolder(attacker)) bonus += 20;
+  return bonus;
 }
 
 /** 暗影【惡】能量: 「只要附有這張卡的【惡】寶可夢在備戰區，不會受到對手的招式的傷害」 */
@@ -130,9 +143,11 @@ export function specialEnergyBlocksBenchedDamage(holder: GameCard): boolean {
   return hasSpecialEnergy(holder, '暗影【惡】能量') && holderTypes(holder).includes('Darkness');
 }
 
-/** 泡沫【水】能量: 「附有這張卡的【水】寶可夢不會陷入特殊狀態，並將受到的特殊狀態全部恢復」 */
+/** 泡沫【水】能量: 「附有這張卡的【水】寶可夢不會陷入特殊狀態，並將受到的特殊狀態全部恢復」;
+ *  驅勁能量 古代: same clause for a 「古代」 holder. */
 export function specialEnergyBlocksStatus(holder: GameCard): boolean {
-  return hasSpecialEnergy(holder, '泡沫【水】能量') && holderTypes(holder).includes('Water');
+  if (hasSpecialEnergy(holder, '泡沫【水】能量') && holderTypes(holder).includes('Water')) return true;
+  return hasSpecialEnergy(holder, '驅勁能量 古代') && isAncientHolder(holder);
 }
 
 /**
