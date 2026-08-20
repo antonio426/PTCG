@@ -152,7 +152,11 @@ function parseCardHtml(id: number, html: string, baseOfficial: OfficialCard): Pa
     card.subtypes = ['Stadium'];
   } else if (headerText.includes('能量')) {
     card.supertype = 'Energy';
-    const isBasic = /^基本[【\[]([^】\]]+)[】\]]能量$/.test(baseOfficial.name);
+    // Brackets and the 基本 prefix are both optional on real Basic Energy prints: 基本【火】能量,
+    // the bracket-less promo naming 基本火能量, and the prefix-less 【惡】能量. Only matching the
+    // fully-bracketed form is what mislabeled 40+ Basic Energy prints as Special Energy
+    // (see fix-energy-classification.ts).
+    const isBasic = /^(基本[【\[]?.[】\]]?|[【\[].[】\]])能量$/.test(baseOfficial.name);
     card.subtypes = [isBasic ? 'Basic Energy' : 'Special Energy'];
   } else {
     card.supertype = 'Pokémon';

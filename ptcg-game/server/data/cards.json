@@ -46153,11 +46153,10 @@
     {
       "id": "SVEL-010",
       "name": "厲害釣竿",
-      "supertype": "Pokémon",
+      "supertype": "Trainer",
       "subtypes": [
-        "Basic"
+        "Item"
       ],
-      "hp": "70",
       "types": [
         "Darkness"
       ],
@@ -429634,9 +429633,9 @@
     {
       "id": "SVAL-012",
       "name": "巢穴球",
-      "supertype": "Energy",
+      "supertype": "Trainer",
       "subtypes": [
-        "Basic Energy"
+        "Item"
       ],
       "abilities": [],
       "attacks": [],
@@ -429667,9 +429666,9 @@
     {
       "id": "SVAW-019",
       "name": "活力頭帶",
-      "supertype": "Energy",
+      "supertype": "Trainer",
       "subtypes": [
-        "Basic Energy"
+        "Pokémon Tool"
       ],
       "abilities": [],
       "attacks": [],
@@ -429919,9 +429918,9 @@
     {
       "id": "S5I-064",
       "name": "一擊的卷軸 憤怒之卷",
-      "supertype": "Energy",
+      "supertype": "Trainer",
       "subtypes": [
-        "Special Energy"
+        "Pokémon Tool"
       ],
       "abilities": [],
       "attacks": [],
@@ -429950,9 +429949,9 @@
     {
       "id": "S5I-065",
       "name": "學習裝置",
-      "supertype": "Energy",
+      "supertype": "Trainer",
       "subtypes": [
-        "Special Energy"
+        "Pokémon Tool"
       ],
       "abilities": [],
       "attacks": [],
@@ -429981,9 +429980,9 @@
     {
       "id": "S5a-065",
       "name": "伽勒爾的胸甲",
-      "supertype": "Energy",
+      "supertype": "Trainer",
       "subtypes": [
-        "Special Energy"
+        "Pokémon Tool"
       ],
       "abilities": [],
       "attacks": [],
@@ -430526,7 +430525,7 @@
       "name": "雙重渦輪能量",
       "supertype": "Energy",
       "subtypes": [
-        "Basic Energy"
+        "Special Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -433517,7 +433516,7 @@
       "name": "基本惡能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -433533,7 +433532,9 @@
         "releaseDate": ""
       },
       "number": "P",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/SV/SV-P/DAR/low",
@@ -433582,7 +433583,7 @@
       "name": "基本惡能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -433598,7 +433599,9 @@
         "releaseDate": ""
       },
       "number": "DAR",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/S/S10b/DAR/low",
@@ -433644,7 +433647,7 @@
       "name": "基本惡能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -433660,7 +433663,9 @@
         "releaseDate": ""
       },
       "number": "DAR",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/S/S8a/DAR/low",
@@ -433709,7 +433714,7 @@
       "name": "基本惡能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -433725,7 +433730,9 @@
         "releaseDate": ""
       },
       "number": "DAR",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/SH/SH/DAR/low",
@@ -433847,7 +433854,7 @@
       "name": "基本鬥能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -433863,7 +433870,9 @@
         "releaseDate": ""
       },
       "number": "P",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/SV/SV-P/FIG/low",
@@ -433948,7 +433957,7 @@
       "name": "基本鬥能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -433964,7 +433973,9 @@
         "releaseDate": ""
       },
       "number": "FIG",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/S/S10b/FIG/low",
@@ -433978,7 +433989,7 @@
       "name": "基本鬥能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -433994,7 +434005,9 @@
         "releaseDate": ""
       },
       "number": "FIG",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/S/S8a/FIG/low",
@@ -434075,7 +434088,7 @@
       "name": "基本鬥能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -434091,7 +434104,9 @@
         "releaseDate": ""
       },
       "number": "FIG",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/SH/SH/FIG/low",
@@ -434212,7 +434227,7 @@
       "name": "基本火能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -434228,7 +434243,9 @@
         "releaseDate": ""
       },
       "number": "P",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/SV/SV-P/FIR/low",
@@ -434349,7 +434366,7 @@
       "name": "基本火能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -434365,7 +434382,9 @@
         "releaseDate": ""
       },
       "number": "FIR",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/S/S10b/FIR/low",
@@ -434379,7 +434398,7 @@
       "name": "基本火能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -434395,7 +434414,9 @@
         "releaseDate": ""
       },
       "number": "FIR",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/S/S8a/FIR/low",
@@ -434441,7 +434462,7 @@
       "name": "基本火能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -434457,7 +434478,9 @@
         "releaseDate": ""
       },
       "number": "FIR",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/SH/SH/FIR/low",
@@ -434579,7 +434602,7 @@
       "name": "基本草能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -434595,7 +434618,9 @@
         "releaseDate": ""
       },
       "number": "P",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/SV/SV-P/GRA/low",
@@ -434644,7 +434669,7 @@
       "name": "基本草能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -434660,7 +434685,9 @@
         "releaseDate": ""
       },
       "number": "GRA",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/S/S10b/GRA/low",
@@ -434674,7 +434701,7 @@
       "name": "基本草能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -434690,7 +434717,9 @@
         "releaseDate": ""
       },
       "number": "GRA",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/S/S8a/GRA/low",
@@ -434739,7 +434768,7 @@
       "name": "基本草能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -434755,7 +434784,9 @@
         "releaseDate": ""
       },
       "number": "GRA",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/SH/SH/GRA/low",
@@ -434841,7 +434872,7 @@
       "name": "基本雷能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -434857,7 +434888,9 @@
         "releaseDate": ""
       },
       "number": "P",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/SV/SV-P/LIG/low",
@@ -435013,7 +435046,7 @@
       "name": "基本雷能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -435029,7 +435062,9 @@
         "releaseDate": ""
       },
       "number": "LIG",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/S/S10b/LIG/low",
@@ -435043,7 +435078,7 @@
       "name": "基本雷能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -435059,7 +435094,9 @@
         "releaseDate": ""
       },
       "number": "LIG",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/S/S8a/LIG/low",
@@ -435073,7 +435110,7 @@
       "name": "基本雷能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -435089,7 +435126,9 @@
         "releaseDate": ""
       },
       "number": "LIG",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/SN/SN/LIG/low",
@@ -435138,7 +435177,7 @@
       "name": "基本雷能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -435154,7 +435193,9 @@
         "releaseDate": ""
       },
       "number": "LIG",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/SH/SH/LIG/low",
@@ -435240,7 +435281,7 @@
       "name": "基本鋼能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -435256,7 +435297,9 @@
         "releaseDate": ""
       },
       "number": "P",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/SV/SV-P/MET/low",
@@ -435305,7 +435348,7 @@
       "name": "基本鋼能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -435321,7 +435364,9 @@
         "releaseDate": ""
       },
       "number": "MET",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/S/S10b/MET/low",
@@ -435335,7 +435380,7 @@
       "name": "基本鋼能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -435351,7 +435396,9 @@
         "releaseDate": ""
       },
       "number": "MET",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/S/S8a/MET/low",
@@ -435472,7 +435519,7 @@
       "name": "基本超能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -435488,7 +435535,9 @@
         "releaseDate": ""
       },
       "number": "P",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/SV/SV-P/PSY/low",
@@ -435645,7 +435694,7 @@
       "name": "基本超能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -435661,7 +435710,9 @@
         "releaseDate": ""
       },
       "number": "PSY",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/S/S10b/PSY/low",
@@ -435675,7 +435726,7 @@
       "name": "基本超能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -435691,7 +435742,9 @@
         "releaseDate": ""
       },
       "number": "PSY",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/S/S8a/PSY/low",
@@ -435812,7 +435865,7 @@
       "name": "基本水能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -435828,7 +435881,9 @@
         "releaseDate": ""
       },
       "number": "P",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/SV/SV-P/WAT/low",
@@ -435913,7 +435968,7 @@
       "name": "基本水能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -435929,7 +435984,9 @@
         "releaseDate": ""
       },
       "number": "WAT",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/S/S10b/WAT/low",
@@ -435943,7 +436000,7 @@
       "name": "基本水能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -435959,7 +436016,9 @@
         "releaseDate": ""
       },
       "number": "WAT",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/S/S8a/WAT/low",
@@ -436008,7 +436067,7 @@
       "name": "基本水能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "abilities": [],
       "attacks": [],
@@ -436024,7 +436083,9 @@
         "releaseDate": ""
       },
       "number": "WAT",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "regulationMark": "G",
       "images": {
         "small": "/api/images/SH/SH/WAT/low",
@@ -610548,7 +610609,7 @@
       "name": "基本火能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "set": {
         "id": "EXT07",
@@ -610559,7 +610620,9 @@
         "releaseDate": ""
       },
       "number": "FIR",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "images": {
         "small": "/api/images/SV/EXT07/FIR/low",
         "large": "/api/images/SV/EXT07/FIR/high"
@@ -610574,7 +610637,7 @@
       "name": "基本惡能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "set": {
         "id": "EXT07",
@@ -610585,7 +610648,9 @@
         "releaseDate": ""
       },
       "number": "DAR",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "images": {
         "small": "/api/images/SV/EXT07/DAR/low",
         "large": "/api/images/SV/EXT07/DAR/high"
@@ -610600,7 +610665,7 @@
       "name": "基本鬥能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "set": {
         "id": "EXT07",
@@ -610611,7 +610676,9 @@
         "releaseDate": ""
       },
       "number": "FIG",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "images": {
         "small": "/api/images/SV/EXT07/FIG/low",
         "large": "/api/images/SV/EXT07/FIG/high"
@@ -610626,7 +610693,7 @@
       "name": "基本草能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "set": {
         "id": "EXT07",
@@ -610637,7 +610704,9 @@
         "releaseDate": ""
       },
       "number": "GRA",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "images": {
         "small": "/api/images/SV/EXT07/GRA/low",
         "large": "/api/images/SV/EXT07/GRA/high"
@@ -610652,7 +610721,7 @@
       "name": "基本雷能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "set": {
         "id": "EXT07",
@@ -610663,7 +610732,9 @@
         "releaseDate": ""
       },
       "number": "LIG",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "images": {
         "small": "/api/images/SV/EXT07/LIG/low",
         "large": "/api/images/SV/EXT07/LIG/high"
@@ -610678,7 +610749,7 @@
       "name": "基本鋼能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "set": {
         "id": "EXT07",
@@ -610689,7 +610760,9 @@
         "releaseDate": ""
       },
       "number": "MET",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "images": {
         "small": "/api/images/SV/EXT07/MET/low",
         "large": "/api/images/SV/EXT07/MET/high"
@@ -610704,7 +610777,7 @@
       "name": "基本超能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "set": {
         "id": "EXT07",
@@ -610715,7 +610788,9 @@
         "releaseDate": ""
       },
       "number": "PSY",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "images": {
         "small": "/api/images/SV/EXT07/PSY/low",
         "large": "/api/images/SV/EXT07/PSY/high"
@@ -610730,7 +610805,7 @@
       "name": "基本水能量",
       "supertype": "Energy",
       "subtypes": [
-        "Special Energy"
+        "Basic Energy"
       ],
       "set": {
         "id": "EXT07",
@@ -610741,7 +610816,9 @@
         "releaseDate": ""
       },
       "number": "WAT",
-      "legalities": {},
+      "legalities": {
+        "standard": "Legal"
+      },
       "images": {
         "small": "/api/images/SV/EXT07/WAT/low",
         "large": "/api/images/SV/EXT07/WAT/high"

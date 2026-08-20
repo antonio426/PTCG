@@ -19,7 +19,10 @@ const PIKA_A = card('SV1-025', '皮卡丘');
 const PIKA_B = card('SV5-025', '皮卡丘');
 const RAICHU = card('SV1-026', '雷丘', { subtypes: ['Stage 1'] as Subtype[] });
 const GRASS_ENERGY = card('SVE-001', '基本草能量', { supertype: 'Energy', subtypes: ['Basic Energy'] as Subtype[] });
-const CATALOG = [PIKA_A, PIKA_B, RAICHU, GRASS_ENERGY];
+const SPECIAL_ENERGY = card('SV6-101', '古舊能量', { supertype: 'Energy', subtypes: ['Special Energy'] as Subtype[] });
+/** The real-data failure this guards against: SV-P-086 雙重渦輪能量 shipped subtyped Basic Energy. */
+const MISLABELED_SPECIAL = card('SV-P-086', '雙重渦輪能量', { supertype: 'Energy', subtypes: ['Basic Energy', 'Special Energy'] as Subtype[] });
+const CATALOG = [PIKA_A, PIKA_B, RAICHU, GRASS_ENERGY, SPECIAL_ENERGY, MISLABELED_SPECIAL];
 
 const setDeck = (cards: string[]) =>
   useDeckStore.setState({ currentDeck: { id: null, name: 'test', cards }, dirty: false });
@@ -35,9 +38,22 @@ describe('isBasicEnergyCard', () => {
   it.each([
     [GRASS_ENERGY, true],
     [PIKA_A, false],
+    [SPECIAL_ENERGY, false],
+    // Fail closed on contradictory data: carrying both subtypes must not grant the exemption.
+    [MISLABELED_SPECIAL, false],
     [undefined, false],
   ])('%o -> %s', (c, expected) => {
     expect(isBasicEnergyCard(c as Card | undefined)).toBe(expected);
+  });
+});
+
+describe('Special Energy and the 4-copy limit', () => {
+  it('counts Special Energy toward the limit like any other card', () => {
+    expect(sameNameCopyCount(repeat(SPECIAL_ENERGY.id, 4), SPECIAL_ENERGY.id, CATALOG)).toBe(4);
+  });
+
+  it('still counts a Special Energy whose print is mislabeled as Basic Energy', () => {
+    expect(sameNameCopyCount(repeat(MISLABELED_SPECIAL.id, 5), MISLABELED_SPECIAL.id, CATALOG)).toBe(5);
   });
 });
 

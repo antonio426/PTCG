@@ -40,7 +40,12 @@ function generateId(): string {
 }
 
 export function isBasicEnergyCard(card: Card | undefined): boolean {
-  return !!card && card.subtypes.includes('Basic Energy' as Subtype);
+  // Fail closed on contradictory data: a print carrying BOTH energy subtypes (or a non-Energy
+  // supertype) must not inherit Basic Energy's exemption from the 4-copy limit — a mislabeled
+  // SV-P print of 雙重渦輪能量 once let a deck run 60 copies of a Special Energy this way.
+  return !!card && card.supertype === 'Energy'
+    && card.subtypes.includes('Basic Energy' as Subtype)
+    && !card.subtypes.includes('Special Energy' as Subtype);
 }
 
 /**

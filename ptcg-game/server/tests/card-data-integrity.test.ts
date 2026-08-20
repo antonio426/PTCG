@@ -77,3 +77,60 @@ describe('cards.json retreat costs', () => {
     expect(suspicious).toEqual([]);
   });
 });
+
+describe('cards.json energy classification', () => {
+  // Unlike the retreat checks these run over ALL prints, not just Standard: the deck builder's
+  // Standard filter is a user-toggleable checkbox, so every print in the catalog can end up in a
+  // deck — and the 4-copy limit's Basic Energy exemption keys directly on these subtypes. A
+  // mislabeled SV-P print of 雙重渦輪能量 once made 60 copies of a Special Energy legal.
+  const energies = cards.filter(c => c.supertype === 'Energy');
+
+  it('has a meaningful number of Energy prints to check', () => {
+    expect(energies.length).toBeGreaterThan(300);
+  });
+
+  it('gives every Energy print exactly one of Basic Energy / Special Energy', () => {
+    const bad = energies
+      .filter(c => c.subtypes?.includes('Basic Energy') === c.subtypes?.includes('Special Energy'))
+      .map(c => `${c.id} ${c.name}: ${JSON.stringify(c.subtypes)}`);
+    expect(bad).toEqual([]);
+  });
+
+  it('classifies every 基本X能量-named print as Basic Energy', () => {
+    // Brackets and the 基本 prefix are both optional on real prints (基本火能量 promos,
+    // 【惡】能量 special art) — the scraper once only recognized the fully-bracketed form and
+    // mislabeled 40+ Basic Energy prints as Special, wrongly capping them at 4 per deck.
+    const basicName = /^(基本[【\[]?.[】\]]?|[【\[].[】\]])能量$/;
+    const bad = energies
+      .filter(c => basicName.test(c.name) !== !!c.subtypes?.includes('Basic Energy'))
+      .map(c => `${c.id} ${c.name}: ${JSON.stringify(c.subtypes)}`);
+    expect(bad).toEqual([]);
+  });
+
+  it('never puts an energy subtype on a non-Energy card, or an Energy supertype on a non-能量 name', () => {
+    // Starter-deck pages were once scraped into Energy entries for 巢穴球/活力頭帶/學習裝置 —
+    // supertype Energy + subtype Basic Energy on an Item means unlimited copies of it in a deck.
+    const bad = cards
+      .filter(c => c.supertype === 'Energy'
+        ? !c.name.includes('能量')
+        : c.subtypes?.some((s: string) => s === 'Basic Energy' || s === 'Special Energy'))
+      .map(c => `${c.id} ${c.name} (${c.supertype})`);
+    expect(bad).toEqual([]);
+  });
+
+  it('never lets one printed name span supertypes or Basic/Special classes', () => {
+    // A name IS the card in the TCG rules (the 4-copy limit counts names); prints of one name
+    // disagreeing about what kind of card it is means one of them is scraper junk — this is how
+    // 厲害釣竿's phantom 70-HP "Pokémon" print was found.
+    const classOf = (c: any) => c.supertype === 'Energy'
+      ? (c.subtypes?.includes('Basic Energy') ? 'Energy/Basic' : 'Energy/Special')
+      : c.supertype;
+    const byName = new Map<string, Set<string>>();
+    for (const c of cards) {
+      if (!byName.has(c.name)) byName.set(c.name, new Set());
+      byName.get(c.name)!.add(classOf(c));
+    }
+    const bad = [...byName].filter(([, kinds]) => kinds.size > 1).map(([name, kinds]) => `${name}: ${[...kinds]}`);
+    expect(bad).toEqual([]);
+  });
+});
