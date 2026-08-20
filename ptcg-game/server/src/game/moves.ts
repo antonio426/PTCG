@@ -12,10 +12,11 @@ import { AttackBoardContext, resolveGenericAttackEffect } from './effects/generi
 import { inferEvolvesFromSpecies, evolvesFromMatches } from './evolutionChains';
 import { ENERGY_TYPE_ZH_LABEL, addLog, applyAttackOutcome, buildAttackBoard } from './attackResolution';
 import { isFossilCard, fossilAsPokemon } from './fossils';
+import { canOpenAsSetupActive } from './setup';
 import {
   EffectContext, EffectStep,
   hasTrainerEffect, canPlayTrainer, startTrainerEffect, resumeTrainerEffect,
-  hasAbilityEffect, startAbilityEffect, resumeAbilityEffect, isAbilityUnlimitedUse, canUseAbility,
+  hasAbilityEffect, startAbilityEffect, resumeAbilityEffect, isAbilityUnlimitedUse, canUseAbility, FROM_HAND_ABILITY_NAMES,
   hasAttackEffect, startAttackEffect, resumeAttackEffect,
   normalizeAbilityName,
 } from './effects';
@@ -163,7 +164,8 @@ const rawMoves = {
     const idx = player.hand.findIndex(c => c.id === cardId);
     if (idx === -1) return;
     const card = player.hand[idx];
-    if (card.cardData.supertype !== 'Pokémon' || !card.cardData.subtypes.includes('Basic')) return;
+    // Basic, or a 瞬間爆發力 card — the one non-Basic real rules allow as the opening Active.
+    if (!canOpenAsSetupActive(card)) return;
 
     player.hand.splice(idx, 1);
     player.active = card;
@@ -444,12 +446,17 @@ const rawMoves = {
   useAbility: ({ G, ctx }: { G: PtcgGameState; ctx: any }, cardId: string) => {
     if (G.pendingChoice) return;
     const player = G.players[G.currentPlayer];
-    const source = player.active?.id === cardId ? player.active : player.bench.find(c => c?.id === cardId);
+    // 緊急迴轉/激動俯衝: abilities printed 「若手牌有這張卡」 resolve from the HAND — the only
+    // names the hand fallback accepts (any other hand card's ability stays unusable from there).
+    const inPlaySource = player.active?.id === cardId ? player.active : player.bench.find(c => c?.id === cardId);
+    const source = inPlaySource
+      ?? player.hand.find(c => c.id === cardId && (c.cardData.abilities || []).some(a => a.text && FROM_HAND_ABILITY_NAMES.has(normalizeAbilityName(a.name))));
     if (!source) return;
     const ability = source.cardData.abilities?.find(a => hasAbilityEffect(normalizeAbilityName(a.name)));
     if (!ability) return;
     // 暗夜羽擊: an Active facing the opponent's 暗夜羽擊 Active has all its abilities negated.
-    if (areAbilitiesNegated(G, source)) return;
+    // Hand cards are exempt on purpose — negation effects read 「場上」.
+    if (inPlaySource && areAbilitiesNegated(G, source)) return;
     const name = normalizeAbilityName(ability.name);
     if (player.abilitiesUsedThisTurn.includes(source.id) && !isAbilityUnlimitedUse(name)) return;
 

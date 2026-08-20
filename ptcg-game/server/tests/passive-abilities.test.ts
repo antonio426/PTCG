@@ -422,3 +422,69 @@ describe('警備濁霧: taking attack damage while Active benches up to 2 瓦斯
     expect(G.players[1].deck).toHaveLength(1);
   });
 });
+
+/* ---------- Batch D: from-hand and setup-placement abilities ---------- */
+
+describe('緊急迴轉/激動俯衝: Stage 2s dropped onto the Bench straight from hand', () => {
+  it('緊急迴轉 is offered from hand only while the opponent has a Stage 2 in play', () => {
+    const gear = makeGameCard(makeCard({
+      name: '齒輪怪', hp: '140', subtypes: ['Stage 2'] as Subtype[],
+      abilities: [{ name: '緊急迴轉', type: 'Ability', text: 'x' }],
+    }), 0);
+    const stage2Opp = makeGameCard(makeCard({ name: '對面二階', hp: '150', subtypes: ['Stage 2'] as Subtype[] }), 1);
+    const G = plainBoard(makeGameCard(BASIC_MON, 0), stage2Opp);
+    G.players[0].hand = [gear];
+    expect(getLegalMoves(G, 0).some(m => m.type === 'use_ability' && (m.payload as any)?.cardId === gear.id)).toBe(true);
+    moves.useAbility({ G, ctx: battleCtx } as any, gear.id);
+    expect(G.players[0].hand).toHaveLength(0);
+    expect(G.players[0].bench[0]?.id).toBe(gear.id);
+    // Entered play this turn — it may not evolve this turn.
+    expect(G.players[0].pokemonPlayedThisTurn).toContain(gear.id);
+    // Without an opposing Stage 2 it is neither offered nor usable.
+    const gear2 = makeGameCard(gear.cardData, 0);
+    const G2 = plainBoard(makeGameCard(BASIC_MON, 0), makeGameCard(BASIC_MON, 1));
+    G2.players[0].hand = [gear2];
+    expect(getLegalMoves(G2, 0).some(m => m.type === 'use_ability' && (m.payload as any)?.cardId === gear2.id)).toBe(false);
+    moves.useAbility({ G: G2, ctx: battleCtx } as any, gear2.id);
+    expect(G2.players[0].hand).toHaveLength(1);
+  });
+
+  it('激動俯衝 needs an OWN Colorless Mega ex in play', () => {
+    const bird = makeGameCard(makeCard({
+      name: '烈箭鷹ex', hp: '280', subtypes: ['Stage 2', 'ex'] as Subtype[],
+      abilities: [{ name: '激動俯衝', type: 'Ability', text: 'x' }],
+    }), 0);
+    const mega = makeGameCard(makeCard({ name: '超級某某ex', hp: '300', subtypes: ['Stage 1', 'ex'] as Subtype[], types: ['Colorless'] as any }), 0);
+    const G = plainBoard(mega, makeGameCard(BASIC_MON, 1));
+    G.players[0].hand = [bird];
+    moves.useAbility({ G, ctx: battleCtx } as any, bird.id);
+    expect(G.players[0].bench[0]?.id).toBe(bird.id);
+    // A Fire Mega ex does not satisfy the 【無】屬性 gate.
+    const bird2 = makeGameCard(bird.cardData, 0);
+    const fireMega = makeGameCard(makeCard({ name: '超級火某ex', hp: '300', subtypes: ['Stage 1', 'ex'] as Subtype[], types: ['Fire'] as any }), 0);
+    const G2 = plainBoard(fireMega, makeGameCard(BASIC_MON, 1));
+    G2.players[0].hand = [bird2];
+    expect(getLegalMoves(G2, 0).some(m => m.type === 'use_ability' && (m.payload as any)?.cardId === bird2.id)).toBe(false);
+  });
+});
+
+describe('瞬間爆發力: an evolved card may open as the setup Active', () => {
+  const luxray = makeCard({
+    name: '倫琴貓', hp: '160', subtypes: ['Stage 2'] as Subtype[],
+    abilities: [{ name: '瞬間爆發力', type: 'Ability', text: 'x' }],
+  });
+
+  it('choose_active offers it and chooseActive accepts it; a plain Stage 2 stays rejected', () => {
+    const burst = makeGameCard(luxray, 0);
+    const plainStage2 = makeGameCard(makeCard({ name: '普通二階', hp: '150', subtypes: ['Stage 2'] as Subtype[] }), 0);
+    const G = makeState({ phase: 'choose_active' as any, currentPlayer: 0, players: [makePlayer(), makePlayer()] });
+    G.players[0].hand = [burst, plainStage2, makeGameCard(BASIC_MON, 0)];
+    const offered = getLegalMoves(G, 0).filter(m => m.type === 'choose_active').map(m => (m.payload as any).cardId);
+    expect(offered).toContain(burst.id);
+    expect(offered).not.toContain(plainStage2.id);
+    moves.chooseActive({ G, ctx: { currentPlayer: '0' } } as any, plainStage2.id);
+    expect(G.players[0].active).toBeNull();
+    moves.chooseActive({ G, ctx: { currentPlayer: '0' } } as any, burst.id);
+    expect(G.players[0].active?.id).toBe(burst.id);
+  });
+});

@@ -1,5 +1,6 @@
 import { Card, GameCard, TurnAction } from '@ptcg/shared';
 import { PtcgGameState, PtcgPlayerState } from './GameState';
+import { normalizeAbilityName } from './effects/types';
 
 export interface PtcgSetupData {
   decks: string[][];
@@ -99,8 +100,22 @@ function hasBasicInHand(player: PtcgPlayerState): boolean {
   );
 }
 
+/** 瞬間爆發力 (倫琴貓): 「進行對戰準備將寶可夢放置於戰鬥場上時，若手牌有這張卡，則可將這張卡
+ * 反面朝上放置於戰鬥場。」 — during setup, this evolved card may be placed as the opening ACTIVE
+ * (only there — never the Bench). It deliberately does NOT count for the mulligan check above:
+ * per the JP ruling, a hand with no Basic redraws even while holding this card. Consulted by
+ * setup's auto-placement, moves.chooseActive and getLegalMoves' choose_active phase. */
+export function canOpenAsSetupActive(card: { cardData: { supertype: string; subtypes: string[]; abilities?: { name: string; text?: string }[] } }): boolean {
+  if (card.cardData.supertype !== 'Pokémon') return false;
+  if (card.cardData.subtypes.includes('Basic')) return true;
+  return (card.cardData.abilities || []).some(a => a.text && normalizeAbilityName(a.name) === '瞬間爆發力');
+}
+
 function placeBasics(player: PtcgPlayerState): void {
-  const basicIndex = player.hand.findIndex(c =>
+  // Prefer a 瞬間爆發力 card as the opening Active when one is in hand — it's an evolved
+  // Pokémon (bigger HP) that could otherwise never enter play without its lower Stages.
+  const burstIndex = player.hand.findIndex(c => !c.cardData.subtypes.includes('Basic') && canOpenAsSetupActive(c));
+  const basicIndex = burstIndex !== -1 ? burstIndex : player.hand.findIndex(c =>
     c.cardData.supertype === 'Pokémon' && c.cardData.subtypes.includes('Basic')
   );
   if (basicIndex === -1) return;

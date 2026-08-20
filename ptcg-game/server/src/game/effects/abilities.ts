@@ -2957,7 +2957,52 @@ const cocoonGrowth: EffectHandler = {
   },
 };
 
+/**
+ * 「在自己的回合，若手牌有這張卡…則可使用1次。將這張卡放置於備戰區。」 — abilities printed on
+ * evolved Pokémon that are USED FROM HAND, dropping the card straight onto the Bench without
+ * evolving. getLegalMoves/useAbility route hand cards here only for names in
+ * FROM_HAND_ABILITY_NAMES; in-play ability negation (暗夜羽擊/初始化) doesn't apply — those
+ * effects read 「場上」 and a hand card isn't in play yet.
+ */
+function benchSelfFromHandAbility(gate: (ctx: EffectContext) => boolean): EffectHandler {
+  const can = (ctx: EffectContext) => {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (!p.hand.some(c => c.id === ctx.sourceCardId)) return false;
+    if (!p.bench.some(s => s === null)) return false;
+    return gate(ctx);
+  };
+  return {
+    canPlay: can,
+    start(ctx) {
+      if (!can(ctx)) return 'done';
+      const p = player(ctx.G, ctx.playerIndex);
+      const i = p.hand.findIndex(c => c.id === ctx.sourceCardId);
+      const slot = p.bench.findIndex(s => s === null);
+      const [card] = p.hand.splice(i, 1);
+      p.bench[slot] = card;
+      // Entered play this turn: it can't evolve further this turn, same as a freshly played Basic.
+      p.pokemonPlayedThisTurn.push(card.id);
+      return 'done';
+    },
+    resume() { return 'done'; },
+  };
+}
+
+/** 緊急迴轉 (齒輪怪): usable while the opponent has a Stage 2 Pokémon in play. */
+const emergencySpin = benchSelfFromHandAbility(ctx =>
+  allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1).some(c => c.cardData.subtypes.includes('Stage 2')));
+
+/** 激動俯衝 (烈箭鷹ex): usable while OWN field has a Colorless Mega ex (「超級…ex」). */
+const excitedDive = benchSelfFromHandAbility(ctx =>
+  allPokemon(ctx.G, ctx.playerIndex).some(c =>
+    c.cardData.name.startsWith('超級') && c.cardData.subtypes.includes('ex') && (c.cardData.types || []).includes('Colorless')));
+
+/** The ability names getLegalMoves/useAbility must also look for in the HAND. */
+export const FROM_HAND_ABILITY_NAMES = new Set(['緊急迴轉', '激動俯衝']);
+
 export const abilityEffects: Record<string, EffectHandler> = {
+  '緊急迴轉': emergencySpin,
+  '激動俯衝': excitedDive,
   '偵查指令': strategicCommand,
   '咒詛炸彈': curseBomb,
   '腎上腺腦力': adrenalineBrain,

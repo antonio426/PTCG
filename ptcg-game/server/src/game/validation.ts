@@ -1,12 +1,13 @@
 import { GameCard, EnergyType, LegalAction, isAceSpec } from '@ptcg/shared';
 import { PtcgGameState, GamePhase, PendingChoice } from './GameState';
-import { hasAbilityEffect, canUseAbility } from './effects/abilities';
+import { hasAbilityEffect, canUseAbility, FROM_HAND_ABILITY_NAMES } from './effects/abilities';
 import { canPlayTrainer, hasTrainerEffect } from './effects/trainers';
 import { getRetreatCostReduction, getColorlessCostReduction } from './effects/tools';
 import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostOverride, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatCostReduction, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, isAceSpecPlayBlocked, areAbilitiesNegated, isAttackLockedByTimedEffect, isItemAndToolPlayBlocked, isItemLockedByTimedEffect, isItemPlayBlocked, isNamedAttackLockedByTimedEffect, isStadiumPlayBlocked, isRetreatLockedByTimedEffect, isProtectedFromOpponentTrainer } from './effects/passiveAbilities';
 import { normalizeAbilityName, normalizeCardName } from './effects/types';
 import { hasEvolvesFrom, evolvesFromMatches, inferEvolvesFromSpecies } from './evolutionChains';
 import { isFossilCard } from './fossils';
+import { canOpenAsSetupActive } from './setup';
 import { benchLimit, isStadiumActive } from './effects/stadiums';
 import { energyUnitsProvided } from './effects/specialEnergy';
 
@@ -299,7 +300,8 @@ export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalActio
 
   if (G.phase === 'choose_active') {
     for (const card of player.hand) {
-      if (card.cardData.supertype === 'Pokémon' && card.cardData.subtypes.includes('Basic')) {
+      // canOpenAsSetupActive = Basic, plus 瞬間爆發力 (see setup.ts).
+      if (canOpenAsSetupActive(card)) {
         legalMoves.push({
           type: 'choose_active',
           description: `Set ${card.cardData.name} as your Active Pokémon`,
@@ -340,6 +342,20 @@ export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalActio
           });
         }
       }
+    }
+    // 緊急迴轉/激動俯衝: abilities used FROM HAND (「若手牌有這張卡…」) — the board loop above
+    // can't see them. In-play negation is deliberately not consulted: 暗夜羽擊/初始化 read 場上.
+    for (const card of player.hand) {
+      const ability = card.cardData.abilities?.find(a => a.text && FROM_HAND_ABILITY_NAMES.has(normalizeAbilityName(a.name)));
+      if (!ability) continue;
+      const name = normalizeAbilityName(ability.name);
+      if (player.abilitiesUsedThisTurn.includes(card.id)) continue;
+      if (!canUseAbility(name, { G, playerIndex: playerIndex as 0 | 1, sourceCardId: card.id })) continue;
+      legalMoves.push({
+        type: 'use_ability',
+        description: `Use ${card.cardData.name}'s ability "${ability.name}" from hand`,
+        payload: { cardId: card.id },
+      });
     }
   }
 

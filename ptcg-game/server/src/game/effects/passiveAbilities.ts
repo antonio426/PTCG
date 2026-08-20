@@ -758,4 +758,7 @@ export const PASSIVE_ABILITY_NAMES = new Set([
   '黏著束縛', '初始化', '暴龍根性', '全能硬殼', '純樸', '抵抗之幕', '爆大身軀',
   '融合為雪', '緊張感', '廣域堡壘', '光之翼', '平穩境地',
   '潛者捕捉', '光子纜線', '最後鎖鏈', '警備濁霧',
+  // 瞬間爆發力 lives in setup.ts's canOpenAsSetupActive (a setup-placement right, not a
+  // usable-in-turn effect); 緊急迴轉/激動俯衝 are real abilityEffects entries used from hand.
+  '瞬間爆發力',
 ]);
