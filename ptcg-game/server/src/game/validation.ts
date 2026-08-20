@@ -8,6 +8,7 @@ import { normalizeAbilityName, normalizeCardName } from './effects/types';
 import { hasEvolvesFrom, evolvesFromMatches, inferEvolvesFromSpecies } from './evolutionChains';
 import { isFossilCard } from './fossils';
 import { benchLimit, isStadiumActive } from './effects/stadiums';
+import { energyUnitsProvided } from './effects/specialEnergy';
 
 /** All k-sized combinations of `items`, capped so huge hands can't explode the move list. */
 function combinations<T>(items: T[], k: number, cap = 40): T[][] {
@@ -84,22 +85,39 @@ function getEnergyCounts(attachedEnergy: { type: string }[]): Record<string, num
   return counts;
 }
 
-export function canPayEnergyCost(attachedEnergy: { type: string }[], cost: EnergyType[], colorlessReduction = 0): boolean {
+/**
+ * `holder` is optional only so the existing callers that pass a bare attachment list keep working;
+ * pass it whenever the Pokémon is known. Without it, Special Energy falls back to its flat
+ * `type`, which is one Colorless for most of them — 火箭隊能量's two units, 古舊能量's wildcard and
+ * the holder-dependent ones (稜鏡能量, 新衝天能量, 燃火能量) all need the card to be resolved.
+ */
+export function canPayEnergyCost(
+  attachedEnergy: { type: string; cardData?: GameCard['cardData'] }[],
+  cost: EnergyType[],
+  colorlessReduction = 0,
+  holder?: GameCard,
+): boolean {
   if (cost.length === 0) return true;
 
-  const counts = getEnergyCounts(attachedEnergy);
+  const units = holder
+    ? attachedEnergy.flatMap(e => energyUnitsProvided(e, holder))
+    : attachedEnergy.map(e => ({ types: [e.type] }));
+
   const specificCosts = cost.filter(c => c !== 'Colorless');
   const colorlessCount = Math.max(0, cost.filter(c => c === 'Colorless').length - colorlessReduction);
 
-  const remaining = { ...counts };
-
-  for (const requiredType of specificCosts) {
-    if (!remaining[requiredType] || remaining[requiredType] <= 0) return false;
-    remaining[requiredType]--;
+  // Assign the specific symbols first, spending the LEAST flexible unit that can cover each one.
+  // Spending a wildcard on a symbol an exact-type unit could have paid would wrongly report a
+  // cost as unpayable — with 古舊能量 (every type) plus one Fire, a 【火】【無】 cost is payable,
+  // but only if the Fire pays the 【火】 and the wildcard covers the 【無】.
+  const pool = units.map(u => ({ types: new Set(u.types), spent: false }));
+  for (const required of specificCosts) {
+    const candidates = pool.filter(u => !u.spent && u.types.has(required));
+    if (candidates.length === 0) return false;
+    candidates.sort((a, b) => a.types.size - b.types.size)[0].spent = true;
   }
 
-  const totalRemaining = Object.values(remaining).reduce((a, b) => a + b, 0);
-  return totalRemaining >= colorlessCount;
+  return pool.filter(u => !u.spent).length >= colorlessCount;
 }
 
 /** Retreat cost after Tool-based reductions (e.g. 氣球 -2, 緊急滑板 -1 or waived when low HP). */
@@ -257,7 +275,7 @@ export function canAttack(G: PtcgGameState, playerIndex: number, attackIndex: nu
     ? colorlessInCost
     : getColorlessCostReduction(G, player.active, playerIndex as 0 | 1)
       + getPassiveAttackCostReduction(G, playerIndex as 0 | 1, player.active, attack.name);
-  return canPayEnergyCost(player.active.attachedEnergy, cost, colorlessReduction);
+  return canPayEnergyCost(player.active.attachedEnergy, cost, colorlessReduction, player.active);
 }
 
 export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalAction[] {
