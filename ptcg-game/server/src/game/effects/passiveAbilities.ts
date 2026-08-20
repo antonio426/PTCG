@@ -190,6 +190,9 @@ export function isItemLockedByTimedEffect(G: PtcgGameState, playerIndex: 0 | 1):
 export function isDamageBlocked(G: PtcgGameState, attacker: GameCard, defender: GameCard, attackPrintedDamage?: number): boolean {
   // 鐵壁硬殼: immune to attacks with 200+ printed damage.
   if (hasAbility(G, defender, '鐵壁硬殼') && (attackPrintedDamage ?? 0) >= 200) return true;
+  // 璀璨鱗片 (美納斯ex): untouchable by the opponent's 太晶 Pokémon's attacks — damage here,
+  // effects via its isImmuneToOpponentAttackEffects clause.
+  if (hasAbility(G, defender, '璀璨鱗片') && isTeraPokemon(attacker)) return true;
   // 太晶: Benched Tera Pokémon are untouchable.
   if (hasTeraBenchedImmunity(defender) && isBenchedPokemon(G, defender)) return true;
   // 暗影【惡】能量: same shape — a Darkness Pokémon carrying it is untouchable while Benched.
@@ -253,6 +256,8 @@ export function isImmuneToOpponentAttackEffects(G: PtcgGameState, defender: Game
   if (hasAbility(G, defender, '純樸')) return true;
   // 全能硬殼: only against attackers carrying a Special Energy.
   if (hasAbility(G, defender, '全能硬殼') && holdsSpecialEnergy(attacker)) return true;
+  // 璀璨鱗片: only against 太晶 attackers (blocks their damage too — see isDamageBlocked).
+  if (hasAbility(G, defender, '璀璨鱗片') && isTeraPokemon(attacker)) return true;
   // 抵抗之幕 (<火箭隊的>急凍鳥): every own Basic 「火箭隊的寶可夢」 while the holder is in play.
   if (defender.cardData.subtypes.includes('Basic') && defender.cardData.name.includes('火箭隊的')
     && teamOf(G, ownerIndexOf(G, defender)).some(c => hasAbility(G, c, '抵抗之幕'))) return true;
@@ -805,4 +810,5 @@ export const PASSIVE_ABILITY_NAMES = new Set([
   // Batch F: 潛入記憶 (usableAttacks), 全能變身/全能靈魂 (moves wrapper watch + canEvolve gate),
   // 多重轉接 (canHoldSecondTool + attachedTool2), 整人擊落 (primitives.millDeck trigger).
   '潛入記憶', '全能變身', '全能靈魂', '多重轉接', '整人擊落',
+  '璀璨鱗片',
 ]);

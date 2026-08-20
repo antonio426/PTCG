@@ -680,3 +680,21 @@ describe('整人擊落: milled by the opponent, punishes their deck for 8', () =
     expect(G2.players[0].deck).toHaveLength(10);
   });
 });
+
+describe('璀璨鱗片 (美納斯ex): untouchable by 太晶 attackers', () => {
+  it('blocks damage and effects from a Tera attacker only', () => {
+    const scale = makeGameCard(withAbility('璀璨鱗片', { hp: '270' }), 1);
+    // isTeraPokemon keys on the bench-immunity pseudo-attack every Tera print carries.
+    const tera = makeGameCard(makeCard({
+      name: '太晶攻擊者', hp: '220', subtypes: ['Basic', 'ex'] as Subtype[],
+      attacks: [{ name: '太晶標記', cost: [], damage: '', text: '只要這隻寶可夢在備戰區，不會受到招式的傷害。' } as any],
+    }), 0);
+    const G = plainBoard(tera, scale);
+    expect(isDamageBlocked(G, tera, scale)).toBe(true);
+    expect(isImmuneToOpponentAttackEffects(G, scale, tera)).toBe(true);
+    const plain = makeGameCard(BASIC_MON, 0);
+    const G2 = plainBoard(plain, makeGameCard(scale.cardData, 1));
+    expect(isDamageBlocked(G2, plain, G2.players[1].active!)).toBe(false);
+    expect(isImmuneToOpponentAttackEffects(G2, G2.players[1].active!, plain)).toBe(false);
+  });
+});
