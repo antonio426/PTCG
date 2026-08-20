@@ -208,3 +208,61 @@ describe('new mechanisms (end to end)', () => {
     expect(offered).toEqual(['真招式']);
   });
 });
+
+describe('round-4 mechanisms', () => {
+  it('delayedKo fires at the end of the next opponent turn, with prizes', () => {
+    const atk = mkAttack('詛咒之種', ['Colorless'], '', '將這隻寶可夢身上附加的能量卡全部丟棄。在下個對手的回合結束時，受到這個招式的寶可夢會【昏厥】。');
+    const attacker = makeGameCard(makeCard({ name: '詛咒者', hp: '120', subtypes: ['Basic'] as Subtype[], attacks: [atk] }), 0, { attachedEnergy: [colorless('d4-1')] });
+    const victim = makeGameCard(makeCard({ name: '受害者', hp: '300', subtypes: ['Basic'] as Subtype[] }), 1);
+    const G = battle(attacker, victim, { theirBench: [makeGameCard(BASIC_MON, 1)] });
+    G.players[0].prizes = [makeGameCard(BASIC_MON, 0)];
+    moves.attack({ G, ctx: ctx0 } as any, 0);
+    expect(attacker.attachedEnergy).toHaveLength(0);
+    expect(victim.timedEffects?.some(e => e.kind === 'delayedKo')).toBe(true);
+    // End of the opponent's turn (turn 4) = the sweep that runs once G.turn has passed it.
+    G.turn = 5;
+    processBetweenTurns(G);
+    expect(G.players[1].discardPile.some(c => c.id === victim.id)).toBe(true);
+    expect(G.players[0].takenPrizes).toBe(1);
+  });
+
+  it('discardDefenderEntirely removes the stack with NO prizes', () => {
+    const atk = mkAttack('捲入毀滅', ['Colorless'], '', '選擇1張這隻寶可夢身上附加的「火箭隊能量」，將其丟棄。這個情況下，將對手的戰鬥寶可夢與附加的卡全部丟棄。');
+    const rocketEnergy = { id: 'rk-1', type: 'Colorless', cardData: makeCard({ name: '火箭隊能量', supertype: 'Energy', subtypes: ['Special Energy'] as Subtype[] }) };
+    const attacker = makeGameCard(makeCard({ name: '毀滅者', hp: '120', subtypes: ['Basic'] as Subtype[], attacks: [atk] }), 0, { attachedEnergy: [rocketEnergy, colorless('d4-2')] });
+    const victim = makeGameCard(makeCard({ name: '被捲入者', hp: '300', subtypes: ['Basic'] as Subtype[] }), 1);
+    const G = battle(attacker, victim, { theirBench: [makeGameCard(BASIC_MON, 1)] });
+    G.players[0].prizes = [makeGameCard(BASIC_MON, 0)];
+    moves.attack({ G, ctx: ctx0 } as any, 0);
+    expect(G.players[1].discardPile.some(c => c.id === victim.id)).toBe(true);
+    expect(G.players[1].active).toBeNull();
+    expect(G.players[0].takenPrizes).toBe(0); // 丟棄 ≠ 昏厥
+    expect(attacker.attachedEnergy.map(e => e.id)).toEqual(['d4-2']); // the cost was paid
+  });
+
+  it('winGameIfOnePrizeLeft ends the game only at exactly 1 prize', () => {
+    const atk = mkAttack('終局宣言', ['Colorless'], '', '使用這個招式時，若自己剩餘獎賞卡的張數為1張，則這場對戰己方獲勝。');
+    const attacker = makeGameCard(makeCard({ name: '宣言者', hp: '120', subtypes: ['Basic'] as Subtype[], attacks: [atk] }), 0, { attachedEnergy: [colorless('d4-3')] });
+    const G = battle(attacker, makeGameCard(BASIC_MON, 1, { cardData: undefined as any } as any));
+    G.players[1].active = makeGameCard(makeCard({ name: '對手', hp: '300', subtypes: ['Basic'] as Subtype[] }), 1);
+    G.players[0].prizes = [makeGameCard(BASIC_MON, 0), makeGameCard(BASIC_MON, 0)];
+    moves.attack({ G, ctx: ctx0 } as any, 0);
+    expect(G.winner).toBeNull();
+    G.players[0].prizes = [makeGameCard(BASIC_MON, 0)];
+    G.phase = 'main' as any;
+    moves.attack({ G, ctx: ctx0 } as any, 0);
+    expect(G.winner).toBe(0);
+  });
+
+  it('copyDefenderRandomAttack resolves a printed defender attack against the current board', () => {
+    const copyAtk = mkAttack('鏡像', ['Colorless'], '', '選擇1個對手的戰鬥寶可夢持有的招式，作為這個招式使用。');
+    const attacker = makeGameCard(makeCard({ name: '鏡像者', hp: '120', subtypes: ['Basic'] as Subtype[], attacks: [copyAtk] }), 0, { attachedEnergy: [colorless('d4-4')] });
+    const victim = makeGameCard(makeCard({
+      name: '模板', hp: '300', subtypes: ['Basic'] as Subtype[],
+      attacks: [mkAttack('大力錘', ['Colorless'], '70')],
+    }), 1);
+    const G = battle(attacker, victim);
+    moves.attack({ G, ctx: ctx0 } as any, 0);
+    expect(victim.damage).toBe(70);
+  });
+});

@@ -3,6 +3,7 @@ import { effectiveMaxHp, flushPreEvolutionsTo, handleKo, sweepKnockedOut } from 
 import { getBurnCounterBonus, getColdCurtainVictims, getPoisonCounterBonus, getSandstormVictims } from './effects/passiveAbilities';
 import { enforceBenchLimit, sweepStadiumStatusCures } from './effects/stadiums';
 import { discardBurnoutEnergy } from './effects/specialEnergy';
+import { discardAttachedEnergy } from './effects/primitives';
 
 /**
  * "Between Turns" processing (runs once per turn transition, checking BOTH
@@ -24,6 +25,41 @@ export function processBetweenTurns(G: PtcgGameState): void {
   // Backstop for every other way an HP modifier can come and go during a turn (a Tool removed,
   // a passive-ability holder leaving play) — see sweepKnockedOut.
   sweepKnockedOut(G);
+  // 「在下個對手的回合結束時…」 delayed attack effects (delayedKo / delayedCounters /
+  // delayedDiscard). This sweep runs at every turn transition with G.turn already advanced, so
+  // "the end of turn T" is the first sweep where G.turn > T. The effect rides the Pokémon
+  // (retreating doesn't shed it); leaving play discards timedEffects with the card as usual.
+  for (let dIdx = 0 as 0 | 1; dIdx <= 1; dIdx = (dIdx + 1) as 0 | 1) {
+    const dp = G.players[dIdx];
+    for (const card of [dp.active, ...dp.bench]) {
+      if (!card?.timedEffects) continue;
+      const due = card.timedEffects.filter(e =>
+        (e.kind === 'delayedKo' || e.kind === 'delayedCounters' || e.kind === 'delayedDiscard') && G.turn > e.appliesOnTurn);
+      if (due.length === 0) continue;
+      card.timedEffects = card.timedEffects.filter(e => !due.includes(e));
+      for (const e of due) {
+        if (e.kind === 'delayedCounters') {
+          card.damage += (e.amount ?? 0) * 10;
+          const hp = effectiveMaxHp(G, card);
+          if (hp > 0 && card.damage >= hp) handleKo(G, dIdx, card.id);
+        } else if (e.kind === 'delayedKo') {
+          handleKo(G, dIdx, card.id);
+        } else {
+          // delayedDiscard: 丟棄 is not 昏厥 — the whole stack goes to the discard pile, no prizes.
+          for (const energy of card.attachedEnergy.splice(0)) discardAttachedEnergy(G, dIdx, energy);
+          if (card.attachedTool) { dp.discardPile.push(card.attachedTool); card.attachedTool = null; }
+          if (card.attachedTool2) { dp.discardPile.push(card.attachedTool2); card.attachedTool2 = null; }
+          flushPreEvolutionsTo(card, dp.discardPile);
+          dp.discardPile.push(card);
+          if (dp.active?.id === card.id) dp.active = null;
+          else {
+            const bi = dp.bench.findIndex(c => c?.id === card.id);
+            if (bi >= 0) dp.bench[bi] = null;
+          }
+        }
+      }
+    }
+  }
   // 燃火能量: 「將附於寶可夢身上的這張卡，在自己的回合結束時丟棄」 — the turn transition IS that
   // moment, and justFinishedIdx below is exactly whose turn just ended.
   discardBurnoutEnergy(G, (1 - G.currentPlayer) as 0 | 1);

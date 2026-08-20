@@ -299,7 +299,18 @@ export function canAttack(G: PtcgGameState, playerIndex: number, attackIndex: nu
 
   // 反等離子 replaces the printed cost outright, so it has to resolve before any reduction is
   // applied to it — the reductions below all shave Colorless pips off whatever cost is in force.
-  const cost = getPassiveAttackCostOverride(G, playerIndex as 0 | 1, player.active, attack.name) ?? attack.cost;
+  let cost = getPassiveAttackCostOverride(G, playerIndex as 0 | 1, player.active, attack.name) ?? attack.cost;
+  // Printed conditional cost waivers, read straight off the attack text:
+  // 「若這隻寶可夢處於特殊狀態，則…就算沒有附於…也可使用」 — free while Conditioned.
+  if (attack.text?.includes('若這隻寶可夢處於特殊狀態，則使用這個招式所需的能量就算沒有附於')
+    && player.active.statusConditions.length > 0) cost = [];
+  // 「若這隻寶可夢身上放置有傷害指示物，則這個招式只需要N個【T】能量即可使用」
+  const costCut = attack.text?.match(/若這隻寶可夢身上放置有傷害指示物，則這個招式只需要(\d+)個【(.)】能量即可使用/);
+  if (costCut && player.active.damage > 0) {
+    const zh: Record<string, string> = { '草': 'Grass', '火': 'Fire', '水': 'Water', '雷': 'Lightning', '超': 'Psychic', '鬥': 'Fighting', '惡': 'Darkness', '鋼': 'Metal', '無': 'Colorless' };
+    const ty = zh[costCut[2]];
+    if (ty) cost = Array.from({ length: parseInt(costCut[1], 10) }, () => ty as EnergyType);
+  }
 
   // 化身團結 waives only the Colorless portion of the cost — specific-type requirements remain.
   const colorlessInCost = cost.filter(c => c === 'Colorless').length;
