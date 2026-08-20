@@ -5,9 +5,11 @@ import { energyUnitsProvided, ALL_ENERGY_TYPES, specialEnergyRetaliation, specia
 import { effectiveMaxHp } from '../src/game/damage';
 import { getPassiveDamageBonus, getPrizeReduction, isDamageBlocked } from '../src/game/effects/passiveAbilities';
 import { applyStatusCondition } from '../src/game/effects/primitives';
+import { moves } from '../src/game/moves';
+import { processBetweenTurns } from '../src/game/statusConditions';
 import { makePlayer, makeState } from './fixtures';
 import { canPayEnergyCost, effectiveRetreatCost } from '../src/game/validation';
-import { makeCard, makeGameCard } from './fixtures';
+import { BASIC_ENERGY, BASIC_MON, makeCard, makeGameCard } from './fixtures';
 import type { EnergyType, Subtype } from '@ptcg/shared';
 
 const cards: any[] = JSON.parse(readFileSync(join(__dirname, '..', 'data', 'cards.json'), 'utf8')).data;
@@ -247,5 +249,58 @@ describe('Special Energy secondary effects', () => {
     expect(specialEnergyBlocksAttackEffects(carrying(mon(['Fire']), '薄霧能量'))).toBe(true);
     expect(specialEnergyBlocksAttackEffects(carrying(mon(['Fighting']), '硬岩【鬥】能量'))).toBe(true);
     expect(specialEnergyBlocksAttackEffects(carrying(mon(['Fire']), '硬岩【鬥】能量'))).toBe(false);
+  });
+});
+
+describe('Special Energy timing effects', () => {
+  const mon2 = (types: string[], subtypes: string[] = ['Basic']) =>
+    makeGameCard(makeCard({ name: '持有者', hp: '100', types: types as any, subtypes: subtypes as Subtype[] }), 0);
+
+  it('富裕能量 draws 4 when attached from hand', () => {
+    const energy = makeGameCard(special('富裕能量'), 0);
+    const active = mon2(['Colorless']);
+    const G = makeState({
+      turn: 3, currentPlayer: 0, phase: 'main',
+      players: [
+        makePlayer({ active, hand: [energy], deck: Array.from({ length: 10 }, () => makeGameCard(BASIC_MON, 0)) }),
+        makePlayer({ active: mon2(['Colorless']) }),
+      ],
+    });
+    moves.attachEnergy({ G, ctx: { currentPlayer: '0', turn: 3, events: { endTurn: () => {} } } } as any, energy.id, active.id);
+    expect(active.attachedEnergy).toHaveLength(1);
+    expect(G.players[0].hand).toHaveLength(4);
+    expect(G.players[0].deck).toHaveLength(6);
+  });
+
+  it('a plain energy attaches without drawing', () => {
+    const energy = makeGameCard(BASIC_ENERGY, 0);
+    const active = mon2(['Colorless']);
+    const G = makeState({
+      turn: 3, currentPlayer: 0, phase: 'main',
+      players: [
+        makePlayer({ active, hand: [energy], deck: Array.from({ length: 10 }, () => makeGameCard(BASIC_MON, 0)) }),
+        makePlayer({ active: mon2(['Colorless']) }),
+      ],
+    });
+    moves.attachEnergy({ G, ctx: { currentPlayer: '0', turn: 3, events: { endTurn: () => {} } } } as any, energy.id, active.id);
+    expect(G.players[0].hand).toHaveLength(0);
+    expect(G.players[0].deck).toHaveLength(10);
+  });
+
+  it('燃火能量 discards itself at the end of its own controller\'s turn', () => {
+    const mine = mon2(['Colorless']);
+    mine.attachedEnergy = [attach('燃火能量')];
+    const theirs = mon2(['Colorless']);
+    theirs.attachedEnergy = [attach('燃火能量')];
+    // currentPlayer 1 is starting their turn, so player 0's turn just ended.
+    const G = makeState({
+      turn: 4, currentPlayer: 1,
+      players: [makePlayer({ active: mine }), makePlayer({ active: theirs })],
+    });
+    processBetweenTurns(G);
+    expect(mine.attachedEnergy).toHaveLength(0);
+    expect(G.players[0].discardPile.map(c => norm(c.cardData.name))).toContain('燃火能量');
+    // The opponent's copy survives — it goes at the end of THEIR turn, not this one.
+    expect(theirs.attachedEnergy).toHaveLength(1);
   });
 });

@@ -3,6 +3,7 @@ import { PtcgGameState } from '../GameState';
 import { normalizeAbilityName, normalizeCardName } from './types';
 import { hasEvolvesFrom } from '../evolutionChains';
 import { isStadiumActive, isTeraPokemon } from './stadiums';
+import { drawCards } from './primitives';
 import { specialEnergyBlocksBenchedDamage, specialEnergyDamageBonus, specialEnergyMaxHpBonus, specialEnergyPrizeReduction, specialEnergyWaivesRetreat } from './specialEnergy';
 
 /**
@@ -491,7 +492,7 @@ export function canEvolveOnFirstTurnOrJustPlayed(G: PtcgGameState, target: GameC
 /** 自動治癒 / 侵蝕詛咒: reacts to a hand Energy attach. Heals `target` 90 if its own team holds
  * 自動治癒 (only while `target` is Active); places 2 damage counters on `target` if the
  * OPPONENT of `attachingIdx` holds 侵蝕詛咒 (unconditional on position, per printed text). */
-export function onEnergyAttachedFromHand(G: PtcgGameState, attachingIdx: 0 | 1, target: GameCard): void {
+export function onEnergyAttachedFromHand(G: PtcgGameState, attachingIdx: 0 | 1, target: GameCard, energy?: { cardData?: GameCard['cardData'] }): void {
   if (isActivePokemon(G, target) && teamOf(G, attachingIdx).some(c => hasAbility(G, c, '自動治癒'))) {
     target.damage = Math.max(0, target.damage - 90);
   }
@@ -499,6 +500,17 @@ export function onEnergyAttachedFromHand(G: PtcgGameState, attachingIdx: 0 | 1, 
   if (teamOf(G, oppIdx).some(c => hasAbility(G, c, '侵蝕詛咒'))) {
     target.damage += 20;
   }
+  // 富裕能量: 「從手牌將這張卡附於寶可夢身上時，從自己的牌庫抽出4張卡」 — keyed off the card that
+  // was actually just attached, which is why this hook takes it.
+  if (energy && isSpecialEnergyNamed(energy, '富裕能量')) {
+    drawCards(G, attachingIdx, 4);
+  }
+}
+
+/** The named Special Energy check, on the raw attachment rather than a Pokémon holding it. */
+function isSpecialEnergyNamed(energy: { cardData?: GameCard['cardData'] }, name: string): boolean {
+  return !!energy.cardData?.subtypes?.includes('Special Energy')
+    && String(energy.cardData.name).replace(/^[‌​\s]+/, '').trim() === name;
 }
 
 /** 冰冷之帳: each Between-Turns check, every ability-holding Pokémon (both sides, except the

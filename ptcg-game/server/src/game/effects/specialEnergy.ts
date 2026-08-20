@@ -1,4 +1,5 @@
 import { GameCard } from '@ptcg/shared';
+import { PtcgGameState } from '../GameState';
 
 /**
  * What a piece of attached Energy actually pays for.
@@ -157,4 +158,33 @@ export function specialEnergyBlocksAttackEffects(holder: GameCard): boolean {
  */
 export function specialEnergyPrizeReduction(koCard: GameCard): number {
   return hasSpecialEnergy(koCard, '古舊能量') ? 1 : 0;
+}
+
+/**
+ * 燃火能量: 「將附於寶可夢身上的這張卡，在自己的回合結束時丟棄」 — discards itself off every
+ * Pokémon that player controls at the end of their own turn. The card goes to the discard pile
+ * rather than vanishing, same as any other energy leaving a Pokémon.
+ */
+export function discardBurnoutEnergy(G: PtcgGameState, playerIdx: 0 | 1): void {
+  const p = G.players[playerIdx];
+  for (const card of [p.active, ...p.bench]) {
+    if (!card) continue;
+    for (let i = card.attachedEnergy.length - 1; i >= 0; i--) {
+      const e = card.attachedEnergy[i];
+      if (!hasSpecialEnergyName(e, '燃火能量')) continue;
+      card.attachedEnergy.splice(i, 1);
+      if (e.cardData) {
+        p.discardPile.push({
+          id: e.id, cardData: e.cardData, owner: playerIdx,
+          damage: 0, statusConditions: [], attachedEnergy: [],
+        });
+      }
+    }
+  }
+}
+
+/** Named-card check on a raw attachment (no holding Pokémon needed). */
+function hasSpecialEnergyName(energy: { cardData?: GameCard['cardData'] }, name: string): boolean {
+  return !!energy.cardData?.subtypes?.includes('Special Energy')
+    && String(energy.cardData.name).replace(/^[‌​\s]+/, '').trim() === name;
 }

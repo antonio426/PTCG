@@ -316,7 +316,7 @@ const rawMoves = {
       type: energyType,
       cardData: energyCard.cardData,
     });
-    onEnergyAttachedFromHand(G, G.currentPlayer as 0 | 1, target);
+    onEnergyAttachedFromHand(G, G.currentPlayer as 0 | 1, target, energyCard);
     // 祭典會場: this Pokémon now has Energy, so any Condition already on it is cured.
     sweepStadiumStatusCures(G);
 

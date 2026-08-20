@@ -2,6 +2,7 @@ import { PtcgGameState } from './GameState';
 import { effectiveMaxHp, flushPreEvolutionsTo, handleKo, sweepKnockedOut } from './damage';
 import { getBurnCounterBonus, getColdCurtainVictims, getPoisonCounterBonus, getSandstormVictims } from './effects/passiveAbilities';
 import { enforceBenchLimit, sweepStadiumStatusCures } from './effects/stadiums';
+import { discardBurnoutEnergy } from './effects/specialEnergy';
 
 /**
  * "Between Turns" processing (runs once per turn transition, checking BOTH
@@ -23,6 +24,9 @@ export function processBetweenTurns(G: PtcgGameState): void {
   // Backstop for every other way an HP modifier can come and go during a turn (a Tool removed,
   // a passive-ability holder leaving play) — see sweepKnockedOut.
   sweepKnockedOut(G);
+  // 燃火能量: 「將附於寶可夢身上的這張卡，在自己的回合結束時丟棄」 — the turn transition IS that
+  // moment, and justFinishedIdx below is exactly whose turn just ended.
+  discardBurnoutEnergy(G, (1 - G.currentPlayer) as 0 | 1);
   // The player whose turn just ended — i.e. whoever was G.currentPlayer up until this call
   // (applyTurnBegin/turn.onBegin already flip G.currentPlayer to the new turn's player before
   // calling this). Needed for Paralysis below.
