@@ -7,7 +7,7 @@ import { areAbilitiesNegated, getBonusPrizesForAttackKo, getEvolveCountersFromOp
 import { benchDamageFromEffectsBlocked, benchLimit, enforceBenchLimit, isStadiumActive, sweepStadiumStatusCures } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
 import { applyStatusCondition, discardAttachedEnergy, drawCards, drawUpTo, shuffleDeck, asAttachedEnergy } from './effects/primitives';
-import { maybeRaiseSensorEnergyBenchChoice, resolveSensorEnergyBench } from './effects/specialEnergy';
+import { maybeRaiseSensorEnergyBenchChoice, processAttackEnergyReturns, resolveSensorEnergyBench, watchAttackEnergyReturns } from './effects/specialEnergy';
 import { AttackBoardContext, resolveGenericAttackEffect } from './effects/genericAttacks';
 import { inferEvolvesFromSpecies, evolvesFromMatches } from './evolutionChains';
 import { ENERGY_TYPE_ZH_LABEL, addLog, applyAttackOutcome, buildAttackBoard } from './attackResolution';
@@ -937,6 +937,10 @@ const rawMoves = {
       }
     }
 
+    // 回力鏢能量/燃料【火】能量: record the attacker's copies before the attack resolves, so the
+    // post-move wrapper can return whichever ones the attack's own effect discards.
+    watchAttackEnergyReturns(G, G.currentPlayer as 0 | 1, attacker);
+
     if (hasAttackEffect(attacker.cardData.name, attack.name)) {
       const ctxInfo: EffectContext = { G, playerIndex: G.currentPlayer as 0 | 1, sourceCardId: attacker.id };
       const step = startAttackEffect(attacker.cardData.name, attack.name, ctxInfo);
@@ -1003,6 +1007,9 @@ export const moves = Object.fromEntries(
     (arg: { G: PtcgGameState; ctx: any }, ...rest: unknown[]) => {
       const result = (fn as (...a: unknown[]) => unknown)(arg, ...rest);
       if (arg.G.winner === null && !arg.G.pendingChoice) {
+        // 回力鏢能量/燃料【火】能量 come back 「在招式的傷害與效果的影響之後」 — this is that
+        // moment, whether the attack finished synchronously or through a pendingChoice.
+        processAttackEnergyReturns(arg.G);
         // Order matters: clear Conditions off the Bench first, then check for Knock Outs, so a
         // Pokémon that was just switched out isn't KO'd on Poison damage it should no longer have.
         clearBenchStatusConditions(arg.G);

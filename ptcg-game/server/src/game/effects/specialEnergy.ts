@@ -190,6 +190,65 @@ function hasSpecialEnergyName(energy: { cardData?: GameCard['cardData'] }, name:
     && String(energy.cardData.name).replace(/^[‌​\s]+/, '').trim() === name;
 }
 
+/**
+ * 回力鏢能量: 「若因附有這張卡的寶可夢使用的招式的效果使這張卡被丟棄，則在招式的傷害與效果的影響
+ * 之後，重新附於原本的寶可夢身上。」
+ * 燃料【火】能量: same trigger on a 【火】 holder, but 「這張卡放回手牌」 instead.
+ *
+ * Called by moves.attack before the attack resolves: records which of the two cards the attacker
+ * carries going in. Between this and processAttackEnergyReturns, the only thing that can move a
+ * recorded card into the discard pile — besides the attack's own effect — is the holder being
+ * Knocked Out (whole stack discarded), which the process step excludes by requiring the holder to
+ * still be in play, or an opposing 甲殼刺-style ability, which attackResolution excludes by
+ * dropping the id from this record when it fires.
+ */
+export function watchAttackEnergyReturns(G: PtcgGameState, attackerOwner: 0 | 1, attacker: GameCard): void {
+  const entries: NonNullable<PtcgGameState['attackEnergyReturns']> = [];
+  for (const e of attacker.attachedEnergy) {
+    if (hasSpecialEnergyName(e, '回力鏢能量')) {
+      entries.push({ owner: attackerOwner, holderId: attacker.id, energyId: e.id, kind: 'reattach' });
+    } else if (hasSpecialEnergyName(e, '燃料【火】能量') && (attacker.cardData.types ?? []).includes('Fire')) {
+      entries.push({ owner: attackerOwner, holderId: attacker.id, energyId: e.id, kind: 'hand' });
+    }
+  }
+  G.attackEnergyReturns = entries.length > 0 ? entries : null;
+}
+
+/**
+ * The 「在招式的傷害與效果的影響之後」 half: runs from the central post-move wrapper at the first
+ * moment no pendingChoice is open after an attack, which is exactly when the attack's damage and
+ * effects have all landed. Requiring the holder to still be in play for BOTH cards is a deliberate
+ * simplification: it is what stops a Knock-Out's stack discard from being mistaken for an
+ * attack-effect discard, at the cost of the rare legal case where the effect discards the card
+ * first and a retaliation ability then KOs the holder in the same attack.
+ */
+export function processAttackEnergyReturns(G: PtcgGameState): void {
+  const entries = G.attackEnergyReturns;
+  G.attackEnergyReturns = null;
+  if (!entries) return;
+  for (const entry of entries) {
+    const p = G.players[entry.owner];
+    const holder = [p.active, ...p.bench].find(c => c?.id === entry.holderId);
+    if (!holder) continue;
+    const i = p.discardPile.findIndex(c => c.id === entry.energyId);
+    if (i === -1) continue; // the attack's effect never discarded it
+    const card = p.discardPile.splice(i, 1)[0];
+    if (entry.kind === 'hand') {
+      p.hand.push(card);
+    } else {
+      holder.attachedEnergy.push({ id: card.id, type: card.cardData.types?.[0] ?? 'Colorless', cardData: card.cardData });
+    }
+    // Same push shape as attackResolution's addLog — imported it would close an import cycle
+    // (attackResolution → passiveAbilities → this module).
+    G.turnLog.push({
+      player: entry.owner, turn: G.turn, action: 'special_energy_return', timestamp: Date.now(),
+      details: entry.kind === 'hand'
+        ? `${card.cardData.name} 回到了手牌`
+        : `${card.cardData.name} 重新附於 ${holder.cardData.name} 身上`,
+    });
+  }
+}
+
 const isBasicPsychicPokemon = (c: GameCard) =>
   c.cardData.supertype === 'Pokémon'
   && c.cardData.subtypes.includes('Basic')

@@ -72,6 +72,9 @@ async function main() {
     : filter
       ? presets.filter(d => expand(d).some((id: string) => cardData[id]?.name?.includes(filter)))
       : presets.slice(0, deckCount);
+  // Adjacent pairing needs two decks; a filter matching exactly one preset still deserves games,
+  // so mirror-match it against itself.
+  if (filter && pool.length === 1) pool.push(pool[0]);
   const findings: Finding[] = [];
   const byCulprit = new Map<string, number>();
   const nameOf = (instanceId: string) => cardData[instanceId.replace(/_\d+$/, '')]?.name ?? instanceId;

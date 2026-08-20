@@ -103,6 +103,12 @@ export interface PtcgGameState {
   pendingChoice: PendingChoice | null;
   /** Only one Stadium card may be in play at a time; playing a new one discards the old (to its owner's pile). */
   activeStadium: GameCard | null;
+  /** 回力鏢能量/燃料【火】能量: 「在招式的傷害與效果的影響之後」 they come back if the holder's own
+   * attack's effect discarded them. That moment has no single call site — an attack can finish
+   * synchronously or through a PendingChoice resolved moves later — so moves.attack records the
+   * attacker's copies here going in, and the central post-move wrapper consumes the record at the
+   * first moment no pendingChoice is open (see processAttackEnergyReturns). null between attacks. */
+  attackEnergyReturns: { owner: 0 | 1; holderId: string; energyId: string; kind: 'reattach' | 'hand' }[] | null;
 }
 
 export type GamePhase = PtcgGameState['phase'];

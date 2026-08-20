@@ -263,6 +263,12 @@ export function applyAttackOutcome(
   if (damage > 0 && shouldDiscardAttackerEnergy(G, defender) && attacker.attachedEnergy.length > 0) {
     const removed = attacker.attachedEnergy.splice(Math.floor(Math.random() * attacker.attachedEnergy.length), 1)[0];
     discardAttachedEnergy(G, attacker.owner, removed);
+    // This is an ability's discard, not 「招式的效果」 — 回力鏢/燃料【火】 must NOT come back from
+    // it, so drop the id from the attack's return record.
+    if (G.attackEnergyReturns) {
+      const kept = G.attackEnergyReturns.filter(r => r.energyId !== removed.id);
+      G.attackEnergyReturns = kept.length > 0 ? kept : null;
+    }
   }
   // 炸裂針: only fires if this hit is what KOs the holder.
   if (damage > 0) {

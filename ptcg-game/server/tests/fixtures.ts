@@ -151,6 +151,7 @@ export function makeState(overrides: Partial<PtcgGameState> = {}): PtcgGameState
     turnLog: [],
     pendingChoice: null,
     activeStadium: null,
+    attackEnergyReturns: null,
     ...overrides,
   };
 }

@@ -9,7 +9,7 @@ import { moves } from '../src/game/moves';
 import { processBetweenTurns } from '../src/game/statusConditions';
 import { makePlayer, makeState } from './fixtures';
 import { canPayEnergyCost, effectiveRetreatCost } from '../src/game/validation';
-import { BASIC_ENERGY, BASIC_MON, makeCard, makeGameCard } from './fixtures';
+import { BASIC_ENERGY, BASIC_MON, attack as mkAttack, makeCard, makeGameCard } from './fixtures';
 import type { EnergyType, Subtype } from '@ptcg/shared';
 
 const cards: any[] = JSON.parse(readFileSync(join(__dirname, '..', 'data', 'cards.json'), 'utf8')).data;
@@ -377,5 +377,74 @@ describe('感應【超】能量 attach-time deck search', () => {
     expect(G.pendingChoice).toBeNull();
     expect(G.players[0].bench.every(c => c === null)).toBe(true);
     expect(G.players[0].deck).toHaveLength(4);
+  });
+});
+
+describe('回力鏢能量 / 燃料【火】能量 return after their own attack discards them', () => {
+  const ctx0 = { currentPlayer: '0', turn: 3, events: { endTurn: () => {} } } as any;
+  const discardAllAttack = mkAttack('捨身撞擊', ['Colorless'], '100', '將這隻寶可夢身上附加的能量卡全部丟棄。');
+  const chooseTwoAttack = mkAttack('雙棄擊', ['Colorless'], '80', '選擇2個這隻寶可夢身上附加的能量，將其丟棄。');
+  const attackerWith = (types: string[], energies: any[], atk = discardAllAttack) => {
+    const mon = makeGameCard(makeCard({ name: '攻擊者', hp: '120', types: types as any, subtypes: ['Basic'] as Subtype[], attacks: [atk] }), 0);
+    mon.attachedEnergy = energies;
+    return mon;
+  };
+  const battle = (active: any) => makeState({
+    turn: 3, currentPlayer: 0, phase: 'main',
+    players: [
+      makePlayer({ active }),
+      makePlayer({ active: makeGameCard(makeCard({ name: '防守者', hp: '300', subtypes: ['Basic'] as Subtype[] }), 1) }),
+    ],
+  });
+
+  it('回力鏢能量 reattaches to its Pokémon; the other discarded energy stays discarded', () => {
+    const active = attackerWith(['Colorless'], [attach('回力鏢能量'), basicEnergy('Colorless')]);
+    const G = battle(active);
+    moves.attack({ G, ctx: ctx0 }, 0);
+    expect(active.attachedEnergy.map(e => norm(e.cardData!.name))).toEqual(['回力鏢能量']);
+    expect(G.players[0].discardPile.map(c => norm(c.cardData.name))).toEqual(['基本Colorless能量']);
+    expect(G.attackEnergyReturns).toBeNull();
+  });
+
+  it('燃料【火】能量 goes back to hand off a 【火】 Pokémon', () => {
+    const active = attackerWith(['Fire'], [attach('燃料【火】能量')]);
+    const G = battle(active);
+    moves.attack({ G, ctx: ctx0 }, 0);
+    expect(active.attachedEnergy).toHaveLength(0);
+    expect(G.players[0].hand.map(c => norm(c.cardData.name))).toEqual(['燃料【火】能量']);
+    expect(G.players[0].discardPile).toHaveLength(0);
+  });
+
+  it('燃料【火】能量 stays discarded off a non-【火】 Pokémon', () => {
+    const active = attackerWith(['Water'], [attach('燃料【火】能量')]);
+    const G = battle(active);
+    moves.attack({ G, ctx: ctx0 }, 0);
+    expect(G.players[0].hand).toHaveLength(0);
+    expect(G.players[0].discardPile.map(c => norm(c.cardData.name))).toEqual(['燃料【火】能量']);
+  });
+
+  it('returns after the attack\'s own discard CHOICE resolves, not before', () => {
+    const boomerang = attach('回力鏢能量');
+    const active = attackerWith(['Colorless'], [boomerang, basicEnergy('Colorless'), basicEnergy('Fire')], chooseTwoAttack);
+    const G = battle(active);
+    moves.attack({ G, ctx: ctx0 }, 0);
+    expect(G.pendingChoice?.effectKey).toBe('attack_self_energy_discard');
+    // Mid-choice, nothing has come back yet.
+    expect(G.attackEnergyReturns).not.toBeNull();
+    moves.resolveChoice({ G, ctx: ctx0 }, [boomerang.id, 'b-Colorless']);
+    expect(active.attachedEnergy.map(e => norm(e.cardData!.name))).toEqual(['基本Fire能量', '回力鏢能量']);
+    expect(G.players[0].discardPile.map(c => norm(c.cardData.name))).toEqual(['基本Colorless能量']);
+  });
+
+  it('a Knock-Out\'s stack discard is not mistaken for an attack-effect discard', () => {
+    // Simulate the post-KO state directly: the record is set, the energy sits in the discard
+    // pile, but its holder has left play — nothing may come back.
+    const G = battle(attackerWith(['Colorless'], []));
+    const boomerangCard = makeGameCard(special('回力鏢能量'), 0);
+    G.players[0].discardPile.push(boomerangCard);
+    G.attackEnergyReturns = [{ owner: 0, holderId: 'gone-mon', energyId: boomerangCard.id, kind: 'reattach' }];
+    moves.endTurn({ G, ctx: ctx0 });
+    expect(G.players[0].discardPile.map(c => norm(c.cardData.name))).toEqual(['回力鏢能量']);
+    expect(G.attackEnergyReturns).toBeNull();
   });
 });

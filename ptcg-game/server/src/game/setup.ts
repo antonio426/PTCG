@@ -248,5 +248,6 @@ export function setup(setupData?: PtcgSetupData): PtcgGameState {
     turnLog,
     pendingChoice: null,
     activeStadium: null,
+    attackEnergyReturns: null,
   };
 }
