@@ -3,7 +3,7 @@ import { PtcgGameState, GamePhase, PendingChoice } from './GameState';
 import { hasAbilityEffect, canUseAbility } from './effects/abilities';
 import { canPlayTrainer, hasTrainerEffect } from './effects/trainers';
 import { getRetreatCostReduction, getColorlessCostReduction } from './effects/tools';
-import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostOverride, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatCostReduction, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, isAceSpecPlayBlocked, areAbilitiesNegated, isAttackLockedByTimedEffect, isItemAndToolPlayBlocked, isItemLockedByTimedEffect, isItemPlayBlocked, isNamedAttackLockedByTimedEffect, isStadiumPlayBlocked, isRetreatLockedByTimedEffect } from './effects/passiveAbilities';
+import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostOverride, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatCostReduction, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, isAceSpecPlayBlocked, areAbilitiesNegated, isAttackLockedByTimedEffect, isItemAndToolPlayBlocked, isItemLockedByTimedEffect, isItemPlayBlocked, isNamedAttackLockedByTimedEffect, isStadiumPlayBlocked, isRetreatLockedByTimedEffect, isProtectedFromOpponentTrainer } from './effects/passiveAbilities';
 import { normalizeAbilityName, normalizeCardName } from './effects/types';
 import { hasEvolvesFrom, evolvesFromMatches, inferEvolvesFromSpecies } from './evolutionChains';
 import { isFossilCard } from './fossils';
@@ -226,7 +226,11 @@ export function canRetreat(G: PtcgGameState, playerIndex: number): boolean {
   if (player.active.cardData.isFossil) return false;
   if (isRetreatLockedByTimedEffect(G, player.active)) return false;
   // 霍米加的演奏: Poisoned Pokémon (including newly-poisoned ones) can't retreat this turn.
-  if (player.active.statusConditions.includes('Poisoned') && player.poisonedCantRetreatUntilTurn === G.turn) return false;
+  // The lock is a Supporter's continuous effect, so a Pokémon shielded from opponent Supporter
+  // effects (融合為雪/緊張感/廣域堡壘) retreats through it — checked here at consult time, since
+  // the flag itself is player-wide and protection can appear/disappear after the play.
+  if (player.active.statusConditions.includes('Poisoned') && player.poisonedCantRetreatUntilTurn === G.turn
+    && !isProtectedFromOpponentTrainer(G, player.active, 'Supporter')) return false;
 
   const retreatCost = effectiveRetreatCost(G, player.active);
   const attachedEnergyCount = player.active.attachedEnergy.length;

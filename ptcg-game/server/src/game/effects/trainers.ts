@@ -2,7 +2,7 @@ import { GameCard } from '@ptcg/shared';
 import { EffectContext, EffectHandler, EffectStep, allPokemon, normalizeCardName, opponent, player, shuffleDeck } from './types';
 import { applyStatusCondition, discardAttachedEnergy, discardFromHand, drawCards, drawUpTo, flipCoin, hasNoRuleBox, healDamage, moveDiscardCardToHand, asAttachedEnergy } from './primitives';
 import { clearStatusConditionsOnLeaveActive } from '../statusConditions';
-import { isEnergyDiscardProtected } from './passiveAbilities';
+import { isEnergyDiscardProtected, isProtectedFromOpponentTrainer, isReturnToHandBlocked } from './passiveAbilities';
 import { handleKo, stackAsPreEvolution, flushPreEvolutionsTo, flushPreEvolutionsToDiscard, resetCardForReentry } from '../damage';
 import { hasEvolvesFrom, evolvesFromMatches, inferEvolvesFromSpecies, chainTracesBackTo } from '../evolutionChains';
 
@@ -77,36 +77,45 @@ const ultraBall: EffectHandler = {
   },
 };
 
-/** 老大的指令 Boss's Orders: force-switch one of the opponent's benched Pokémon to active. */
-const bosssOrders: EffectHandler = {
-  canPlay(ctx) { return opponent(ctx.G, ctx.playerIndex).bench.some(c => c !== null); },
-  start(ctx) {
-    const opp = opponent(ctx.G, ctx.playerIndex);
-    const benched = opp.bench.filter((c): c is GameCard => c !== null);
-    if (benched.length === 0) return 'done';
-    return {
-      prompt: "老大的指令：選 1 隻對手備戰寶可夢換上場",
-      choiceType: 'select_pokemon',
-      count: 1,
-      options: benched.map(c => ({ id: c.id, label: c.cardData.name })),
-      context: {},
-    };
-  },
-  resume(ctx, _context, selection) {
-    const opp = opponent(ctx.G, ctx.playerIndex);
-    const idx = opp.bench.findIndex(c => c?.id === selection[0]);
-    if (idx >= 0 && opp.active) {
-      const chosen = opp.bench[idx]!;
-      clearStatusConditionsOnLeaveActive(opp.active);
-      opp.bench[idx] = opp.active;
-      opp.active = chosen;
-    } else if (idx >= 0 && !opp.active) {
-      opp.active = opp.bench[idx];
-      opp.bench[idx] = null;
-    }
-    return 'done';
-  },
-};
+/** 老大的指令 Boss's Orders: force-switch one of the opponent's benched Pokémon to active.
+ * A factory rather than a single handler because 寶可夢捕捉器/頂尖捕捉器 reuse the body as ITEM
+ * cards, and 融合為雪/緊張感/廣域堡壘 protection depends on which trainer class the gust came
+ * from — a benched 超甲狂犀-covered Pokémon is safe from the Supporter but not the Items. */
+function gustHandler(kind: 'Item' | 'Supporter'): EffectHandler {
+  const eligible = (ctx: EffectContext) => opponent(ctx.G, ctx.playerIndex).bench
+    .filter((c): c is GameCard => c !== null && !isProtectedFromOpponentTrainer(ctx.G, c, kind));
+  return {
+    canPlay(ctx) { return eligible(ctx).length > 0; },
+    start(ctx) {
+      const benched = eligible(ctx);
+      if (benched.length === 0) return 'done';
+      return {
+        prompt: "老大的指令：選 1 隻對手備戰寶可夢換上場",
+        choiceType: 'select_pokemon',
+        count: 1,
+        options: benched.map(c => ({ id: c.id, label: c.cardData.name })),
+        context: {},
+      };
+    },
+    resume(ctx, _context, selection) {
+      const opp = opponent(ctx.G, ctx.playerIndex);
+      const idx = opp.bench.findIndex(c => c?.id === selection[0]);
+      if (idx >= 0 && isProtectedFromOpponentTrainer(ctx.G, opp.bench[idx]!, kind)) return 'done';
+      if (idx >= 0 && opp.active) {
+        const chosen = opp.bench[idx]!;
+        clearStatusConditionsOnLeaveActive(opp.active);
+        opp.bench[idx] = opp.active;
+        opp.active = chosen;
+      } else if (idx >= 0 && !opp.active) {
+        opp.active = opp.bench[idx];
+        opp.bench[idx] = null;
+      }
+      return 'done';
+    },
+  };
+}
+const bosssOrders = gustHandler('Supporter');
+const gustByItem = gustHandler('Item');
 
 /** 神奇糖果 Rare Candy: evolve a Basic Pokémon in play directly into a Stage 2 from hand. */
 const rareCandy: EffectHandler = {
@@ -465,13 +474,13 @@ const energyDelivery: EffectHandler = {
 
 /** 寶可夢捕捉器 Pokémon Catcher: flip a coin; if heads, Boss's-Orders-style force switch. */
 const pokemonCatcher: EffectHandler = {
-  // even heads does nothing vs an empty bench
-  canPlay(ctx) { return opponent(ctx.G, ctx.playerIndex).bench.some(c => c !== null); },
+  // even heads does nothing vs an empty (or fully trainer-protected) bench
+  canPlay(ctx) { return gustByItem.canPlay!(ctx); },
   start(ctx) {
     if (!flipCoin()) return 'done';
-    return bosssOrders.start(ctx);
+    return gustByItem.start(ctx);
   },
-  resume(ctx, context, selection) { return bosssOrders.resume(ctx, context, selection); },
+  resume(ctx, context, selection) { return gustByItem.resume(ctx, context, selection); },
 };
 
 /** 寶可裝置3.0 Poké Gear 3.0: look at top 7, take 1 Supporter card to hand. */
@@ -549,33 +558,39 @@ const energyRecyclingSystem: EffectHandler = {
 /** "Choose 1 Energy attached to an opponent's Pokémon and discard it" — the shared body behind
  * 粉碎之錘 (coin-gated) and 鏽蝕組手下 (not). Kept separate from the coin flip so a card whose
  * printed text has no flip can't inherit one. */
-const discardOneOpponentEnergy: EffectHandler = {
-  start(ctx) {
-    // 崗哨: benched Pokémon protected by this ability can't have their Energy targeted.
-    const targets = allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1).filter(c => c.attachedEnergy.length > 0 && !isEnergyDiscardProtected(ctx.G, c));
-    if (targets.length === 0) return 'done';
-    const options: { id: string; label: string }[] = [];
-    for (const c of targets) for (const e of c.attachedEnergy) options.push({ id: e.id, label: `${c.cardData.name} 的 ${e.type} 能量` });
-    return { prompt: '選擇要丟棄對手身上的哪個能量', choiceType: 'select_from_list', count: 1, options, context: {} };
-  },
-  resume(ctx, _context, selection) {
-    const opp = opponent(ctx.G, ctx.playerIndex);
-    for (const c of [opp.active, ...opp.bench]) {
-      if (!c) continue;
-      const i = c.attachedEnergy.findIndex(e => e.id === selection[0]);
-      if (i >= 0) { discardAttachedEnergy(ctx.G, c.owner, c.attachedEnergy.splice(i, 1)[0]); break; }
-    }
-    return 'done';
-  },
-};
+function discardOneOpponentEnergyHandler(kind: 'Item' | 'Supporter'): EffectHandler {
+  return {
+    start(ctx) {
+      // 崗哨: benched Pokémon protected by this ability can't have their Energy targeted;
+      // 融合為雪/緊張感/廣域堡壘 shield theirs from the whole trainer class.
+      const targets = allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1)
+        .filter(c => c.attachedEnergy.length > 0 && !isEnergyDiscardProtected(ctx.G, c) && !isProtectedFromOpponentTrainer(ctx.G, c, kind));
+      if (targets.length === 0) return 'done';
+      const options: { id: string; label: string }[] = [];
+      for (const c of targets) for (const e of c.attachedEnergy) options.push({ id: e.id, label: `${c.cardData.name} 的 ${e.type} 能量` });
+      return { prompt: '選擇要丟棄對手身上的哪個能量', choiceType: 'select_from_list', count: 1, options, context: {} };
+    },
+    resume(ctx, _context, selection) {
+      const opp = opponent(ctx.G, ctx.playerIndex);
+      for (const c of [opp.active, ...opp.bench]) {
+        if (!c || isProtectedFromOpponentTrainer(ctx.G, c, kind)) continue;
+        const i = c.attachedEnergy.findIndex(e => e.id === selection[0]);
+        if (i >= 0) { discardAttachedEnergy(ctx.G, c.owner, c.attachedEnergy.splice(i, 1)[0]); break; }
+      }
+      return 'done';
+    },
+  };
+}
+const discardOneOpponentEnergyByItem = discardOneOpponentEnergyHandler('Item');
+const discardOneOpponentEnergyBySupporter = discardOneOpponentEnergyHandler('Supporter');
 
 /** 粉碎之錘 Crushing Hammer: flip a coin; if heads, discard 1 energy attached to an opponent's Pokémon. */
 const crushingHammer: EffectHandler = {
   start(ctx) {
     if (!flipCoin()) return 'done';
-    return discardOneOpponentEnergy.start(ctx);
+    return discardOneOpponentEnergyByItem.start(ctx);
   },
-  resume: discardOneOpponentEnergy.resume,
+  resume: discardOneOpponentEnergyByItem.resume,
 };
 
 /** An attached Energy that is a Special Energy card rather than a basic one. AttachedEnergy keeps
@@ -589,10 +604,10 @@ const isSpecialEnergy = (e: { cardData?: { subtypes?: string[] } }) =>
 const modifiedHammer: EffectHandler = {
   canPlay(ctx) {
     return allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1)
-      .some(c => c.attachedEnergy.some(isSpecialEnergy) && !isEnergyDiscardProtected(ctx.G, c));
+      .some(c => c.attachedEnergy.some(isSpecialEnergy) && !isEnergyDiscardProtected(ctx.G, c) && !isProtectedFromOpponentTrainer(ctx.G, c, 'Item'));
   },
   start(ctx) {
-    const targets = allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1).filter(c => !isEnergyDiscardProtected(ctx.G, c));
+    const targets = allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1).filter(c => !isEnergyDiscardProtected(ctx.G, c) && !isProtectedFromOpponentTrainer(ctx.G, c, 'Item'));
     const options: { id: string; label: string }[] = [];
     // 特殊能量 only — this used to offer every attached Energy, so it could discard basic Energy
     // the printed text never allowed it to touch.
@@ -602,7 +617,7 @@ const modifiedHammer: EffectHandler = {
     if (options.length === 0) return 'done';
     return { prompt: '改造之錘：選擇要丟棄對手身上的哪張特殊能量', choiceType: 'select_from_list', count: 1, options, context: {} };
   },
-  resume: discardOneOpponentEnergy.resume,
+  resume: discardOneOpponentEnergyByItem.resume,
 };
 
 /** 水蓮的照顧 Erika's Hospitality: from discard, up to 3 total of (non-rule-box Pokémon + Basic Energy) to hand. */
@@ -728,14 +743,14 @@ const dorasena: EffectHandler = {
 /** 頂尖捕捉器 Top Catcher: force-switch an opponent's benched Pokémon to active, then switch your own. */
 const topCatcher: EffectHandler = {
   // full no-op only when neither half can act
-  canPlay(ctx) { return bosssOrders.canPlay!(ctx) || pokemonExchange.canPlay!(ctx); },
+  canPlay(ctx) { return gustByItem.canPlay!(ctx) || pokemonExchange.canPlay!(ctx); },
   start(ctx) {
-    const step = bosssOrders.start(ctx);
+    const step = gustByItem.start(ctx);
     return step === 'done' ? pokemonExchange.start(ctx) : { ...step, context: { ...step.context, step: 'opponent' } };
   },
   resume(ctx, context, selection) {
     if (context.step === 'opponent') {
-      bosssOrders.resume(ctx, context, selection);
+      gustByItem.resume(ctx, context, selection);
       return pokemonExchange.start(ctx);
     }
     return pokemonExchange.resume(ctx, context, selection);
@@ -893,6 +908,10 @@ const fullHealMegaReturnEnergy: EffectHandler = {
     const target = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === selection[0]);
     if (target) {
       target.damage = 0;
+      // 平穩境地: attached cards of this side's Pokémon can't return to hand — the heal is an
+      // effect on the Pokémon and still lands, but the Energy stays attached ("do as much as
+      // you can"; the card has no replacement destination for it).
+      if (isReturnToHandBlocked(ctx.G, ctx.playerIndex)) return 'done';
       p.hand.push(...target.attachedEnergy.map(e => ({
         id: e.id,
         cardData: { id: e.type, name: `基本${e.type}能量`, supertype: 'Energy' as const, subtypes: ['Basic Energy' as const], types: [e.type as any], set: { id: '', name: '', series: '', printedTotal: 0, total: 0, releaseDate: '' }, number: '', legalities: {}, images: { small: '', large: '' } },
@@ -964,14 +983,18 @@ const bugCatchingSet: EffectHandler = {
 
 /** 道具拆除器: discard up to 2 Pokémon Tool cards attached to EITHER side's Pokémon. */
 const toolWrecker: EffectHandler = {
-  canPlay(ctx) { return [...allPokemon(ctx.G, 0), ...allPokemon(ctx.G, 1)].some(c => !!c.attachedTool); },
+  // Own-side Pokémon are never "protected" here — 融合為雪/緊張感 only shield against the
+  // OPPONENT's trainer plays, and for the player's own side this is their own Item.
+  canPlay(ctx) { return [...allPokemon(ctx.G, 0), ...allPokemon(ctx.G, 1)].some(c => !!c.attachedTool && (c.owner === ctx.playerIndex || !isProtectedFromOpponentTrainer(ctx.G, c, 'Item'))); },
   start(ctx) {
-    const targets = [...allPokemon(ctx.G, 0), ...allPokemon(ctx.G, 1)].filter(c => c.attachedTool);
+    const targets = [...allPokemon(ctx.G, 0), ...allPokemon(ctx.G, 1)]
+      .filter(c => c.attachedTool && (c.owner === ctx.playerIndex || !isProtectedFromOpponentTrainer(ctx.G, c, 'Item')));
     if (targets.length === 0) return 'done';
     return { prompt: '道具拆除器：選最多 2 張雙方場上的寶可夢道具卡丟棄', choiceType: 'select_from_list', maxCount: Math.min(2, targets.length), options: targets.map(c => ({ id: c.attachedTool!.id, label: `${c.cardData.name} 的 ${c.attachedTool!.cardData.name}` })), context: {} };
   },
   resume(ctx, _context, selection) {
     for (const c of [...allPokemon(ctx.G, 0), ...allPokemon(ctx.G, 1)]) {
+      if (c.owner !== ctx.playerIndex && isProtectedFromOpponentTrainer(ctx.G, c, 'Item')) continue;
       if (c.attachedTool && selection.includes(c.attachedTool.id)) {
         const ownerIdx = c.owner;
         player(ctx.G, ownerIdx).discardPile.push(c.attachedTool);
@@ -1574,7 +1597,8 @@ const highTempBurner: EffectHandler = {
       const i = p.hand.findIndex(c => c.id === selection[0]);
       if (i >= 0) p.discardPile.push(p.hand.splice(i, 1)[0]);
       const opp = opponent(ctx.G, ctx.playerIndex);
-      const oppTargets = allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1);
+      const oppTargets = allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1)
+        .filter(c => !isProtectedFromOpponentTrainer(ctx.G, c, 'Item'));
       const options: { id: string; label: string }[] = [];
       for (const c of oppTargets) {
         if (c.attachedTool) options.push({ id: c.attachedTool.id, label: `${c.cardData.name} 的 ${c.attachedTool.cardData.name}` });
@@ -1591,6 +1615,7 @@ const highTempBurner: EffectHandler = {
       return 'done';
     }
     for (const c of allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1)) {
+      if (isProtectedFromOpponentTrainer(ctx.G, c, 'Item')) continue;
       if (c.attachedTool?.id === targetId) {
         player(ctx.G, c.owner).discardPile.push(c.attachedTool);
         c.attachedTool = null;
@@ -1851,7 +1876,7 @@ const masterBall: EffectHandler = {
 const dangerRay: EffectHandler = {
   start(ctx) {
     const opp = opponent(ctx.G, ctx.playerIndex);
-    if (opp.active) {
+    if (opp.active && !isProtectedFromOpponentTrainer(ctx.G, opp.active, 'Item')) {
       opp.active.statusConditions = opp.active.statusConditions.filter(c => c !== 'Burned' && c !== 'Confused');
       opp.active.statusConditions.push('Burned', 'Confused');
     }
@@ -1956,7 +1981,8 @@ const handTrimmer: EffectHandler = {
 const lucasShowcase: EffectHandler = {
   start(ctx) {
     const opp = opponent(ctx.G, ctx.playerIndex);
-    const targets = opp.bench.filter((c): c is GameCard => c !== null && c.cardData.subtypes.includes('Basic'));
+    const targets = opp.bench.filter((c): c is GameCard => c !== null && c.cardData.subtypes.includes('Basic')
+      && !isProtectedFromOpponentTrainer(ctx.G, c, 'Supporter'));
     if (targets.length === 0) return 'done';
     return { prompt: '琉琪亞的展示：選擇對手備戰區的 1 隻基礎寶可夢換上場', choiceType: 'select_pokemon', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: {} };
   },
@@ -2052,7 +2078,7 @@ const rocketScareBomb: EffectHandler = {
   start(ctx) {
     if (flipCoin()) {
       const opp = opponent(ctx.G, ctx.playerIndex);
-      const targets = [opp.active, ...opp.bench].filter((c): c is GameCard => c !== null);
+      const targets = [opp.active, ...opp.bench].filter((c): c is GameCard => c !== null && !isProtectedFromOpponentTrainer(ctx.G, c, 'Item'));
       if (targets.length === 0) return 'done';
       return { prompt: '火箭隊的驚嚇炸彈：擲硬幣正面，選擇對手 1 隻寶可夢放置 2 個傷害指示物', choiceType: 'select_pokemon', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: { side: 'opponent' } };
     }
@@ -2139,7 +2165,11 @@ const tim: EffectHandler = {
 
 /** 寶可夢旋風回收機: return 1 own field Pokémon (and its attached cards) to hand. */
 const pokemonCyclone: EffectHandler = {
+  // 平穩境地: while the opponent's 美納斯 is in play, this side's Pokémon can't return to hand
+  // at all, so the whole card is a guaranteed no-op — gate it rather than discard it for nothing.
+  canPlay(ctx) { return !isReturnToHandBlocked(ctx.G, ctx.playerIndex) && allPokemon(ctx.G, ctx.playerIndex).length > 0; },
   start(ctx) {
+    if (isReturnToHandBlocked(ctx.G, ctx.playerIndex)) return 'done';
     const targets = allPokemon(ctx.G, ctx.playerIndex);
     if (targets.length === 0) return 'done';
     return { prompt: '寶可夢旋風回收機：選擇要收回手牌的寶可夢', choiceType: 'select_pokemon', count: 1, options: targets.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
@@ -2201,7 +2231,8 @@ const deductionSet: EffectHandler = {
 const scaryBrother: EffectHandler = {
   start(ctx) {
     const opp = opponent(ctx.G, ctx.playerIndex);
-    const targets = [opp.active, ...opp.bench].filter((c): c is GameCard => c !== null && (!!c.attachedTool || c.attachedEnergy.length > 0));
+    const targets = [opp.active, ...opp.bench].filter((c): c is GameCard => c !== null && (!!c.attachedTool || c.attachedEnergy.length > 0)
+      && !isProtectedFromOpponentTrainer(ctx.G, c, 'Supporter'));
     if (targets.length === 0) return 'done';
     return { prompt: '可怕的哥哥：選擇對手 1 隻寶可夢，丟棄其道具與 1 張能量', choiceType: 'select_pokemon', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: {} };
   },
@@ -2493,7 +2524,7 @@ const megatonHairDryer: EffectHandler = {
   start(ctx) {
     const opp = opponent(ctx.G, ctx.playerIndex);
     for (const c of [opp.active, ...opp.bench]) {
-      if (!c) continue;
+      if (!c || isProtectedFromOpponentTrainer(ctx.G, c, 'Item')) continue;
       if (c.attachedTool) { opp.discardPile.push(c.attachedTool); c.attachedTool = null; }
       // 特殊能量 only, same defect 改造之錘 had — basic Energy must survive this.
       for (const energy of c.attachedEnergy.filter(isSpecialEnergy)) {
@@ -2653,6 +2684,8 @@ const darkBell: EffectHandler = {
     for (const idx of [0, 1] as const) {
       const active = ctx.G.players[idx].active;
       if (!active || (active.cardData.types || []).includes('Darkness')) continue;
+      // The player's own Active isn't shielded from their own Item — only the opponent's is.
+      if (idx !== ctx.playerIndex && isProtectedFromOpponentTrainer(ctx.G, active, 'Item')) continue;
       applyStatusCondition(ctx.G, active, 'Confused');
     }
     return 'done';
@@ -2664,8 +2697,8 @@ const darkBell: EffectHandler = {
 const rustCrewGoon: EffectHandler = {
   // Deliberately NOT crushingHammer: 鏽蝕組手下's printed text has no coin flip, but it used to
   // borrow 粉碎之錘's start() wholesale and inherited one, silently failing half the time.
-  start: discardOneOpponentEnergy.start,
-  resume: discardOneOpponentEnergy.resume,
+  start: discardOneOpponentEnergyBySupporter.start,
+  resume: discardOneOpponentEnergyBySupporter.resume,
 };
 
 /** 瑪琪艾兒: reveal the opponent's hand, draw a card for each Pokémon card found in it. */
@@ -2781,7 +2814,7 @@ const awakeningDrum: EffectHandler = {
 const bugSpray: EffectHandler = {
   start(ctx) {
     const opp = opponent(ctx.G, ctx.playerIndex);
-    const idx = opp.bench.findIndex(c => c !== null);
+    const idx = opp.bench.findIndex(c => c !== null && !isProtectedFromOpponentTrainer(ctx.G, c, 'Item'));
     if (idx === -1 || !opp.active) return 'done';
     const chosen = opp.bench[idx]!;
     clearStatusConditionsOnLeaveActive(opp.active);

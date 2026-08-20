@@ -5,6 +5,7 @@ import { getLegalMoves } from '../src/game/validation';
 import { effectiveMaxHp } from '../src/game/damage';
 import {
   areAbilitiesNegated, isDamageBlocked, isImmuneToOpponentAttackEffects, isStadiumPlayBlocked,
+  isProtectedFromOpponentTrainer, isProtectedFromOpponentAbility, isReturnToHandBlocked,
 } from '../src/game/effects/passiveAbilities';
 import { BASIC_MON, attack as mkAttack, makeCard, makeGameCard, makePlayer, makeState } from './fixtures';
 
@@ -157,5 +158,165 @@ describe('爆大身軀 (大王銅象): Stadium plays blocked while it is the opp
   it('does not gate from the Bench', () => {
     const G = plainBoard(makeGameCard(BASIC_MON, 0), makeGameCard(BASIC_MON, 1), { theirBench: [makeGameCard(elephant.cardData, 1)] });
     expect(isStadiumPlayBlocked(G, 0)).toBe(false);
+  });
+});
+
+/* ---------- Batch B: trainer-effect immunity family + 光之翼 + 平穩境地 ---------- */
+
+const mkTrainer = (name: string, kind: 'Item' | 'Supporter') =>
+  makeGameCard(makeCard({ name, supertype: 'Trainer', subtypes: [kind] as Subtype[] }), 0);
+
+const battleCtx = { currentPlayer: '0', turn: 3, events: { endTurn: () => {} } };
+
+describe('融合為雪/緊張感/廣域堡壘: unaffected by opponent Item/Supporter effects', () => {
+  it('query: self-protection covers both kinds; 廣域堡壘 is Supporter-only, team-wide, Active-only', () => {
+    const tense = makeGameCard(withAbility('緊張感'), 1);
+    const teammate = makeGameCard(BASIC_MON, 1);
+    const fortress = makeGameCard(withAbility('廣域堡壘'), 1);
+    const G = plainBoard(makeGameCard(BASIC_MON, 0), fortress, { theirBench: [tense, teammate] });
+    expect(isProtectedFromOpponentTrainer(G, tense, 'Item')).toBe(true);
+    expect(isProtectedFromOpponentTrainer(G, tense, 'Supporter')).toBe(true);
+    // 廣域堡壘 Active covers the whole team — but only against Supporters.
+    expect(isProtectedFromOpponentTrainer(G, teammate, 'Supporter')).toBe(true);
+    expect(isProtectedFromOpponentTrainer(G, teammate, 'Item')).toBe(false);
+    // From the Bench it covers nothing.
+    const G2 = plainBoard(makeGameCard(BASIC_MON, 0), makeGameCard(BASIC_MON, 1), { theirBench: [makeGameCard(fortress.cardData, 1), teammate] });
+    expect(isProtectedFromOpponentTrainer(G2, teammate, 'Supporter')).toBe(false);
+  });
+
+  it('老大的指令 is not offered (and refunds) when every benched target is protected', () => {
+    const tense = makeGameCard(withAbility('緊張感'), 1);
+    const boss = mkTrainer('老大的指令', 'Supporter');
+    const G = plainBoard(makeGameCard(BASIC_MON, 0), makeGameCard(BASIC_MON, 1), { theirBench: [tense] });
+    G.players[0].hand = [boss];
+    expect(getLegalMoves(G, 0).some(m => m.type === 'play_trainer' && (m.payload as any)?.cardId === boss.id)).toBe(false);
+    moves.playTrainer({ G, ctx: battleCtx } as any, boss.id);
+    expect(G.players[0].hand.map(c => c.id)).toContain(boss.id);
+    expect(G.pendingChoice).toBeNull();
+  });
+
+  it('老大的指令 offers only unprotected benched Pokémon on a mixed bench', () => {
+    const tense = makeGameCard(withAbility('緊張感'), 1);
+    const plain = makeGameCard(BASIC_MON, 1);
+    const boss = mkTrainer('老大的指令', 'Supporter');
+    const G = plainBoard(makeGameCard(BASIC_MON, 0), makeGameCard(BASIC_MON, 1), { theirBench: [tense, plain] });
+    G.players[0].hand = [boss];
+    moves.playTrainer({ G, ctx: battleCtx } as any, boss.id);
+    expect(G.pendingChoice).not.toBeNull();
+    expect(G.pendingChoice!.options!.map(o => o.id)).toEqual([plain.id]);
+  });
+
+  it('危險光線 (Item) fizzles against a protected Active — no Burn, no Confusion', () => {
+    const whale = makeGameCard(withAbility('融合為雪'), 1);
+    const ray = mkTrainer('危險光線', 'Item');
+    const G = plainBoard(makeGameCard(BASIC_MON, 0), whale);
+    G.players[0].hand = [ray];
+    moves.playTrainer({ G, ctx: battleCtx } as any, ray.id);
+    expect(whale.statusConditions).toEqual([]);
+  });
+
+  it('改造之錘 (Item) is blocked by 緊張感 but sails past 廣域堡壘', () => {
+    const hammer = mkTrainer('改造之錘', 'Item');
+    // Only Special-Energy holder is the 緊張感 Pokémon → no legal target, gated.
+    const tense = makeGameCard(withAbility('緊張感'), 1, { attachedEnergy: [SPECIAL_ENERGY_ATTACHMENT] });
+    const G1 = plainBoard(makeGameCard(BASIC_MON, 0), tense);
+    G1.players[0].hand = [hammer];
+    expect(getLegalMoves(G1, 0).some(m => m.type === 'play_trainer' && (m.payload as any)?.cardId === hammer.id)).toBe(false);
+    // 廣域堡壘 Active only stops Supporters — the Item still gets a target.
+    const fortress = makeGameCard(withAbility('廣域堡壘'), 1);
+    const holder = makeGameCard(BASIC_MON, 1, { attachedEnergy: [{ ...SPECIAL_ENERGY_ATTACHMENT, id: 'se-2' }] });
+    const hammer2 = mkTrainer('改造之錘', 'Item');
+    const G2 = plainBoard(makeGameCard(BASIC_MON, 0), fortress, { theirBench: [holder] });
+    G2.players[0].hand = [hammer2];
+    expect(getLegalMoves(G2, 0).some(m => m.type === 'play_trainer' && (m.payload as any)?.cardId === hammer2.id)).toBe(true);
+  });
+
+  it('鏽蝕組手下 (Supporter) finds no target through 廣域堡壘 and discards nothing', () => {
+    const fortress = makeGameCard(withAbility('廣域堡壘'), 1);
+    const holder = makeGameCard(BASIC_MON, 1, { attachedEnergy: [{ ...SPECIAL_ENERGY_ATTACHMENT, id: 'se-3' }] });
+    const goon = mkTrainer('鏽蝕組手下', 'Supporter');
+    const G = plainBoard(makeGameCard(BASIC_MON, 0), fortress, { theirBench: [holder] });
+    G.players[0].hand = [goon];
+    moves.playTrainer({ G, ctx: battleCtx } as any, goon.id);
+    expect(G.pendingChoice).toBeNull();
+    expect(holder.attachedEnergy).toHaveLength(1);
+  });
+
+  it('霍米加的演奏 retreat lock: a Supporter-protected Poisoned Active retreats through it', () => {
+    const tense = makeGameCard(withAbility('緊張感'), 0, { statusConditions: ['Poisoned'] });
+    const plainMon = makeGameCard(BASIC_MON, 0, { statusConditions: ['Poisoned'] });
+    const G = plainBoard(tense, makeGameCard(BASIC_MON, 1), { myBench: [makeGameCard(BASIC_MON, 0)] });
+    G.players[0].poisonedCantRetreatUntilTurn = G.turn;
+    expect(getLegalMoves(G, 0).some(m => m.type === 'retreat')).toBe(true);
+    const G2 = plainBoard(plainMon, makeGameCard(BASIC_MON, 1), { myBench: [makeGameCard(BASIC_MON, 0)] });
+    G2.players[0].poisonedCantRetreatUntilTurn = G2.turn;
+    expect(getLegalMoves(G2, 0).some(m => m.type === 'retreat')).toBe(false);
+  });
+});
+
+describe('光之翼: unaffected by opponent Pokémon ability effects', () => {
+  it('query: only the holder is covered', () => {
+    const wings = makeGameCard(withAbility('光之翼'), 0);
+    const G = plainBoard(wings, makeGameCard(BASIC_MON, 1));
+    expect(isProtectedFromOpponentAbility(G, wings)).toBe(true);
+    expect(isProtectedFromOpponentAbility(G, G.players[1].active!)).toBe(false);
+  });
+
+  it('attacking into 甲殼刺/毒刺: a protected attacker keeps its Energy and stays clean', () => {
+    const hit = mkAttack('撞擊', ['Colorless'], '10');
+    const energy = { id: 'e-w1', type: 'Colorless', cardData: makeCard({ name: '基本無能量', supertype: 'Energy', subtypes: ['Basic Energy'] as Subtype[] }) };
+    const protectedAttacker = makeGameCard(withAbility('光之翼', { attacks: [hit] }), 0, { attachedEnergy: [energy] });
+    const spiky = makeGameCard(makeCard({
+      name: '刺刺防守者', hp: '200', subtypes: ['Basic'] as Subtype[],
+      abilities: [{ name: '甲殼刺', type: 'Ability', text: 'x' }, { name: '毒刺', type: 'Ability', text: 'x' }],
+    }), 1);
+    const G = plainBoard(protectedAttacker, spiky);
+    moves.attack({ G, ctx: battleCtx } as any, 0);
+    expect(spiky.damage).toBe(10);
+    expect(protectedAttacker.attachedEnergy).toHaveLength(1); // 甲殼刺 blocked
+    expect(protectedAttacker.statusConditions).toEqual([]);   // 毒刺 blocked
+    // Control: an unprotected attacker into the same defender loses the Energy and is Poisoned.
+    const plainAttacker = makeGameCard(makeCard({ name: '普通攻擊者', hp: '120', subtypes: ['Basic'] as Subtype[], attacks: [hit] }), 0, { attachedEnergy: [{ ...energy, id: 'e-w2' }] });
+    const G2 = plainBoard(plainAttacker, makeGameCard(spiky.cardData, 1));
+    moves.attack({ G: G2, ctx: battleCtx } as any, 0);
+    expect(plainAttacker.attachedEnergy).toHaveLength(0);
+    expect(plainAttacker.statusConditions).toContain('Poisoned');
+  });
+});
+
+describe('平穩境地: the opponent side cannot return in-play Pokémon/attachments to hand', () => {
+  it('query: blocks the holder side’s opponent, not the holder side itself', () => {
+    const milotic = makeGameCard(withAbility('平穩境地'), 1);
+    const G = plainBoard(makeGameCard(BASIC_MON, 0), makeGameCard(BASIC_MON, 1), { theirBench: [milotic] });
+    expect(isReturnToHandBlocked(G, 0)).toBe(true);  // player 0 faces the holder
+    expect(isReturnToHandBlocked(G, 1)).toBe(false); // the holder's own side is free
+  });
+
+  it('寶可夢旋風回收機 is gated off and refunds while the opponent has 平穩境地', () => {
+    const milotic = makeGameCard(withAbility('平穩境地'), 1);
+    const cyclone = mkTrainer('寶可夢旋風回收機', 'Item');
+    const G = plainBoard(makeGameCard(BASIC_MON, 0), makeGameCard(BASIC_MON, 1), { theirBench: [milotic] });
+    G.players[0].hand = [cyclone];
+    expect(getLegalMoves(G, 0).some(m => m.type === 'play_trainer' && (m.payload as any)?.cardId === cyclone.id)).toBe(false);
+    moves.playTrainer({ G, ctx: battleCtx } as any, cyclone.id);
+    expect(G.players[0].hand.map(c => c.id)).toContain(cyclone.id);
+  });
+
+  it('an attack self-bounce clause is pinned: damage lands, the attacker stays in play', () => {
+    const bounce = mkAttack('夾尾巴逃跑', ['Colorless'], '30', '將這隻寶可夢與附加的卡，全部放回手牌。');
+    const energy = { id: 'e-b1', type: 'Colorless', cardData: makeCard({ name: '基本無能量', supertype: 'Energy', subtypes: ['Basic Energy'] as Subtype[] }) };
+    const attacker = makeGameCard(makeCard({ name: '彈跳者', hp: '120', subtypes: ['Basic'] as Subtype[], attacks: [bounce] }), 0, { attachedEnergy: [energy] });
+    const milotic = makeGameCard(withAbility('平穩境地', { hp: '150' }), 1);
+    const G = plainBoard(attacker, milotic);
+    moves.attack({ G, ctx: battleCtx } as any, 0);
+    expect(milotic.damage).toBe(30);
+    expect(G.players[0].active?.id).toBe(attacker.id);
+    expect(attacker.attachedEnergy).toHaveLength(1);
+    // Control: with no 平穩境地 across the table, the same attack bounces to hand.
+    const attacker2 = makeGameCard(attacker.cardData, 0, { attachedEnergy: [{ ...energy, id: 'e-b2' }] });
+    const G2 = plainBoard(attacker2, makeGameCard(BASIC_MON, 1, {}));
+    moves.attack({ G: G2, ctx: battleCtx } as any, 0);
+    expect(G2.players[0].active).toBeNull();
+    expect(G2.players[0].hand.map(c => c.id)).toContain(attacker2.id);
   });
 });

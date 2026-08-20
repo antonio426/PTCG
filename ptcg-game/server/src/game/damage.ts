@@ -1,6 +1,6 @@
 import { Attack, DamageDetail, GameCard } from '@ptcg/shared';
 import { PtcgGameState } from './GameState';
-import { getOutgoingDamageReduction, getPassiveDamageBonus, getPassiveDamageReduction, getPassiveMaxHpBonus, getPrizeReduction, getWeaknessTypeOverride, hasPassiveAbilityNamed, isDamageBlocked, isWeaknessRemovedByTimedEffect, rollBonusPrizeOnActiveKo, shouldExilePrizes } from './effects/passiveAbilities';
+import { getOutgoingDamageReduction, getPassiveDamageBonus, getPassiveDamageReduction, getPassiveMaxHpBonus, getPrizeReduction, getWeaknessTypeOverride, hasPassiveAbilityNamed, isDamageBlocked, isWeaknessRemovedByTimedEffect, rollBonusPrizeOnActiveKo, shouldExilePrizes, isProtectedFromOpponentAbility } from './effects/passiveAbilities';
 import { getToolDamageBonus, getToolHpBonus } from './effects/tools';
 import { parseBaseNumber } from './effects/genericAttacks';
 
@@ -187,7 +187,9 @@ export function calculateDamageBreakdown(G: PtcgGameState, attackerIdx: 0 | 1, a
   // 的寶可夢使用招式的傷害「-N」點" — printed on the DEFENDER at the time, so it reduces THEIR
   // outgoing damage once it becomes their turn to attack).
   baseDamage = Math.max(0, baseDamage - getOutgoingDamageReduction(G, attacker));
-  const weaknessOverride = getWeaknessTypeOverride(G, (1 - attackerIdx) as 0 | 1, defender);
+  // 妖精領域-style added weakness is an opponent ABILITY's effect on the defender — 光之翼 ignores it.
+  const weaknessOverride = isProtectedFromOpponentAbility(G, defender)
+    ? undefined : getWeaknessTypeOverride(G, (1 - attackerIdx) as 0 | 1, defender);
   const weaknessRemoved = ignoreWeakness || isWeaknessRemovedByTimedEffect(G, defender);
   const afterWeakness = applyWeaknessResistance(baseDamage, attacker, defender, weaknessOverride, ignoreResistance, weaknessRemoved);
   const defenderIdx = (1 - attackerIdx) as 0 | 1;

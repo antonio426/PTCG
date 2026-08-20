@@ -265,6 +265,40 @@ export function isStadiumPlayBlocked(G: PtcgGameState, playerIndex: 0 | 1): bool
   return hasAbility(G, G.players[(1 - playerIndex) as 0 | 1].active, '爆大身軀');
 }
 
+/**
+ * 「對手從手牌使出物品卡或者支援者卡時，這隻寶可夢不會受到那個效果的影響」 — 融合為雪 (浩大鯨ex)
+ * and 緊張感 (斧牙龍) print this identical text; 廣域堡壘 (超甲狂犀) is the Supporter-only,
+ * team-wide variant gated on its holder being Active. `target` is a Pokémon on the side NOT
+ * playing the trainer. Scope: only effects done TO the Pokémon itself (chosen by a gust, its
+ * energy/Tool stripped, statused, counters placed on it). Hand/deck/prize disruption is done to
+ * the PLAYER, and for gusts the protection covers the chosen Pokémon being pulled in, not the
+ * Active being displaced (the 公主之幕/老大的指令 ruling shape).
+ */
+export function isProtectedFromOpponentTrainer(G: PtcgGameState, target: GameCard, kind: 'Item' | 'Supporter'): boolean {
+  if (hasAbility(G, target, '融合為雪') || hasAbility(G, target, '緊張感')) return true;
+  if (kind === 'Supporter') {
+    const active = G.players[ownerIndexOf(G, target)].active;
+    if (active && hasAbility(G, active, '廣域堡壘')) return true;
+  }
+  return false;
+}
+
+/** 光之翼 (超級皮可西ex): this Pokémon is unaffected by effects of the opponent's Pokémon
+ * ABILITIES — active-use effects targeting it (counters, status, energy strips, gusts) and
+ * ability-sourced retaliation when it attacks. Damage modifiers on the OTHER Pokémon's own
+ * attacks/defenses are effects on that Pokémon, not on this one, and stay live. */
+export function isProtectedFromOpponentAbility(G: PtcgGameState, target: GameCard): boolean {
+  return hasAbility(G, target, '光之翼');
+}
+
+/** 平穩境地 (美納斯): while the holder is in play, its OPPONENT's in-play Pokémon and the cards
+ * attached to them can't be returned to hand — from ANY source (the opponent's own scoop-ups,
+ * attack self-bounces, energy-to-hand clauses). Pass the owner of the Pokémon/cards that would
+ * move to hand. */
+export function isReturnToHandBlocked(G: PtcgGameState, ownerIdx: 0 | 1): boolean {
+  return teamOf(G, (1 - ownerIdx) as 0 | 1).some(c => hasAbility(G, c, '平穩境地'));
+}
+
 /** Rule-box Pokémon (ex/V/VMAX/VSTAR/GX/Mega/TAG TEAM) — local copy to avoid a cross-module import cycle. */
 function isRuleBoxPokemon(card: GameCard): boolean {
   const subs = card.cardData.subtypes || [];
@@ -721,4 +755,6 @@ export const PASSIVE_ABILITY_NAMES = new Set([
   '高密度盔甲', '棉花搬運', '不朽身軀', '尖刺盔甲', '垃圾洩氣', '甲殼刺', '鬥志戰吼', '複眼', '無限之影',
   '大將', '岩石宮殿', '大晴天', '森林秘道', '守護之鐘', '憨憨臉',
   '濕氣', '反等離子', 'ACE消弭', '藏青浪濤', '皇帝之勢',
+  '黏著束縛', '初始化', '暴龍根性', '全能硬殼', '純樸', '抵抗之幕', '爆大身軀',
+  '融合為雪', '緊張感', '廣域堡壘', '光之翼', '平穩境地',
 ]);

@@ -11,7 +11,7 @@
 import { Attack, DamageDetail, GameCard, TurnAction } from '@ptcg/shared';
 import { PtcgGameState, PtcgPlayerState } from './GameState';
 import { calculateDamageBreakdown, effectiveMaxHp, flushPreEvolutionsTo, flushPreEvolutionsToDiscard, handleKo, prizesForKo, resetCardForReentry, stackAsPreEvolution } from './damage';
-import { getBonusPrizesForAttackKo, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getScaledRetaliation, hasPassiveAbilityNamed, hasTeraBenchedImmunity, isImmuneToOpponentAttackEffects, shouldDiscardAttackerEnergy } from './effects/passiveAbilities';
+import { getBonusPrizesForAttackKo, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getScaledRetaliation, hasPassiveAbilityNamed, hasTeraBenchedImmunity, isImmuneToOpponentAttackEffects, shouldDiscardAttackerEnergy, isProtectedFromOpponentAbility, isReturnToHandBlocked } from './effects/passiveAbilities';
 import { benchDamageFromEffectsBlocked, isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
 import { specialEnergyRetaliation } from './effects/specialEnergy';
@@ -252,15 +252,19 @@ export function applyAttackOutcome(
   // regardless of whether the hit also knocked the holder out.
   // 扣殺能量: 2 counters back on the attacker whenever its holder takes attack damage.
   let retaliation = getToolRetaliationDamage(G, defender) + specialEnergyRetaliation(defender);
-  if (damage > 0 && hasPassiveAbilityNamed(G, defender, '反擊雞冠')) retaliation += 5;
-  if (damage > 0 && (hasPassiveAbilityNamed(G, defender, '自動用武') || hasPassiveAbilityNamed(G, defender, '反擊') || hasPassiveAbilityNamed(G, defender, '反擊針'))) retaliation += 3;
-  if (damage > 0) retaliation += getScaledRetaliation(G, defender);
-  retaliation += getGrudgeVortexRetaliation(G, defender);
+  // 光之翼: ability-sourced retaliation is an opponent ABILITY's effect on the attacker, so a
+  // protected attacker shrugs it off — Tool (龐克頭盔) and Special-Energy (扣殺能量) retaliation
+  // above are not ability effects and still land.
+  const attackerAbilityImmune = isProtectedFromOpponentAbility(G, attacker);
+  if (damage > 0 && !attackerAbilityImmune && hasPassiveAbilityNamed(G, defender, '反擊雞冠')) retaliation += 5;
+  if (damage > 0 && !attackerAbilityImmune && (hasPassiveAbilityNamed(G, defender, '自動用武') || hasPassiveAbilityNamed(G, defender, '反擊') || hasPassiveAbilityNamed(G, defender, '反擊針'))) retaliation += 3;
+  if (damage > 0 && !attackerAbilityImmune) retaliation += getScaledRetaliation(G, defender);
+  if (!attackerAbilityImmune) retaliation += getGrudgeVortexRetaliation(G, defender);
   if (retaliation > 0) {
     attacker.damage += retaliation * 10;
   }
   // 甲殼刺: being hit while Active discards 1 Energy attached to the attacker.
-  if (damage > 0 && shouldDiscardAttackerEnergy(G, defender) && attacker.attachedEnergy.length > 0) {
+  if (damage > 0 && !attackerAbilityImmune && shouldDiscardAttackerEnergy(G, defender) && attacker.attachedEnergy.length > 0) {
     const removed = attacker.attachedEnergy.splice(Math.floor(Math.random() * attacker.attachedEnergy.length), 1)[0];
     discardAttachedEnergy(G, attacker.owner, removed);
     // This is an ability's discard, not 「招式的效果」 — 回力鏢/燃料【火】 must NOT come back from
@@ -274,16 +278,16 @@ export function applyAttackOutcome(
   if (damage > 0) {
     const defenderHpBefore = effectiveMaxHp(G, defender);
     if (defenderHpBefore > 0 && defender.damage >= defenderHpBefore) {
-      const lethalRetaliation = getLethalOnlyRetaliation(G, defender);
+      const lethalRetaliation = attackerAbilityImmune ? 0 : getLethalOnlyRetaliation(G, defender);
       if (lethalRetaliation > 0) attacker.damage += lethalRetaliation * 10;
     }
   }
   // 毒刺 / 灼熱之軀-style retaliation: being hit while Active poisons/burns the attacker.
-  if (damage > 0 && hasPassiveAbilityNamed(G, defender, '毒刺')) {
+  if (damage > 0 && !attackerAbilityImmune && hasPassiveAbilityNamed(G, defender, '毒刺')) {
     attacker.statusConditions = attacker.statusConditions.filter(c => c !== 'Poisoned');
     attacker.statusConditions.push('Poisoned');
   }
-  if (damage > 0 && hasPassiveAbilityNamed(G, defender, '灼熱之軀')) {
+  if (damage > 0 && !attackerAbilityImmune && hasPassiveAbilityNamed(G, defender, '灼熱之軀')) {
     attacker.statusConditions = attacker.statusConditions.filter(c => c !== 'Burned');
     attacker.statusConditions.push('Burned');
   }
@@ -440,7 +444,10 @@ export function applyAttackOutcome(
     // meaningful while it is still the Active (a KO from recoil already removed it). Printed
     // text is 「將這隻寶可夢與附加的卡，全部放回手牌」, and "附加的卡" covers the lower Stages
     // stacked underneath, so the whole stack goes to hand — not to the discard pile.
-    if (genericOutcome.returnSelfAndAttachmentsToHand && player.active?.id === attacker.id) {
+    // 平穩境地: the opponent's 美納斯 pins this side's Pokémon in play — the bounce half of the
+    // attack simply doesn't happen (damage already dealt above).
+    if (genericOutcome.returnSelfAndAttachmentsToHand && player.active?.id === attacker.id
+      && !isReturnToHandBlocked(G, G.currentPlayer as 0 | 1)) {
       for (const energy of attacker.attachedEnergy.splice(0)) {
         if (energy.cardData) player.hand.push({ id: energy.id, cardData: energy.cardData, owner: G.currentPlayer as 0 | 1, damage: 0, statusConditions: [], attachedEnergy: [] });
       }
@@ -874,7 +881,7 @@ export function applyAttackOutcome(
         if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id);
       }
     }
-    if (genericOutcome.returnSelfEnergyToHandTypeBonus) {
+    if (genericOutcome.returnSelfEnergyToHandTypeBonus && !isReturnToHandBlocked(G, G.currentPlayer as 0 | 1)) {
       const { type } = genericOutcome.returnSelfEnergyToHandTypeBonus;
       const idx = attacker.attachedEnergy.findIndex(e => e.type === type);
       if (idx >= 0) {
@@ -901,7 +908,8 @@ export function applyAttackOutcome(
         }
       }
     }
-    if (genericOutcome.returnSelfEnergyToHandCount && attacker.attachedEnergy.length > 0) {
+    if (genericOutcome.returnSelfEnergyToHandCount && attacker.attachedEnergy.length > 0
+      && !isReturnToHandBlocked(G, G.currentPlayer as 0 | 1)) {
       for (let i = 0; i < genericOutcome.returnSelfEnergyToHandCount && attacker.attachedEnergy.length > 0; i++) {
         const idx = Math.floor(Math.random() * attacker.attachedEnergy.length);
         const [energy] = attacker.attachedEnergy.splice(idx, 1);

@@ -3,7 +3,7 @@ import { PtcgGameState, PtcgPlayerState, PendingChoice } from './GameState';
 import { canPlayPokemon, canEvolve, canAttachEnergy, canRetreat, canAttack, effectiveRetreatCost, FIRST_TURN_SUPPORTER_EXCEPTIONS } from './validation';
 import { clearBenchStatusConditions, clearStatusConditionsOnLeaveActive } from './statusConditions';
 import { calculateDamageBreakdown, effectiveMaxHp, flushPreEvolutionsTo, flushPreEvolutionsToDiscard, handleKo, prizesForKo, promoteActiveIfNeeded, resetCardForReentry, stackAsPreEvolution, sweepKnockedOut } from './damage';
-import { areAbilitiesNegated, getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasCoinFlipAttackMissDebuff, hasPassiveAbilityNamed, hasTeraBenchedImmunity, isRetreatBlockedByOpponent, isStadiumPlayBlocked, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat, shouldDiscardAttackerEnergy } from './effects/passiveAbilities';
+import { areAbilitiesNegated, getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasCoinFlipAttackMissDebuff, hasPassiveAbilityNamed, hasTeraBenchedImmunity, isRetreatBlockedByOpponent, isStadiumPlayBlocked, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat, shouldDiscardAttackerEnergy, isProtectedFromOpponentAbility } from './effects/passiveAbilities';
 import { benchDamageFromEffectsBlocked, benchLimit, enforceBenchLimit, isStadiumActive, sweepStadiumStatusCures } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
 import { applyStatusCondition, discardAttachedEnergy, drawCards, drawUpTo, shuffleDeck, asAttachedEnergy } from './effects/primitives';
@@ -85,18 +85,19 @@ function performRetreat(G: PtcgGameState, targetBenchPosition: number | undefine
   addLog(G, G.currentPlayer, 'retreat', `撤退，換上 ${benchPokemon!.cardData.name}`);
 
   // 凹洞: 2 damage counters land on the Pokémon that just retreated (now benched).
-  const punishCounters = getRetreatPunishmentCounters(G, G.currentPlayer as 0 | 1);
+  // All three retreat punishments below are opponent ABILITY effects — 光之翼 walks through them.
+  const punishCounters = isProtectedFromOpponentAbility(G, activePokemon) ? 0 : getRetreatPunishmentCounters(G, G.currentPlayer as 0 | 1);
   if (punishCounters > 0) {
     activePokemon.damage += punishCounters * 10;
     const hp = effectiveMaxHp(G, activePokemon);
     if (hp > 0 && activePokemon.damage >= hp) handleKo(G, G.currentPlayer, activePokemon.id);
   }
   // 漩渦言靈: the newly promoted Pokémon gets Confused.
-  if (shouldConfuseOnOpponentRetreat(G, G.currentPlayer as 0 | 1) && player.active) {
+  if (shouldConfuseOnOpponentRetreat(G, G.currentPlayer as 0 | 1) && player.active && !isProtectedFromOpponentAbility(G, player.active)) {
     applyStatusCondition(G, player.active, 'Confused');
   }
   // 熔岩地域: the newly promoted Pokémon gets Burned.
-  if (shouldBurnOnOpponentRetreat(G, G.currentPlayer as 0 | 1) && player.active) {
+  if (shouldBurnOnOpponentRetreat(G, G.currentPlayer as 0 | 1) && player.active && !isProtectedFromOpponentAbility(G, player.active)) {
     applyStatusCondition(G, player.active, 'Burned');
   }
 }
@@ -286,7 +287,7 @@ const rawMoves = {
     addLog(G, G.currentPlayer, 'evolve', `進化成 ${evolution.cardData.name}`);
 
     // 黑暗脈衝: the opponent's ability may place 4 damage counters on the newly evolved Pokémon.
-    const evolveCounters = getEvolveCountersFromOpponent(G, G.currentPlayer as 0 | 1);
+    const evolveCounters = isProtectedFromOpponentAbility(G, evolution) ? 0 : getEvolveCountersFromOpponent(G, G.currentPlayer as 0 | 1);
     if (evolveCounters > 0) {
       evolution.damage += evolveCounters * 10;
       const hp = effectiveMaxHp(G, evolution);

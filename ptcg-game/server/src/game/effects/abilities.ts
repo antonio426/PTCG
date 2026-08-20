@@ -4,6 +4,7 @@ import { handleKo, stackAsPreEvolution, flushPreEvolutionsTo, flushPreEvolutions
 import { applyStatusCondition, discardAttachedEnergy, discardFromHand, drawCards, drawUpTo, flipCoin, flipCoins, moveDeckCardToBench, moveDeckCardToHand, shuffleDeck, asAttachedEnergy } from './primitives';
 import { clearStatusConditionsOnLeaveActive } from '../statusConditions';
 import { hasEvolvesFrom, evolvesFromMatches } from '../evolutionChains';
+import { isProtectedFromOpponentAbility, isReturnToHandBlocked } from './passiveAbilities';
 
 /** 偵查指令: look at the top 2 cards of your deck, take 1 to hand, put the rest on the bottom. */
 const strategicCommand: EffectHandler = {
@@ -57,7 +58,9 @@ function curseBombCounters(ctx: EffectContext): number {
 const curseBomb: EffectHandler = {
   start(ctx) {
     const opp = opponent(ctx.G, ctx.playerIndex);
-    const targets = [opp.active, ...opp.bench].filter((c): c is GameCard => c !== null);
+    // 光之翼: unaffected by opponents' ability effects — can't be chosen by any of the
+    // opponent-targeting ability handlers below (same filter on each).
+    const targets = [opp.active, ...opp.bench].filter((c): c is GameCard => c !== null && !isProtectedFromOpponentAbility(ctx.G, c));
     if (targets.length === 0) return 'done';
     const n = curseBombCounters(ctx);
     return {
@@ -199,7 +202,7 @@ const wildBite: EffectHandler = {
   start(ctx) {
     if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const opp = opponent(ctx.G, ctx.playerIndex);
-    const targets = [opp.active, ...opp.bench].filter((c): c is GameCard => c !== null);
+    const targets = [opp.active, ...opp.bench].filter((c): c is GameCard => c !== null && !isProtectedFromOpponentAbility(ctx.G, c));
     if (targets.length === 0) return 'done';
     return { prompt: '亂咬：選最多 2 隻對手寶可夢各放置 2 個傷害指示物', choiceType: 'select_pokemon', maxCount: Math.min(2, targets.length), options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: {} };
   },
@@ -597,7 +600,7 @@ const poisonDust: EffectHandler = {
     const p = player(ctx.G, ctx.playerIndex);
     const opp = opponent(ctx.G, ctx.playerIndex);
     if (p.active) { p.active.statusConditions = p.active.statusConditions.filter(c => c !== 'Poisoned'); p.active.statusConditions.push('Poisoned'); }
-    if (opp.active) { opp.active.statusConditions = opp.active.statusConditions.filter(c => c !== 'Poisoned'); opp.active.statusConditions.push('Poisoned'); }
+    if (opp.active && !isProtectedFromOpponentAbility(ctx.G, opp.active)) { opp.active.statusConditions = opp.active.statusConditions.filter(c => c !== 'Poisoned'); opp.active.statusConditions.push('Poisoned'); }
     return 'done';
   },
   resume() { return 'done'; },
@@ -692,7 +695,7 @@ const scorchingSteam: EffectHandler = {
     const p = player(ctx.G, ctx.playerIndex);
     if (p.active?.id !== ctx.sourceCardId) return 'done';
     const opp = opponent(ctx.G, ctx.playerIndex);
-    if (opp.active) { opp.active.statusConditions = opp.active.statusConditions.filter(c => c !== 'Burned'); opp.active.statusConditions.push('Burned'); }
+    if (opp.active && !isProtectedFromOpponentAbility(ctx.G, opp.active)) { opp.active.statusConditions = opp.active.statusConditions.filter(c => c !== 'Burned'); opp.active.statusConditions.push('Burned'); }
     return 'done';
   },
   resume() { return 'done'; },
@@ -704,7 +707,7 @@ const tranquilLight: EffectHandler = {
     const p = player(ctx.G, ctx.playerIndex);
     if (p.active?.id !== ctx.sourceCardId) return 'done';
     const opp = opponent(ctx.G, ctx.playerIndex);
-    if (opp.active) applyStatusCondition(ctx.G, opp.active, 'Asleep');
+    if (opp.active && !isProtectedFromOpponentAbility(ctx.G, opp.active)) applyStatusCondition(ctx.G, opp.active, 'Asleep');
     return 'done';
   },
   resume() { return 'done'; },
@@ -716,7 +719,7 @@ const finishingShuriken: EffectHandler = {
     const p = player(ctx.G, ctx.playerIndex);
     if (p.active?.id !== ctx.sourceCardId) return 'done';
     const cost = p.hand.filter(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes('Water'));
-    const targets = allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1);
+    const targets = allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1).filter(c => !isProtectedFromOpponentAbility(ctx.G, c));
     if (cost.length === 0 || targets.length === 0) return 'done';
     return { prompt: '必殺手裡劍：丟棄 1 張基本水能量卡', choiceType: 'select_from_list', count: 1, options: cost.map(c => ({ id: c.id, label: c.cardData.name })), context: { step: 'pay_cost' } };
   },
@@ -725,7 +728,7 @@ const finishingShuriken: EffectHandler = {
     if (context.step === 'pay_cost') {
       const i = p.hand.findIndex(c => c.id === selection[0]);
       if (i >= 0) p.discardPile.push(p.hand.splice(i, 1)[0]);
-      const targets = allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1);
+      const targets = allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1).filter(c => !isProtectedFromOpponentAbility(ctx.G, c));
       return { prompt: '必殺手裡劍：選擇要放置 6 個傷害指示物的對手寶可夢', choiceType: 'select_pokemon', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: { step: 'pick_target' } };
     }
     const opp = opponent(ctx.G, ctx.playerIndex);
@@ -968,7 +971,7 @@ const stealthBite: EffectHandler = {
   start(ctx) {
     if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const opp = opponent(ctx.G, ctx.playerIndex);
-    const targets = [opp.active, ...opp.bench].filter((c): c is GameCard => c !== null);
+    const targets = [opp.active, ...opp.bench].filter((c): c is GameCard => c !== null && !isProtectedFromOpponentAbility(ctx.G, c));
     if (targets.length === 0) return 'done';
     return { prompt: '暗中咬住：選擇對手 1 隻寶可夢放置 2 個傷害指示物', choiceType: 'select_pokemon', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: {} };
   },
@@ -1140,7 +1143,7 @@ const primalWing: EffectHandler = {
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     if (p.active?.id !== ctx.sourceCardId) return 'done';
-    const targets = allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1).filter(c => hasEvolvesFrom(c.cardData));
+    const targets = allPokemon(ctx.G, (1 - ctx.playerIndex) as 0 | 1).filter(c => hasEvolvesFrom(c.cardData) && !isProtectedFromOpponentAbility(ctx.G, c));
     if (targets.length === 0) return 'done';
     return { prompt: '原始之翼：選擇對手 1 隻進化寶可夢使其退化', choiceType: 'select_pokemon', count: 1, options: targets.map(t => ({ id: t.id, label: t.cardData.name })), context: {} };
   },
@@ -1191,7 +1194,7 @@ const starryPattern: EffectHandler = {
     if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const opp = opponent(ctx.G, ctx.playerIndex);
     const targets = opp.bench.filter((c): c is GameCard => {
-      if (!c) return false;
+      if (!c || isProtectedFromOpponentAbility(ctx.G, c)) return false;
       const hp = parseInt(c.cardData.hp || '0', 10);
       return hp > 0 && hp - c.damage <= 90;
     });
@@ -1435,7 +1438,7 @@ const enticingLure: EffectHandler = {
   start(ctx) {
     if (!flipCoin()) return 'done';
     const opp = opponent(ctx.G, ctx.playerIndex);
-    const benched = opp.bench.filter((c): c is GameCard => c !== null);
+    const benched = opp.bench.filter((c): c is GameCard => c !== null && !isProtectedFromOpponentAbility(ctx.G, c));
     if (!opp.active || benched.length === 0) return 'done';
     return {
       prompt: '媚惑引誘：擲硬幣結果為正面，選 1 隻對手備戰寶可夢換上場',
@@ -1926,7 +1929,7 @@ const wreckingHeadbutt: EffectHandler = {
     if (p.active?.id !== ctx.sourceCardId) return 'done';
     if (!flipCoin()) return 'done';
     const opp = opponent(ctx.G, ctx.playerIndex);
-    if (!opp.active || opp.active.attachedEnergy.length === 0) return 'done';
+    if (!opp.active || opp.active.attachedEnergy.length === 0 || isProtectedFromOpponentAbility(ctx.G, opp.active)) return 'done';
     return { prompt: '破壞頭錘：擲硬幣結果為正面，選 1 張對手戰鬥寶可夢身上的能量丟棄', choiceType: 'select_from_list', count: 1, options: opp.active.attachedEnergy.map(e => ({ id: e.id, label: e.type })), context: {} };
   },
   resume(ctx, _context, selection) {
@@ -2184,7 +2187,7 @@ const gentleBreeze: EffectHandler = {
   start(ctx) {
     if (!flipCoin()) return 'done';
     const opp = opponent(ctx.G, ctx.playerIndex);
-    if (!opp.active || opp.active.attachedEnergy.length === 0) return 'done';
+    if (!opp.active || opp.active.attachedEnergy.length === 0 || isProtectedFromOpponentAbility(ctx.G, opp.active)) return 'done';
     return { prompt: '微風吹拂：擲硬幣結果為正面，選 1 張對手戰鬥寶可夢身上的能量丟棄', choiceType: 'select_from_list', count: 1, options: opp.active.attachedEnergy.map(e => ({ id: e.id, label: e.type })), context: {} };
   },
   resume(ctx, _context, selection) {
@@ -2387,7 +2390,7 @@ const pickAnyMucus: EffectHandler = {
   resume(ctx, _context, selection) {
     const opp = opponent(ctx.G, ctx.playerIndex);
     const condition = selection[0] as 'Poisoned' | 'Burned' | 'Confused';
-    if (opp.active) applyStatusCondition(ctx.G, opp.active, condition);
+    if (opp.active && !isProtectedFromOpponentAbility(ctx.G, opp.active)) applyStatusCondition(ctx.G, opp.active, condition);
     return 'done';
   },
 };
@@ -2638,7 +2641,7 @@ const mothersLure: EffectHandler = {
   start(ctx) {
     if (!flipCoin()) return 'done';
     const opp = opponent(ctx.G, ctx.playerIndex);
-    const benched = opp.bench.filter((c): c is GameCard => c !== null);
+    const benched = opp.bench.filter((c): c is GameCard => c !== null && !isProtectedFromOpponentAbility(ctx.G, c));
     if (!opp.active || benched.length === 0) return 'done';
     return { prompt: '母親的誘引：擲硬幣結果為正面，選 1 隻對手備戰寶可夢換上場', choiceType: 'select_pokemon', count: 1, options: benched.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
   },
