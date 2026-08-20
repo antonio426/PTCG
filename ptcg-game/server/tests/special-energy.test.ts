@@ -304,3 +304,78 @@ describe('Special Energy timing effects', () => {
     expect(theirs.attachedEnergy).toHaveLength(1);
   });
 });
+
+describe('感應【超】能量 attach-time deck search', () => {
+  const ctx0 = { currentPlayer: '0', turn: 3, events: { endTurn: () => {} } } as any;
+  const psychicMon = (n: number) => makeGameCard(makeCard({
+    name: `超基礎${n}`, hp: '60', types: ['Psychic'] as any, subtypes: ['Basic'] as Subtype[],
+  }), 0);
+  const setup = (holderTypes: string[], deckExtras = [psychicMon(1), psychicMon(2), psychicMon(3)]) => {
+    const energy = makeGameCard(special('感應【超】能量'), 0);
+    const active = makeGameCard(makeCard({ name: '持有者', hp: '100', types: holderTypes as any, subtypes: ['Basic'] as Subtype[] }), 0);
+    const G = makeState({
+      turn: 3, currentPlayer: 0, phase: 'main',
+      players: [
+        makePlayer({ active, hand: [energy], deck: [...deckExtras, makeGameCard(BASIC_MON, 0)] }),
+        makePlayer({ active: makeGameCard(BASIC_MON, 1) }),
+      ],
+    });
+    moves.attachEnergy({ G, ctx: ctx0 }, energy.id, active.id);
+    return { G, active };
+  };
+
+  it('raises the deck search when attached from hand onto a 【超】 Pokémon', () => {
+    const { G, active } = setup(['Psychic']);
+    expect(active.attachedEnergy).toHaveLength(1);
+    expect(G.pendingChoice?.effectKey).toBe('sensor_energy_bench');
+    // Only the 【超】 Basics are offered, capped at the printed 2.
+    expect(G.pendingChoice?.options).toHaveLength(3);
+    expect(G.pendingChoice?.maxCount).toBe(2);
+    expect(G.pendingChoice?.minCount).toBe(0);
+  });
+
+  it('benches the picks and shrinks the deck on resolve', () => {
+    const { G } = setup(['Psychic']);
+    const picks = G.pendingChoice!.options!.slice(0, 2).map(o => o.id);
+    moves.resolveChoice({ G, ctx: ctx0 }, picks);
+    expect(G.pendingChoice).toBeNull();
+    const benched = G.players[0].bench.filter(c => c !== null);
+    expect(benched.map(c => c!.id).sort()).toEqual([...picks].sort());
+    expect(G.players[0].deck).toHaveLength(2);
+  });
+
+  it('does nothing beyond the attach on a non-【超】 Pokémon', () => {
+    const { G, active } = setup(['Fire']);
+    expect(active.attachedEnergy).toHaveLength(1);
+    expect(G.pendingChoice).toBeNull();
+    expect(G.players[0].deck).toHaveLength(4);
+  });
+
+  it('skips the choice entirely when the Bench is full', () => {
+    const energy = makeGameCard(special('感應【超】能量'), 0);
+    const active = makeGameCard(makeCard({ name: '持有者', hp: '100', types: ['Psychic'] as any, subtypes: ['Basic'] as Subtype[] }), 0);
+    const G = makeState({
+      turn: 3, currentPlayer: 0, phase: 'main',
+      players: [
+        makePlayer({
+          active, hand: [energy], deck: [psychicMon(1)],
+          bench: Array.from({ length: 5 }, (_, i) => makeGameCard(makeCard({ name: `備戰${i}`, hp: '60', subtypes: ['Basic'] as Subtype[] }), 0)),
+        }),
+        makePlayer({ active: makeGameCard(BASIC_MON, 1) }),
+      ],
+    });
+    moves.attachEnergy({ G, ctx: ctx0 }, energy.id, active.id);
+    expect(active.attachedEnergy).toHaveLength(1);
+    expect(G.pendingChoice).toBeNull();
+  });
+
+  it('refuses ineligible ids smuggled into the resolution', () => {
+    const { G } = setup(['Psychic']);
+    // The colorless BASIC_MON in the deck is not among options — submitting it must not bench it.
+    const smuggled = G.players[0].deck.find(c => !(c.cardData.types ?? []).includes('Psychic'))!;
+    moves.resolveChoice({ G, ctx: ctx0 }, [smuggled.id]);
+    expect(G.pendingChoice).toBeNull();
+    expect(G.players[0].bench.every(c => c === null)).toBe(true);
+    expect(G.players[0].deck).toHaveLength(4);
+  });
+});

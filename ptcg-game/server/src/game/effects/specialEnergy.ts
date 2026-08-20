@@ -1,5 +1,6 @@
 import { GameCard } from '@ptcg/shared';
 import { PtcgGameState } from '../GameState';
+import { shuffleDeck } from './types';
 
 /**
  * What a piece of attached Energy actually pays for.
@@ -187,4 +188,57 @@ export function discardBurnoutEnergy(G: PtcgGameState, playerIdx: 0 | 1): void {
 function hasSpecialEnergyName(energy: { cardData?: GameCard['cardData'] }, name: string): boolean {
   return !!energy.cardData?.subtypes?.includes('Special Energy')
     && String(energy.cardData.name).replace(/^[‌​\s]+/, '').trim() === name;
+}
+
+const isBasicPsychicPokemon = (c: GameCard) =>
+  c.cardData.supertype === 'Pokémon'
+  && c.cardData.subtypes.includes('Basic')
+  && (c.cardData.types ?? []).includes('Psychic');
+
+/**
+ * 感應【超】能量: 「從手牌將這張卡附於【超】寶可夢身上時，從自己的牌庫選擇最多2張【超】屬性的
+ * 【基礎】寶可夢卡，放置於備戰區。並且重洗牌庫。」
+ *
+ * Called from moves.attachEnergy — the only from-hand attach path — right after the card lands.
+ * The search is a real decision, so it goes through a PendingChoice (resolved under effectKey
+ * 'sensor_energy_bench' by resolveSensorEnergyBench). When there is nothing to decide — Bench
+ * full, or no 【超】 Basic left in the deck — the deck is still shuffled, because the printed
+ * effect searched it either way.
+ */
+export function maybeRaiseSensorEnergyBenchChoice(
+  G: PtcgGameState, playerIdx: 0 | 1, target: GameCard, energy: { cardData?: GameCard['cardData'] },
+): void {
+  if (!hasSpecialEnergyName(energy, '感應【超】能量')) return;
+  if (!(target.cardData.types ?? []).includes('Psychic')) return;
+  const p = G.players[playerIdx];
+  const emptySlots = p.bench.filter(s => s === null).length;
+  const options = p.deck.filter(isBasicPsychicPokemon);
+  if (emptySlots === 0 || options.length === 0) { shuffleDeck(p.deck); return; }
+  G.pendingChoice = {
+    player: playerIdx,
+    effectKey: 'sensor_energy_bench',
+    prompt: '感應【超】能量：從牌庫選擇最多2張【超】屬性的基礎寶可夢卡，放置於備戰區',
+    choiceType: 'select_from_list',
+    minCount: 0,
+    maxCount: Math.min(2, emptySlots, options.length),
+    options: options.map(c => ({ id: c.id, label: c.cardData.name })),
+    context: {},
+  };
+}
+
+/** The resolution half of the choice above: bench the picks, then the printed reshuffle.
+ * Re-validates each pick (still in the deck AND actually a 【超】 Basic) rather than trusting the
+ * submitted ids, and clamps to the printed 2. Returns the benched names for the battle log. */
+export function resolveSensorEnergyBench(G: PtcgGameState, playerIdx: 0 | 1, selection: string[]): string[] {
+  const p = G.players[playerIdx];
+  const placed: string[] = [];
+  for (const id of selection.slice(0, 2)) {
+    const slot = p.bench.findIndex(s => s === null);
+    const i = p.deck.findIndex(c => c.id === id);
+    if (slot === -1 || i === -1 || !isBasicPsychicPokemon(p.deck[i])) continue;
+    p.bench[slot] = p.deck.splice(i, 1)[0];
+    placed.push(p.bench[slot]!.cardData.name);
+  }
+  shuffleDeck(p.deck);
+  return placed;
 }

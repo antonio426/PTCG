@@ -7,6 +7,7 @@ import { areAbilitiesNegated, getBonusPrizesForAttackKo, getEvolveCountersFromOp
 import { benchDamageFromEffectsBlocked, benchLimit, enforceBenchLimit, isStadiumActive, sweepStadiumStatusCures } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
 import { applyStatusCondition, discardAttachedEnergy, drawCards, drawUpTo, shuffleDeck, asAttachedEnergy } from './effects/primitives';
+import { maybeRaiseSensorEnergyBenchChoice, resolveSensorEnergyBench } from './effects/specialEnergy';
 import { AttackBoardContext, resolveGenericAttackEffect } from './effects/genericAttacks';
 import { inferEvolvesFromSpecies, evolvesFromMatches } from './evolutionChains';
 import { ENERGY_TYPE_ZH_LABEL, addLog, applyAttackOutcome, buildAttackBoard } from './attackResolution';
@@ -323,6 +324,8 @@ const rawMoves = {
     player.energyAttachedThisTurn++;
     player.cardsPlayedThisTurn++;
     addLog(G, G.currentPlayer, 'attach_energy', `將 ${energyCard.cardData.name} 附加於 ${target.cardData.name}`);
+    // 感應【超】能量: attaching it from hand onto a 【超】 Pokémon opens a deck search.
+    maybeRaiseSensorEnergyBenchChoice(G, G.currentPlayer as 0 | 1, target, energyCard);
   },
 
   playTrainer: ({ G, ctx }: { G: PtcgGameState; ctx: any }, cardId: string) => {
@@ -620,6 +623,14 @@ const rawMoves = {
       if (placed.length > 0) addLog(G, G.currentPlayer, 'mulligan_bonus_bench', `放到備戰區：${placed.join('、')}`);
       G.pendingChoice = null;
       raiseNextMulliganBonusOrFinish(G);
+      return;
+    }
+
+    if (effectKey === 'sensor_energy_bench') {
+      const placed = resolveSensorEnergyBench(G, G.currentPlayer as 0 | 1, selection);
+      G.pendingChoice = null;
+      addLog(G, G.currentPlayer, 'resolve_choice',
+        placed.length > 0 ? `感應【超】能量：${placed.join('、')} 放上備戰區` : '感應【超】能量：未選擇寶可夢');
       return;
     }
 

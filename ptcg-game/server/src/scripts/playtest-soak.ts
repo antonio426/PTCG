@@ -11,7 +11,7 @@
  * than copying them: a fourth copy of the turn lifecycle is exactly what CLAUDE.md warns about,
  * and the drift guard in tests/turn-lifecycle.test.ts only covers the three that exist.
  *
- *   npx tsx src/scripts/playtest-soak.ts [--games N] [--decks N] [--seed N] [--verbose]
+ *   npx tsx src/scripts/playtest-soak.ts [--games N] [--decks N] [--seed N] [--filter 卡名] [--verbose]
  */
 import * as fs from 'fs';
 import * as path from 'path';
@@ -63,9 +63,15 @@ async function main() {
   // boards where "every Pokémon already has a Tool" or "nothing left to evolve into" actually
   // happen, which is where the last few bugs were hiding.
   const synthetic = process.argv.includes('--synthetic');
+  // --filter <substring>: soak only the preset decks whose lists contain a card whose name
+  // includes the substring. This is how "scale the batch to the change's blast radius" is done in
+  // practice — after touching one card's effect, soak exactly the decks that can reach it.
+  const filter = process.argv.includes('--filter') ? process.argv[process.argv.indexOf('--filter') + 1] : null;
   const pool = synthetic
     ? buildAdversarialDecks(cards)
-    : presets.slice(0, deckCount);
+    : filter
+      ? presets.filter(d => expand(d).some((id: string) => cardData[id]?.name?.includes(filter)))
+      : presets.slice(0, deckCount);
   const findings: Finding[] = [];
   const byCulprit = new Map<string, number>();
   const nameOf = (instanceId: string) => cardData[instanceId.replace(/_\d+$/, '')]?.name ?? instanceId;
