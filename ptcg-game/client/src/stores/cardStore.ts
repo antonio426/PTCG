@@ -66,18 +66,20 @@ export function evolutionFamilyOf(query: string): Set<string> {
   }
   return family;
 }
-export type CardTag = 'ace-spec' | 'tera' | 'mega-ex' | 'trainer-named';
+export type CardTag = 'ace-spec' | 'tera' | 'mega-ex' | 'trainer-named' | 'ancient' | 'future';
 
 export const CARD_TAG_DEFS: { tag: CardTag; label: string }[] = [
   { tag: 'ace-spec', label: 'ACE SPEC' },
   { tag: 'tera', label: '太晶' },
   { tag: 'mega-ex', label: '超級進化' },
   { tag: 'trainer-named', label: '訓練家冠名' },
+  { tag: 'ancient', label: '古代' },
+  { tag: 'future', label: '未來' },
 ];
 
-/** Data-derived mechanic tags. 古代/未來 are deliberately absent: no source in the current
- * dataset carries a structured Ancient/Future marker (subtypes count is 0 across all 10k+
- * cards; the official scrape only has it as free text) — recorded as a data gap in ROADMAP.md. */
+/** Data-derived mechanic tags. 古代/未來 were absent for a long time because no source carried
+ * the marker — the label is part of the card artwork. The subtypes are now backfilled from the
+ * official card search's own filter (see server/src/scripts/backfill-paradox-subtypes.ts). */
 export function cardMatchesTag(c: Card, tag: CardTag): boolean {
   switch (tag) {
     case 'ace-spec':
@@ -93,6 +95,10 @@ export function cardMatchesTag(c: Card, tag: CardTag): boolean {
       return c.name.startsWith('超級') && c.subtypes.includes('ex');
     case 'trainer-named':
       return c.supertype === 'Pokémon' && /^.{1,6}的./.test(c.name);
+    case 'ancient':
+      return c.subtypes.includes('Ancient' as Subtype);
+    case 'future':
+      return c.subtypes.includes('Future' as Subtype);
   }
 }
 
