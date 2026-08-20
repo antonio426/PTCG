@@ -1101,6 +1101,28 @@ export function applyAttackOutcome(
         attacker.timedEffects = [...(attacker.timedEffects || []), { kind: 'damageImmune', appliesOnTurn: G.turn + 1 }];
       }
     }
+    if (genericOutcome.discardAllOpponentFieldSpecialEnergy) {
+      for (const c of [opponent.active, ...opponent.bench]) {
+        if (!c) continue;
+        for (let i = c.attachedEnergy.length - 1; i >= 0; i--) {
+          if (c.attachedEnergy[i].cardData?.subtypes?.includes('Special Energy')) {
+            discardAttachedEnergy(G, c.owner, c.attachedEnergy.splice(i, 1)[0]);
+          }
+        }
+      }
+    }
+    if (genericOutcome.revealTopAttachEnergiesCount) {
+      const targets = [player.active, ...player.bench].filter((c): c is GameCard => c !== null);
+      const top = player.deck.splice(-genericOutcome.revealTopAttachEnergiesCount);
+      for (const card of top) {
+        if (card.cardData.supertype === 'Energy' && targets.length > 0) {
+          targets[Math.floor(Math.random() * targets.length)].attachedEnergy.push(asAttachedEnergy(card));
+        } else {
+          player.deck.push(card);
+        }
+      }
+      shuffleDeck(player.deck);
+    }
     if (genericOutcome.poisonCounterOverride && genericOutcome.statusToInflict?.includes('Poisoned') && !defenderEffectImmune && damage > 0) {
       // applyStatusCondition (run at the statusToInflict site) resets the override; set it after.
       if (defender.statusConditions.includes('Poisoned')) defender.poisonCounterOverride = genericOutcome.poisonCounterOverride;

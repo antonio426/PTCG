@@ -81,6 +81,40 @@ describe('new clause matchers (parser level)', () => {
   });
 });
 
+describe('recursive combinators', () => {
+  it('coin-heads wrapper resolves the wrapped clause on heads, base only on tails', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.1); // heads
+    const heads = resolveGenericAttackEffect('擲1次硬幣若為正面，則將對手的牌庫上方3張卡丟棄。', '40', board())!;
+    expect(heads.baseDamage).toBe(40);
+    expect(heads.millOpponentDeckCount).toBe(3);
+    vi.spyOn(Math, 'random').mockReturnValue(0.9); // tails
+    const tails = resolveGenericAttackEffect('擲1次硬幣若為正面，則將對手的牌庫上方3張卡丟棄。', '40', board())!;
+    expect(tails.baseDamage).toBe(40);
+    expect(tails.millOpponentDeckCount).toBeUndefined();
+  });
+
+  it('tails-fail wrapper zeroes everything on tails', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.9); // tails
+    const out = resolveGenericAttackEffect(
+      '擲1次硬幣若為反面，則這個招式失敗。若為正面，則在下個對手的回合，這隻寶可夢不會受到招式的傷害與效果的影響。', '100', board())!;
+    expect(out.baseDamage).toBe(0);
+    expect(out.selfTimedEffect).toBeUndefined();
+  });
+
+  it('若希望 passthrough and the boost-with-rider pair auto-resolve', () => {
+    const out = resolveGenericAttackEffect('若希望，增加120點傷害。這個情況下，這隻寶可夢也受到90點傷害。', '30', board())!;
+    expect(out.baseDamage).toBe(150);
+    expect(out.selfDamage).toBe(90);
+  });
+
+  it('the heal + retreat-lock pair composes', () => {
+    const out = resolveGenericAttackEffect('將這隻寶可夢恢復「30」HP。在下個自己的回合，這隻寶可夢無法撤退。', '80', board())!;
+    expect(out.baseDamage).toBe(80);
+    expect(out.healSelfAmount).toBe(30);
+    expect(out.selfTimedEffect).toEqual({ kind: 'cantRetreat', turnOffset: 2 });
+  });
+});
+
 describe('new mechanisms (end to end)', () => {
   it('poison severity override: the between-turns tick places 8 counters', () => {
     // 10 printed damage: the statusToInflict apply site keeps its established damage>0 gate.

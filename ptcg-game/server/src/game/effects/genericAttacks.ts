@@ -299,6 +299,11 @@ export interface GenericAttackOutcome {
   /** 「選擇自己的所有備戰寶可夢進化而來的卡各1張…完成進化」 — evolve every own Benched Pokémon
    * (optionally type-filtered) using a matching evolution from the deck, reshuffle. */
   massEvolveBenchFromDeck?: { type?: string };
+  /** Discard every Special Energy attached anywhere on the opponent's field. */
+  discardAllOpponentFieldSpecialEnergy?: boolean;
+  /** Reveal the top N deck cards; every Energy among them attaches to a random own Pokémon,
+   * the rest are shuffled back. */
+  revealTopAttachEnergiesCount?: number;
 }
 
 export interface AttackBoardContext {
@@ -1871,6 +1876,91 @@ export function resolveGenericAttackEffect(text: string, damageField: string, bo
   // (approximated as damage immunity — the timed system has no combined effect-immunity kind)
   if (/^若對手的寶可夢因這個招式的傷害而【昏厥】了，則在下個對手的回合，這隻寶可夢不會受到招式的傷害(?:與效果)?的影響。$/.test(t)) {
     return { baseDamage: parseBaseNumber(damageField), selfProtectNextTurnIfKo: true };
+  }
+
+  /* ---- Round 3: cheap standalone clauses ---- */
+
+  // 將自己的N張手牌丟棄。(player's choice of which — auto-random per this file's convention)
+  m = t.match(/^將自己的(\d+)張手牌丟棄。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), discardRandomSelfHandCount: parseInt(m[1], 10) };
+
+  // 將這隻寶可夢恢復「N」HP。(some prints carry a stray leading zero-width char)
+  m = t.match(/^[‌​]*將這隻寶可夢恢復「(\d+)」HP。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), healSelfAmount: parseInt(m[1], 10) };
+
+  // 在下個自己的回合，這隻寶可夢無法撤退。
+  if (/^在下個自己的回合，這隻寶可夢無法撤退。$/.test(t)) {
+    return { baseDamage: parseBaseNumber(damageField), selfTimedEffect: { kind: 'cantRetreat', turnOffset: 2 } };
+  }
+
+  // 擲N次硬幣，將對手的牌庫上方與正面出現的次數相同數量的卡丟棄。
+  m = t.match(/^擲(\d+)次硬幣，將對手的牌庫上方與正面出現的次數相同數量的卡丟棄。$/);
+  if (m) {
+    const heads = flipCoins(parseInt(m[1], 10));
+    return { baseDamage: parseBaseNumber(damageField), millOpponentDeckCount: heads, coinFlipNote: `${heads}次正面` };
+  }
+
+  // 將對手的所有寶可夢身上附加的特殊能量卡全部丟棄。
+  if (/^將對手的所有寶可夢身上附加的特殊能量卡全部丟棄。$/.test(t)) {
+    return { baseDamage: parseBaseNumber(damageField), discardAllOpponentFieldSpecialEnergy: true };
+  }
+
+  // 選擇N張對手的反面朝上的獎賞卡，查看那張卡的正面後，回復原樣。(peek — no hidden-info model)
+  if (/^選擇\d+張對手的反面朝上的獎賞卡，查看那張卡的正面後，回復原樣。$/.test(t)) {
+    return { baseDamage: parseBaseNumber(damageField) };
+  }
+
+  // 查看自己的牌庫上方N張卡，從其中選擇任意數量的能量卡，以任意方式附於自己的寶可夢身上。將剩餘卡放回牌庫並重洗。
+  m = t.match(/^查看自己的牌庫上方(\d+)張卡，從其中選擇任意數量的能量卡，以任意方式附於自己的寶可夢身上。將剩餘卡放回牌庫並重洗。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), revealTopAttachEnergiesCount: parseInt(m[1], 10) };
+
+  /* ---- Round 3: general recursive combinators. Each strips a modal/timing wrapper and
+   * resolves the remainder through this same resolver (strictly shorter text — terminates).
+   * They sit AFTER every specific template so an exact match always wins first. ---- */
+
+  // 擲1次硬幣若為正面，則(rest) — heads runs the rest, tails does nothing beyond the base.
+  m = t.match(/^擲1次硬幣[，,]?若為正面，則(.+)$/);
+  if (m) {
+    const rest = resolveGenericAttackEffect(m[1], '0', board);
+    if (rest) {
+      const heads = Math.random() < 0.5;
+      const base = parseBaseNumber(damageField);
+      if (!heads) return { baseDamage: base, coinFlipNote: '反面' };
+      return { ...rest, baseDamage: base + rest.baseDamage, coinFlipNote: rest.coinFlipNote ? `正面；${rest.coinFlipNote}` : '正面' };
+    }
+  }
+
+  // 擲N次硬幣若為反面，則這個招式失敗。若為正面，則(rest) — the all-or-nothing flip.
+  m = t.match(/^擲1次硬幣若為反面，則這個招式失敗。若為正面，則(.+)$/);
+  if (m) {
+    const rest = resolveGenericAttackEffect(m[1], '0', board);
+    if (rest) {
+      const heads = Math.random() < 0.5;
+      if (!heads) return { baseDamage: 0, coinFlipNote: '反面（招式失敗）' };
+      return { ...rest, baseDamage: parseBaseNumber(damageField) + rest.baseDamage, coinFlipNote: '正面' };
+    }
+  }
+
+  // 若希望，增加N點傷害。這個情況下，(consequence) — optional boost with a rider, auto-taken.
+  m = t.match(/^若希望，增加(\d+)點傷害。這個情況下，(.+)$/);
+  if (m) {
+    const rest = resolveGenericAttackEffect(m[2], '0', board);
+    if (rest) return { ...rest, baseDamage: parseBaseNumber(damageField) + parseInt(m[1], 10) + rest.baseDamage };
+  }
+
+  // 若希望，(rest) — optional, auto-taken (the file's standing convention).
+  m = t.match(/^若希望，(.+)$/);
+  if (m) {
+    const rest = resolveGenericAttackEffect(m[1], damageField, board);
+    if (rest) return rest;
+  }
+
+  // 在造成傷害前，(rest) — ordering prefix; applyAttackOutcome applies signals in its own fixed
+  // order regardless, so the wrapper is transparent here.
+  m = t.match(/^在造成傷害前，(.+)$/);
+  if (m) {
+    const rest = resolveGenericAttackEffect(m[1], damageField, board);
+    if (rest) return rest;
   }
 
   // ---- Clause-composition fallback: any text whose 。-separated clauses (bracket-aware) each
