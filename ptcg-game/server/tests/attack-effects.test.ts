@@ -146,3 +146,78 @@ describe('阿賽斯特萊石 (太陽伊布ex)', () => {
     expect(G.players[1].deck).toHaveLength(before);
   });
 });
+
+describe('蠱惑挪移 (振翼髮)', () => {
+  // Unimplementable until the 古代/未來 subtypes were backfilled from the official card search:
+  // no data source carried them, so the Ancient filter matched nothing.
+  const ANCIENT = makeCard({
+    name: '振翼髮', hp: '90', types: ['Psychic'], subtypes: ['Basic', 'Ancient'] as any,
+    attacks: [{ name: '蠱惑挪移', cost: ['Colorless', 'Colorless'] as any, convertedEnergyCost: 2, damage: '', text: '選擇1隻自己的備戰區的「古代」寶可夢，將所選的寶可夢身上放置的傷害指示物，全部改放於對手的戰鬥寶可夢身上。' }],
+  });
+  const ANCIENT_BENCH = makeCard({ name: '古代鼠', hp: '120', types: ['Fighting'], subtypes: ['Basic', 'Ancient'] as any });
+  const PLAIN_BENCH = makeCard({ name: '普通鼠', hp: '120', types: ['Colorless'], subtypes: ['Basic'] });
+  const TANK = makeCard({ name: '木頭鼠', hp: '300', types: ['Colorless'], subtypes: ['Basic'] });
+
+  function board(bench: (ReturnType<typeof makeGameCard> | null)[]) {
+    const G = makeState({
+      turn: 3, currentPlayer: 0, phase: 'main',
+      players: [
+        makePlayer({
+          active: makeGameCard(ANCIENT, 0),
+          bench: [...bench, null, null, null, null].slice(0, 5) as any,
+          prizes: Array.from({ length: 6 }, () => makeGameCard(BASIC_MON, 0)),
+        }),
+        makePlayer({ active: makeGameCard(TANK, 1), prizes: [makeGameCard(BASIC_MON, 1)] }),
+      ],
+    });
+    return G;
+  }
+
+  it('moves every counter from the only Ancient Bench Pokémon onto the defender', () => {
+    const donor = makeGameCard(ANCIENT_BENCH, 0, { damage: 50 });
+    const G = board([donor]);
+    fire(G, '振翼髮', '蠱惑挪移');
+    expect(donor.damage).toBe(0);
+    expect(G.players[1].active?.damage).toBe(50);
+  });
+
+  it('resolves without asking when there is only one candidate', () => {
+    const G = board([makeGameCard(ANCIENT_BENCH, 0, { damage: 20 })]);
+    fire(G, '振翼髮', '蠱惑挪移');
+    expect(G.pendingChoice).toBeNull();
+  });
+
+  it('asks which one when several Ancient Pokémon are damaged', () => {
+    const G = board([
+      makeGameCard(ANCIENT_BENCH, 0, { damage: 20 }),
+      makeGameCard(ANCIENT_BENCH, 0, { damage: 40 }),
+    ]);
+    const step = fire(G, '振翼髮', '蠱惑挪移');
+    expect(step).not.toBe('done');
+    expect((step as any).options).toHaveLength(2);
+  });
+
+  it('ignores a Bench Pokémon that is not Ancient', () => {
+    const plain = makeGameCard(PLAIN_BENCH, 0, { damage: 60 });
+    const G = board([plain]);
+    fire(G, '振翼髮', '蠱惑挪移');
+    expect(plain.damage).toBe(60);
+    expect(G.players[1].active?.damage).toBe(0);
+  });
+
+  it('ignores an undamaged Ancient Pokémon', () => {
+    const G = board([makeGameCard(ANCIENT_BENCH, 0, { damage: 0 })]);
+    expect(fire(G, '振翼髮', '蠱惑挪移')).toBe('done');
+    expect(G.players[1].active?.damage).toBe(0);
+  });
+
+  it('KOs the defender when the moved counters are lethal', () => {
+    const small = makeCard({ name: '小鼠', hp: '60', types: ['Colorless'], subtypes: ['Basic'] });
+    const donor = makeGameCard(ANCIENT_BENCH, 0, { damage: 80 });
+    const G = board([donor]);
+    G.players[1].active = makeGameCard(small, 1);
+    fire(G, '振翼髮', '蠱惑挪移');
+    expect(G.players[1].discardPile.map(c => c.cardData.name)).toContain('小鼠');
+    expect(G.players[0].takenPrizes).toBe(1);
+  });
+});

@@ -1,0 +1,1169 @@
+{
+  "matched": [
+    {
+      "id": "MC-150",
+      "name": "破空焰",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "MC-151",
+      "name": "破空焰ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "MC-221",
+      "name": "波盪水",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "MC-222",
+      "name": "波盪水ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "MC-352",
+      "name": "吼叫尾",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "MC-353",
+      "name": "吼叫尾ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "MC-354",
+      "name": "振翼髮",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "MC-355",
+      "name": "振翼髮",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "MC-422",
+      "name": "雄偉牙",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "MC-423",
+      "name": "爬地翅",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "MC-424",
+      "name": "沙鐵皮",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "MC-487",
+      "name": "猛惡菇",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "MC-550",
+      "name": "故勒頓",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "MC-551",
+      "name": "故勒頓ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "MC-551",
+      "name": "故勒頓ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "MC-554",
+      "name": "猛雷鼓ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-027",
+      "name": "破空焰ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-049",
+      "name": "波盪水ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-071",
+      "name": "吼叫尾",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-071",
+      "name": "吼叫尾",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-072",
+      "name": "振翼髮",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-072",
+      "name": "振翼髮",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-086",
+      "name": "雄偉牙",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-086",
+      "name": "雄偉牙",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-087",
+      "name": "爬地翅",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-087",
+      "name": "爬地翅",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-088",
+      "name": "沙鐵皮ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-099",
+      "name": "猛惡菇",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-099",
+      "name": "猛惡菇",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-100",
+      "name": "轟鳴月",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-100",
+      "name": "轟鳴月",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-101",
+      "name": "轟鳴月ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-122",
+      "name": "故勒頓",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-122",
+      "name": "故勒頓",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-124",
+      "name": "猛雷鼓ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-143",
+      "name": "大地之容器",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-143",
+      "name": "大地之容器",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-157",
+      "name": "驅勁能量 古代",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-157",
+      "name": "驅勁能量 古代",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-167",
+      "name": "奧琳博士的氣魄",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-167",
+      "name": "奧琳博士的氣魄",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-172",
+      "name": "探險家的嚮導",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-172",
+      "name": "探險家的嚮導",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-215",
+      "name": "沙鐵皮ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-218",
+      "name": "轟鳴月ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-222",
+      "name": "猛雷鼓ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8a-235",
+      "name": "波盪水ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8-059",
+      "name": "振翼髮",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV8-069",
+      "name": "故勒頓",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV7a-009",
+      "name": "破空焰",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV7-075",
+      "name": "猛雷鼓",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV6a-026",
+      "name": "爬地翅",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV6-071",
+      "name": "猛惡菇",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV5a-026",
+      "name": "波盪水",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV5a-040",
+      "name": "吼叫尾ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV5a-082",
+      "name": "吼叫尾ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV5K-012",
+      "name": "破空焰ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV5K-024",
+      "name": "波盪水ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV5K-033",
+      "name": "振翼髮",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV5K-042",
+      "name": "雄偉牙",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV5K-051",
+      "name": "轟鳴月",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV5K-052",
+      "name": "故勒頓",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV5K-053",
+      "name": "猛雷鼓ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV5K-067",
+      "name": "探險家的嚮導",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV5K-076",
+      "name": "振翼髮",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV5K-085",
+      "name": "破空焰ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV5K-086",
+      "name": "波盪水ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV5K-089",
+      "name": "猛雷鼓ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV5K-090",
+      "name": "探險家的嚮導",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV5K-093",
+      "name": "破空焰ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV5K-094",
+      "name": "波盪水ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV5K-095",
+      "name": "猛雷鼓ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV5K-098",
+      "name": "破空焰ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV5K-099",
+      "name": "波盪水ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV5K-100",
+      "name": "猛雷鼓ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SVHK-005",
+      "name": "吼叫尾",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SVHK-008",
+      "name": "雄偉牙",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SVHK-009",
+      "name": "沙鐵皮",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SVHK-010",
+      "name": "故勒頓ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SVHK-011",
+      "name": "大地之容器",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SVHK-016",
+      "name": "驅勁能量 古代",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SVHK-017",
+      "name": "奧琳博士的氣魄",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV4a-112",
+      "name": "雄偉牙ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV4a-330",
+      "name": "雄偉牙ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV4K-032",
+      "name": "吼叫尾",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV4K-041",
+      "name": "爬地翅",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV4K-042",
+      "name": "沙鐵皮ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV4K-053",
+      "name": "猛惡菇",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV4K-054",
+      "name": "轟鳴月ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV4K-060",
+      "name": "大地之容器",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV4K-061",
+      "name": "驅勁能量 古代",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV4K-064",
+      "name": "奧琳博士的氣魄",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV-P-079",
+      "name": "故勒頓",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV-P-081",
+      "name": "猛雷鼓ex",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV-P-084",
+      "name": "大地之容器",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV-P-187",
+      "name": "破空焰",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "SV-P-225",
+      "name": "振翼髮",
+      "subtype": "Ancient"
+    },
+    {
+      "id": "MC-077",
+      "name": "鐵斑葉ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "MC-280",
+      "name": "鐵臂膀",
+      "subtype": "Future"
+    },
+    {
+      "id": "MC-281",
+      "name": "鐵荊棘",
+      "subtype": "Future"
+    },
+    {
+      "id": "MC-282",
+      "name": "鐵荊棘ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "MC-357",
+      "name": "鐵武者",
+      "subtype": "Future"
+    },
+    {
+      "id": "MC-360",
+      "name": "鐵磐岩",
+      "subtype": "Future"
+    },
+    {
+      "id": "MC-361",
+      "name": "鐵頭殼ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "MC-429",
+      "name": "鐵磐岩ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "MC-536",
+      "name": "鐵頭殼",
+      "subtype": "Future"
+    },
+    {
+      "id": "MC-552",
+      "name": "密勒頓",
+      "subtype": "Future"
+    },
+    {
+      "id": "MC-553",
+      "name": "密勒頓ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "MC-628",
+      "name": "鐵脖頸",
+      "subtype": "Future"
+    },
+    {
+      "id": "MC-671",
+      "name": "重新啟動箱",
+      "subtype": "Future"
+    },
+    {
+      "id": "MC-698",
+      "name": "暗碼迷的解讀",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV8a-016",
+      "name": "鐵斑葉ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV8a-024",
+      "name": "鐵毒蛾",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV8a-024",
+      "name": "鐵毒蛾",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV8a-047",
+      "name": "鐵包袱",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV8a-047",
+      "name": "鐵包袱",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV8a-054",
+      "name": "鐵臂膀ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV8a-055",
+      "name": "鐵荊棘",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV8a-055",
+      "name": "鐵荊棘",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV8a-056",
+      "name": "鐵荊棘ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV8a-074",
+      "name": "鐵武者ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV8a-077",
+      "name": "鐵磐岩",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV8a-077",
+      "name": "鐵磐岩",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV8a-078",
+      "name": "鐵頭殼ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV8a-116",
+      "name": "鐵轍跡",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV8a-123",
+      "name": "密勒頓",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV8a-135",
+      "name": "鐵脖頸",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV8a-144",
+      "name": "高科技雷達",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV8a-158",
+      "name": "驅勁能量 未來",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV8a-165",
+      "name": "暗碼迷的解讀",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV8a-165",
+      "name": "暗碼迷的解讀",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV8a-175",
+      "name": "弗圖博士的劇本",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV8a-210",
+      "name": "鐵臂膀ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV8a-213",
+      "name": "鐵武者ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV8a-214",
+      "name": "鐵頭殼ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV8a-233",
+      "name": "鐵斑葉ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV8-031",
+      "name": "鐵包袱",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV8-044",
+      "name": "密勒頓",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV7a-039",
+      "name": "鐵頭殼",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV7-047",
+      "name": "鐵磐岩",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV6a-009",
+      "name": "鐵毒蛾",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV6-037",
+      "name": "鐵包袱",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV5a-007",
+      "name": "鐵斑葉",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV5a-033",
+      "name": "鐵荊棘ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV5a-081",
+      "name": "鐵荊棘ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV5M-016",
+      "name": "鐵斑葉ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV5M-030",
+      "name": "鐵荊棘",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV5M-035",
+      "name": "鐵武者",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV5M-036",
+      "name": "鐵頭殼ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV5M-041",
+      "name": "鐵磐岩ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV5M-051",
+      "name": "鐵轍跡",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV5M-052",
+      "name": "密勒頓",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV5M-065",
+      "name": "驅勁能量 未來",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV5M-067",
+      "name": "暗碼迷的解讀",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV5M-077",
+      "name": "鐵荊棘",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV5M-084",
+      "name": "鐵斑葉ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV5M-086",
+      "name": "鐵頭殼ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV5M-087",
+      "name": "鐵磐岩ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV5M-090",
+      "name": "暗碼迷的解讀",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV5M-093",
+      "name": "鐵斑葉ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV5M-094",
+      "name": "鐵頭殼ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV5M-095",
+      "name": "鐵磐岩ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV5M-098",
+      "name": "鐵斑葉ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV5M-099",
+      "name": "鐵頭殼ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV5M-100",
+      "name": "鐵磐岩ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SVHM-004",
+      "name": "鐵臂膀",
+      "subtype": "Future"
+    },
+    {
+      "id": "SVHM-008",
+      "name": "鐵武者",
+      "subtype": "Future"
+    },
+    {
+      "id": "SVHM-009",
+      "name": "密勒頓ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SVHM-010",
+      "name": "鐵脖頸",
+      "subtype": "Future"
+    },
+    {
+      "id": "SVHM-011",
+      "name": "高科技雷達",
+      "subtype": "Future"
+    },
+    {
+      "id": "SVHM-016",
+      "name": "驅勁能量 未來",
+      "subtype": "Future"
+    },
+    {
+      "id": "SVHM-021",
+      "name": "弗圖博士的劇本",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV4a-333",
+      "name": "鐵轍跡ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV4M-012",
+      "name": "鐵毒蛾",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV4M-020",
+      "name": "鐵包袱",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV4M-027",
+      "name": "鐵臂膀ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV4M-038",
+      "name": "鐵武者ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV4M-058",
+      "name": "鐵脖頸",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV4M-060",
+      "name": "高科技雷達",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV4M-062",
+      "name": "驅勁能量 未來",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV4M-065",
+      "name": "弗圖博士的劇本",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV1V-058",
+      "name": "鐵轍跡ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV-P-078",
+      "name": "鐵頭殼ex",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV-P-080",
+      "name": "密勒頓",
+      "subtype": "Future"
+    },
+    {
+      "id": "SV-P-085",
+      "name": "高科技雷達",
+      "subtype": "Future"
+    }
+  ],
+  "unmatched": [
+    {
+      "detailId": "11142",
+      "setId": "SVK",
+      "number": 12,
+      "name": "大地之容器",
+      "subtype": "Ancient"
+    },
+    {
+      "detailId": "10804",
+      "setId": "SVTG",
+      "number": 10,
+      "name": "大地之容器",
+      "subtype": "Ancient"
+    },
+    {
+      "detailId": "10778",
+      "setId": "SVTS",
+      "number": 7,
+      "name": "吼叫尾",
+      "subtype": "Ancient"
+    },
+    {
+      "detailId": "10782",
+      "setId": "SVTS",
+      "number": 11,
+      "name": "大地之容器",
+      "subtype": "Ancient"
+    },
+    {
+      "detailId": "10894",
+      "setId": "SV6a",
+      "number": 93,
+      "name": "大地之容器",
+      "subtype": "Ancient"
+    },
+    {
+      "detailId": "9764",
+      "setId": "SV5K",
+      "number": 65,
+      "name": "驅勁能量 古代",
+      "subtype": "Ancient"
+    },
+    {
+      "detailId": "10652",
+      "setId": "SV4K",
+      "number": 71,
+      "name": "吼叫尾",
+      "subtype": "Ancient"
+    },
+    {
+      "detailId": "10655",
+      "setId": "SV4K",
+      "number": 74,
+      "name": "爬地翅",
+      "subtype": "Ancient"
+    },
+    {
+      "detailId": "10658",
+      "setId": "SV4K",
+      "number": 77,
+      "name": "猛惡菇",
+      "subtype": "Ancient"
+    },
+    {
+      "detailId": "10664",
+      "setId": "SV4K",
+      "number": 83,
+      "name": "沙鐵皮ex",
+      "subtype": "Ancient"
+    },
+    {
+      "detailId": "10665",
+      "setId": "SV4K",
+      "number": 84,
+      "name": "轟鳴月ex",
+      "subtype": "Ancient"
+    },
+    {
+      "detailId": "10666",
+      "setId": "SV4K",
+      "number": 85,
+      "name": "奧琳博士的氣魄",
+      "subtype": "Ancient"
+    },
+    {
+      "detailId": "10670",
+      "setId": "SV4K",
+      "number": 89,
+      "name": "沙鐵皮ex",
+      "subtype": "Ancient"
+    },
+    {
+      "detailId": "10671",
+      "setId": "SV4K",
+      "number": 90,
+      "name": "轟鳴月ex",
+      "subtype": "Ancient"
+    },
+    {
+      "detailId": "10672",
+      "setId": "SV4K",
+      "number": 91,
+      "name": "奧琳博士的氣魄",
+      "subtype": "Ancient"
+    },
+    {
+      "detailId": "15022",
+      "setId": "SV4K",
+      "number": 93,
+      "name": "轟鳴月ex",
+      "subtype": "Ancient"
+    },
+    {
+      "detailId": "10859",
+      "setId": "SV",
+      "number": 137,
+      "name": "大地之容器",
+      "subtype": "Ancient"
+    },
+    {
+      "detailId": "11506",
+      "setId": "SV",
+      "number": 167,
+      "name": "轟鳴月ex",
+      "subtype": "Ancient"
+    },
+    {
+      "detailId": "12576",
+      "setId": "SV",
+      "number": 184,
+      "name": "奧琳博士的氣魄",
+      "subtype": "Ancient"
+    },
+    {
+      "detailId": "11164",
+      "setId": "SVK",
+      "number": 34,
+      "name": "弗圖博士的劇本",
+      "subtype": "Future"
+    },
+    {
+      "detailId": "10821",
+      "setId": "SVTR",
+      "number": 7,
+      "name": "鐵臂膀ex",
+      "subtype": "Future"
+    },
+    {
+      "detailId": "9160",
+      "setId": "SV4a",
+      "number": 132,
+      "name": "鐵轍跡ex",
+      "subtype": "Future"
+    },
+    {
+      "detailId": "10676",
+      "setId": "SV4M",
+      "number": 69,
+      "name": "鐵毒蛾",
+      "subtype": "Future"
+    },
+    {
+      "detailId": "10678",
+      "setId": "SV4M",
+      "number": 71,
+      "name": "鐵包袱",
+      "subtype": "Future"
+    },
+    {
+      "detailId": "10685",
+      "setId": "SV4M",
+      "number": 78,
+      "name": "鐵脖頸",
+      "subtype": "Future"
+    },
+    {
+      "detailId": "10686",
+      "setId": "SV4M",
+      "number": 79,
+      "name": "鐵臂膀ex",
+      "subtype": "Future"
+    },
+    {
+      "detailId": "10687",
+      "setId": "SV4M",
+      "number": 80,
+      "name": "鐵武者ex",
+      "subtype": "Future"
+    },
+    {
+      "detailId": "10693",
+      "setId": "SV4M",
+      "number": 86,
+      "name": "弗圖博士的劇本",
+      "subtype": "Future"
+    },
+    {
+      "detailId": "10695",
+      "setId": "SV4M",
+      "number": 88,
+      "name": "鐵臂膀ex",
+      "subtype": "Future"
+    },
+    {
+      "detailId": "10696",
+      "setId": "SV4M",
+      "number": 89,
+      "name": "鐵武者ex",
+      "subtype": "Future"
+    },
+    {
+      "detailId": "10698",
+      "setId": "SV4M",
+      "number": 91,
+      "name": "弗圖博士的劇本",
+      "subtype": "Future"
+    },
+    {
+      "detailId": "15013",
+      "setId": "SV4M",
+      "number": 93,
+      "name": "鐵武者ex",
+      "subtype": "Future"
+    },
+    {
+      "detailId": "11503",
+      "setId": "SV",
+      "number": 164,
+      "name": "密勒頓ex",
+      "subtype": "Future"
+    },
+    {
+      "detailId": "11507",
+      "setId": "SV",
+      "number": 168,
+      "name": "鐵武者ex",
+      "subtype": "Future"
+    }
+  ]
+}

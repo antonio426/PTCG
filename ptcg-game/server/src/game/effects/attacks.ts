@@ -147,7 +147,53 @@ const alolanVulpixStone: EffectHandler = {
   resume() { return 'done'; },
 };
 
+/**
+ * 蠱惑挪移 (振翼髮): 「選擇1隻自己的備戰區的「古代」寶可夢，將所選的寶可夢身上放置的傷害指示物，
+ * 全部改放於對手的戰鬥寶可夢身上。」 — move every damage counter off one of your own Benched
+ * Ancient Pokémon onto the opponent's Active.
+ *
+ * This was unimplementable until the 古代/未來 subtypes were backfilled: no data source carried
+ * them (the label is part of the card artwork), so the Ancient filter matched nothing at all.
+ */
+const beguilingShift: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const donors = p.bench.filter(
+      (c): c is GameCard => c !== null && c.cardData.subtypes.includes('Ancient') && c.damage > 0,
+    );
+    // An attack with nothing to do is still a legal attack under the real rules, unlike a Trainer
+    // — there's no canPlay gate here on purpose.
+    if (donors.length === 0) return 'done';
+    if (donors.length === 1) { moveCountersToDefender(ctx, donors[0]); return 'done'; }
+    return {
+      prompt: '蠱惑挪移：選擇要移走傷害指示物的「古代」寶可夢',
+      choiceType: 'select_pokemon',
+      count: 1,
+      options: donors.map(c => ({ id: c.id, label: `${c.cardData.name}（${c.damage} 傷害）` })),
+      context: {},
+    };
+  },
+  resume(ctx, _context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const donor = p.bench.find(c => c?.id === selection[0]);
+    if (donor) moveCountersToDefender(ctx, donor);
+    return 'done';
+  },
+};
+
+/** Moves every counter off `donor` and onto the defending Active, KO-checking the result. */
+function moveCountersToDefender(ctx: EffectContext, donor: GameCard): void {
+  const defender = opponent(ctx.G, ctx.playerIndex).active;
+  if (!defender) return;
+  const moved = donor.damage;
+  donor.damage = 0;
+  defender.damage += moved;
+  const hp = parseInt(defender.cardData.hp || '0', 10);
+  if (hp > 0 && defender.damage >= hp) handleKo(ctx.G, (1 - ctx.playerIndex) as 0 | 1, defender.id);
+}
+
 export const attackEffects: Record<string, EffectHandler> = {
+  '振翼髮::蠱惑挪移': beguilingShift,
   '多龍巴魯托ex::幻影奇襲': phantomDive,
   '超級蒂安希ex::花冠射線': floralRay,
   '火箭隊的袋獸ex::惡棍衝擊': villainousShock,

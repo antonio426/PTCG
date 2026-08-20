@@ -16128,7 +16128,8 @@
       "name": "鐵臂膀",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "hp": "140",
       "types": [
@@ -22098,7 +22099,8 @@
       "name": "吼叫尾",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "hp": "90",
       "types": [
@@ -31230,7 +31232,8 @@
       "name": "鐵斑葉",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "hp": "120",
       "types": [
@@ -36816,7 +36819,8 @@
       "name": "鐵武者",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "hp": "130",
       "types": [
@@ -37580,7 +37584,8 @@
       "name": "雄偉牙",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "hp": "140",
       "types": [
@@ -41850,7 +41855,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Future"
       ],
       "hp": "220",
       "types": [
@@ -42050,7 +42056,8 @@
       "name": "鐵毒蛾",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "hp": "120",
       "types": [
@@ -42192,7 +42199,8 @@
       "name": "破空焰",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "hp": "130",
       "types": [
@@ -42657,7 +42665,8 @@
       "name": "沙鐵皮",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "hp": "120",
       "types": [
@@ -46891,7 +46900,8 @@
       "name": "鐵脖頸",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "hp": "130",
       "types": [
@@ -47601,7 +47611,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Ancient"
       ],
       "hp": "230",
       "types": [
@@ -55862,7 +55873,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Ancient"
       ],
       "hp": "230",
       "types": [
@@ -55998,7 +56010,8 @@
       "name": "鐵毒蛾",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "hp": "130",
       "types": [
@@ -71192,7 +71205,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Future"
       ],
       "hp": "220",
       "types": [
@@ -72236,7 +72250,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Future"
       ],
       "hp": "220",
       "types": [
@@ -87371,7 +87386,8 @@
       "name": "鐵包袱",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "hp": "100",
       "types": [
@@ -102124,7 +102140,8 @@
       "name": "鐵毒蛾",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "hp": "130",
       "types": [
@@ -109728,7 +109745,8 @@
       "name": "波盪水",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "hp": "130",
       "types": [
@@ -110209,7 +110227,8 @@
       "name": "爬地翅",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "hp": "140",
       "types": [
@@ -113579,7 +113598,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Ancient"
       ],
       "hp": "230",
       "types": [
@@ -114058,7 +114078,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Future"
       ],
       "hp": "230",
       "types": [
@@ -125893,7 +125914,8 @@
       "name": "鐵荊棘",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "hp": "140",
       "types": [
@@ -129495,7 +129517,8 @@
       "name": "鐵包袱",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "hp": "100",
       "types": [
@@ -133664,7 +133687,8 @@
       "name": "吼叫尾",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "hp": "90",
       "types": [
@@ -136104,7 +136128,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Future"
       ],
       "hp": "230",
       "types": [
@@ -144633,7 +144658,8 @@
       "name": "鐵武者",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "hp": "130",
       "types": [
@@ -148324,7 +148350,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Future"
       ],
       "hp": "220",
       "types": [
@@ -152253,7 +152280,8 @@
       "name": "鐵包袱",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "hp": "90",
       "types": [
@@ -155328,7 +155356,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Future"
       ],
       "hp": "220",
       "types": [
@@ -159202,7 +159231,8 @@
       "name": "鐵頭殼",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "hp": "130",
       "types": [
@@ -162393,7 +162423,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Ancient"
       ],
       "hp": "190",
       "types": [
@@ -167160,7 +167191,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Future"
       ],
       "hp": "240",
       "types": [
@@ -167367,7 +167399,8 @@
       "name": "爬地翅",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "hp": "140",
       "types": [
@@ -171015,7 +171048,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Ancient"
       ],
       "hp": "220",
       "types": [
@@ -178052,7 +178086,8 @@
       "name": "密勒頓",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "hp": "120",
       "types": [
@@ -188320,7 +188355,8 @@
       "name": "鐵包袱",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "hp": "100",
       "types": [
@@ -189185,7 +189221,8 @@
       "name": "鐵磐岩",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "hp": "140",
       "types": [
@@ -195684,7 +195721,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Ancient"
       ],
       "hp": "220",
       "types": [
@@ -204155,7 +204193,8 @@
       "name": "鐵轍跡",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "hp": "130",
       "types": [
@@ -207931,7 +207970,8 @@
       "name": "密勒頓",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "hp": "110",
       "types": [
@@ -211580,7 +211620,8 @@
       "name": "猛惡菇",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "hp": "120",
       "types": [
@@ -214046,7 +214087,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Future"
       ],
       "hp": "230",
       "types": [
@@ -215019,7 +215061,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Ancient"
       ],
       "hp": "230",
       "types": [
@@ -217472,7 +217515,8 @@
       "name": "鐵荊棘",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "hp": "140",
       "types": [
@@ -220956,7 +221000,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Future"
       ],
       "hp": "230",
       "types": [
@@ -227567,7 +227612,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Future"
       ],
       "hp": "220",
       "types": [
@@ -227642,7 +227688,8 @@
       "name": "鐵脖頸",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "hp": "130",
       "types": [
@@ -231029,7 +231076,8 @@
       "name": "振翼髮",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "hp": "90",
       "types": [
@@ -255439,7 +255487,8 @@
       "name": "故勒頓",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "hp": "130",
       "types": [
@@ -259238,7 +259287,8 @@
       "name": "吼叫尾",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "hp": "90",
       "types": [
@@ -259741,7 +259791,8 @@
       "name": "猛惡菇",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "hp": "120",
       "types": [
@@ -261321,7 +261372,8 @@
       "name": "振翼髮",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "hp": "90",
       "types": [
@@ -265604,7 +265656,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Future"
       ],
       "hp": "220",
       "types": [
@@ -268221,7 +268274,8 @@
       "name": "猛雷鼓",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "hp": "130",
       "types": [
@@ -270088,7 +270142,8 @@
       "name": "振翼髮",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "hp": "90",
       "types": [
@@ -272018,7 +272073,8 @@
       "name": "鐵磐岩",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "hp": "140",
       "types": [
@@ -272561,7 +272617,8 @@
       "name": "鐵荊棘",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "hp": "140",
       "types": [
@@ -274212,7 +274269,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Future"
       ],
       "hp": "220",
       "types": [
@@ -274423,7 +274481,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Future"
       ],
       "hp": "220",
       "types": [
@@ -276707,7 +276766,8 @@
       "name": "故勒頓",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "hp": "140",
       "types": [
@@ -278993,7 +279053,8 @@
       "name": "密勒頓",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "hp": "110",
       "types": [
@@ -281202,7 +281263,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Ancient"
       ],
       "hp": "240",
       "types": [
@@ -287686,7 +287748,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Future"
       ],
       "hp": "220",
       "types": [
@@ -289574,7 +289637,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Ancient"
       ],
       "hp": "230",
       "types": [
@@ -291512,7 +291576,8 @@
       "name": "雄偉牙",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "hp": "140",
       "types": [
@@ -291721,7 +291786,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Ancient"
       ],
       "hp": "220",
       "types": [
@@ -292042,7 +292108,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Future"
       ],
       "hp": "220",
       "types": [
@@ -293615,7 +293682,8 @@
       "name": "爬地翅",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "hp": "140",
       "types": [
@@ -294231,7 +294299,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Future"
       ],
       "hp": "240",
       "types": [
@@ -295755,7 +295824,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Ancient"
       ],
       "hp": "220",
       "types": [
@@ -297825,7 +297895,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Ancient"
       ],
       "hp": "240",
       "types": [
@@ -303511,7 +303582,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Ancient"
       ],
       "hp": "230",
       "types": [
@@ -303723,7 +303795,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Future"
       ],
       "hp": "220",
       "types": [
@@ -304900,7 +304973,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Ancient"
       ],
       "hp": "220",
       "types": [
@@ -305035,7 +305109,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Future"
       ],
       "hp": "220",
       "types": [
@@ -306190,7 +306265,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Ancient"
       ],
       "hp": "240",
       "types": [
@@ -306328,7 +306404,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Future"
       ],
       "hp": "240",
       "types": [
@@ -310991,7 +311068,8 @@
       "name": "猛惡菇",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "hp": "120",
       "types": [
@@ -312157,7 +312235,8 @@
       "name": "轟鳴月",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "hp": "140",
       "types": [
@@ -313313,7 +313392,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Ancient"
       ],
       "hp": "230",
       "types": [
@@ -327756,7 +327836,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Ancient"
       ],
       "hp": "250",
       "types": [
@@ -332440,7 +332521,8 @@
       "name": "鐵轍跡",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "hp": "130",
       "types": [
@@ -339259,7 +339341,8 @@
       "name": "故勒頓",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "hp": "140",
       "types": [
@@ -340240,7 +340323,8 @@
       "name": "密勒頓",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "hp": "110",
       "types": [
@@ -341156,7 +341240,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Ancient"
       ],
       "hp": "240",
       "types": [
@@ -349881,7 +349966,8 @@
       "name": "鐵脖頸",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "hp": "130",
       "types": [
@@ -366563,7 +366649,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Future"
       ],
       "hp": "230",
       "types": [
@@ -367387,7 +367474,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Future"
       ],
       "hp": "220",
       "types": [
@@ -367648,7 +367736,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Future"
       ],
       "hp": "220",
       "types": [
@@ -367912,7 +368001,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Ancient"
       ],
       "hp": "220",
       "types": [
@@ -368679,7 +368769,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Ancient"
       ],
       "hp": "230",
       "types": [
@@ -369724,7 +369815,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Ancient"
       ],
       "hp": "240",
       "types": [
@@ -372194,7 +372286,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Future"
       ],
       "hp": "220",
       "types": [
@@ -372741,7 +372834,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Ancient"
       ],
       "hp": "220",
       "types": [
@@ -385197,7 +385291,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Ancient"
       ],
       "hp": "250",
       "types": [
@@ -385572,7 +385667,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "EX"
+        "EX",
+        "Future"
       ],
       "hp": "220",
       "types": [
@@ -388839,7 +388935,8 @@
       "name": "高科技雷達",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Item",
+        "Future"
       ],
       "abilities": [],
       "attacks": [],
@@ -388938,7 +389035,8 @@
       "name": "大地之容器",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Item",
+        "Ancient"
       ],
       "abilities": [],
       "attacks": [],
@@ -391950,7 +392048,8 @@
       "name": "驅勁能量 未來",
       "supertype": "Trainer",
       "subtypes": [
-        "Pokémon Tool"
+        "Pokémon Tool",
+        "Future"
       ],
       "abilities": [],
       "attacks": [],
@@ -392049,7 +392148,8 @@
       "name": "驅勁能量 古代",
       "supertype": "Trainer",
       "subtypes": [
-        "Pokémon Tool"
+        "Pokémon Tool",
+        "Ancient"
       ],
       "abilities": [],
       "attacks": [],
@@ -392690,7 +392790,8 @@
       "name": "奧琳博士的氣魄",
       "supertype": "Trainer",
       "subtypes": [
-        "Supporter"
+        "Supporter",
+        "Ancient"
       ],
       "abilities": [],
       "attacks": [],
@@ -395134,7 +395235,8 @@
       "name": "弗圖博士的劇本",
       "supertype": "Trainer",
       "subtypes": [
-        "Supporter"
+        "Supporter",
+        "Future"
       ],
       "abilities": [],
       "attacks": [],
@@ -399323,7 +399425,8 @@
       "name": "高科技雷達",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Item",
+        "Future"
       ],
       "abilities": [],
       "attacks": [],
@@ -399423,7 +399526,8 @@
       "name": "大地之容器",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Item",
+        "Ancient"
       ],
       "abilities": [],
       "attacks": [],
@@ -399952,7 +400056,8 @@
       "name": "驅勁能量 古代",
       "supertype": "Trainer",
       "subtypes": [
-        "Pokémon Tool"
+        "Pokémon Tool",
+        "Ancient"
       ],
       "abilities": [],
       "attacks": [],
@@ -400412,7 +400517,8 @@
       "name": "驅勁能量 未來",
       "supertype": "Trainer",
       "subtypes": [
-        "Pokémon Tool"
+        "Pokémon Tool",
+        "Future"
       ],
       "abilities": [],
       "attacks": [],
@@ -401798,7 +401904,8 @@
       "name": "奧琳博士的氣魄",
       "supertype": "Trainer",
       "subtypes": [
-        "Supporter"
+        "Supporter",
+        "Ancient"
       ],
       "abilities": [],
       "attacks": [],
@@ -402240,7 +402347,8 @@
       "name": "弗圖博士的劇本",
       "supertype": "Trainer",
       "subtypes": [
-        "Supporter"
+        "Supporter",
+        "Future"
       ],
       "abilities": [],
       "attacks": [],
@@ -402335,7 +402443,8 @@
       "name": "驅勁能量 未來",
       "supertype": "Trainer",
       "subtypes": [
-        "Pokémon Tool"
+        "Pokémon Tool",
+        "Future"
       ],
       "abilities": [],
       "attacks": [],
@@ -403442,7 +403551,8 @@
       "name": "暗碼迷的解讀",
       "supertype": "Trainer",
       "subtypes": [
-        "Supporter"
+        "Supporter",
+        "Future"
       ],
       "abilities": [],
       "attacks": [],
@@ -405825,7 +405935,8 @@
       "name": "大地之容器",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Item",
+        "Ancient"
       ],
       "abilities": [],
       "attacks": [],
@@ -405856,7 +405967,8 @@
       "name": "高科技雷達",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Item",
+        "Future"
       ],
       "abilities": [],
       "attacks": [],
@@ -406375,7 +406487,8 @@
       "name": "探險家的嚮導",
       "supertype": "Trainer",
       "subtypes": [
-        "Supporter"
+        "Supporter",
+        "Ancient"
       ],
       "abilities": [],
       "attacks": [],
@@ -406487,7 +406600,8 @@
       "name": "暗碼迷的解讀",
       "supertype": "Trainer",
       "subtypes": [
-        "Supporter"
+        "Supporter",
+        "Future"
       ],
       "abilities": [],
       "attacks": [],
@@ -418011,7 +418125,8 @@
       "name": "大地之容器",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Item",
+        "Ancient"
       ],
       "abilities": [],
       "attacks": [],
@@ -418326,7 +418441,8 @@
       "name": "高科技雷達",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Item",
+        "Future"
       ],
       "abilities": [],
       "attacks": [],
@@ -421860,7 +421976,8 @@
       "name": "驅勁能量 古代",
       "supertype": "Trainer",
       "subtypes": [
-        "Pokémon Tool"
+        "Pokémon Tool",
+        "Ancient"
       ],
       "abilities": [],
       "attacks": [],
@@ -422083,7 +422200,8 @@
       "name": "驅勁能量 未來",
       "supertype": "Trainer",
       "subtypes": [
-        "Pokémon Tool"
+        "Pokémon Tool",
+        "Future"
       ],
       "abilities": [],
       "attacks": [],
@@ -423552,7 +423670,8 @@
       "name": "暗碼迷的解讀",
       "supertype": "Trainer",
       "subtypes": [
-        "Supporter"
+        "Supporter",
+        "Future"
       ],
       "abilities": [],
       "attacks": [],
@@ -423844,7 +423963,8 @@
       "name": "奧琳博士的氣魄",
       "supertype": "Trainer",
       "subtypes": [
-        "Supporter"
+        "Supporter",
+        "Ancient"
       ],
       "abilities": [],
       "attacks": [],
@@ -424834,7 +424954,8 @@
       "name": "探險家的嚮導",
       "supertype": "Trainer",
       "subtypes": [
-        "Supporter"
+        "Supporter",
+        "Ancient"
       ],
       "abilities": [],
       "attacks": [],
@@ -425163,7 +425284,8 @@
       "name": "弗圖博士的劇本",
       "supertype": "Trainer",
       "subtypes": [
-        "Supporter"
+        "Supporter",
+        "Future"
       ],
       "abilities": [],
       "attacks": [],
@@ -472088,7 +472210,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "ex"
+        "ex",
+        "Future"
       ],
       "set": {
         "id": "MC",
@@ -476506,7 +476629,8 @@
       "name": "破空焰",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "set": {
         "id": "MC",
@@ -476630,7 +476754,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "ex"
+        "ex",
+        "Ancient"
       ],
       "set": {
         "id": "MC",
@@ -480904,7 +481029,8 @@
       "name": "波盪水",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "set": {
         "id": "MC",
@@ -481025,7 +481151,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "ex"
+        "ex",
+        "Ancient"
       ],
       "set": {
         "id": "MC",
@@ -484462,7 +484589,8 @@
       "name": "鐵臂膀",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "set": {
         "id": "MC",
@@ -484526,7 +484654,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "ex"
+        "ex",
+        "Future"
       ],
       "set": {
         "id": "MC",
@@ -484654,7 +484783,8 @@
       "name": "鐵荊棘",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "set": {
         "id": "MC",
@@ -488920,7 +489050,8 @@
       "name": "吼叫尾",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "set": {
         "id": "MC",
@@ -488985,7 +489116,8 @@
       "name": "振翼髮",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "set": {
         "id": "MC",
@@ -489046,7 +489178,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "ex"
+        "ex",
+        "Ancient"
       ],
       "set": {
         "id": "MC",
@@ -489111,7 +489244,8 @@
       "name": "振翼髮",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "set": {
         "id": "MC",
@@ -489241,7 +489375,8 @@
       "name": "鐵武者",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "set": {
         "id": "MC",
@@ -489437,7 +489572,8 @@
       "name": "鐵磐岩",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "set": {
         "id": "MC",
@@ -489504,7 +489640,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "ex"
+        "ex",
+        "Future"
       ],
       "set": {
         "id": "MC",
@@ -493181,7 +493318,8 @@
       "name": "雄偉牙",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "set": {
         "id": "MC",
@@ -493308,7 +493446,8 @@
       "name": "爬地翅",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "set": {
         "id": "MC",
@@ -493433,7 +493572,8 @@
       "name": "沙鐵皮",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "set": {
         "id": "MC",
@@ -493679,7 +493819,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "ex"
+        "ex",
+        "Future"
       ],
       "set": {
         "id": "MC",
@@ -497042,7 +497183,8 @@
       "name": "猛惡菇",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "set": {
         "id": "MC",
@@ -500331,7 +500473,8 @@
       "name": "鐵頭殼",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "set": {
         "id": "MC",
@@ -501136,7 +501279,8 @@
       "name": "故勒頓",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "set": {
         "id": "MC",
@@ -501252,7 +501396,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "ex"
+        "ex",
+        "Ancient"
       ],
       "set": {
         "id": "MC",
@@ -501308,7 +501453,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "ex"
+        "ex",
+        "Future"
       ],
       "set": {
         "id": "MC",
@@ -501362,7 +501508,8 @@
       "name": "密勒頓",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "set": {
         "id": "MC",
@@ -501418,7 +501565,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "ex"
+        "ex",
+        "Ancient"
       ],
       "set": {
         "id": "MC",
@@ -505990,7 +506138,8 @@
       "name": "鐵脖頸",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Future"
       ],
       "set": {
         "id": "MC",
@@ -507271,7 +507420,8 @@
       "name": "重新啟動箱",
       "supertype": "Trainer",
       "subtypes": [
-        "Item"
+        "Item",
+        "Future"
       ],
       "set": {
         "id": "MC",
@@ -508077,7 +508227,8 @@
       "name": "暗碼迷的解讀",
       "supertype": "Trainer",
       "subtypes": [
-        "Supporter"
+        "Supporter",
+        "Future"
       ],
       "set": {
         "id": "MC",
@@ -589693,7 +589844,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "ex"
+        "ex",
+        "Ancient"
       ],
       "set": {
         "id": "SV5a",
@@ -589759,7 +589911,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "ex"
+        "ex",
+        "Future"
       ],
       "set": {
         "id": "SV5a",
@@ -590556,7 +590709,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "ex"
+        "ex",
+        "Ancient"
       ],
       "set": {
         "id": "SV5K",
@@ -591128,7 +591282,8 @@
       "name": "振翼髮",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "set": {
         "id": "SV5K",
@@ -591697,7 +591852,8 @@
       "name": "雄偉牙",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "set": {
         "id": "SV5K",
@@ -592242,7 +592398,8 @@
       "name": "轟鳴月",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "set": {
         "id": "SV5K",
@@ -592306,7 +592463,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "ex"
+        "ex",
+        "Ancient"
       ],
       "set": {
         "id": "SV5K",
@@ -592360,7 +592518,8 @@
       "name": "故勒頓",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "set": {
         "id": "SV5K",
@@ -592817,7 +592976,8 @@
       "name": "探險家的嚮導",
       "supertype": "Trainer",
       "subtypes": [
-        "Supporter"
+        "Supporter",
+        "Ancient"
       ],
       "set": {
         "id": "SV5K",
@@ -593032,7 +593192,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "ex"
+        "ex",
+        "Ancient"
       ],
       "set": {
         "id": "SV5K",
@@ -593098,7 +593259,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "ex"
+        "ex",
+        "Ancient"
       ],
       "set": {
         "id": "SV5K",
@@ -593160,7 +593322,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "ex"
+        "ex",
+        "Ancient"
       ],
       "set": {
         "id": "SV5K",
@@ -593215,7 +593378,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "ex"
+        "ex",
+        "Future"
       ],
       "set": {
         "id": "SV5M",
@@ -593288,7 +593452,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "ex"
+        "ex",
+        "Future"
       ],
       "set": {
         "id": "SV5M",
@@ -593351,7 +593516,8 @@
       "supertype": "Pokémon",
       "subtypes": [
         "Basic",
-        "ex"
+        "ex",
+        "Future"
       ],
       "set": {
         "id": "SV5M",
@@ -595453,7 +595619,8 @@
       "name": "破空焰",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "set": {
         "id": "SV-P",
@@ -596370,7 +596537,8 @@
       "name": "振翼髮",
       "supertype": "Pokémon",
       "subtypes": [
-        "Basic"
+        "Basic",
+        "Ancient"
       ],
       "set": {
         "id": "SV-P",
