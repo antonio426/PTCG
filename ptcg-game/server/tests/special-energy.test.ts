@@ -1,8 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { energyUnitsProvided, ALL_ENERGY_TYPES } from '../src/game/effects/specialEnergy';
-import { canPayEnergyCost } from '../src/game/validation';
+import { energyUnitsProvided, ALL_ENERGY_TYPES, specialEnergyRetaliation, specialEnergyBlocksAttackEffects } from '../src/game/effects/specialEnergy';
+import { effectiveMaxHp } from '../src/game/damage';
+import { getPassiveDamageBonus, getPrizeReduction, isDamageBlocked } from '../src/game/effects/passiveAbilities';
+import { applyStatusCondition } from '../src/game/effects/primitives';
+import { makePlayer, makeState } from './fixtures';
+import { canPayEnergyCost, effectiveRetreatCost } from '../src/game/validation';
 import { makeCard, makeGameCard } from './fixtures';
 import type { EnergyType, Subtype } from '@ptcg/shared';
 
@@ -154,5 +158,94 @@ describe('paying an attack cost with Special Energy', () => {
   it('without a holder, falls back to the flat type so old callers are unchanged', () => {
     // heuristicAI still calls it this way; Special Energy then reads as its plain type.
     expect(canPayEnergyCost([attach('古舊能量')], ['Fire'] as EnergyType[])).toBe(false);
+  });
+});
+
+/**
+ * The secondary effects, each wired into the passive hook that already existed for its shape
+ * rather than a new code path: max-HP bonus, retreat waiver, damage bonus, benched immunity,
+ * status immunity, retaliation and the prize reduction.
+ */
+describe('Special Energy secondary effects', () => {
+  const mon = (types: string[], subtypes: string[] = ['Basic']) =>
+    makeGameCard(makeCard({ name: '持有者', hp: '100', types: types as any, subtypes: subtypes as Subtype[] }), 0);
+  const carrying = (holder: ReturnType<typeof mon>, name: string) => {
+    holder.attachedEnergy = [attach(name)];
+    return holder;
+  };
+
+  it('增強【草】能量 gives a Grass holder +20 max HP, and nothing to others', () => {
+    const G = makeState();
+    expect(effectiveMaxHp(G, carrying(mon(['Grass']), '增強【草】能量'))).toBe(120);
+    expect(effectiveMaxHp(G, carrying(mon(['Fire']), '增強【草】能量'))).toBe(100);
+  });
+
+  it('磁鐵【鋼】能量 waives retreat for a Metal holder only', () => {
+    const metal = carrying(mon(['Metal']), '磁鐵【鋼】能量');
+    metal.cardData = { ...metal.cardData, retreatCost: ['Colorless', 'Colorless'] as any };
+    const other = carrying(mon(['Fire']), '磁鐵【鋼】能量');
+    other.cardData = { ...other.cardData, retreatCost: ['Colorless', 'Colorless'] as any };
+    const G = makeState({ players: [makePlayer({ active: metal }), makePlayer({ active: mon(['Colorless']) })] });
+    expect(effectiveRetreatCost(G, metal)).toBe(0);
+    expect(effectiveRetreatCost(G, other)).toBe(2);
+  });
+
+  it('伏特【雷】能量 adds 20 damage for a Lightning attacker', () => {
+    const G = makeState();
+    const lightning = carrying(mon(['Lightning']), '伏特【雷】能量');
+    const other = carrying(mon(['Water']), '伏特【雷】能量');
+    const target = mon(['Colorless']);
+    expect(getPassiveDamageBonus(G, 0, lightning, target)).toBe(20);
+    expect(getPassiveDamageBonus(G, 0, other, target)).toBe(0);
+  });
+
+  it('暗影【惡】能量 makes a Benched Darkness holder untouchable', () => {
+    const benched = carrying(mon(['Darkness']), '暗影【惡】能量');
+    const G = makeState({
+      players: [
+        makePlayer({ active: mon(['Colorless']) }),
+        makePlayer({ active: mon(['Colorless'], ['Basic']), bench: [benched, null, null, null, null] }),
+      ],
+    });
+    benched.owner = 1;
+    expect(isDamageBlocked(G, mon(['Colorless']), benched)).toBe(true);
+    // In the Active spot the same card is a normal target.
+    G.players[1].active = benched;
+    G.players[1].bench = [null, null, null, null, null];
+    expect(isDamageBlocked(G, mon(['Colorless']), benched)).toBe(false);
+  });
+
+  it('泡沫【水】能量 keeps a Water holder free of Special Conditions', () => {
+    const G = makeState();
+    const water = carrying(mon(['Water']), '泡沫【水】能量');
+    G.players[0].active = water;
+    applyStatusCondition(G, water, 'Asleep');
+    expect(water.statusConditions).toEqual([]);
+
+    const fire = carrying(mon(['Fire']), '泡沫【水】能量');
+    G.players[0].active = fire;
+    applyStatusCondition(G, fire, 'Asleep');
+    expect(fire.statusConditions).toContain('Asleep');
+  });
+
+  it('扣殺能量 puts 2 counters back on the attacker', () => {
+    expect(specialEnergyRetaliation(carrying(mon(['Colorless']), '扣殺能量'))).toBe(20);
+    expect(specialEnergyRetaliation(mon(['Colorless']))).toBe(0);
+  });
+
+  it('古舊能量 reduces a prize once per game, then never again', () => {
+    const victim = carrying(mon(['Colorless']), '古舊能量');
+    const attacker = mon(['Colorless']);
+    const G = makeState();
+    expect(getPrizeReduction(G, 0, victim, attacker)).toBe(1);
+    expect(G.players[0].usedAncientEnergyPrizeReduction).toBe(true);
+    // 「對戰中…只生效1次」 — the second KO gets nothing, even from a different copy.
+    expect(getPrizeReduction(G, 0, carrying(mon(['Colorless']), '古舊能量'), attacker)).toBe(0);
+  });
+
+  it('薄霧能量 blocks attack effects for anything, 硬岩【鬥】能量 only for Fighting', () => {
+    expect(specialEnergyBlocksAttackEffects(carrying(mon(['Fire']), '薄霧能量'))).toBe(true);
+    expect(specialEnergyBlocksAttackEffects(carrying(mon(['Fighting']), '硬岩【鬥】能量'))).toBe(true);
+    expect(specialEnergyBlocksAttackEffects(carrying(mon(['Fire']), '硬岩【鬥】能量'))).toBe(false);
   });
 });

@@ -3,6 +3,7 @@ import { PtcgGameState } from '../GameState';
 import { handleKo, resetCardForReentry } from '../damage';
 import { player, opponent, allPokemon, shuffleDeck } from './types';
 import { immuneToStatusByStadium } from './stadiums';
+import { specialEnergyBlocksStatus } from './specialEnergy';
 
 /** Draw up to `count` cards; returns how many were actually drawn (deck may run out). */
 export function drawCards(G: PtcgGameState, idx: 0 | 1, count: number): number {
@@ -147,6 +148,9 @@ export function applyStatusCondition(G: PtcgGameState, card: GameCard, condition
   if (card.cardData.isFossil) return;
   // 祭典會場 Stadium: any Pokémon with Energy attached, on either side, can't be Conditioned.
   if (immuneToStatusByStadium(G, card)) return;
+  // 泡沫【水】能量: a Water Pokémon carrying it can't be Conditioned (the cure half is swept in
+  // statusConditions.ts alongside 祭典會場's, which has the same shape).
+  if (specialEnergyBlocksStatus(card)) return;
   // 不眠 / 憨憨臉: this Pokémon can never be made Asleep / Confused (respectively), from any source.
   const holderHasAbility = (name: string) => card.cardData.abilities?.some(a => a.text && a.name.replace(/^[‌​\s]+/, '').replace(/^\[特性\]\s*/, '').trim() === name);
   if (condition === 'Asleep' && holderHasAbility('不眠')) return;

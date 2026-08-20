@@ -81,6 +81,7 @@ function createPlayerState(deckCardIds: string[], cardData: Record<string, Card>
     retreatedThisTurn: false,
     lastPokemonFaintedTurn: null,
     stadiumActionUsedThisTurn: false,
+    usedAncientEnergyPrizeReduction: false,
   };
 }
 

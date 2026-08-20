@@ -57,6 +57,10 @@ export interface PtcgPlayerState {
    * ever in play at a time (see stadiums.ts) — reset every turn-begin like the other *ThisTurn
    * flags. */
   stadiumActionUsedThisTurn: boolean;
+  /** 古舊能量's prize reduction is once per GAME per player (「對戰中…只生效1次」), so unlike the
+   * per-turn counters above this is never reset — it is set the first time it applies and stays. */
+  usedAncientEnergyPrizeReduction?: boolean;
+
   /** Instance id of whoever was Active when this turn began. Anything else standing in the
    * Active spot later in the turn therefore got there from the Bench this turn — which is what
    * "在這個回合，若從備戰區將這隻寶可夢放置於戰鬥場" keys off. Recorded once per turn instead

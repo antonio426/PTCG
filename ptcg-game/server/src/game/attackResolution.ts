@@ -14,6 +14,7 @@ import { calculateDamageBreakdown, effectiveMaxHp, flushPreEvolutionsTo, flushPr
 import { getBonusPrizesForAttackKo, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getScaledRetaliation, hasPassiveAbilityNamed, hasTeraBenchedImmunity, shouldDiscardAttackerEnergy } from './effects/passiveAbilities';
 import { benchDamageFromEffectsBlocked, isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
+import { specialEnergyRetaliation } from './effects/specialEnergy';
 import { applyStatusCondition, discardAttachedEnergy, drawCards, drawUpTo, shuffleDeck, asAttachedEnergy } from './effects/primitives';
 import { AttackBoardContext, resolveGenericAttackEffect } from './effects/genericAttacks';
 import { inferEvolvesFromSpecies, evolvesFromMatches } from './evolutionChains';
@@ -249,7 +250,8 @@ export function applyAttackOutcome(
 
   // 龐克頭盔-style retaliation Tool: damages the attacker back when its holder is hit,
   // regardless of whether the hit also knocked the holder out.
-  let retaliation = getToolRetaliationDamage(G, defender);
+  // 扣殺能量: 2 counters back on the attacker whenever its holder takes attack damage.
+  let retaliation = getToolRetaliationDamage(G, defender) + specialEnergyRetaliation(defender);
   if (damage > 0 && hasPassiveAbilityNamed(G, defender, '反擊雞冠')) retaliation += 5;
   if (damage > 0 && (hasPassiveAbilityNamed(G, defender, '自動用武') || hasPassiveAbilityNamed(G, defender, '反擊') || hasPassiveAbilityNamed(G, defender, '反擊針'))) retaliation += 3;
   if (damage > 0) retaliation += getScaledRetaliation(G, defender);

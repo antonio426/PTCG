@@ -98,3 +98,63 @@ export function energyUnitsProvided(
 export function energyUnitsOn(holder: GameCard): EnergyUnit[] {
   return holder.attachedEnergy.flatMap(e => energyUnitsProvided(e, holder));
 }
+
+/** Does `holder` carry a Special Energy printed with this exact name? */
+export function hasSpecialEnergy(holder: GameCard, name: string): boolean {
+  return holder.attachedEnergy.some(e =>
+    e.cardData?.subtypes?.includes('Special Energy')
+    && String(e.cardData.name).replace(/^[‌​\s]+/, '').trim() === name);
+}
+
+const holderTypes = (holder: GameCard) => holder.cardData.types ?? [];
+
+/** 增強【草】能量: 「附有這張卡的【草】寶可夢的最大HP「+20」」 */
+export function specialEnergyMaxHpBonus(holder: GameCard): number {
+  return hasSpecialEnergy(holder, '增強【草】能量') && holderTypes(holder).includes('Grass') ? 20 : 0;
+}
+
+/** 磁鐵【鋼】能量: 「附有這張卡的【鋼】寶可夢【撤退】所需的能量全部消除」 */
+export function specialEnergyWaivesRetreat(holder: GameCard): boolean {
+  return hasSpecialEnergy(holder, '磁鐵【鋼】能量') && holderTypes(holder).includes('Metal');
+}
+
+/** 伏特【雷】能量: 「附有這張卡的【雷】寶可夢使用的招式…傷害「+20」點」 */
+export function specialEnergyDamageBonus(attacker: GameCard): number {
+  return hasSpecialEnergy(attacker, '伏特【雷】能量') && holderTypes(attacker).includes('Lightning') ? 20 : 0;
+}
+
+/** 暗影【惡】能量: 「只要附有這張卡的【惡】寶可夢在備戰區，不會受到對手的招式的傷害」 */
+export function specialEnergyBlocksBenchedDamage(holder: GameCard): boolean {
+  return hasSpecialEnergy(holder, '暗影【惡】能量') && holderTypes(holder).includes('Darkness');
+}
+
+/** 泡沫【水】能量: 「附有這張卡的【水】寶可夢不會陷入特殊狀態，並將受到的特殊狀態全部恢復」 */
+export function specialEnergyBlocksStatus(holder: GameCard): boolean {
+  return hasSpecialEnergy(holder, '泡沫【水】能量') && holderTypes(holder).includes('Water');
+}
+
+/**
+ * 扣殺能量: 「附有這張卡的寶可夢在戰鬥場受到對手的寶可夢招式的傷害時，在使用招式的寶可夢身上放置
+ * 2個傷害指示物」 — damage counters, so 20 damage, dealt back to the attacker.
+ */
+export function specialEnergyRetaliation(defender: GameCard): number {
+  return hasSpecialEnergy(defender, '扣殺能量') ? 20 : 0;
+}
+
+/**
+ * 薄霧能量 / 硬岩【鬥】能量: 「不會受到對手的寶可夢使用招式的效果的影響」. 硬岩 additionally
+ * requires the holder to be a 【鬥】 Pokémon; 薄霧 applies to whatever carries it.
+ */
+export function specialEnergyBlocksAttackEffects(holder: GameCard): boolean {
+  if (hasSpecialEnergy(holder, '薄霧能量')) return true;
+  return hasSpecialEnergy(holder, '硬岩【鬥】能量') && holderTypes(holder).includes('Fighting');
+}
+
+/**
+ * 古舊能量: 「受到對手的寶可夢招式的傷害而【昏厥】時，被獲得的獎賞卡減少1張。對戰中，自己的
+ * 「古舊能量」的這個效果只生效1次。」 — the once-per-GAME limit is tracked on the player, not the
+ * card, since the text scopes it to 自己的「古舊能量」 as a whole rather than to one copy.
+ */
+export function specialEnergyPrizeReduction(koCard: GameCard): number {
+  return hasSpecialEnergy(koCard, '古舊能量') ? 1 : 0;
+}

@@ -1,5 +1,6 @@
 import { GameCard } from '@ptcg/shared';
 import { PtcgGameState } from '../GameState';
+import { specialEnergyBlocksStatus } from './specialEnergy';
 
 /** The default Bench size; 零之大空洞 is the only thing that changes it (see benchLimit). */
 export const DEFAULT_BENCH_SIZE = 5;
@@ -101,10 +102,13 @@ export function enforceBenchLimit(G: PtcgGameState, flushPreEvolutions: (card: G
 }
 
 export function sweepStadiumStatusCures(G: PtcgGameState): void {
-  if (!isStadiumActive(G, '祭典會場')) return;
+  const plazaOut = isStadiumActive(G, '祭典會場');
   for (const p of G.players) {
     for (const card of [p.active, ...p.bench]) {
-      if (card && card.attachedEnergy.length > 0 && card.statusConditions.length > 0) {
+      if (!card || card.statusConditions.length === 0) continue;
+      // 祭典會場 cures anything holding Energy; 泡沫【水】能量 cures the Water Pokémon carrying it
+      // (「並將受到的特殊狀態全部恢復」). Identical shape, so one sweep covers both.
+      if ((plazaOut && card.attachedEnergy.length > 0) || specialEnergyBlocksStatus(card)) {
         card.statusConditions = [];
       }
     }

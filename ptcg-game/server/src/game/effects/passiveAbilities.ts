@@ -3,6 +3,7 @@ import { PtcgGameState } from '../GameState';
 import { normalizeAbilityName, normalizeCardName } from './types';
 import { hasEvolvesFrom } from '../evolutionChains';
 import { isStadiumActive, isTeraPokemon } from './stadiums';
+import { specialEnergyBlocksBenchedDamage, specialEnergyDamageBonus, specialEnergyMaxHpBonus, specialEnergyPrizeReduction, specialEnergyWaivesRetreat } from './specialEnergy';
 
 /**
  * Most real Pokémon abilities are NOT "use once per turn" triggered effects (the shape
@@ -84,6 +85,8 @@ function isBenchedPokemon(G: PtcgGameState, card: GameCard): boolean {
 /** Extra damage `attacker` deals to `defender`, from any of the attacker's own team's passive abilities. */
 export function getPassiveDamageBonus(G: PtcgGameState, attackerIdx: 0 | 1, attacker: GameCard, defender: GameCard): number {
   let bonus = 0;
+  // 伏特【雷】能量: +20 to whatever a Lightning Pokémon carrying it attacks with.
+  bonus += specialEnergyDamageBonus(attacker);
   for (const holder of teamOf(G, attackerIdx)) {
     if (hasAbility(G, holder, '輝煌聲援') && attacker.cardData.name.includes('竹蘭的')) bonus += 30;
     if (hasAbility(G, holder, '閃焰象徵') && holder.id !== attacker.id
@@ -169,6 +172,8 @@ export function isDamageBlocked(G: PtcgGameState, attacker: GameCard, defender: 
   if (hasAbility(G, defender, '鐵壁硬殼') && (attackPrintedDamage ?? 0) >= 200) return true;
   // 太晶: Benched Tera Pokémon are untouchable.
   if (hasTeraBenchedImmunity(defender) && isBenchedPokemon(G, defender)) return true;
+  // 暗影【惡】能量: same shape — a Darkness Pokémon carrying it is untouchable while Benched.
+  if (specialEnergyBlocksBenchedDamage(defender) && isBenchedPokemon(G, defender)) return true;
   // Timed self-protection set by the defender's own earlier attack (e.g. "在下個對手的回合，
   // 這隻寶可夢不會受到招式的傷害"). `vsSubtype`, when present, restricts the immunity to
   // attackers of that printed Subtype only (e.g. "Basic").
@@ -327,6 +332,16 @@ export function getPrizeReduction(G: PtcgGameState, koPlayerIndex: 0 | 1, koCard
   if (attackerIsEx && (koCard.cardData.types || []).includes('Darkness')
     && teamOf(G, koPlayerIndex).some(c => hasAbility(G, c, '影藏'))) reduction += 1;
   if (attackerIsEx && hasAbility(G, koCard, '脆弱蛻殼')) reduction += 99;
+  // 古舊能量: one fewer prize, but 「對戰中…只生效1次」 — the limit is per player for the whole
+  // game (the text scopes it to 自己的「古舊能量」, not to one copy), so it's spent from state here
+  // rather than being available on every KO.
+  if (attackerCard && !G.players[koPlayerIndex].usedAncientEnergyPrizeReduction) {
+    const fromEnergy = specialEnergyPrizeReduction(koCard);
+    if (fromEnergy > 0) {
+      G.players[koPlayerIndex].usedAncientEnergyPrizeReduction = true;
+      reduction += fromEnergy;
+    }
+  }
   return reduction;
 }
 
@@ -349,6 +364,8 @@ export function canAttackOnFirstTurn(G: PtcgGameState, card: GameCard): boolean 
 
 /** Retreat cost is fully waived for `card` by any of its own team's passive abilities. */
 export function getPassiveRetreatWaiver(G: PtcgGameState, idx: 0 | 1, card: GameCard): boolean {
+  // 磁鐵【鋼】能量: a Metal Pokémon carrying it retreats for free.
+  if (specialEnergyWaivesRetreat(card)) return true;
   for (const holder of teamOf(G, idx)) {
     if ((hasAbility(G, holder, '天空徑線') || hasAbility(G, holder, '棉花搬運')) && card.cardData.subtypes.includes('Basic')) return true;
     if (hasAbility(G, holder, '鋼之橋') && card.attachedEnergy.some(e => e.type === 'Metal')) return true;
@@ -429,6 +446,8 @@ export function getPassiveMaxHpBonus(G: PtcgGameState, card: GameCard): number {
   if (hasAbility(G, card, '大師工藝')) bonus += card.attachedEnergy.filter(e => e.type === 'Fighting').length * 40;
   // 生機森巴: +40 max HP for every own Pokémon, doesn't stack across multiple holders.
   if (teamOf(G, ownerIndexOf(G, card)).some(c => hasAbility(G, c, '生機森巴'))) bonus += 40;
+  // 增強【草】能量: +20 max HP while a Grass Pokémon carries it.
+  bonus += specialEnergyMaxHpBonus(card);
   // 激動競技場 Stadium: +30 max HP for every Basic Pokémon on BOTH sides.
   if (isStadiumActive(G, '激動競技場') && card.cardData.subtypes.includes('Basic')) bonus += 30;
   // 引力山岳 Stadium: -30 max HP for every Stage 2 Pokémon on BOTH sides.
