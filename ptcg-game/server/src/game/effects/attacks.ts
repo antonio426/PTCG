@@ -1,7 +1,9 @@
 import { GameCard } from '@ptcg/shared';
 import { EffectContext, EffectHandler, EffectStep, normalizeCardName, opponent, player, shuffleDeck } from './types';
 import { applyWeaknessResistance, handleKo } from '../damage';
-import { discardAttachedEnergy } from './primitives';
+import { discardAttachedEnergy, hasNoRuleBox } from './primitives';
+import { applyAttackOutcome, buildAttackBoard } from '../attackResolution';
+import { isTeraPokemon } from './stadiums';
 
 /**
  * Attacks whose text does something beyond flat weakness/resistance damage
@@ -192,8 +194,128 @@ function moveCountersToDefender(ctx: EffectContext, donor: GameCard): void {
   if (hp > 0 && defender.damage >= hp) handleKo(ctx.G, (1 - ctx.playerIndex) as 0 | 1, defender.id);
 }
 
+
+/**
+ * 「選擇1個…持有的招式，作為這個招式使用」 — resolve another Pokémon's attack as if this one had
+ * used it. Shared by 呆呆王's 耀閃挑戰, N的索羅亞克ex's 暗黑底牌 and 火箭隊的謎擬Q's 扮晶晶酒.
+ *
+ * The copied attack is resolved against the CURRENT board with THIS Pokémon as the attacker, so
+ * weakness, the defender and every board-scaled template read the real situation. Its energy cost
+ * is deliberately not checked: the printed text grants the use outright, the cost was already
+ * paid for the attack that copied it.
+ */
+function useCopiedAttack(ctx: EffectContext, source: GameCard, attackIndex: number): void {
+  const attack = source.cardData.attacks?.[attackIndex];
+  if (!attack) return;
+  const p = player(ctx.G, ctx.playerIndex);
+  const opp = opponent(ctx.G, ctx.playerIndex);
+  if (!p.active || !opp.active) return;
+  const board = buildAttackBoard(ctx.G, p, opp, p.active, opp.active, attack);
+  applyAttackOutcome(ctx.G, p, opp, p.active, opp.active, attack, board);
+}
+
+/** Attacks a copy effect may offer: anything the donor actually prints. */
+function copyableAttackOptions(donor: GameCard): { id: string; label: string }[] {
+  return (donor.cardData.attacks ?? []).map((a, i) => ({
+    id: String(i),
+    label: `${donor.cardData.name}：${a.name}${a.damage ? `（${a.damage}）` : ''}`,
+  }));
+}
+
+/** 耀閃挑戰 (呆呆王): discard the top deck card; if it's a Pokémon without a rule box, use one of its attacks. */
+const dazzlingChallenge: EffectHandler = {
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const top = p.deck.pop();
+    if (!top) return 'done';
+    p.discardPile.push(top);
+    if (top.cardData.supertype !== 'Pokémon' || !hasNoRuleBox(top)) return 'done';
+    const options = copyableAttackOptions(top);
+    if (options.length === 0) return 'done';
+    if (options.length === 1) { useCopiedAttack(ctx, top, 0); return 'done'; }
+    return {
+      prompt: `耀閃挑戰：選擇要使用的「${top.cardData.name}」招式`,
+      choiceType: 'select_from_list',
+      count: 1,
+      options,
+      context: { donorId: top.id },
+    };
+  },
+  resume(ctx, context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const donor = p.discardPile.find(c => c.id === context.donorId);
+    if (donor) useCopiedAttack(ctx, donor, parseInt(selection[0], 10));
+    return 'done';
+  },
+};
+
+/** Shared shape for "pick a Pokémon from a set, then use one of its attacks". */
+function copyFromPokemon(
+  promptLabel: string,
+  donors: (ctx: EffectContext) => GameCard[],
+): EffectHandler {
+  const findDonor = (ctx: EffectContext, id: string) => donors(ctx).find(c => c.id === id);
+  return {
+    start(ctx) {
+      const list = donors(ctx).filter(c => (c.cardData.attacks?.length ?? 0) > 0);
+      if (list.length === 0) return 'done';
+      if (list.length === 1) {
+        const options = copyableAttackOptions(list[0]);
+        if (options.length === 1) { useCopiedAttack(ctx, list[0], 0); return 'done'; }
+        return {
+          prompt: `${promptLabel}：選擇要使用的招式`,
+          choiceType: 'select_from_list',
+          count: 1,
+          options,
+          context: { donorId: list[0].id },
+        };
+      }
+      return {
+        prompt: `${promptLabel}：選擇要借用招式的寶可夢`,
+        choiceType: 'select_pokemon',
+        count: 1,
+        options: list.map(c => ({ id: c.id, label: c.cardData.name })),
+        context: { step: 'pick_donor' },
+      };
+    },
+    resume(ctx, context, selection) {
+      if (context.step === 'pick_donor') {
+        const donor = findDonor(ctx, selection[0]);
+        if (!donor) return 'done';
+        const options = copyableAttackOptions(donor);
+        if (options.length === 1) { useCopiedAttack(ctx, donor, 0); return 'done'; }
+        return {
+          prompt: `${promptLabel}：選擇要使用的招式`,
+          choiceType: 'select_from_list',
+          count: 1,
+          options,
+          context: { donorId: donor.id },
+        };
+      }
+      const donor = findDonor(ctx, context.donorId as string);
+      if (donor) useCopiedAttack(ctx, donor, parseInt(selection[0], 10));
+      return 'done';
+    },
+  };
+}
+
+/** 暗黑底牌 (N的索羅亞克ex): use an attack from one of your Benched 「N的」 Pokémon. */
+const darkTrumpCard = copyFromPokemon('暗黑底牌', ctx =>
+  player(ctx.G, ctx.playerIndex).bench.filter(
+    (c): c is GameCard => c !== null && c.cardData.name.includes('N的'),
+  ));
+
+/** 扮晶晶酒 (火箭隊的謎擬Q): use an attack from the opponent's Active, if it's a 太晶 Pokémon. */
+const teraMimicry = copyFromPokemon('扮晶晶酒', ctx => {
+  const oppActive = opponent(ctx.G, ctx.playerIndex).active;
+  return oppActive && isTeraPokemon(oppActive) ? [oppActive] : [];
+});
+
 export const attackEffects: Record<string, EffectHandler> = {
   '振翼髮::蠱惑挪移': beguilingShift,
+  '呆呆王::耀閃挑戰': dazzlingChallenge,
+  'N的索羅亞克ex::暗黑底牌': darkTrumpCard,
+  '火箭隊的謎擬Q::扮晶晶酒': teraMimicry,
   '多龍巴魯托ex::幻影奇襲': phantomDive,
   '超級蒂安希ex::花冠射線': floralRay,
   '火箭隊的袋獸ex::惡棍衝擊': villainousShock,

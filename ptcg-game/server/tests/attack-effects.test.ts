@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { hasAttackEffect, startAttackEffect } from '../src/game/effects/attacks';
 import { stackAsPreEvolution } from '../src/game/damage';
 import { PtcgGameState } from '../src/game/GameState';
-import { BASIC_ENERGY, BASIC_MON, STAGE1_MON, makeCard, makeGameCard, makePlayer, makeState } from './fixtures';
+import { BASIC_ENERGY, BASIC_MON, STAGE1_MON, attack as mkAttack, makeCard, makeGameCard, makePlayer, makeState } from './fixtures';
 
 const KANGASKHAN = makeCard({ name: '火箭隊的袋獸ex', hp: '230', types: ['Colorless'], subtypes: ['Basic', 'ex'] });
 const ESPEON = makeCard({ name: '太陽伊布ex', hp: '270', types: ['Psychic'], subtypes: ['Stage 1', 'ex'] });
@@ -219,5 +219,134 @@ describe('蠱惑挪移 (振翼髮)', () => {
     fire(G, '振翼髮', '蠱惑挪移');
     expect(G.players[1].discardPile.map(c => c.cardData.name)).toContain('小鼠');
     expect(G.players[0].takenPrizes).toBe(1);
+  });
+});
+
+/**
+ * 「選擇1個…持有的招式，作為這個招式使用」. These were unimplementable until buildAttackBoard /
+ * applyAttackOutcome were lifted out of moves.attack — nothing else could resolve an attack.
+ */
+describe('copying another Pokémon\'s attack', () => {
+  const HITTER = makeCard({
+    name: '借用來源', hp: '100', types: ['Colorless'], subtypes: ['Basic'],
+    attacks: [mkAttack('借來的一擊', ['Colorless'], '80')],
+  });
+  const TWO_ATTACKS = makeCard({
+    name: '雙招來源', hp: '100', types: ['Colorless'], subtypes: ['Basic'],
+    attacks: [mkAttack('小招', ['Colorless'], '10'), mkAttack('大招', ['Colorless'], '90')],
+  });
+  const BIG_TANK = makeCard({ name: '厚皮鼠', hp: '400', types: ['Colorless'], subtypes: ['Basic'] });
+
+  function board(user: ReturnType<typeof makeCard>, over: {
+    deckTop?: ReturnType<typeof makeGameCard>;
+    bench?: (ReturnType<typeof makeGameCard> | null)[];
+    oppActive?: ReturnType<typeof makeGameCard>;
+  } = {}) {
+    const G = makeState({
+      turn: 3, currentPlayer: 0, phase: 'main',
+      players: [
+        makePlayer({
+          active: makeGameCard(user, 0),
+          bench: [...(over.bench ?? []), null, null, null, null].slice(0, 5) as any,
+          deck: over.deckTop ? [over.deckTop] : [],
+          prizes: Array.from({ length: 6 }, () => makeGameCard(BASIC_MON, 0)),
+        }),
+        makePlayer({
+          active: over.oppActive ?? makeGameCard(BIG_TANK, 1),
+          prizes: Array.from({ length: 6 }, () => makeGameCard(BASIC_MON, 1)),
+        }),
+      ],
+    });
+    return G;
+  }
+
+  describe('耀閃挑戰 (呆呆王)', () => {
+    const SLOWKING = makeCard({ name: '呆呆王', hp: '120', types: ['Psychic'], subtypes: ['Stage 1'] });
+
+    it('discards the top card and uses its attack when it is a rule-box-free Pokémon', () => {
+      const top = makeGameCard(HITTER, 0);
+      const G = board(SLOWKING, { deckTop: top });
+      fire(G, '呆呆王', '耀閃挑戰');
+      expect(G.players[0].discardPile.map(c => c.id)).toContain(top.id);
+      expect(G.players[1].active?.damage).toBe(80);
+    });
+
+    it('discards but does nothing when the top card is not a Pokémon', () => {
+      const top = makeGameCard(BASIC_ENERGY, 0);
+      const G = board(SLOWKING, { deckTop: top });
+      fire(G, '呆呆王', '耀閃挑戰');
+      expect(G.players[0].discardPile.map(c => c.id)).toContain(top.id);
+      expect(G.players[1].active?.damage).toBe(0);
+    });
+
+    it('skips a Pokémon with a rule box, as the text says', () => {
+      const ruleBox = makeCard({
+        name: '規則鼠ex', hp: '200', types: ['Colorless'], subtypes: ['Basic', 'ex'],
+        attacks: [mkAttack('大招', ['Colorless'], '150')],
+      });
+      const G = board(SLOWKING, { deckTop: makeGameCard(ruleBox, 0) });
+      fire(G, '呆呆王', '耀閃挑戰');
+      expect(G.players[1].active?.damage).toBe(0);
+    });
+
+    it('asks which attack when the discarded Pokémon prints more than one', () => {
+      const G = board(SLOWKING, { deckTop: makeGameCard(TWO_ATTACKS, 0) });
+      const step = fire(G, '呆呆王', '耀閃挑戰');
+      expect(step).not.toBe('done');
+      expect((step as any).options).toHaveLength(2);
+    });
+
+    it('does nothing with an empty deck', () => {
+      const G = board(SLOWKING);
+      expect(fire(G, '呆呆王', '耀閃挑戰')).toBe('done');
+    });
+  });
+
+  describe('暗黑底牌 (N的索羅亞克ex)', () => {
+    const ZOROARK = makeCard({ name: 'N的索羅亞克ex', hp: '280', types: ['Darkness'], subtypes: ['Stage 1', 'ex'] });
+    const N_MON = makeCard({
+      name: 'N的索羅亞', hp: '70', types: ['Darkness'], subtypes: ['Basic'],
+      attacks: [mkAttack('借來的一擊', ['Colorless'], '80')],
+    });
+
+    it('uses an attack from a Benched N-family Pokémon', () => {
+      const G = board(ZOROARK, { bench: [makeGameCard(N_MON, 0)] });
+      fire(G, 'N的索羅亞克ex', '暗黑底牌');
+      expect(G.players[1].active?.damage).toBe(80);
+    });
+
+    it('ignores a Benched Pokémon outside the family', () => {
+      const G = board(ZOROARK, { bench: [makeGameCard(HITTER, 0)] });
+      expect(fire(G, 'N的索羅亞克ex', '暗黑底牌')).toBe('done');
+      expect(G.players[1].active?.damage).toBe(0);
+    });
+
+    it('does nothing with an empty Bench', () => {
+      expect(fire(board(ZOROARK), 'N的索羅亞克ex', '暗黑底牌')).toBe('done');
+    });
+  });
+
+  describe('扮晶晶酒 (火箭隊的謎擬Q)', () => {
+    const MIMIKYU = makeCard({ name: '火箭隊的謎擬Q', hp: '60', types: ['Psychic'], subtypes: ['Basic'] });
+    const TERA_TEXT = '只要這隻寶可夢在備戰區，不會受到招式的傷害。';
+    const TERA_MON = makeCard({
+      name: '太晶鼠', hp: '300', types: ['Colorless'], subtypes: ['Basic'],
+      attacks: [
+        { name: '太晶', cost: ['Colorless'] as any, convertedEnergyCost: 1, damage: '70', text: TERA_TEXT },
+      ],
+    });
+
+    it('uses an attack from the opponent\'s Tera Active', () => {
+      const G = board(MIMIKYU, { oppActive: makeGameCard(TERA_MON, 1) });
+      fire(G, '火箭隊的謎擬Q', '扮晶晶酒');
+      // The copied attack resolves against the CURRENT board, so it hits the opponent's own Active.
+      expect(G.players[1].active?.damage).toBe(70);
+    });
+
+    it('does nothing when the opponent\'s Active is not a Tera Pokémon', () => {
+      const G = board(MIMIKYU, { oppActive: makeGameCard(BIG_TANK, 1) });
+      expect(fire(G, '火箭隊的謎擬Q', '扮晶晶酒')).toBe('done');
+      expect(G.players[1].active?.damage).toBe(0);
+    });
   });
 });
