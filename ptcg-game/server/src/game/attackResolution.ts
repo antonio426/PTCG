@@ -12,7 +12,7 @@ import { Attack, DamageDetail, GameCard, TurnAction } from '@ptcg/shared';
 import { PtcgGameState, PtcgPlayerState } from './GameState';
 import { calculateDamageBreakdown, effectiveMaxHp, flushPreEvolutionsTo, flushPreEvolutionsToDiscard, handleKo, prizesForKo, resetCardForReentry, stackAsPreEvolution } from './damage';
 import { getBonusPrizesForAttackKo, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getScaledRetaliation, hasPassiveAbilityNamed, hasTeraBenchedImmunity, isImmuneToOpponentAttackEffects, shouldDiscardAttackerEnergy, isProtectedFromOpponentAbility, isReturnToHandBlocked } from './effects/passiveAbilities';
-import { benchDamageFromEffectsBlocked, isStadiumActive } from './effects/stadiums';
+import { benchDamageFromEffectsBlocked, benchLimit, isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
 import { specialEnergyRetaliation } from './effects/specialEnergy';
 import { applyStatusCondition, discardAttachedEnergy, drawCards, drawUpTo, shuffleDeck, asAttachedEnergy } from './effects/primitives';
@@ -247,6 +247,27 @@ export function applyAttackOutcome(
   const defenderWasFullHp = defender.damage === 0;
   defender.damage += damage;
   addLog(G, G.currentPlayer, 'attack', `${attacker.cardData.name} 使用「${attack.name}」，對 ${defender.cardData.name} 造成 ${damage} 點傷害`, damageBreakdown, genericOutcome?.coinFlipNote);
+
+  // 警備濁霧 (<火箭隊的>瓦斯彈): taking opponent-attack damage while Active benches up to 2
+  // 「瓦斯彈」-named Pokémon from the deck. Auto-picked (no defender-side interactive choice
+  // exists mid-attacker-turn — see the KO-trigger note in damage.ts), and it fires on the
+  // lethal hit too: the damage was still taken before the holder leaves play.
+  if (damage > 0 && hasPassiveAbilityNamed(G, defender, '警備濁霧')) {
+    const defenderIdx = (1 - G.currentPlayer) as 0 | 1;
+    const dp = G.players[defenderIdx];
+    const matches = dp.deck.filter(c => c.cardData.supertype === 'Pokémon' && c.cardData.name.includes('瓦斯彈'));
+    let placed = 0;
+    for (const card of matches) {
+      if (placed >= 2) break;
+      const slot = dp.bench.slice(0, benchLimit(G, defenderIdx)).findIndex(s => s === null);
+      if (slot === -1) break;
+      dp.deck.splice(dp.deck.indexOf(card), 1);
+      dp.bench[slot] = card;
+      placed++;
+    }
+    // 「並且重洗牌庫」 — the deck was searched whether or not anything was placed.
+    shuffleDeck(dp.deck);
+  }
 
   // 龐克頭盔-style retaliation Tool: damages the attacker back when its holder is hit,
   // regardless of whether the hit also knocked the holder out.
@@ -530,7 +551,7 @@ export function applyAttackOutcome(
         const target = targets[Math.floor(Math.random() * targets.length)];
         target.damage += genericOutcome.benchSplashDamage;
         const hp = effectiveMaxHp(G, target);
-        if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id);
+        if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id, attacker);
       }
     }
     if (genericOutcome.selfAllBenchSplashDamage) {
@@ -794,13 +815,13 @@ export function applyAttackOutcome(
         const target = targets[Math.floor(Math.random() * targets.length)];
         target.damage += genericOutcome.placeCountersOnRandomOpponent * 10;
         const hp = effectiveMaxHp(G, target);
-        if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id);
+        if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id, attacker);
       }
     }
     if (genericOutcome.placeCountersOnOpponentActive && opponent.active) {
       opponent.active.damage += genericOutcome.placeCountersOnOpponentActive * 10;
       const hp = effectiveMaxHp(G, opponent.active);
-      if (hp > 0 && opponent.active.damage >= hp) handleKo(G, 1 - G.currentPlayer, opponent.active.id);
+      if (hp > 0 && opponent.active.damage >= hp) handleKo(G, 1 - G.currentPlayer, opponent.active.id, attacker);
     }
     if (genericOutcome.placeCountersOnAllOpponent) {
       // Same Bench guard as damageToEachDamagedOpponentAmount below: 對戰圓形競技場 stops
@@ -810,13 +831,13 @@ export function applyAttackOutcome(
       for (const target of pool.filter((c): c is GameCard => c !== null)) {
         target.damage += genericOutcome.placeCountersOnAllOpponent * 10;
         const hp = effectiveMaxHp(G, target);
-        if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id);
+        if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id, attacker);
       }
     }
     if (genericOutcome.splashDamageAfterSwitch && opponent.active) {
       opponent.active.damage += genericOutcome.splashDamageAfterSwitch;
       const hp = effectiveMaxHp(G, opponent.active);
-      if (hp > 0 && opponent.active.damage >= hp) handleKo(G, 1 - G.currentPlayer, opponent.active.id);
+      if (hp > 0 && opponent.active.damage >= hp) handleKo(G, 1 - G.currentPlayer, opponent.active.id, attacker);
     }
     if (genericOutcome.healBenchTypedAmount) {
       const { type, amount } = genericOutcome.healBenchTypedAmount;
@@ -844,7 +865,7 @@ export function applyAttackOutcome(
       for (const target of pool.filter((c): c is GameCard => c !== null && c.damage > 0)) {
         target.damage += genericOutcome.damageToEachDamagedOpponentAmount * 10;
         const hp = effectiveMaxHp(G, target);
-        if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id);
+        if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id, attacker);
       }
     }
     if (genericOutcome.discardHandThenDrawCount) {
@@ -859,7 +880,7 @@ export function applyAttackOutcome(
       for (const target of picked) {
         target.damage += amount;
         const hp = effectiveMaxHp(G, target);
-        if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id);
+        if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id, attacker);
       }
     }
     if (genericOutcome.randomOpponentHandCardToDeckBottom && opponent.hand.length > 0) {
@@ -878,7 +899,7 @@ export function applyAttackOutcome(
         const target = targets[Math.floor(Math.random() * targets.length)];
         target.damage += (target.damage / 10) * genericOutcome.opponentBenchDamageScaledSplash.multiplier;
         const hp = effectiveMaxHp(G, target);
-        if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id);
+        if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id, attacker);
       }
     }
     if (genericOutcome.returnSelfEnergyToHandTypeBonus && !isReturnToHandBlocked(G, G.currentPlayer as 0 | 1)) {
@@ -904,7 +925,7 @@ export function applyAttackOutcome(
           const target = targets[Math.floor(Math.random() * targets.length)];
           target.damage += benchDamage;
           const hp = effectiveMaxHp(G, target);
-          if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id);
+          if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id, attacker);
         }
       }
     }
@@ -982,7 +1003,7 @@ export function applyAttackOutcome(
       for (const target of opponent.bench.filter((c): c is GameCard => c !== null)) {
         target.damage += genericOutcome.opponentAllBenchSplashDamage;
         const hp = effectiveMaxHp(G, target);
-        if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id);
+        if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id, attacker);
       }
     }
   }

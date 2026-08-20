@@ -320,3 +320,105 @@ describe('平穩境地: the opponent side cannot return in-play Pokémon/attachm
     expect(G2.players[0].hand.map(c => c.id)).toContain(attacker2.id);
   });
 });
+
+/* ---------- Batch C: KO/damage-triggered defender-side abilities (auto-resolved) ---------- */
+
+const basicEnergyOf = (id: string, type: string) => ({
+  id, type,
+  cardData: makeCard({ name: `基本${type}能量`, supertype: 'Energy', subtypes: ['Basic Energy'] as Subtype[], types: [type] as any }),
+});
+
+/** Board where player 0 one-shots player 1's Active. Attacker deals `dmg`. */
+const koAttackBoard = (theirActive: any, extra: { theirBench?: any[] } = {}, dmg = '200') => {
+  const hit = mkAttack('重擊', ['Colorless'], dmg);
+  const attacker = makeGameCard(makeCard({ name: '重擊手', hp: '120', subtypes: ['Basic'] as Subtype[], attacks: [hit] }), 0, {
+    attachedEnergy: [basicEnergyOf('atk-e1', 'Colorless')],
+  });
+  return plainBoard(attacker, theirActive, extra);
+};
+
+describe('潛者捕捉: KO\'d own Water Pokémon returns Basic Water Energy to hand', () => {
+  it('Water Energy goes to hand, the off-type Energy rides to discard as usual', () => {
+    const holder = makeGameCard(withAbility('潛者捕捉'), 1);
+    const victim = makeGameCard(makeCard({ name: '水受害者', hp: '60', subtypes: ['Basic'] as Subtype[], types: ['Water'] as any }), 1, {
+      attachedEnergy: [basicEnergyOf('w-1', 'Water'), basicEnergyOf('w-2', 'Water'), basicEnergyOf('f-1', 'Fire')],
+    });
+    const G = koAttackBoard(victim, { theirBench: [holder] });
+    G.players[1].prizes = [makeGameCard(BASIC_MON, 1)];
+    moves.attack({ G, ctx: battleCtx } as any, 0);
+    expect(G.players[1].hand.map(c => c.id).sort()).toEqual(['w-1', 'w-2']);
+    // The KO'd card itself still reaches the discard pile, carrying only the Fire Energy.
+    const discarded = G.players[1].discardPile.find(c => c.id === victim.id);
+    expect(discarded).toBeDefined();
+    expect(discarded!.attachedEnergy.map(e => e.id)).toEqual(['f-1']);
+  });
+
+  it('does nothing for a non-Water victim or an ability-KO', () => {
+    const holder = makeGameCard(withAbility('潛者捕捉'), 1);
+    const victim = makeGameCard(makeCard({ name: '火受害者', hp: '60', subtypes: ['Basic'] as Subtype[], types: ['Fire'] as any }), 1, {
+      attachedEnergy: [basicEnergyOf('w-3', 'Water')],
+    });
+    const G = koAttackBoard(victim, { theirBench: [holder] });
+    G.players[1].prizes = [makeGameCard(BASIC_MON, 1)];
+    moves.attack({ G, ctx: battleCtx } as any, 0);
+    expect(G.players[1].hand).toHaveLength(0);
+  });
+});
+
+describe('光子纜線: Active holder KO\'d by attack moves up to 2 Basic Lightning to the Bench', () => {
+  it('moves 2 of 3 Lightning to the Lightning-type benched Pokémon', () => {
+    const holder = makeGameCard(withAbility('光子纜線', { hp: '120' }), 1, {
+      attachedEnergy: [basicEnergyOf('l-1', 'Lightning'), basicEnergyOf('l-2', 'Lightning'), basicEnergyOf('l-3', 'Lightning')],
+    });
+    const zappy = makeGameCard(makeCard({ name: '雷隊友', hp: '90', subtypes: ['Basic'] as Subtype[], types: ['Lightning'] as any }), 1);
+    const plain = makeGameCard(BASIC_MON, 1);
+    const G = koAttackBoard(holder, { theirBench: [plain, zappy] });
+    G.players[1].prizes = [makeGameCard(BASIC_MON, 1)];
+    moves.attack({ G, ctx: battleCtx } as any, 0);
+    expect(zappy.attachedEnergy).toHaveLength(2);
+    expect(plain.attachedEnergy).toHaveLength(0);
+    const discarded = G.players[1].discardPile.find(c => c.id === holder.id);
+    expect(discarded!.attachedEnergy).toHaveLength(1); // the third Lightning rode to discard
+  });
+});
+
+describe('最後鎖鏈: holder KO\'d by attack searches 1 deck card to hand', () => {
+  it('grabs the Supporter first and shuffles; hand grows by exactly 1', () => {
+    const holder = makeGameCard(withAbility('最後鎖鏈', { hp: '80' }), 1);
+    const supporter = makeGameCard(makeCard({ name: '某支援者', supertype: 'Trainer', subtypes: ['Supporter'] as Subtype[] }), 1);
+    const G = koAttackBoard(holder, { theirBench: [makeGameCard(BASIC_MON, 1)] });
+    G.players[1].deck = [makeGameCard(BASIC_MON, 1), supporter, makeGameCard(BASIC_MON, 1)];
+    G.players[1].prizes = [makeGameCard(BASIC_MON, 1)];
+    moves.attack({ G, ctx: battleCtx } as any, 0);
+    expect(G.players[1].hand.map(c => c.id)).toEqual([supporter.id]);
+    expect(G.players[1].deck).toHaveLength(2);
+  });
+});
+
+describe('警備濁霧: taking attack damage while Active benches up to 2 瓦斯彈 from deck', () => {
+  it('benches 2 on a non-lethal hit and shuffles the deck', () => {
+    const holder = makeGameCard(withAbility('警備濁霧', { hp: '200' }), 1);
+    const gas1 = makeGameCard(makeCard({ name: '<火箭隊的>瓦斯彈', hp: '70', subtypes: ['Basic'] as Subtype[] }), 1);
+    const gas2 = makeGameCard(makeCard({ name: '<火箭隊的>瓦斯彈', hp: '70', subtypes: ['Basic'] as Subtype[] }), 1);
+    const gas3 = makeGameCard(makeCard({ name: '<火箭隊的>瓦斯彈', hp: '70', subtypes: ['Basic'] as Subtype[] }), 1);
+    const G = koAttackBoard(holder, {}, '30');
+    G.players[1].deck = [gas1, gas2, gas3, makeGameCard(BASIC_MON, 1)];
+    moves.attack({ G, ctx: battleCtx } as any, 0);
+    expect(holder.damage).toBe(30);
+    expect(G.players[1].bench.filter(c => c !== null)).toHaveLength(2);
+    expect(G.players[1].bench.filter(c => c?.cardData.name.includes('瓦斯彈'))).toHaveLength(2);
+    expect(G.players[1].deck).toHaveLength(2);
+  });
+
+  it('a BENCHED holder taking splash damage does not trigger', () => {
+    const holder = makeGameCard(withAbility('警備濁霧', { hp: '200' }), 1);
+    const gas = makeGameCard(makeCard({ name: '<火箭隊的>瓦斯彈', hp: '70', subtypes: ['Basic'] as Subtype[] }), 1);
+    const G = koAttackBoard(makeGameCard(BASIC_MON, 1, {}), { theirBench: [holder] }, '10');
+    G.players[1].deck = [gas];
+    G.players[1].prizes = [makeGameCard(BASIC_MON, 1)];
+    moves.attack({ G, ctx: battleCtx } as any, 0);
+    // Only the pre-existing holder sits on the bench — no 瓦斯彈 arrived.
+    expect(G.players[1].bench.filter(c => c !== null)).toHaveLength(1);
+    expect(G.players[1].deck).toHaveLength(1);
+  });
+});

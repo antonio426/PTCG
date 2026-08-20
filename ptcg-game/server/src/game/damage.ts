@@ -3,6 +3,7 @@ import { PtcgGameState } from './GameState';
 import { getOutgoingDamageReduction, getPassiveDamageBonus, getPassiveDamageReduction, getPassiveMaxHpBonus, getPrizeReduction, getWeaknessTypeOverride, hasPassiveAbilityNamed, isDamageBlocked, isWeaknessRemovedByTimedEffect, rollBonusPrizeOnActiveKo, shouldExilePrizes, isProtectedFromOpponentAbility } from './effects/passiveAbilities';
 import { getToolDamageBonus, getToolHpBonus } from './effects/tools';
 import { parseBaseNumber } from './effects/genericAttacks';
+import { shuffleDeck } from './effects/types';
 
 /** Rule-box Pokémon (ex/V/VMAX/VSTAR/GX/Mega/TAG TEAM) — same test as prizesForKo below. */
 function isBigPokemon(card: GameCard): boolean {
@@ -249,6 +250,60 @@ export function handleKo(G: PtcgGameState, koPlayerIndex: number, koCardId: stri
   // the 無限之影 return-to-hand branch below, which is still a real KO (prizes awarded) even
   // though the card doesn't end up in the discard pile.
   koPlayer.lastPokemonFaintedTurn = G.turn;
+
+  // --- KO-triggered defender-side abilities. `attackerCard` present ⟺ this KO came from the
+  // opponent's attack (every defender-side KO call in applyAttackOutcome passes it; ability/
+  // Item/recoil KOs don't) — the same signal 無限之影 below already keys on. All three
+  // auto-resolve: no engine path supports an interactive choice for the NON-current player
+  // mid-attack (battleRunner polls getLegalMoves(currentPlayer) only and humanBattle rejects
+  // out-of-turn moves in vs-AI), so this follows the documented auto-pick convention
+  // (除蟲噴霧, 過度放電). Runs before retireCard so the attachments are still extractable.
+  const victim = koPlayer.active?.id === koCardId
+    ? koPlayer.active : koPlayer.bench.find(c => c?.id === koCardId) ?? undefined;
+  if (victim && attackerCard) {
+    // 潛者捕捉 (獵斑魚): any own Water Pokémon KO'd by opponent-attack damage sends its attached
+    // Basic Water Energy to hand instead of the discard pile. Choiceless ("全部") and strictly
+    // beneficial, so the optional use always fires.
+    if (victim.cardData.types?.includes('Water')
+      && [koPlayer.active, ...koPlayer.bench].some(c => c && hasPassiveAbilityNamed(G, c, '潛者捕捉'))) {
+      for (let i = victim.attachedEnergy.length - 1; i >= 0; i--) {
+        const e = victim.attachedEnergy[i];
+        if (e.cardData?.subtypes?.includes('Basic Energy') && e.cardData.types?.includes('Water')) {
+          victim.attachedEnergy.splice(i, 1);
+          koPlayer.hand.push({ id: e.id, cardData: e.cardData, owner: koPlayerIndex as 0 | 1, damage: 0, statusConditions: [], attachedEnergy: [] });
+        }
+      }
+    }
+    // 光子纜線 (密勒頓): the holder itself, KO'd while Active, moves up to 2 attached Basic
+    // Lightning Energy onto 1 benched Pokémon — auto-picks the first Lightning-type benched
+    // Pokémon (the only ones that can normally spend them), else the first benched.
+    if (wasActive && hasPassiveAbilityNamed(G, victim, '光子纜線')) {
+      const bench = koPlayer.bench.filter((c): c is GameCard => c !== null);
+      const target = bench.find(c => c.cardData.types?.includes('Lightning')) ?? bench[0];
+      if (target) {
+        let moved = 0;
+        for (let i = victim.attachedEnergy.length - 1; i >= 0 && moved < 2; i--) {
+          const e = victim.attachedEnergy[i];
+          if (e.cardData?.subtypes?.includes('Basic Energy') && e.cardData.types?.includes('Lightning')) {
+            victim.attachedEnergy.splice(i, 1);
+            target.attachedEnergy.push(e);
+            moved++;
+          }
+        }
+      }
+    }
+    // 最後鎖鏈 (桃歹郎): the holder, KO'd by opponent-attack damage (any position), searches any
+    // 1 deck card to hand. "Any card" has no auto-pick that knows the player's plan — favor the
+    // generically strongest grabs: first Supporter, else first Energy, else the top card.
+    if (hasPassiveAbilityNamed(G, victim, '最後鎖鏈') && koPlayer.deck.length > 0) {
+      const pick = koPlayer.deck.find(c => c.cardData.subtypes.includes('Supporter'))
+        ?? koPlayer.deck.find(c => c.cardData.supertype === 'Energy')
+        ?? koPlayer.deck[koPlayer.deck.length - 1];
+      koPlayer.deck.splice(koPlayer.deck.indexOf(pick), 1);
+      koPlayer.hand.push(pick);
+      shuffleDeck(koPlayer.deck);
+    }
+  }
 
   // 無限之影: when KO'd by an attack specifically, this card returns to hand (reset to a fresh
   // state) instead of the discard pile — its attachments still go to the discard pile as normal.
