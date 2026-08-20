@@ -201,7 +201,8 @@ export function isDamageBlocked(G: PtcgGameState, attacker: GameCard, defender: 
   // 這隻寶可夢不會受到招式的傷害"). `vsSubtype`, when present, restricts the immunity to
   // attackers of that printed Subtype only (e.g. "Basic").
   const immuneEffect = defender.timedEffects?.find(e => e.kind === 'damageImmune' && e.appliesOnTurn === G.turn);
-  if (immuneEffect && (!immuneEffect.vsSubtype || attacker.cardData.subtypes.includes(immuneEffect.vsSubtype as any))) return true;
+  if (immuneEffect && (!immuneEffect.vsSubtype || attacker.cardData.subtypes.includes(immuneEffect.vsSubtype as any))
+    && (immuneEffect.maxImmuneDamage === undefined || (attackPrintedDamage ?? 0) <= immuneEffect.maxImmuneDamage)) return true;
   // 礎石之勢: immune to damage from any Pokémon that itself has an ability.
   if (hasAbility(G, defender, '礎石之勢') && attacker.cardData.abilities?.some(a => a.text)) return true;
   // 藏隱: while benched, untouchable by opponent attacks entirely (relevant to bench-hitting attacks).
@@ -398,6 +399,16 @@ export function getPassiveDamageReduction(G: PtcgGameState, defender: GameCard, 
 
 /** Retaliation counters placed on the attacker, scaled by the defender's own attached Energy
  * (as opposed to the flat-amount retaliation abilities handled via hasPassiveAbilityNamed). */
+/** 「在下個對手的回合，這隻寶可夢受到招式的傷害時，在使用招式的寶可夢身上放置N個傷害指示物」 —
+ * a timed retaliation set by the holder's own earlier attack, consulted next to the ability
+ * retaliations in applyAttackOutcome. NOT gated by 光之翼 (it's an attack effect, not an
+ * ability's). */
+export function getTimedRetaliationCounters(G: PtcgGameState, defender: GameCard): number {
+  return defender.timedEffects
+    ?.filter(e => e.kind === 'retaliationCounters' && e.appliesOnTurn === G.turn)
+    .reduce((sum, e) => sum + (e.amount ?? 0), 0) ?? 0;
+}
+
 export function getScaledRetaliation(G: PtcgGameState, defender: GameCard): number {
   // 快掃拳返: 2 counters per attached Metal Energy.
   if (hasAbility(G, defender, '快掃拳返')) {

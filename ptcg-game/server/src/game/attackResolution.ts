@@ -11,7 +11,7 @@
 import { Attack, DamageDetail, GameCard, TurnAction } from '@ptcg/shared';
 import { PtcgGameState, PtcgPlayerState } from './GameState';
 import { calculateDamageBreakdown, effectiveMaxHp, flushPreEvolutionsTo, flushPreEvolutionsToDiscard, handleKo, prizesForKo, resetCardForReentry, stackAsPreEvolution } from './damage';
-import { getBonusPrizesForAttackKo, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getScaledRetaliation, hasPassiveAbilityNamed, hasTeraBenchedImmunity, isImmuneToOpponentAttackEffects, shouldDiscardAttackerEnergy, isProtectedFromOpponentAbility, isReturnToHandBlocked } from './effects/passiveAbilities';
+import { getBonusPrizesForAttackKo, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getScaledRetaliation, getTimedRetaliationCounters, hasPassiveAbilityNamed, hasTeraBenchedImmunity, isImmuneToOpponentAttackEffects, shouldDiscardAttackerEnergy, isProtectedFromOpponentAbility, isReturnToHandBlocked } from './effects/passiveAbilities';
 import { benchDamageFromEffectsBlocked, benchLimit, isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
 import { specialEnergyRetaliation } from './effects/specialEnergy';
@@ -80,6 +80,13 @@ export function buildAttackBoard(
     opponentFieldTypes: [opponent.active, ...opponent.bench].filter((c): c is GameCard => c !== null).flatMap(c => c.cardData.types || []),
     opponentHasFutureSubtype: [opponent.active, ...opponent.bench].some(c => c?.cardData.subtypes.includes('Future')),
     opponentHandCount: opponent.hand.length,
+    ownPokemonFaintedLastTurn: player.lastPokemonFaintedTurn === G.turn - 1,
+    defenderStatusConditions: [...defender.statusConditions],
+    defenderName: defender.cardData.name,
+    ownHandCount: player.hand.length,
+    ownHandNames: player.hand.map(c => c.cardData.name),
+    ownFieldNames: [player.active, ...player.bench].filter((c): c is GameCard => c !== null).map(c => c.cardData.name),
+    opponentFieldNames: [opponent.active, ...opponent.bench].filter((c): c is GameCard => c !== null).map(c => c.cardData.name),
     ownFieldBasicCount: [player.active, ...player.bench].filter((c): c is GameCard => c !== null && c.cardData.subtypes.includes('Basic')).length,
     hasActiveStadium: !!G.activeStadium,
     ownFieldTypeCounts: [player.active, ...player.bench].filter((c): c is GameCard => c !== null).reduce((acc, c) => {
@@ -280,6 +287,8 @@ export function applyAttackOutcome(
   if (damage > 0 && !attackerAbilityImmune && hasPassiveAbilityNamed(G, defender, '反擊雞冠')) retaliation += 5;
   if (damage > 0 && !attackerAbilityImmune && (hasPassiveAbilityNamed(G, defender, '自動用武') || hasPassiveAbilityNamed(G, defender, '反擊') || hasPassiveAbilityNamed(G, defender, '反擊針'))) retaliation += 3;
   if (damage > 0 && !attackerAbilityImmune) retaliation += getScaledRetaliation(G, defender);
+  // Timed 「受到招式的傷害時…放置N個傷害指示物」 set by the defender's own previous attack.
+  if (damage > 0) retaliation += getTimedRetaliationCounters(G, defender);
   if (!attackerAbilityImmune) retaliation += getGrudgeVortexRetaliation(G, defender);
   if (retaliation > 0) {
     attacker.damage += retaliation * 10;
@@ -402,11 +411,11 @@ export function applyAttackOutcome(
     }
     if (genericOutcome.selfTimedEffect) {
       const e = genericOutcome.selfTimedEffect;
-      attacker.timedEffects = [...(attacker.timedEffects || []), { kind: e.kind, amount: e.amount, vsSubtype: e.vsSubtype, attackName: e.attackName, appliesOnTurn: G.turn + e.turnOffset }];
+      attacker.timedEffects = [...(attacker.timedEffects || []), { kind: e.kind, amount: e.amount, vsSubtype: e.vsSubtype, maxImmuneDamage: e.maxImmuneDamage, attackName: e.attackName, appliesOnTurn: G.turn + e.turnOffset }];
     }
     if (damage > 0 && genericOutcome.opponentTimedEffect && !defenderEffectImmune) {
       const e = genericOutcome.opponentTimedEffect;
-      defender.timedEffects = [...(defender.timedEffects || []), { kind: e.kind, amount: e.amount, vsSubtype: e.vsSubtype, attackName: e.attackName, appliesOnTurn: G.turn + e.turnOffset }];
+      defender.timedEffects = [...(defender.timedEffects || []), { kind: e.kind, amount: e.amount, vsSubtype: e.vsSubtype, maxImmuneDamage: e.maxImmuneDamage, attackName: e.attackName, appliesOnTurn: G.turn + e.turnOffset }];
     }
     // Choice-requiring generic effects (deck search, switches) auto-pick randomly among
     // the valid options — see genericAttacks.ts's file header for why.
@@ -886,6 +895,215 @@ export function applyAttackOutcome(
     }
     if (genericOutcome.randomOpponentHandCardToDeckBottom && opponent.hand.length > 0) {
       opponent.deck.unshift(opponent.hand.splice(Math.floor(Math.random() * opponent.hand.length), 1)[0]);
+    }
+    if (genericOutcome.multiTargetOpponentBenchFlatDamage && !benchDamageFromEffectsBlocked(G)) {
+      const { count, amount } = genericOutcome.multiTargetOpponentBenchFlatDamage;
+      const pool = opponent.bench.filter((c): c is GameCard => c !== null);
+      for (const target of [...pool].sort(() => Math.random() - 0.5).slice(0, count)) {
+        target.damage += amount;
+        const hp = effectiveMaxHp(G, target);
+        if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id, attacker);
+      }
+    }
+    if (genericOutcome.multiTargetOpponentDamagedBenchFlatDamage && !benchDamageFromEffectsBlocked(G)) {
+      const { count, amount } = genericOutcome.multiTargetOpponentDamagedBenchFlatDamage;
+      const pool = opponent.bench.filter((c): c is GameCard => c !== null && c.damage > 0);
+      for (const target of [...pool].sort(() => Math.random() - 0.5).slice(0, count)) {
+        target.damage += amount;
+        const hp = effectiveMaxHp(G, target);
+        if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id, attacker);
+      }
+    }
+    if (genericOutcome.multiTargetSelfBenchFlatDamage) {
+      const { count, amount } = genericOutcome.multiTargetSelfBenchFlatDamage;
+      const pool = player.bench.filter((c): c is GameCard => c !== null);
+      for (const target of [...pool].sort(() => Math.random() - 0.5).slice(0, count)) {
+        target.damage += amount;
+        const hp = effectiveMaxHp(G, target);
+        // Recoil onto own Bench: the KO pays the OPPONENT, so no attacker arg (not their attack).
+        if (hp > 0 && target.damage >= hp) handleKo(G, G.currentPlayer, target.id);
+      }
+    }
+    if (damage > 0 && genericOutcome.discardOpponentSpecialEnergyCount && !defenderEffectImmune) {
+      for (let i = 0; i < genericOutcome.discardOpponentSpecialEnergyCount; i++) {
+        const idx = defender.attachedEnergy.findIndex(e => e.cardData?.subtypes?.includes('Special Energy'));
+        if (idx === -1) break;
+        discardAttachedEnergy(G, defender.owner, defender.attachedEnergy.splice(idx, 1)[0]);
+      }
+    }
+    // 平穩境地 pins the defender side's attached cards in play, and effect-immunity blocks the
+    // detach outright — both gates apply before Energy can go back to the opponent's hand.
+    if (genericOutcome.returnOpponentEnergyToHandCount && !defenderEffectImmune
+      && !isReturnToHandBlocked(G, (1 - G.currentPlayer) as 0 | 1)) {
+      for (let i = 0; i < genericOutcome.returnOpponentEnergyToHandCount && defender.attachedEnergy.length > 0; i++) {
+        const [energy] = defender.attachedEnergy.splice(Math.floor(Math.random() * defender.attachedEnergy.length), 1);
+        if (energy.cardData) opponent.hand.push({ id: energy.id, cardData: energy.cardData, owner: (1 - G.currentPlayer) as 0 | 1, damage: 0, statusConditions: [], attachedEnergy: [] });
+      }
+    }
+    if (genericOutcome.discardSelfTypedEnergy) {
+      const { type, count } = genericOutcome.discardSelfTypedEnergy;
+      for (let i = 0; i < count; i++) {
+        const idx = attacker.attachedEnergy.findIndex(e => e.type === type);
+        if (idx === -1) break;
+        discardAttachedEnergy(G, attacker.owner, attacker.attachedEnergy.splice(idx, 1)[0]);
+      }
+    }
+    if (genericOutcome.discardPileSearchNamedToSelfCount) {
+      const { name, count } = genericOutcome.discardPileSearchNamedToSelfCount;
+      for (let i = 0; i < count; i++) {
+        const idx = player.discardPile.findIndex(c => c.cardData.name.includes(name));
+        if (idx === -1) break;
+        const card = player.discardPile[idx];
+        if (card.cardData.supertype !== 'Energy') break;
+        player.discardPile.splice(idx, 1);
+        attacker.attachedEnergy.push(asAttachedEnergy(card));
+      }
+    }
+    if (genericOutcome.deckSearchNamedEnergyAttachCount) {
+      const { name, count, benchOnly } = genericOutcome.deckSearchNamedEnergyAttachCount;
+      const pool = (benchOnly ? player.bench : [player.active, ...player.bench]).filter((c): c is GameCard => c !== null);
+      if (pool.length > 0) {
+        for (let i = 0; i < count; i++) {
+          const di = player.deck.findIndex(c => c.cardData.name.includes(name) && c.cardData.supertype === 'Energy');
+          if (di === -1) break;
+          const [card] = player.deck.splice(di, 1);
+          pool[Math.floor(Math.random() * pool.length)].attachedEnergy.push(asAttachedEnergy(card));
+        }
+      }
+      shuffleDeck(player.deck);
+    }
+    if (genericOutcome.deckSearchAnyCardsToHandCount) {
+      for (let i = 0; i < genericOutcome.deckSearchAnyCardsToHandCount && player.deck.length > 0; i++) {
+        player.hand.push(player.deck.splice(Math.floor(Math.random() * player.deck.length), 1)[0]);
+      }
+      shuffleDeck(player.deck);
+    }
+    if (genericOutcome.revealTopBenchPokemonCount) {
+      const top = player.deck.splice(-genericOutcome.revealTopBenchPokemonCount);
+      for (const card of top) {
+        const slot = player.bench.findIndex(s => s === null);
+        if (card.cardData.supertype === 'Pokémon' && slot !== -1) player.bench[slot] = card;
+        else player.deck.push(card);
+      }
+      shuffleDeck(player.deck);
+    }
+    if (genericOutcome.opponentNamedFlatDamage) {
+      const { name, amount, count, benchOnly } = genericOutcome.opponentNamedFlatDamage;
+      const blocked = benchDamageFromEffectsBlocked(G);
+      const pool = (benchOnly ? (blocked ? [] : opponent.bench) : (blocked ? [opponent.active] : [opponent.active, ...opponent.bench]))
+        .filter((c): c is GameCard => c !== null && c.cardData.name.includes(name));
+      for (const target of [...pool].sort(() => Math.random() - 0.5).slice(0, count)) {
+        target.damage += amount;
+        const hp = effectiveMaxHp(G, target);
+        if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id, attacker);
+      }
+    }
+    if (genericOutcome.moveNamedBenchDamageToDefender && !defenderEffectImmune) {
+      const { name, count } = genericOutcome.moveNamedBenchDamageToDefender;
+      const sources = player.bench.filter((c): c is GameCard => c !== null && c.cardData.name.includes(name) && c.damage > 0).slice(0, count);
+      let moved = 0;
+      for (const s of sources) { moved += s.damage; s.damage = 0; }
+      if (moved > 0) {
+        defender.damage += moved;
+        const hp = effectiveMaxHp(G, defender);
+        if (hp > 0 && defender.damage >= hp) handleKo(G, 1 - G.currentPlayer, defender.id, attacker);
+      }
+    }
+    if (genericOutcome.placeCountersOnMultipleOpponents) {
+      const { count, counters } = genericOutcome.placeCountersOnMultipleOpponents;
+      const blocked = benchDamageFromEffectsBlocked(G);
+      const pool = (blocked ? [opponent.active] : [opponent.active, ...opponent.bench]).filter((c): c is GameCard => c !== null);
+      for (const target of [...pool].sort(() => Math.random() - 0.5).slice(0, count)) {
+        target.damage += counters * 10;
+        const hp = effectiveMaxHp(G, target);
+        if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id, attacker);
+      }
+    }
+    if (genericOutcome.setDefenderRemainingHp !== undefined && !defenderEffectImmune) {
+      const hp = effectiveMaxHp(G, defender);
+      const targetDamage = hp - genericOutcome.setDefenderRemainingHp;
+      if (hp > 0 && targetDamage > defender.damage) defender.damage = targetDamage;
+    }
+    if (genericOutcome.discardPileSearchTypedPokemonToBenchCount) {
+      const { type, count } = genericOutcome.discardPileSearchTypedPokemonToBenchCount;
+      for (let i = 0; i < count; i++) {
+        const slot = player.bench.findIndex(s => s === null);
+        if (slot === -1) break;
+        const di = player.discardPile.findIndex(c => c.cardData.supertype === 'Pokémon' && (c.cardData.types || []).includes(type as any));
+        if (di === -1) break;
+        const [card] = player.discardPile.splice(di, 1);
+        resetCardForReentry(card, player.discardPile);
+        player.bench[slot] = card;
+      }
+    }
+    if (genericOutcome.discardNamedFromHandCount) {
+      const { name, count } = genericOutcome.discardNamedFromHandCount;
+      for (let i = 0; i < count; i++) {
+        const hi = player.hand.findIndex(c => c.cardData.name.includes(name));
+        if (hi === -1) break;
+        player.discardPile.push(player.hand.splice(hi, 1)[0]);
+      }
+    }
+    if (genericOutcome.massEvolveBenchFromDeck) {
+      const { type } = genericOutcome.massEvolveBenchFromDeck;
+      for (let i = 0; i < player.bench.length; i++) {
+        const benched = player.bench[i];
+        if (!benched) continue;
+        if (type && !(benched.cardData.types || []).includes(type as any)) continue;
+        const di = player.deck.findIndex(c => c.cardData.supertype === 'Pokémon'
+          && evolvesFromMatches(c.cardData, benched.cardData.name));
+        if (di === -1) continue;
+        const [evo] = player.deck.splice(di, 1);
+        evo.attachedEnergy = benched.attachedEnergy;
+        evo.attachedTool = benched.attachedTool;
+        evo.attachedTool2 = benched.attachedTool2;
+        evo.damage = benched.damage;
+        evo.statusConditions = benched.statusConditions;
+        stackAsPreEvolution(evo, benched);
+        player.bench[i] = evo;
+        player.pokemonPlayedThisTurn.push(evo.id);
+      }
+      shuffleDeck(player.deck);
+    }
+    if (genericOutcome.returnSelfToHandDiscardAttachments && player.active?.id === attacker.id
+      && !isReturnToHandBlocked(G, G.currentPlayer as 0 | 1)) {
+      // 「寶可夢以外的卡全部丟棄」 — Energy and Tools go to the discard pile; the stacked lower
+      // Stages are Pokémon cards and follow the top card to hand.
+      for (const energy of attacker.attachedEnergy.splice(0)) discardAttachedEnergy(G, G.currentPlayer as 0 | 1, energy);
+      if (attacker.attachedTool) { player.discardPile.push(attacker.attachedTool); attacker.attachedTool = null; }
+      if (attacker.attachedTool2) { player.discardPile.push(attacker.attachedTool2); attacker.attachedTool2 = null; }
+      flushPreEvolutionsTo(attacker, player.hand);
+      attacker.damage = 0;
+      attacker.statusConditions = [];
+      player.hand.push(attacker);
+      player.active = null;
+      // Same promotion handling as returnSelfAndAttachmentsToHand below (see its comment).
+      const benchOptions = player.bench.filter((c): c is GameCard => c !== null);
+      if (benchOptions.length === 1) {
+        const idx = player.bench.indexOf(benchOptions[0]);
+        player.active = benchOptions[0];
+        player.bench[idx] = null;
+      } else if (benchOptions.length > 1) {
+        G.pendingChoice = {
+          player: G.currentPlayer as 0 | 1,
+          effectKey: 'attack_self_return_promotion',
+          prompt: '選擇一隻備戰寶可夢上場',
+          choiceType: 'select_bench_pokemon',
+          count: 1,
+          options: benchOptions.map(c => ({ id: c.id, label: c.cardData.name })),
+          context: {},
+        };
+      }
+    }
+    if (genericOutcome.selfProtectNextTurnIfKo) {
+      const defenderGone = opponent.active?.id !== defender.id && !opponent.bench.some(c => c?.id === defender.id);
+      if (defenderGone) {
+        attacker.timedEffects = [...(attacker.timedEffects || []), { kind: 'damageImmune', appliesOnTurn: G.turn + 1 }];
+      }
+    }
+    if (genericOutcome.poisonCounterOverride && genericOutcome.statusToInflict?.includes('Poisoned') && !defenderEffectImmune && damage > 0) {
+      // applyStatusCondition (run at the statusToInflict site) resets the override; set it after.
+      if (defender.statusConditions.includes('Poisoned')) defender.poisonCounterOverride = genericOutcome.poisonCounterOverride;
     }
     // 死亡終局-style: the printed condition reads the defender's damage counters BEFORE this
     // attack's own damage lands (the pre-attack board snapshot), not after — a live re-read

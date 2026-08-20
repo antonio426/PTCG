@@ -38,8 +38,9 @@ export function processBetweenTurns(G: PtcgGameState): void {
     if (!active) continue;
 
     if (active.statusConditions.includes('Poisoned')) {
-      // Normally 1 counter (10 HP); some opposing abilities (e.g. 劇毒支配) add more.
-      active.damage += 10 + getPoisonCounterBonus(G, idx) * 10;
+      // Normally 1 counter (10 HP); some opposing abilities (e.g. 劇毒支配) add more, and
+      // 「因這個【中毒】…改為N個」 attacks replace the base count outright (poisonCounterOverride).
+      active.damage += (active.poisonCounterOverride ?? 1) * 10 + getPoisonCounterBonus(G, idx) * 10;
     }
     if (active.statusConditions.includes('Burned')) {
       // Normally 2 counters (20 HP); some opposing abilities (e.g. 熔岩波動) add more.

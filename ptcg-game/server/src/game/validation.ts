@@ -273,13 +273,21 @@ export function canAttack(G: PtcgGameState, playerIndex: number, attackIndex: nu
   // human is declared the winner even though the opponent never actually lost.
   const opponent = G.players[(1 - playerIndex) as 0 | 1];
   if (!opponent.active) return false;
-  // 出道演出: this specific Pokémon is exempt from the first-turn attack restriction.
-  if (isFirstTurnOfGame(G) && !canAttackOnFirstTurn(G, player.active)) return false;
+  // 出道演出 exempts the Pokémon from the first-turn attack restriction; some attacks print
+  // their own exemption (「這個招式(在/可在)先攻玩家的最初回合(也)可使用」), checked below once
+  // the attack itself is resolved.
+  const firstTurnBlocked = isFirstTurnOfGame(G) && !canAttackOnFirstTurn(G, player.active);
   if (player.active.statusConditions.includes('Asleep') || player.active.statusConditions.includes('Paralyzed')) return false;
   if (isAttackLockedByTimedEffect(G, player.active)) return false;
 
   const attack = usableAttacks(G, player.active)[attackIndex];
   if (!attack) return false;
+  // The Tera bench-immunity MARKER is printed in the attacks block but is not a usable attack
+  // (isTeraPokemon keys on it); with an empty cost it would otherwise be offered as a free no-op.
+  if (attack.text?.trim() === '只要這隻寶可夢在備戰區，不會受到招式的傷害。' && !parseInt(attack.damage || '0', 10)) return false;
+  // 「這個招式只可在後攻玩家的最初回合使用」 — usable ONLY on the second player's first turn.
+  if (attack.text?.includes('只可在後攻玩家的最初回合使用') && G.turn !== 2) return false;
+  if (firstTurnBlocked && !/這個招式(?:在先攻玩家的最初回合也可使用|可在先攻玩家的最初回合使用)/.test(attack.text ?? '')) return false;
   // Old-scraper residue stored ability text as `[特性]`-prefixed pseudo-ATTACKS with an empty
   // cost — always payable, so selecting one silently wasted the turn's attack. The data has
   // been cleaned (46 entries), but keep this guard against a future scrape regression.

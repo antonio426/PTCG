@@ -165,6 +165,9 @@ export function applyStatusCondition(G: PtcgGameState, card: GameCard, condition
   } else {
     card.statusConditions = card.statusConditions.filter(c => c !== condition);
   }
+  // A fresh Poison replaces any severity override a previous 「傷害指示物…改為N個」 poison left;
+  // the attack that wants an override sets it again right after this call.
+  if (condition === 'Poisoned') card.poisonCounterOverride = undefined;
   card.statusConditions.push(condition);
 }
 

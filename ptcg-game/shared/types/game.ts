@@ -17,6 +17,10 @@ export interface GameCard {
   /** 火箭隊的妨礙機器人: a prize card flipped face-up 「在對戰結束前」. Only meaningful while the
    * card sits in a prizes array; cleared if the card leaves the prize zone. */
   revealedPrize?: boolean;
+  /** 「因這個【中毒】而放置的傷害指示物的數量改為N個」 — while this Pokémon is Poisoned by such
+   * an attack, the between-turns tick places N counters instead of 1. Reset whenever Poison is
+   * (re)applied without an override. */
+  poisonCounterOverride?: number;
   /** Real rules: evolving does NOT discard the pre-evolution card — it stays stacked underneath
    * the new card as part of the same in-play Pokémon, and the whole stack only goes to the
    * discard pile together when this Pokémon is later Knocked Out (or otherwise permanently
@@ -34,11 +38,14 @@ export interface GameCard {
 }
 
 export interface TimedCardEffect {
-  kind: 'cantAttack' | 'cantRetreat' | 'damageImmune' | 'damageReduction' | 'outgoingDamageReduction' | 'outgoingDamageBoost' | 'coinFlipAttackMiss' | 'namedAttackLock' | 'weaknessRemoved';
+  kind: 'cantAttack' | 'cantRetreat' | 'damageImmune' | 'damageReduction' | 'outgoingDamageReduction' | 'outgoingDamageBoost' | 'coinFlipAttackMiss' | 'namedAttackLock' | 'weaknessRemoved' | 'retaliationCounters';
   amount?: number;
   appliesOnTurn: number;
   /** For 'damageImmune': restricts the immunity to attackers of this Subtype only (e.g. "Basic"). */
   vsSubtype?: string;
+  /** For 'damageImmune': only attacks whose printed damage is at most this are blocked
+   * (「不會受到「60」以下的招式的傷害」); absent = every attack. */
+  maxImmuneDamage?: number;
   /** For 'namedAttackLock': only this one named attack is blocked, not all of them. */
   attackName?: string;
 }
