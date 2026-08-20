@@ -14,6 +14,9 @@ export interface GameCard {
    * moves wrapper discards it when the permission lapses (the ability's printed parenthetical). */
   attachedTool2?: GameCard | null;
   turnedFacedown?: boolean;
+  /** 火箭隊的妨礙機器人: a prize card flipped face-up 「在對戰結束前」. Only meaningful while the
+   * card sits in a prizes array; cleared if the card leaves the prize zone. */
+  revealedPrize?: boolean;
   /** Real rules: evolving does NOT discard the pre-evolution card — it stays stacked underneath
    * the new card as part of the same in-play Pokémon, and the whole stack only goes to the
    * discard pile together when this Pokémon is later Knocked Out (or otherwise permanently

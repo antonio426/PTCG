@@ -2984,7 +2984,126 @@ const homikasPerformance: EffectHandler = {
   resume() { return 'done'; },
 };
 
+/** 火箭隊的妨礙機器人: pick 1 of the opponent's face-down prizes and 1 blind card from their
+ * hand, reveal both, then optionally have the opponent swap them. Whichever card ends in the
+ * prize slot stays face-up for the rest of the game (GameCard.revealedPrize). The hand pick is
+ * blind by the printed text, so it's a random draw — the same convention as the generic
+ * blind-hand-discard attack template. */
+const rocketJammerBot: EffectHandler = {
+  canPlay(ctx) {
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    return opp.prizes.some(p => !p.revealedPrize) && opp.hand.length > 0;
+  },
+  start(ctx) {
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    const faceDown = opp.prizes.filter(p => !p.revealedPrize);
+    if (faceDown.length === 0 || opp.hand.length === 0) return 'done';
+    return {
+      prompt: '火箭隊的妨礙機器人：選擇 1 張對手反面朝上的獎賞卡',
+      choiceType: 'select_from_list',
+      count: 1,
+      // Blind pick: the labels must not leak which card is which.
+      options: faceDown.map((p, i) => ({ id: p.id, label: `獎賞卡 ${i + 1}` })),
+      context: { step: 'pick_prize' },
+    };
+  },
+  resume(ctx, context, selection) {
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    if (context.step === 'pick_prize') {
+      const prize = opp.prizes.find(p => p.id === selection[0]);
+      if (!prize || opp.hand.length === 0) return 'done';
+      const handCard = opp.hand[Math.floor(Math.random() * opp.hand.length)];
+      // Revealed now — whichever way the swap goes, the chosen prize SLOT stays face-up.
+      prize.revealedPrize = true;
+      return {
+        prompt: `獎賞卡是「${prize.cardData.name}」，對手手牌抽出「${handCard.cardData.name}」。要令對手互換嗎？`,
+        choiceType: 'select_from_list',
+        count: 1,
+        options: [{ id: 'swap', label: '互換' }, { id: 'keep', label: '不互換' }],
+        context: { step: 'decide', prizeId: prize.id, handId: handCard.id },
+      };
+    }
+    if (context.step === 'decide' && selection[0] === 'swap') {
+      const pi = opp.prizes.findIndex(p => p.id === context.prizeId);
+      const hi = opp.hand.findIndex(c => c.id === context.handId);
+      if (pi >= 0 && hi >= 0) {
+        const oldPrize = opp.prizes[pi];
+        opp.prizes[pi] = opp.hand[hi];
+        opp.hand[hi] = oldPrize;
+        opp.prizes[pi].revealedPrize = true;
+        oldPrize.revealedPrize = false; // it left the prize zone
+      }
+    }
+    return 'done';
+  },
+};
+
+/** 變化之書: 「只可2張同時使用（效果是2張生效1次）」 — playing it consumes a SECOND copy from
+ * hand as part of the cost, then swaps 1 Basic from the discard pile with 1 own in-play Basic,
+ * keeping every attachment/damage/condition; the replaced Pokémon is discarded. */
+const bookOfChange: EffectHandler = {
+  canPlay(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (!handExcludingSource(ctx).some(c => normalizeCardName(c.cardData.name) === '變化之書')) return false;
+    if (!p.discardPile.some(c => c.cardData.supertype === 'Pokémon' && c.cardData.subtypes.includes('Basic'))) return false;
+    return allPokemon(ctx.G, ctx.playerIndex).some(c => c.cardData.subtypes.includes('Basic'));
+  },
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const secondIdx = p.hand.findIndex(c => c.id !== ctx.sourceCardId && normalizeCardName(c.cardData.name) === '變化之書');
+    const options = p.discardPile
+      .filter(c => c.cardData.supertype === 'Pokémon' && c.cardData.subtypes.includes('Basic'))
+      .map(c => ({ id: c.id, label: c.cardData.name }));
+    const targets = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.cardData.subtypes.includes('Basic'));
+    if (secondIdx === -1 || options.length === 0 || targets.length === 0) return 'done';
+    // The pair cost: the second copy goes to the discard pile with this play.
+    p.discardPile.push(p.hand.splice(secondIdx, 1)[0]);
+    return {
+      prompt: '變化之書：從棄牌區選擇 1 張基礎寶可夢卡',
+      choiceType: 'select_from_list',
+      count: 1,
+      options,
+      context: { step: 'pick_discard' },
+    };
+  },
+  resume(ctx, context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (context.step === 'pick_discard') {
+      const targets = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.cardData.subtypes.includes('Basic'));
+      if (!selection[0] || targets.length === 0) return 'done';
+      return {
+        prompt: '變化之書：選擇要互換的自己場上的基礎寶可夢',
+        choiceType: 'select_pokemon',
+        count: 1,
+        options: targets.map(t => ({ id: t.id, label: t.cardData.name })),
+        context: { step: 'pick_field', discardId: selection[0] },
+      };
+    }
+    const di = p.discardPile.findIndex(c => c.id === context.discardId
+      && c.cardData.supertype === 'Pokémon' && c.cardData.subtypes.includes('Basic'));
+    const target = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === selection[0] && c.cardData.subtypes.includes('Basic'));
+    if (di === -1 || !target) return 'done';
+    const incoming = p.discardPile.splice(di, 1)[0];
+    // A KO'd Basic sits in the discard still bundling its old attachments — unpack those into
+    // the discard pile first, then take over the in-play Pokémon's live state wholesale.
+    resetCardForReentry(incoming, p.discardPile);
+    incoming.attachedEnergy = target.attachedEnergy;
+    incoming.attachedTool = target.attachedTool;
+    incoming.attachedTool2 = target.attachedTool2;
+    incoming.damage = target.damage;
+    incoming.statusConditions = target.statusConditions;
+    const isActive = p.active?.id === target.id;
+    const benchIdx = isActive ? -1 : p.bench.findIndex(c => c?.id === target.id);
+    if (isActive) p.active = incoming; else if (benchIdx >= 0) p.bench[benchIdx] = incoming;
+    // The replaced Pokémon is discarded — bare, its attachments stayed with the newcomer.
+    p.discardPile.push({ ...target, attachedEnergy: [], attachedTool: null, attachedTool2: null, damage: 0, statusConditions: [], preEvolutions: undefined });
+    return 'done';
+  },
+};
+
 export const trainerEffects: Record<string, EffectHandler> = {
+  '火箭隊的妨礙機器人': rocketJammerBot,
+  '變化之書': bookOfChange,
   '高級球': ultraBall,
   '老大的指令': bosssOrders,
   '老大的指令（赤日）': bosssOrders,
