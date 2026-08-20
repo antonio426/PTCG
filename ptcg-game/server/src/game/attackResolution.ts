@@ -15,7 +15,7 @@ import { getBonusPrizesForAttackKo, getGrudgeVortexRetaliation, getLethalOnlyRet
 import { benchDamageFromEffectsBlocked, benchLimit, isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
 import { specialEnergyRetaliation } from './effects/specialEnergy';
-import { applyStatusCondition, discardAttachedEnergy, drawCards, drawUpTo, shuffleDeck, asAttachedEnergy } from './effects/primitives';
+import { applyStatusCondition, discardAttachedEnergy, drawCards, drawUpTo, millDeck, shuffleDeck, asAttachedEnergy } from './effects/primitives';
 import { AttackBoardContext, resolveGenericAttackEffect } from './effects/genericAttacks';
 import { inferEvolvesFromSpecies, evolvesFromMatches } from './evolutionChains';
 import { effectiveRetreatCost } from './validation';
@@ -444,9 +444,8 @@ export function applyAttackOutcome(
       shuffleDeck(player.deck);
     }
     if (genericOutcome.millOpponentDeckCount) {
-      for (let i = 0; i < genericOutcome.millOpponentDeckCount && opponent.deck.length > 0; i++) {
-        opponent.discardPile.push(opponent.deck.pop()!);
-      }
+      // Via millDeck so 整人擊落 sees an opponent-caused deck discard.
+      millDeck(G, (1 - G.currentPlayer) as 0 | 1, genericOutcome.millOpponentDeckCount, true);
     }
     if (genericOutcome.discardRandomOpponentHandCount) {
       for (let i = 0; i < genericOutcome.discardRandomOpponentHandCount && opponent.hand.length > 0; i++) {
@@ -473,6 +472,7 @@ export function applyAttackOutcome(
         if (energy.cardData) player.hand.push({ id: energy.id, cardData: energy.cardData, owner: G.currentPlayer as 0 | 1, damage: 0, statusConditions: [], attachedEnergy: [] });
       }
       if (attacker.attachedTool) { player.hand.push(attacker.attachedTool); attacker.attachedTool = null; }
+      if (attacker.attachedTool2) { player.hand.push(attacker.attachedTool2); attacker.attachedTool2 = null; }
       flushPreEvolutionsTo(attacker, player.hand);
       attacker.damage = 0;
       attacker.statusConditions = [];
@@ -677,6 +677,7 @@ export function applyAttackOutcome(
           evolution.attachedEnergy = attacker.attachedEnergy;
           evolution.damage = attacker.damage;
           evolution.attachedTool = attacker.attachedTool;
+          evolution.attachedTool2 = attacker.attachedTool2;
           stackAsPreEvolution(evolution, attacker);
           if (isActive) player.active = evolution; else player.bench[benchIdx] = evolution;
         }
@@ -949,6 +950,7 @@ export function applyAttackOutcome(
         const [target] = opponent.bench.splice(idx, 1, null);
         if (!target) continue;
         if (target.attachedTool) opponent.deck.push(target.attachedTool);
+        if (target.attachedTool2) opponent.deck.push(target.attachedTool2);
         for (const energy of target.attachedEnergy.splice(0)) {
           if (energy.cardData) opponent.deck.push({ id: energy.id, cardData: energy.cardData, owner: (1 - G.currentPlayer) as 0 | 1, damage: 0, statusConditions: [], attachedEnergy: [] });
         }
@@ -956,7 +958,7 @@ export function applyAttackOutcome(
         // 狡猾天狗::驅趕龍捲風…) — an evolved Bench target takes its lower Stages back into the
         // deck with it, so a Stage 2 is not silently stripped down to a one-card return.
         flushPreEvolutionsTo(target, opponent.deck);
-        opponent.deck.push({ ...target, damage: 0, statusConditions: [], attachedEnergy: [], attachedTool: null, preEvolutions: undefined });
+        opponent.deck.push({ ...target, damage: 0, statusConditions: [], attachedEnergy: [], attachedTool: null, attachedTool2: null, preEvolutions: undefined });
       }
       while (opponent.bench.length < 5) opponent.bench.push(null);
       shuffleDeck(opponent.deck);

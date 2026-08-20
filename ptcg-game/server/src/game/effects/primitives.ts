@@ -173,6 +173,34 @@ export function everyPokemonInPlay(G: PtcgGameState): GameCard[] {
   return [...allPokemon(G, 0), ...allPokemon(G, 1)];
 }
 
+/**
+ * Discard the top `count` cards of `victimIdx`'s deck. Every mill of the OPPONENT's deck must go
+ * through here with `causedByOpponent: true` (attack templates, 突然削退/沙之羽擊-style
+ * abilities), because 整人擊落 (堅果啞鈴) triggers exactly there: each copy the opponent's
+ * attack/ability/Item/Supporter effect drops from this deck discards THAT player's own top 8.
+ * The 8-card punishment is itself an opponent-caused mill, so it recurses — a 堅果啞鈴 among the
+ * 8 fires back the other way (decks are finite, so this terminates). The trigger reads the raw
+ * ability name rather than hasAbility: the card has already landed in the discard pile, where
+ * board-scoped negation (暗夜羽擊/初始化) can't reach.
+ */
+export function millDeck(G: PtcgGameState, victimIdx: 0 | 1, count: number, causedByOpponent: boolean): GameCard[] {
+  const p = player(G, victimIdx);
+  const milled: GameCard[] = [];
+  for (let i = 0; i < count && p.deck.length > 0; i++) {
+    const c = p.deck.pop()!;
+    p.discardPile.push(c);
+    milled.push(c);
+  }
+  if (causedByOpponent) {
+    const nutCount = milled.filter(c => (c.cardData.abilities || [])
+      .some(a => a.text && a.name.replace(/^[‌​\s]+/, '').replace(/^\[特性\]\s*/, '').trim() === '整人擊落')).length;
+    for (let i = 0; i < nutCount; i++) {
+      millDeck(G, (1 - victimIdx) as 0 | 1, 8, true);
+    }
+  }
+  return milled;
+}
+
 /** Non-rule-box Pokémon: no ex/V/VMAX/VSTAR/GX/Radiant/Mega subtype or name prefix. */
 export function hasNoRuleBox(card: GameCard): boolean {
   const subs = card.cardData.subtypes || [];

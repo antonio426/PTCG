@@ -30,6 +30,7 @@ function allCardInstances(G: PtcgGameState): string[] {
     ids.push(card.id);
     for (const pre of card.preEvolutions ?? []) visit(pre);
     if (card.attachedTool) visit(card.attachedTool);
+    if (card.attachedTool2) visit(card.attachedTool2);
     for (const e of card.attachedEnergy) ids.push(e.id);
   };
   for (const p of G.players) {
@@ -180,8 +181,10 @@ export function checkBoardShape(G: PtcgGameState): Violation[] {
       if (card.damage < 0 || card.damage % 10 !== 0) {
         violations.push({ rule: 'damage-not-in-counters', detail: `player ${idx} ${where}: ${card.cardData.name} at ${card.damage}` });
       }
-      if (card.attachedTool && !card.attachedTool.cardData.subtypes.includes('Pokémon Tool')) {
-        violations.push({ rule: 'non-tool-attached', detail: `player ${idx} ${where}: ${card.attachedTool.cardData.name} attached as a Tool` });
+      for (const tool of [card.attachedTool, card.attachedTool2]) {
+        if (tool && !tool.cardData.subtypes.includes('Pokémon Tool')) {
+          violations.push({ rule: 'non-tool-attached', detail: `player ${idx} ${where}: ${tool.cardData.name} attached as a Tool` });
+        }
       }
       for (const e of card.attachedEnergy) {
         if (e.cardData && e.cardData.supertype !== 'Energy') {
@@ -195,7 +198,7 @@ export function checkBoardShape(G: PtcgGameState): Violation[] {
       }
       // Stacked lower Stages are inert markers — the top card owns every live attachment.
       for (const pre of card.preEvolutions ?? []) {
-        if (pre.attachedEnergy.length > 0 || pre.attachedTool || pre.damage !== 0 || pre.statusConditions.length > 0) {
+        if (pre.attachedEnergy.length > 0 || pre.attachedTool || pre.attachedTool2 || pre.damage !== 0 || pre.statusConditions.length > 0) {
           violations.push({ rule: 'pre-evolution-not-inert', detail: `player ${idx} ${where}: stacked ${pre.cardData.name} still carries state` });
         }
       }
@@ -212,7 +215,7 @@ export function checkBoardShape(G: PtcgGameState): Violation[] {
     // Cards waiting in hand or deck are not in play and carry no board state.
     for (const [zone, name] of [[p.hand, 'hand'], [p.deck, 'deck']] as [GameCard[], string][]) {
       for (const card of zone) {
-        if (card.damage !== 0 || card.attachedEnergy.length > 0 || card.attachedTool || card.statusConditions.length > 0) {
+        if (card.damage !== 0 || card.attachedEnergy.length > 0 || card.attachedTool || card.attachedTool2 || card.statusConditions.length > 0) {
           violations.push({ rule: 'in-play-state-off-board', detail: `player ${idx} ${name}: ${card.cardData.name} carries damage/attachments` });
         }
       }
@@ -261,8 +264,8 @@ export function boardFingerprint(G: PtcgGameState): string {
       prizes: p.prizes.length,
       taken: p.takenPrizes,
       exile: p.exileZone.map(c => c.id),
-      active: p.active && { id: p.active.id, dmg: p.active.damage, st: [...p.active.statusConditions].sort(), e: p.active.attachedEnergy.map(e => e.id).sort(), tool: p.active.attachedTool?.id ?? null },
-      bench: p.bench.map(c => c && { id: c.id, dmg: c.damage, st: [...c.statusConditions].sort(), e: c.attachedEnergy.map(e => e.id).sort(), tool: c.attachedTool?.id ?? null }),
+      active: p.active && { id: p.active.id, dmg: p.active.damage, st: [...p.active.statusConditions].sort(), e: p.active.attachedEnergy.map(e => e.id).sort(), tool: p.active.attachedTool?.id ?? null, tool2: p.active.attachedTool2?.id ?? null },
+      bench: p.bench.map(c => c && { id: c.id, dmg: c.damage, st: [...c.statusConditions].sort(), e: c.attachedEnergy.map(e => e.id).sort(), tool: c.attachedTool?.id ?? null, tool2: c.attachedTool2?.id ?? null }),
       counters: [p.energyAttachedThisTurn, p.cardsPlayedThisTurn, p.abilitiesUsedThisTurn.length,
         p.retreatedThisTurn, p.supporterPlayedThisTurn, p.stadiumActionUsedThisTurn,
         p.pokemonPlayedThisTurn.length, p.usedBonusAttackThisTurn],

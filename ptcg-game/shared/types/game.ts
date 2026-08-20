@@ -9,6 +9,10 @@ export interface GameCard {
   attachedEnergy: AttachedEnergy[];
   /** At most one Pokémon Tool card may be attached per Pokémon under current rules. */
   attachedTool?: GameCard | null;
+  /** Second Tool slot, usable ONLY under 多重轉接 (洛托姆ex: own 洛托姆-named Pokémon may hold
+   * 2 Tools). Every zone-moving code path must move/unbundle this alongside `attachedTool`; the
+   * moves wrapper discards it when the permission lapses (the ability's printed parenthetical). */
+  attachedTool2?: GameCard | null;
   turnedFacedown?: boolean;
   /** Real rules: evolving does NOT discard the pre-evolution card — it stays stacked underneath
    * the new card as part of the same in-play Pokémon, and the whole stack only goes to the

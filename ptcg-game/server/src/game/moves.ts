@@ -1,9 +1,9 @@
 import { Attack, DamageDetail, GameCard } from '@ptcg/shared';
 import { PtcgGameState, PtcgPlayerState, PendingChoice } from './GameState';
-import { canPlayPokemon, canEvolve, canAttachEnergy, canRetreat, canAttack, effectiveRetreatCost, FIRST_TURN_SUPPORTER_EXCEPTIONS } from './validation';
+import { canPlayPokemon, canEvolve, canAttachEnergy, canRetreat, canAttack, effectiveRetreatCost, usableAttacks, FIRST_TURN_SUPPORTER_EXCEPTIONS } from './validation';
 import { clearBenchStatusConditions, clearStatusConditionsOnLeaveActive } from './statusConditions';
 import { calculateDamageBreakdown, effectiveMaxHp, flushPreEvolutionsTo, flushPreEvolutionsToDiscard, handleKo, prizesForKo, promoteActiveIfNeeded, resetCardForReentry, stackAsPreEvolution, sweepKnockedOut } from './damage';
-import { areAbilitiesNegated, getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasCoinFlipAttackMissDebuff, hasPassiveAbilityNamed, hasTeraBenchedImmunity, isRetreatBlockedByOpponent, isStadiumPlayBlocked, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat, shouldDiscardAttackerEnergy, isProtectedFromOpponentAbility } from './effects/passiveAbilities';
+import { areAbilitiesNegated, getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasCoinFlipAttackMissDebuff, hasPassiveAbilityNamed, hasTeraBenchedImmunity, isRetreatBlockedByOpponent, isStadiumPlayBlocked, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat, shouldDiscardAttackerEnergy, isProtectedFromOpponentAbility, canHoldSecondTool } from './effects/passiveAbilities';
 import { benchDamageFromEffectsBlocked, benchLimit, enforceBenchLimit, isStadiumActive, sweepStadiumStatusCures } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
 import { applyStatusCondition, discardAttachedEnergy, drawCards, drawUpTo, shuffleDeck, asAttachedEnergy } from './effects/primitives';
@@ -268,6 +268,7 @@ const rawMoves = {
     const savedEnergy = oldCard.attachedEnergy;
     const savedDamage = oldCard.damage;
     const savedTool = oldCard.attachedTool;
+    const savedTool2 = oldCard.attachedTool2;
     // Note: status conditions (Asleep/Paralyzed/Confused/Poisoned/Burned) are cured on evolution per real rules, not carried over.
 
     stackAsPreEvolution(evolution, oldCard);
@@ -281,6 +282,7 @@ const rawMoves = {
     evolution.attachedEnergy = savedEnergy;
     evolution.damage = savedDamage;
     evolution.attachedTool = savedTool;
+    evolution.attachedTool2 = savedTool2;
     player.cardsPlayedThisTurn++;
     // Without this, canEvolve()'s "already evolved/played this turn" check never sees the new
     // card's id, so a Pokémon that just evolved could illegally evolve again the same turn
@@ -396,7 +398,9 @@ const rawMoves = {
 
     // Pokémon Tool cards attach persistently instead of resolving once and going to discard.
     if (trainerCard.cardData.subtypes.includes('Pokémon Tool') && !hasTrainerEffect(cardName)) {
-      const targets = [player.active, ...player.bench].filter((c): c is GameCard => c !== null && !c.attachedTool);
+      // 多重轉接: a 洛托姆-named Pokémon with the permission active may take a second Tool.
+      const targets = [player.active, ...player.bench].filter((c): c is GameCard => c !== null
+        && (!c.attachedTool || (!c.attachedTool2 && canHoldSecondTool(G, c))));
       if (targets.length === 0) { player.hand.push(trainerCard); return; }
       G.pendingChoice = {
         player: G.currentPlayer as 0 | 1,
@@ -653,6 +657,8 @@ const rawMoves = {
       const toolCard = context.toolCard as GameCard;
       const target = player.active?.id === selection[0] ? player.active : player.bench.find(c => c?.id === selection[0]);
       if (target && !target.attachedTool) target.attachedTool = toolCard;
+      // 多重轉接: the second slot, only while the permission is live.
+      else if (target && !target.attachedTool2 && canHoldSecondTool(G, target)) target.attachedTool2 = toolCard;
       else player.hand.push(toolCard);
       G.pendingChoice = null;
       addLog(G, G.currentPlayer, 'resolve_choice', `將道具「${toolCard.cardData.name}」附加於 ${target?.cardData.name ?? '?'}`);
@@ -700,6 +706,36 @@ const rawMoves = {
       }
       G.pendingChoice = null;
       addLog(G, G.currentPlayer, 'resolve_choice', `${player.active?.cardData.name ?? '?'} 上場成為新的戰鬥寶可夢`);
+      return;
+    }
+
+    if (effectKey === 'mighty_transform') {
+      // 全能變身: swap the freshly-benched 海豚俠 with 海豚俠ex from the deck. Everything on it
+      // (energy, Tool, damage, conditions, the stacked lower Stage) carries over — only the
+      // 海豚俠 top card itself returns to the deck.
+      const player = G.players[G.currentPlayer];
+      const benchIdx = player.bench.findIndex(c => c?.id === G.pendingChoice!.sourceCardId);
+      const pickedId = selection[0];
+      if (benchIdx >= 0 && pickedId) {
+        const dolphin = player.bench[benchIdx]!;
+        const di = player.deck.findIndex(c => c.id === pickedId && normalizeAbilityName(c.cardData.name) === '海豚俠ex');
+        if (di >= 0 && hasPassiveAbilityNamed(G, dolphin, '全能變身')) {
+          const ex = player.deck.splice(di, 1)[0];
+          ex.attachedEnergy = dolphin.attachedEnergy;
+          ex.attachedTool = dolphin.attachedTool;
+          ex.attachedTool2 = dolphin.attachedTool2;
+          ex.damage = dolphin.damage;
+          ex.statusConditions = dolphin.statusConditions;
+          ex.preEvolutions = dolphin.preEvolutions;
+          player.bench[benchIdx] = ex;
+          player.deck.push({ ...dolphin, attachedEnergy: [], attachedTool: null, attachedTool2: null, damage: 0, statusConditions: [], preEvolutions: undefined });
+          player.abilitiesUsedThisTurn.push(ex.id);
+          addLog(G, G.currentPlayer, 'use_ability', `全能變身：海豚俠 與 海豚俠ex 互換`);
+        }
+      }
+      // The deck was searched to build the options either way — reshuffle even on a decline.
+      shuffleDeck(player.deck);
+      G.pendingChoice = null;
       return;
     }
 
@@ -924,7 +960,9 @@ const rawMoves = {
     if (!player.active || !opponent.active) return;
 
     const attacker = player.active;
-    const attack = attacker.cardData.attacks![attackIndex];
+    // usableAttacks, not cardData.attacks: 潛入記憶 appends pre-evolution attacks after the
+    // printed ones, and canAttack above validated the index against that same combined list.
+    const attack = usableAttacks(G, attacker)[attackIndex];
     const defender = opponent.active;
 
     // Confused: flip a coin before the attack connects. Tails = it fails and hits its own user for 30 instead.
@@ -1015,10 +1053,55 @@ const rawMoves = {
  * rules only apply state-based checks between actions, so the sweep runs on the move that
  * finally clears the choice.
  */
+/** 全能變身 (海豚俠): fires when the holder moved from its owner's Active Spot to their Bench
+ * during the owner's own turn — retreat, switch Trainers, Stadium swaps and multi-step choice
+ * resolutions all funnel through some wrapped move, so ONE transition check here covers every
+ * path without per-handler hooks. Offers swapping it with 海豚俠ex from the deck (attachments,
+ * damage, conditions and the stacked lower Stage all carry over — see the resolveChoice branch). */
+function maybeRaiseMightyTransformChoice(G: PtcgGameState, ownerIdx: 0 | 1, previousActiveId: string | null): void {
+  if (!previousActiveId || G.pendingChoice || G.currentPlayer !== ownerIdx) return;
+  const p = G.players[ownerIdx];
+  const moved = p.bench.find(c => c?.id === previousActiveId);
+  if (!moved || !hasPassiveAbilityNamed(G, moved, '全能變身')) return;
+  if (p.abilitiesUsedThisTurn.includes(moved.id)) return;
+  const options = p.deck
+    .filter(c => normalizeAbilityName(c.cardData.name) === '海豚俠ex')
+    .map(c => ({ id: c.id, label: c.cardData.name }));
+  if (options.length === 0) return;
+  G.pendingChoice = {
+    player: ownerIdx,
+    effectKey: 'mighty_transform',
+    sourceCardId: moved.id,
+    prompt: '全能變身：從牌庫選擇 1 張「海豚俠ex」與這張卡互換（可不選）',
+    choiceType: 'select_from_list',
+    minCount: 0,
+    maxCount: 1,
+    options,
+    context: {},
+  };
+}
+
+/** 多重轉接's printed parenthetical: the moment the second-Tool permission lapses (the 洛托姆ex
+ * holder left play or its ability is negated), the extra Tool is discarded. */
+function sweepLapsedSecondTools(G: PtcgGameState): void {
+  for (const p of G.players) {
+    for (const card of [p.active, ...p.bench]) {
+      if (card?.attachedTool2 && !canHoldSecondTool(G, card)) {
+        p.discardPile.push(card.attachedTool2);
+        card.attachedTool2 = null;
+      }
+    }
+  }
+}
+
 export const moves = Object.fromEntries(
   Object.entries(rawMoves).map(([name, fn]) => [
     name,
     (arg: { G: PtcgGameState; ctx: any }, ...rest: unknown[]) => {
+      // Snapshot for the 全能變身 transition watch below — who was Active for the player about
+      // to move, before the move ran.
+      const moverIdx = arg.G.currentPlayer as 0 | 1;
+      const activeBefore = arg.G.players[moverIdx]?.active?.id ?? null;
       const result = (fn as (...a: unknown[]) => unknown)(arg, ...rest);
       if (arg.G.winner === null && !arg.G.pendingChoice) {
         // 回力鏢能量/燃料【火】能量 come back 「在招式的傷害與效果的影響之後」 — this is that
@@ -1028,6 +1111,8 @@ export const moves = Object.fromEntries(
         // Pokémon that was just switched out isn't KO'd on Poison damage it should no longer have.
         clearBenchStatusConditions(arg.G);
         sweepKnockedOut(arg.G);
+        sweepLapsedSecondTools(arg.G);
+        maybeRaiseMightyTransformChoice(arg.G, moverIdx, activeBefore);
       }
       return result;
     },

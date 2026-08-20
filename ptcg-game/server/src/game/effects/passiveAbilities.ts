@@ -299,6 +299,15 @@ export function isReturnToHandBlocked(G: PtcgGameState, ownerIdx: 0 | 1): boolea
   return teamOf(G, (1 - ownerIdx) as 0 | 1).some(c => hasAbility(G, c, '平穩境地'));
 }
 
+/** 多重轉接 (洛托姆ex): while a holder is in play on `card`'s side, that side's 洛托姆-named
+ * Pokémon may each hold a second Pokémon Tool (GameCard.attachedTool2). The moves wrapper
+ * discards the extra Tool the moment this stops being true — the ability's own parenthetical
+ * (「這個特性消除時，將身上多附的『寶可夢道具』卡丟棄」). */
+export function canHoldSecondTool(G: PtcgGameState, card: GameCard): boolean {
+  if (!card.cardData.name.includes('洛托姆')) return false;
+  return teamOf(G, ownerIndexOf(G, card)).some(c => hasAbility(G, c, '多重轉接'));
+}
+
 const ZH_TYPE_CHAR: Record<string, EnergyType> = {
   '草': 'Grass', '火': 'Fire', '水': 'Water', '雷': 'Lightning', '超': 'Psychic',
   '鬥': 'Fighting', '惡': 'Darkness', '鋼': 'Metal', '龍': 'Dragon', '無': 'Colorless',
@@ -793,4 +802,7 @@ export const PASSIVE_ABILITY_NAMES = new Set([
   // usable-in-turn effect); 緊急迴轉/激動俯衝 are real abilityEffects entries used from hand.
   '瞬間爆發力',
   '雙重屬性', '二重核心',
+  // Batch F: 潛入記憶 (usableAttacks), 全能變身/全能靈魂 (moves wrapper watch + canEvolve gate),
+  // 多重轉接 (canHoldSecondTool + attachedTool2), 整人擊落 (primitives.millDeck trigger).
+  '潛入記憶', '全能變身', '全能靈魂', '多重轉接', '整人擊落',
 ]);

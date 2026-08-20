@@ -3,7 +3,7 @@ import { PtcgGameState, GamePhase, PendingChoice } from './GameState';
 import { hasAbilityEffect, canUseAbility, FROM_HAND_ABILITY_NAMES } from './effects/abilities';
 import { canPlayTrainer, hasTrainerEffect } from './effects/trainers';
 import { getRetreatCostReduction, getColorlessCostReduction } from './effects/tools';
-import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostOverride, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatCostReduction, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, isAceSpecPlayBlocked, areAbilitiesNegated, isAttackLockedByTimedEffect, isItemAndToolPlayBlocked, isItemLockedByTimedEffect, isItemPlayBlocked, isNamedAttackLockedByTimedEffect, isStadiumPlayBlocked, isRetreatLockedByTimedEffect, isProtectedFromOpponentTrainer } from './effects/passiveAbilities';
+import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostOverride, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatCostReduction, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, isAceSpecPlayBlocked, areAbilitiesNegated, isAttackLockedByTimedEffect, isItemAndToolPlayBlocked, isItemLockedByTimedEffect, isItemPlayBlocked, isNamedAttackLockedByTimedEffect, isStadiumPlayBlocked, isRetreatLockedByTimedEffect, isProtectedFromOpponentTrainer, hasPassiveAbilityNamed, canHoldSecondTool } from './effects/passiveAbilities';
 import { normalizeAbilityName, normalizeCardName } from './effects/types';
 import { hasEvolvesFrom, evolvesFromMatches, inferEvolvesFromSpecies } from './evolutionChains';
 import { isFossilCard } from './fossils';
@@ -170,6 +170,10 @@ export function canEvolve(G: PtcgGameState, playerIndex: number, cardId: string,
   if (!card) return false;
   if (card.cardData.supertype !== 'Pokémon') return false;
 
+  // 全能靈魂 (海豚俠ex): 「這張卡只可依據…『全能變身』的效果放置於場上」 — it can never be
+  // played by evolving; the only door is the 全能變身 deck swap in moves.resolveChoice.
+  if (card.cardData.abilities?.some(a => a.text && normalizeAbilityName(a.name) === '全能靈魂')) return false;
+
   // TCGdex's zh-tw locale never populates `evolvesFrom` (confirmed: every Stage 1/Stage 2/VMAX/
   // VSTAR card in the dataset is missing it, not just some) — hasEvolvesFrom/evolvesFromMatches
   // fall back to a static species-chain table built from PokeAPI (see evolutionChains.ts) so
@@ -239,6 +243,21 @@ export function canRetreat(G: PtcgGameState, playerIndex: number): boolean {
   return attachedEnergyCount >= retreatCost;
 }
 
+/**
+ * 潛入記憶 (古空棘魚): while a holder is in play on `card`'s side, every own EVOLVED Pokémon may
+ * also use the attacks printed on the Stages stacked underneath it (energy still required).
+ * The list is index-stable — printed attacks first, then pre-evolution attacks oldest-stage
+ * first — and getLegalMoves, canAttack and moves.attack all resolve an attackIndex against THIS
+ * list, so the three can't disagree about which attack an index names.
+ */
+export function usableAttacks(G: PtcgGameState, card: GameCard): NonNullable<GameCard['cardData']['attacks']> {
+  const printed = card.cardData.attacks || [];
+  if (!card.preEvolutions?.length) return printed;
+  const team = G.players[card.owner];
+  if (![team.active, ...team.bench].some(c => c && hasPassiveAbilityNamed(G, c, '潛入記憶'))) return printed;
+  return [...printed, ...card.preEvolutions.flatMap(p => p.cardData.attacks || [])];
+}
+
 export function canAttack(G: PtcgGameState, playerIndex: number, attackIndex: number): boolean {
   const player = playerState(G, playerIndex, ['main', 'attack']);
   if (!player) return false;
@@ -259,7 +278,7 @@ export function canAttack(G: PtcgGameState, playerIndex: number, attackIndex: nu
   if (player.active.statusConditions.includes('Asleep') || player.active.statusConditions.includes('Paralyzed')) return false;
   if (isAttackLockedByTimedEffect(G, player.active)) return false;
 
-  const attack = player.active.cardData.attacks?.[attackIndex];
+  const attack = usableAttacks(G, player.active)[attackIndex];
   if (!attack) return false;
   // Old-scraper residue stored ability text as `[特性]`-prefixed pseudo-ATTACKS with an empty
   // cost — always payable, so selecting one silently wasted the turn's attack. The data has
@@ -487,7 +506,8 @@ export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalActio
         // `canPlayTrainer` can't cover this: these cards have no handler to carry a canPlay.
         const isGenericTool = card.cardData.subtypes.includes('Pokémon Tool') && !hasTrainerEffect(card.cardData.name);
         const noToolTarget = isGenericTool
-          && ![player.active, ...player.bench].some(c => c !== null && !c.attachedTool);
+          && ![player.active, ...player.bench].some(c => c !== null
+            && (!c.attachedTool || (!c.attachedTool2 && canHoldSecondTool(G, c))));
         if (!blockedFirstTurn && !blockedAlreadyPlayed && !blockedByOpponentAbility && !blockedByGate && !noToolTarget) {
           legalMoves.push({
             type: 'play_trainer',
@@ -526,12 +546,13 @@ export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalActio
   }
 
   if (G.phase === 'main' || G.phase === 'attack') {
-    if (player.active && player.active.cardData.attacks) {
-      for (let i = 0; i < player.active.cardData.attacks.length; i++) {
+    if (player.active) {
+      const attacks = usableAttacks(G, player.active);
+      for (let i = 0; i < attacks.length; i++) {
         if (canAttack(G, playerIndex, i)) {
           legalMoves.push({
             type: 'attack',
-            description: player.active.cardData.attacks[i].name,
+            description: attacks[i].name,
             payload: { attackIndex: i },
           });
         }

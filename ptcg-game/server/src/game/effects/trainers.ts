@@ -181,6 +181,7 @@ const rareCandy: EffectHandler = {
       evolution.attachedEnergy = old.attachedEnergy;
       evolution.damage = old.damage;
       evolution.attachedTool = old.attachedTool;
+    evolution.attachedTool2 = old.attachedTool2;
       stackAsPreEvolution(evolution, old);
       if (isActive) p.active = evolution; else p.bench[benchIdx] = evolution;
     }
@@ -1205,6 +1206,7 @@ const saijo: EffectHandler = {
     evolution.attachedEnergy = old.attachedEnergy;
     evolution.damage = old.damage;
     evolution.attachedTool = old.attachedTool;
+    evolution.attachedTool2 = old.attachedTool2;
     stackAsPreEvolution(evolution, old);
     if (isActive) p.active = evolution; else p.bench[benchIdx] = evolution;
     return 'done';
@@ -2136,6 +2138,7 @@ const oniMask: EffectHandler = {
     replacement.attachedEnergy = old.attachedEnergy;
     replacement.damage = old.damage;
     replacement.attachedTool = old.attachedTool;
+    replacement.attachedTool2 = old.attachedTool2;
     replacement.statusConditions = old.statusConditions;
     if (isActive) p.active = replacement; else p.bench[benchIdx] = replacement;
     return 'done';
@@ -2182,6 +2185,7 @@ const pokemonCyclone: EffectHandler = {
     const target = isActive ? p.active : (benchIdx >= 0 ? p.bench[benchIdx] : null);
     if (!target) return 'done';
     if (target.attachedTool) p.hand.push(target.attachedTool);
+    if (target.attachedTool2) p.hand.push(target.attachedTool2);
     // 「將那隻寶可夢與附加的卡，全部放回手牌」 — everything on the Pokémon follows it to hand.
     // AttachedEnergy keeps the card it came from in `cardData`, so Energy can be rebuilt into a
     // hand card (an older comment here claimed it couldn't and discarded it instead); only an
@@ -2192,7 +2196,7 @@ const pokemonCyclone: EffectHandler = {
     // The lower Stages stacked underneath are "附加的卡" too, so a Stage 2 returns as its whole
     // stack instead of leaving the Basic and Stage 1 behind in the discard pile.
     flushPreEvolutionsTo(target, p.hand);
-    p.hand.push({ ...target, damage: 0, statusConditions: [], attachedEnergy: [], attachedTool: null, preEvolutions: undefined });
+    p.hand.push({ ...target, damage: 0, statusConditions: [], attachedEnergy: [], attachedTool: null, attachedTool2: null, preEvolutions: undefined });
     if (isActive) p.active = null; else p.bench[benchIdx] = null;
     return 'done';
   },
@@ -2762,12 +2766,13 @@ const mysteriousClock: EffectHandler = {
     priorStage.attachedEnergy = target.attachedEnergy;
     priorStage.damage = target.damage;
     priorStage.attachedTool = target.attachedTool;
+    priorStage.attachedTool2 = target.attachedTool2;
     priorStage.statusConditions = target.statusConditions;
     const isActive = p.active?.id === target.id;
     const benchIdx = isActive ? -1 : p.bench.findIndex(c => c?.id === target.id);
     if (isActive) p.active = priorStage; else if (benchIdx >= 0) p.bench[benchIdx] = priorStage;
     // Only the removed evolution card itself returns to hand — it carries no stacked history.
-    p.hand.push({ ...target, damage: 0, statusConditions: [], attachedEnergy: [], attachedTool: null, preEvolutions: undefined });
+    p.hand.push({ ...target, damage: 0, statusConditions: [], attachedEnergy: [], attachedTool: null, attachedTool2: null, preEvolutions: undefined });
     return 'done';
   },
 };

@@ -1,7 +1,7 @@
 import { EnergyType, GameCard, AttachedEnergy } from '@ptcg/shared';
 import { EffectContext, EffectHandler, EffectStep, allPokemon, findOwnPokemon, normalizeAbilityName, opponent, player } from './types';
 import { handleKo, stackAsPreEvolution, flushPreEvolutionsTo, flushPreEvolutionsToDiscard, resetCardForReentry } from '../damage';
-import { applyStatusCondition, discardAttachedEnergy, discardFromHand, drawCards, drawUpTo, flipCoin, flipCoins, moveDeckCardToBench, moveDeckCardToHand, shuffleDeck, asAttachedEnergy } from './primitives';
+import { applyStatusCondition, discardAttachedEnergy, discardFromHand, drawCards, drawUpTo, flipCoin, flipCoins, millDeck, moveDeckCardToBench, moveDeckCardToHand, shuffleDeck, asAttachedEnergy } from './primitives';
 import { clearStatusConditionsOnLeaveActive } from '../statusConditions';
 import { hasEvolvesFrom, evolvesFromMatches } from '../evolutionChains';
 import { isProtectedFromOpponentAbility, isReturnToHandBlocked } from './passiveAbilities';
@@ -189,9 +189,7 @@ const customerMagnet: EffectHandler = {
 const suddenSetback: EffectHandler = {
   start(ctx) {
     if (!playedOrEvolvedThisTurn(ctx)) return 'done';
-    const opp = opponent(ctx.G, ctx.playerIndex);
-    const card = opp.deck.pop();
-    if (card) opp.discardPile.push(card);
+    millDeck(ctx.G, (1 - ctx.playerIndex) as 0 | 1, 1, true);
     return 'done';
   },
   resume() { return 'done'; },
@@ -1168,12 +1166,13 @@ const primalWing: EffectHandler = {
     priorStage.attachedEnergy = target.attachedEnergy;
     priorStage.damage = target.damage;
     priorStage.attachedTool = target.attachedTool;
+    priorStage.attachedTool2 = target.attachedTool2;
     priorStage.statusConditions = target.statusConditions;
     const isActive = opp.active?.id === target.id;
     const benchIdx = isActive ? -1 : opp.bench.findIndex(c => c?.id === target.id);
     if (isActive) opp.active = priorStage; else if (benchIdx >= 0) opp.bench[benchIdx] = priorStage;
     // Only the removed evolution card itself returns to hand — it carries no stacked history.
-    opp.hand.push({ ...target, damage: 0, statusConditions: [], attachedEnergy: [], attachedTool: null, preEvolutions: undefined });
+    opp.hand.push({ ...target, damage: 0, statusConditions: [], attachedEnergy: [], attachedTool: null, attachedTool2: null, preEvolutions: undefined });
     return 'done';
   },
 };
@@ -1360,8 +1359,7 @@ const skyCarry: EffectHandler = {
 const sandWingbeat: EffectHandler = {
   start(ctx) {
     if (!playedOrEvolvedThisTurn(ctx)) return 'done';
-    const opp = opponent(ctx.G, ctx.playerIndex);
-    for (let i = 0; i < 2 && opp.deck.length > 0; i++) opp.discardPile.push(opp.deck.pop()!);
+    millDeck(ctx.G, (1 - ctx.playerIndex) as 0 | 1, 2, true);
     return 'done';
   },
   resume() { return 'done'; },
@@ -2017,6 +2015,7 @@ const grudgeEvolution: EffectHandler = {
     evolution.attachedEnergy = self.attachedEnergy;
     evolution.damage = self.damage + 20;
     evolution.attachedTool = self.attachedTool;
+    evolution.attachedTool2 = self.attachedTool2;
     if (isActive) p.active = evolution; else p.bench[benchIdx] = evolution;
     return 'done';
   },
@@ -2605,6 +2604,7 @@ const emergencyEvolution: EffectHandler = {
     evolution.attachedEnergy = self.attachedEnergy;
     evolution.damage = self.damage;
     evolution.attachedTool = self.attachedTool;
+    evolution.attachedTool2 = self.attachedTool2;
     stackAsPreEvolution(evolution, self);
     if (isActive) p.active = evolution; else p.bench[benchIdx] = evolution;
     return 'done';

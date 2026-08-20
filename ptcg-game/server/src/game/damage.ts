@@ -98,6 +98,10 @@ export function resetCardForReentry(card: GameCard, discardPile: GameCard[]): vo
     discardPile.push(card.attachedTool);
     card.attachedTool = null;
   }
+  if (card.attachedTool2) {
+    discardPile.push(card.attachedTool2);
+    card.attachedTool2 = null;
+  }
 }
 
 /**
@@ -321,6 +325,10 @@ export function handleKo(G: PtcgGameState, koPlayerIndex: number, koCardId: stri
       // are public, so the duplicate was visible, and any effect that retrieves or counts Tools
       // in the discard could act on it twice.
       c.attachedTool = null;
+    }
+    if (c.attachedTool2) {
+      koPlayer.discardPile.push(c.attachedTool2);
+      c.attachedTool2 = null;
     }
     if (returnsToHand(c)) {
       // Inlined rather than imported from effects/primitives.ts — that file imports handleKo

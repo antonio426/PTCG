@@ -69,38 +69,37 @@ export function hasToolEffect(name: string): boolean {
   return normalizeCardName(name) in toolEffects;
 }
 
+/** Both Tool slots as live ToolEffect entries — slot 2 only exists under 多重轉接 (洛托姆ex). */
+function activeToolEffects(G: PtcgGameState, card: GameCard): ToolEffect[] {
+  if (toolsAreDisabled(G)) return [];
+  return [card.attachedTool, card.attachedTool2]
+    .filter((t): t is GameCard => !!t)
+    .map(t => toolEffects[normalizeCardName(t.cardData.name)])
+    .filter((e): e is ToolEffect => !!e);
+}
+
 export function getRetreatCostReduction(G: PtcgGameState, card: GameCard): { reduction: number; waived: boolean } {
-  const tool = card.attachedTool;
-  if (!tool || toolsAreDisabled(G)) return { reduction: 0, waived: false };
-  const effect = toolEffects[normalizeCardName(tool.cardData.name)];
-  if (!effect) return { reduction: 0, waived: false };
-  return {
-    reduction: effect.retreatCostReduction?.(card) ?? 0,
-    waived: effect.retreatCostWaived?.(card) ?? false,
-  };
+  let reduction = 0;
+  let waived = false;
+  for (const effect of activeToolEffects(G, card)) {
+    reduction += effect.retreatCostReduction?.(card) ?? 0;
+    waived = waived || (effect.retreatCostWaived?.(card) ?? false);
+  }
+  return { reduction, waived };
 }
 
 export function getColorlessCostReduction(G: PtcgGameState, card: GameCard, ownerIdx: 0 | 1): number {
-  const tool = card.attachedTool;
-  if (!tool || toolsAreDisabled(G)) return 0;
-  const effect = toolEffects[normalizeCardName(tool.cardData.name)];
-  return effect?.colorlessCostReduction?.(card, G, ownerIdx) ?? 0;
+  return activeToolEffects(G, card).reduce((sum, e) => sum + (e.colorlessCostReduction?.(card, G, ownerIdx) ?? 0), 0);
 }
 
 export function getToolHpBonus(G: PtcgGameState, card: GameCard): number {
-  const tool = card.attachedTool;
-  if (!tool || toolsAreDisabled(G)) return 0;
-  return toolEffects[normalizeCardName(tool.cardData.name)]?.hpBonus ?? 0;
+  return activeToolEffects(G, card).reduce((sum, e) => sum + (e.hpBonus ?? 0), 0);
 }
 
 export function getToolDamageBonus(G: PtcgGameState, card: GameCard, defender: GameCard): number {
-  const tool = card.attachedTool;
-  if (!tool || toolsAreDisabled(G)) return 0;
-  return toolEffects[normalizeCardName(tool.cardData.name)]?.damageBonus?.(card, defender) ?? 0;
+  return activeToolEffects(G, card).reduce((sum, e) => sum + (e.damageBonus?.(card, defender) ?? 0), 0);
 }
 
 export function getToolRetaliationDamage(G: PtcgGameState, card: GameCard): number {
-  const tool = card.attachedTool;
-  if (!tool || toolsAreDisabled(G)) return 0;
-  return toolEffects[tool.cardData.name]?.retaliationDamage?.(card) ?? 0;
+  return activeToolEffects(G, card).reduce((sum, e) => sum + (e.retaliationDamage?.(card) ?? 0), 0);
 }

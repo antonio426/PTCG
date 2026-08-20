@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import type { Subtype } from '@ptcg/shared';
 import { moves } from '../src/game/moves';
-import { getLegalMoves } from '../src/game/validation';
+import { getLegalMoves, canEvolve } from '../src/game/validation';
 import { effectiveMaxHp } from '../src/game/damage';
+import { millDeck } from '../src/game/effects/primitives';
 import {
   areAbilitiesNegated, isDamageBlocked, isImmuneToOpponentAttackEffects, isStadiumPlayBlocked,
   isProtectedFromOpponentTrainer, isProtectedFromOpponentAbility, isReturnToHandBlocked,
@@ -539,5 +540,143 @@ describe('雙重屬性/二重核心: printed type replaced by the two types in t
     const G2 = plainBoard(plainAttacker, psychicWeak2);
     moves.attack({ G: G2, ctx: battleCtx } as any, 0);
     expect(psychicWeak2.damage).toBe(30);
+  });
+});
+
+/* ---------- Batch F: structural abilities ---------- */
+
+describe('潛入記憶: evolved Pokémon can use their pre-evolutions\' attacks', () => {
+  it('the stacked Basic\'s attack is offered, resolvable, and gone without the holder', () => {
+    const preAttack = mkAttack('底層猛擊', ['Colorless'], '40');
+    const topAttack = mkAttack('表層輕拍', ['Colorless'], '10');
+    const stage1 = makeGameCard(makeCard({ name: '上層者', hp: '120', subtypes: ['Stage 1'] as Subtype[], attacks: [topAttack] }), 0, {
+      attachedEnergy: [{ id: 'm-e1', type: 'Colorless', cardData: makeCard({ name: '基本無能量', supertype: 'Energy', subtypes: ['Basic Energy'] as Subtype[] }) }],
+    });
+    stage1.preEvolutions = [makeGameCard(makeCard({ name: '底層者', hp: '60', subtypes: ['Basic'] as Subtype[], attacks: [preAttack] }), 0)];
+    const holder = makeGameCard(withAbility('潛入記憶'), 0);
+    const G = plainBoard(stage1, makeGameCard(BASIC_MON, 1, { cardData: undefined as any } as any), { myBench: [holder] });
+    G.players[1].active = makeGameCard(makeCard({ name: '標靶', hp: '200', subtypes: ['Basic'] as Subtype[] }), 1);
+    const offered = getLegalMoves(G, 0).filter(m => m.type === 'attack').map(m => m.description);
+    expect(offered).toContain('表層輕拍');
+    expect(offered).toContain('底層猛擊');
+    moves.attack({ G, ctx: battleCtx } as any, 1); // index 1 = the appended pre-evo attack
+    expect(G.players[1].active!.damage).toBe(40);
+    // Without the holder, only the printed attack is offered.
+    const stage1b = makeGameCard(stage1.cardData, 0, { attachedEnergy: stage1.attachedEnergy });
+    stage1b.preEvolutions = stage1.preEvolutions;
+    const G2 = plainBoard(stage1b, makeGameCard(BASIC_MON, 1));
+    expect(getLegalMoves(G2, 0).filter(m => m.type === 'attack').map(m => m.description)).toEqual(['表層輕拍']);
+  });
+});
+
+describe('全能變身/全能靈魂: the 海豚俠 deck swap', () => {
+  const dolphin = makeCard({
+    name: '海豚俠', hp: '100', subtypes: ['Stage 1'] as Subtype[], types: ['Water'] as any,
+    abilities: [{ name: '全能變身', type: 'Ability', text: 'x' }],
+  });
+  const dolphinEx = makeCard({
+    name: '海豚俠ex', hp: '340', subtypes: ['Stage 1', 'ex'] as Subtype[], types: ['Water'] as any,
+    abilities: [{ name: '全能靈魂', type: 'Ability', text: 'x' }],
+  });
+
+  it('benching it from the Active offers the swap; everything carries over', () => {
+    const hero = makeGameCard(dolphin, 0, {
+      damage: 30,
+      attachedEnergy: [{ id: 'd-e1', type: 'Water', cardData: makeCard({ name: '基本水能量', supertype: 'Energy', subtypes: ['Basic Energy'] as Subtype[] }) }],
+    });
+    const exCard = makeGameCard(dolphinEx, 0);
+    const G = plainBoard(hero, makeGameCard(BASIC_MON, 1), { myBench: [makeGameCard(BASIC_MON, 0)] });
+    G.players[0].deck = [exCard, makeGameCard(BASIC_MON, 0)];
+    moves.retreat({ G, ctx: battleCtx } as any, 0);
+    expect(G.pendingChoice?.effectKey).toBe('mighty_transform');
+    moves.resolveChoice({ G, ctx: battleCtx } as any, [exCard.id]);
+    const swapped = G.players[0].bench.find(c => c?.id === exCard.id);
+    expect(swapped).toBeDefined();
+    expect(swapped!.damage).toBe(30);
+    expect(swapped!.attachedEnergy).toHaveLength(1);
+    expect(G.players[0].deck.some(c => c.id === hero.id)).toBe(true);
+    expect(G.players[0].deck.some(c => c.id === exCard.id)).toBe(false);
+  });
+
+  it('declining leaves the board alone, and 全能靈魂 blocks a normal evolution', () => {
+    const hero = makeGameCard(dolphin, 0);
+    const exCard = makeGameCard(dolphinEx, 0);
+    const G = plainBoard(hero, makeGameCard(BASIC_MON, 1), { myBench: [makeGameCard(BASIC_MON, 0)] });
+    G.players[0].deck = [exCard];
+    moves.retreat({ G, ctx: battleCtx } as any, 0);
+    expect(G.pendingChoice?.effectKey).toBe('mighty_transform');
+    moves.resolveChoice({ G, ctx: battleCtx } as any, []);
+    expect(G.players[0].bench.some(c => c?.id === hero.id)).toBe(true);
+    // 全能靈魂: even with the ex in hand and 海豚俠 in play, evolving into it is never legal.
+    const G2 = plainBoard(makeGameCard(dolphin, 0), makeGameCard(BASIC_MON, 1));
+    const exInHand = makeGameCard(dolphinEx, 0);
+    G2.players[0].hand = [exInHand];
+    expect(canEvolve(G2, 0, exInHand.id, G2.players[0].active!.id)).toBe(false);
+  });
+});
+
+describe('多重轉接: a second Tool slot for 洛托姆-named Pokémon', () => {
+  const cape = () => makeGameCard(makeCard({ name: '英雄斗篷', supertype: 'Trainer', subtypes: ['Pokémon Tool'] as Subtype[] }), 0);
+
+  it('attaches a second Tool, sums its effect, and discards it when the permission lapses', () => {
+    const rotom = makeGameCard(makeCard({
+      name: '洛托姆ex', hp: '190', subtypes: ['Basic', 'ex'] as Subtype[],
+      abilities: [{ name: '多重轉接', type: 'Ability', text: 'x' }],
+    }), 0);
+    const G = plainBoard(rotom, makeGameCard(BASIC_MON, 1));
+    const tool1 = cape();
+    const tool2 = cape();
+    G.players[0].hand = [tool1, tool2];
+    moves.playTrainer({ G, ctx: battleCtx } as any, tool1.id);
+    moves.resolveChoice({ G, ctx: battleCtx } as any, [rotom.id]);
+    moves.playTrainer({ G, ctx: battleCtx } as any, tool2.id);
+    moves.resolveChoice({ G, ctx: battleCtx } as any, [rotom.id]);
+    expect(rotom.attachedTool?.id).toBe(tool1.id);
+    expect(rotom.attachedTool2?.id).toBe(tool2.id);
+    expect(effectiveMaxHp(G, rotom)).toBe(190 + 200); // two 英雄斗篷 stack
+    // Permission lapses (the only holder is this very Rotom — knock it out of play by hand):
+    // simulate the holder losing the ability via 初始化 on the opponent's Active.
+    G.players[1].active = makeGameCard(withAbility('初始化', { subtypes: ['Basic', 'ex', 'Future'] as Subtype[] }), 1);
+    moves.endTurn({ G, ctx: battleCtx } as any);
+    expect(rotom.attachedTool2).toBeNull();
+    expect(G.players[0].discardPile.some(c => c.id === tool2.id)).toBe(true);
+    expect(rotom.attachedTool?.id).toBe(tool1.id); // the first Tool is legal and stays
+  });
+
+  it('a non-洛托姆 Pokémon never gets the second slot', () => {
+    const rotomHolder = makeGameCard(makeCard({
+      name: '洛托姆ex', hp: '190', subtypes: ['Basic', 'ex'] as Subtype[],
+      abilities: [{ name: '多重轉接', type: 'Ability', text: 'x' }],
+    }), 0);
+    const plain = makeGameCard(BASIC_MON, 0, { attachedTool: makeGameCard(makeCard({ name: '某道具', supertype: 'Trainer', subtypes: ['Pokémon Tool'] as Subtype[] }), 0) });
+    const G = plainBoard(plain, makeGameCard(BASIC_MON, 1), { myBench: [rotomHolder] });
+    const tool = cape();
+    G.players[0].hand = [tool];
+    moves.playTrainer({ G, ctx: battleCtx } as any, tool.id);
+    // Options exclude the occupied non-洛托姆 Active; only the Rotom (slot 1 free) is offered.
+    expect(G.pendingChoice?.options!.map(o => o.id)).toEqual([rotomHolder.id]);
+  });
+});
+
+describe('整人擊落: milled by the opponent, punishes their deck for 8', () => {
+  it('fires on opponent-caused mills only, and chains through the punishment', () => {
+    const nut = makeGameCard(makeCard({
+      name: '堅果啞鈴', hp: '130', subtypes: ['Stage 1'] as Subtype[],
+      abilities: [{ name: '整人擊落', type: 'Ability', text: 'x' }],
+    }), 1);
+    const G = plainBoard(makeGameCard(BASIC_MON, 0), makeGameCard(BASIC_MON, 1));
+    G.players[1].deck = [makeGameCard(BASIC_MON, 1), nut]; // nut on top
+    G.players[0].deck = Array.from({ length: 10 }, () => makeGameCard(BASIC_MON, 0));
+    millDeck(G, 1, 1, true);
+    expect(G.players[1].discardPile.map(c => c.id)).toContain(nut.id);
+    expect(G.players[0].deck).toHaveLength(2); // 10 - 8
+    expect(G.players[0].discardPile).toHaveLength(8);
+    // Self-caused mills don't trigger.
+    const nut2 = makeGameCard(nut.cardData, 1);
+    const G2 = plainBoard(makeGameCard(BASIC_MON, 0), makeGameCard(BASIC_MON, 1));
+    G2.players[1].deck = [nut2];
+    G2.players[0].deck = Array.from({ length: 10 }, () => makeGameCard(BASIC_MON, 0));
+    millDeck(G2, 1, 1, false);
+    expect(G2.players[0].deck).toHaveLength(10);
   });
 });

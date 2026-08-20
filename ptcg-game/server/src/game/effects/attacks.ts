@@ -126,6 +126,7 @@ const alolanVulpixStone: EffectHandler = {
       newTop.preEvolutions = stack.slice(0, -1);
       newTop.attachedEnergy = card.attachedEnergy;
       newTop.attachedTool = card.attachedTool ?? null;
+      newTop.attachedTool2 = card.attachedTool2 ?? null;
       newTop.damage = card.damage;
       newTop.statusConditions = [];
 
