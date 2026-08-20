@@ -4,7 +4,7 @@ import { normalizeAbilityName, normalizeCardName } from './types';
 import { hasEvolvesFrom } from '../evolutionChains';
 import { isStadiumActive, isTeraPokemon } from './stadiums';
 import { drawCards } from './primitives';
-import { specialEnergyBlocksBenchedDamage, specialEnergyDamageBonus, specialEnergyMaxHpBonus, specialEnergyPrizeReduction, specialEnergyWaivesRetreat } from './specialEnergy';
+import { specialEnergyBlocksAttackEffects, specialEnergyBlocksBenchedDamage, specialEnergyDamageBonus, specialEnergyMaxHpBonus, specialEnergyPrizeReduction, specialEnergyWaivesRetreat } from './specialEnergy';
 
 /**
  * Most real Pokémon abilities are NOT "use once per turn" triggered effects (the shape
@@ -50,6 +50,25 @@ export function areAbilitiesNegated(G: PtcgGameState, card: GameCard): boolean {
   // negation is exact enough here — every Standard print carrying a self-KO ability has only that
   // one ability, so there's nothing else on the card to over-negate.
   if (card.cardData.abilities?.some(a => a.text && SELF_KO_ABILITY.test(a.text)) && isDampInPlay(G)) return true;
+
+  // 黏著束縛 (海兔獸): while its holder is Benched, every Benched Stage 2 Pokémon on BOTH sides
+  // is negated. Direct .some() like 濕氣 above — hasAbility would recurse back here.
+  if (card.cardData.subtypes.includes('Stage 2') && isBenchedPokemon(G, card)) {
+    for (const p of G.players) {
+      for (const c of p.bench) {
+        if (c?.cardData.abilities?.some(a => a.text && normalizeAbilityName(a.name) === '黏著束縛')) return true;
+      }
+    }
+  }
+
+  // 初始化 (鐵荊棘ex): while its holder is in the Active Spot on either side, every rule-box
+  // Pokémon's abilities are negated except 「未來」 Pokémon — the holder itself is Future, so the
+  // printed carve-out is what keeps it from negating itself.
+  if (isRuleBoxPokemon(card) && !card.cardData.subtypes.includes('Future')) {
+    for (const p of G.players) {
+      if (p.active?.cardData.abilities?.some(a => a.text && normalizeAbilityName(a.name) === '初始化')) return true;
+    }
+  }
 
   const owner = card.owner;
   if (G.players[owner].active?.id !== card.id) return false; // only the Active is ever negated by 暗夜羽擊
@@ -211,7 +230,39 @@ export function isDamageBlocked(G: PtcgGameState, attacker: GameCard, defender: 
   if (hasAbility(G, defender, '尾甲') && attacker.cardData.subtypes.includes('Basic') && attacker.cardData.subtypes.includes('ex')) return true;
   // 躲藏高手: unconditional coin-flip immunity (same shape as 順滑大衣, different card).
   if (hasAbility(G, defender, '躲藏高手') && Math.random() < 0.5) return true;
+  // 全能硬殼: immune to damage from attackers carrying a Special Energy (the effects half lives
+  // in isImmuneToOpponentAttackEffects).
+  if (hasAbility(G, defender, '全能硬殼') && holdsSpecialEnergy(attacker)) return true;
   return false;
+}
+
+function holdsSpecialEnergy(attacker: GameCard): boolean {
+  return attacker.attachedEnergy.some(e => e.cardData?.subtypes?.includes('Special Energy'));
+}
+
+/**
+ * 「不會受到對手的寶可夢使用招式的效果的影響」 — the one query for every printed source of
+ * attack-EFFECT immunity, consulted by applyAttackOutcome before applying any non-damage outcome
+ * to the defender (status, energy/Tool discard, timed debuffs, forced energy moves). Damage is a
+ * separate axis: only 全能硬殼 blocks both, via its isDamageBlocked clause above.
+ */
+export function isImmuneToOpponentAttackEffects(G: PtcgGameState, defender: GameCard, attacker: GameCard): boolean {
+  // 薄霧能量 / 硬岩【鬥】能量.
+  if (specialEnergyBlocksAttackEffects(defender)) return true;
+  // 純樸 (骨紋巨聲鱷): self-only, unconditional.
+  if (hasAbility(G, defender, '純樸')) return true;
+  // 全能硬殼: only against attackers carrying a Special Energy.
+  if (hasAbility(G, defender, '全能硬殼') && holdsSpecialEnergy(attacker)) return true;
+  // 抵抗之幕 (<火箭隊的>急凍鳥): every own Basic 「火箭隊的寶可夢」 while the holder is in play.
+  if (defender.cardData.subtypes.includes('Basic') && defender.cardData.name.includes('火箭隊的')
+    && teamOf(G, ownerIndexOf(G, defender)).some(c => hasAbility(G, c, '抵抗之幕'))) return true;
+  return false;
+}
+
+/** 爆大身軀 (大王銅象): while it sits in the opponent's Active Spot, this player can't play
+ * Stadium cards from hand. */
+export function isStadiumPlayBlocked(G: PtcgGameState, playerIndex: 0 | 1): boolean {
+  return hasAbility(G, G.players[(1 - playerIndex) as 0 | 1].active, '爆大身軀');
 }
 
 /** Rule-box Pokémon (ex/V/VMAX/VSTAR/GX/Mega/TAG TEAM) — local copy to avoid a cross-module import cycle. */
@@ -449,6 +500,8 @@ export function getPassiveMaxHpBonus(G: PtcgGameState, card: GameCard): number {
   if (teamOf(G, ownerIndexOf(G, card)).some(c => hasAbility(G, c, '生機森巴'))) bonus += 40;
   // 增強【草】能量: +20 max HP while a Grass Pokémon carries it.
   bonus += specialEnergyMaxHpBonus(card);
+  // 暴龍根性 (怪顎龍): +150 max HP while any Special Energy is attached.
+  if (hasAbility(G, card, '暴龍根性') && holdsSpecialEnergy(card)) bonus += 150;
   // 激動競技場 Stadium: +30 max HP for every Basic Pokémon on BOTH sides.
   if (isStadiumActive(G, '激動競技場') && card.cardData.subtypes.includes('Basic')) bonus += 30;
   // 引力山岳 Stadium: -30 max HP for every Stage 2 Pokémon on BOTH sides.

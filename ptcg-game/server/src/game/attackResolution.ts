@@ -11,7 +11,7 @@
 import { Attack, DamageDetail, GameCard, TurnAction } from '@ptcg/shared';
 import { PtcgGameState, PtcgPlayerState } from './GameState';
 import { calculateDamageBreakdown, effectiveMaxHp, flushPreEvolutionsTo, flushPreEvolutionsToDiscard, handleKo, prizesForKo, resetCardForReentry, stackAsPreEvolution } from './damage';
-import { getBonusPrizesForAttackKo, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getScaledRetaliation, hasPassiveAbilityNamed, hasTeraBenchedImmunity, shouldDiscardAttackerEnergy } from './effects/passiveAbilities';
+import { getBonusPrizesForAttackKo, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getScaledRetaliation, hasPassiveAbilityNamed, hasTeraBenchedImmunity, isImmuneToOpponentAttackEffects, shouldDiscardAttackerEnergy } from './effects/passiveAbilities';
 import { benchDamageFromEffectsBlocked, isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
 import { specialEnergyRetaliation } from './effects/specialEnergy';
@@ -326,7 +326,11 @@ export function applyAttackOutcome(
   // heads..."-style effects; self-targeted effects (heal, draw, recoil, self-lockout,
   // self-protection) apply regardless, matching their printed text having no damage gate.
   if (genericOutcome) {
-    if (damage > 0 && genericOutcome.statusToInflict) {
+    // 「不會受到對手的寶可夢使用招式的效果的影響」 (薄霧/硬岩【鬥】能量, 純樸, 抵抗之幕, 全能硬殼):
+    // computed once, gates every defender-targeted NON-damage outcome below. Damage itself is
+    // never an "effect" — that's isDamageBlocked's axis.
+    const defenderEffectImmune = isImmuneToOpponentAttackEffects(G, defender, attacker);
+    if (damage > 0 && genericOutcome.statusToInflict && !defenderEffectImmune) {
       for (const status of genericOutcome.statusToInflict) applyStatusCondition(G, defender, status);
     }
     if (genericOutcome.selfStatusToInflict) {
@@ -361,13 +365,13 @@ export function applyAttackOutcome(
         for (const energy of attacker.attachedEnergy.splice(0, count)) discardAttachedEnergy(G, attacker.owner, energy);
       }
     }
-    if (damage > 0 && genericOutcome.discardOpponentEnergyCount) {
+    if (damage > 0 && genericOutcome.discardOpponentEnergyCount && !defenderEffectImmune) {
       for (let i = 0; i < genericOutcome.discardOpponentEnergyCount && defender.attachedEnergy.length > 0; i++) {
         const removed = defender.attachedEnergy.splice(Math.floor(Math.random() * defender.attachedEnergy.length), 1)[0];
         discardAttachedEnergy(G, defender.owner, removed);
       }
     }
-    if (genericOutcome.discardOpponentTool && defender.attachedTool) {
+    if (genericOutcome.discardOpponentTool && defender.attachedTool && !defenderEffectImmune) {
       opponent.discardPile.push(defender.attachedTool);
       defender.attachedTool = null;
     }
@@ -375,7 +379,7 @@ export function applyAttackOutcome(
       const e = genericOutcome.selfTimedEffect;
       attacker.timedEffects = [...(attacker.timedEffects || []), { kind: e.kind, amount: e.amount, vsSubtype: e.vsSubtype, attackName: e.attackName, appliesOnTurn: G.turn + e.turnOffset }];
     }
-    if (damage > 0 && genericOutcome.opponentTimedEffect) {
+    if (damage > 0 && genericOutcome.opponentTimedEffect && !defenderEffectImmune) {
       const e = genericOutcome.opponentTimedEffect;
       defender.timedEffects = [...(defender.timedEffects || []), { kind: e.kind, amount: e.amount, vsSubtype: e.vsSubtype, attackName: e.attackName, appliesOnTurn: G.turn + e.turnOffset }];
     }
@@ -531,7 +535,7 @@ export function applyAttackOutcome(
     }
     if (genericOutcome.drawToHandSize) drawUpTo(G, G.currentPlayer as 0 | 1, genericOutcome.drawToHandSize);
     if (genericOutcome.healSelfByDamageDealt && damage > 0) attacker.damage = Math.max(0, attacker.damage - damage);
-    if (genericOutcome.moveOpponentEnergyToTheirBench && defender.attachedEnergy.length > 0) {
+    if (genericOutcome.moveOpponentEnergyToTheirBench && defender.attachedEnergy.length > 0 && !defenderEffectImmune) {
       const benchTargets = opponent.bench.filter((c): c is GameCard => c !== null);
       if (benchTargets.length > 0) {
         const target = benchTargets[Math.floor(Math.random() * benchTargets.length)];
