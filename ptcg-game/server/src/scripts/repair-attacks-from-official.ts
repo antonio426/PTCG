@@ -82,7 +82,10 @@ const needsALook: string[] = [];
 
 for (const card of file.data) {
   if (card.supertype !== 'Pokémon') continue;
-  if (card.legalities?.standard !== 'Legal') continue;
+  // --all extends the repair past the Standard pool. It finds nothing: the scrape is built from
+  // the official site's STANDARD id list, so non-Standard prints have no official record to
+  // compare against — repairing them needs a different source, not a wider filter.
+  if (!process.argv.includes('--all') && card.legalities?.standard !== 'Legal') continue;
   const k = keyOf(card);
   if (!k) { unmatched++; continue; }
   const off = officialByKey.get(k);
