@@ -2356,10 +2356,13 @@ const amisGaze: EffectHandler = {
   resume() { return 'done'; },
 };
 
-/** 納莉: draw 4. (The "discard your whole hand if you still have 5+ cards at end of this turn" clause isn't enforced — no end-of-turn hook exists yet.) */
+/** 納莉: draw 4, and 「在使用了這張卡的回合結束時，若自己的手牌有5張以上，則將自己的手牌全部丟棄」.
+ * The drawback is the whole point of the card — without it this was an unconditional draw 4. It
+ * rides on the turn transition in processBetweenTurns, which is where end-of-turn effects live. */
 const nari: EffectHandler = {
   start(ctx) {
     drawCards(ctx.G, ctx.playerIndex, 4);
+    player(ctx.G, ctx.playerIndex).discardHandAtTurnEndIfAtLeast = 5;
     return 'done';
   },
   resume() { return 'done'; },

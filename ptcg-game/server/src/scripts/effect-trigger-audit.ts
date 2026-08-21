@@ -143,7 +143,9 @@ function runChecks(kind: 'ability' | 'trainer', key: string, h: EffectHandler, p
   // Two unit mismatches are systematic here and must not be read as missing:
   //   N 個傷害指示物 -> the engine stores damage POINTS, so N*10 is the correct literal;
   //   擲 N 次硬幣    -> spelled as N repeated flipCoin() calls, the count never appears.
-  const clause = effectClause(p.text);
+  //   「只可N張同時使用」 -> a play restriction, not an effect number: the handler expresses it by
+  //     looking for another copy in hand ("a second one"), so the digit never appears either.
+  const clause = effectClause(p.text).replace(/只可\d+張同時使用。?（[^）]*）/g, '');
   const coinCounts = new Set((clause.match(/擲(\d+)次硬幣/g) || []).map(s => Number(s.match(/\d+/)![0])));
   const counterNums = new Set((clause.match(/(\d+)個傷害指示物/g) || []).map(s => Number(s.match(/\d+/)![0])));
   const nums = [...new Set((clause.match(/\d+/g) || []).map(Number))]

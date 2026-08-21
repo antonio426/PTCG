@@ -70,6 +70,14 @@ export function processBetweenTurns(G: PtcgGameState): void {
   // Their attacks-this-turn record becomes 「上個自己的回合」 for the attack templates.
   G.players[justFinishedIdx].attacksUsedLastTurn = G.players[justFinishedIdx].attacksUsedThisTurn;
   G.players[justFinishedIdx].attacksUsedThisTurn = [];
+  // 納莉: the drawback half of a draw-4, payable only at the end of the turn it was played on.
+  const finisher = G.players[justFinishedIdx];
+  if (finisher.discardHandAtTurnEndIfAtLeast !== undefined) {
+    if (finisher.hand.length >= finisher.discardHandAtTurnEndIfAtLeast) {
+      finisher.discardPile.push(...finisher.hand.splice(0));
+    }
+    finisher.discardHandAtTurnEndIfAtLeast = undefined;
+  }
 
   for (let idx = 0 as 0 | 1; idx <= 1; idx = (idx + 1) as 0 | 1) {
     const p = G.players[idx];

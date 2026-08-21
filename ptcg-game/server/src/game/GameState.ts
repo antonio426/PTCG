@@ -18,6 +18,9 @@ export interface PtcgPlayerState {
   /** Names of every Supporter card played this turn — 供 family-scoped "if you played a X-named
    * Supporter this turn" conditions (e.g. 火箭隊的工廠 Stadium) that a plain boolean can't answer. */
   supporterNamesPlayedThisTurn: string[];
+  /** 納莉: 「在使用了這張卡的回合結束時，若自己的手牌有N張以上，則將自己的手牌全部丟棄」 — set when
+   * the card resolves, checked and cleared at the turn transition (processBetweenTurns). */
+  discardHandAtTurnEndIfAtLeast?: number;
   /** Attacks declared by this side, rotated ThisTurn -> LastTurn once per turn transition in
    * processBetweenTurns — feeds 「在上個自己的回合，若…使用了「X」」 attack templates. */
   attacksUsedThisTurn: { cardId: string; attackName: string; ancient: boolean }[];

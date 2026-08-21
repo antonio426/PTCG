@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { moves } from '../src/game/moves';
 import { getLegalMoves } from '../src/game/validation';
+import { processBetweenTurns } from '../src/game/statusConditions';
 import { trainerEffects, canPlayTrainer } from '../src/game/effects/trainers';
 import { PtcgGameState } from '../src/game/GameState';
 import { BASIC_MON, SUPPORTER, EXEMPT_SUPPORTER, makeCard, makeGameCard, makePlayer, makeState } from './fixtures';
@@ -119,5 +120,49 @@ describe('canPlay gating holds for every gated Trainer in the registry', () => {
     expect(G.players[0].hand.map(c => c.id), `${name} was consumed by a forced play`).toContain(card.id);
     expect(G.players[0].discardPile, `${name} was discarded for zero effect`).toHaveLength(0);
     expect(G.players[0].cardsPlayedThisTurn, `${name} counted as a card played`).toBe(0);
+  });
+});
+
+describe('納莉: the drawback half of its draw 4', () => {
+  const nariCard = () => makeGameCard(makeCard({ name: '納莉', supertype: 'Trainer', subtypes: ['Supporter'] }), 0);
+  const boardWith = (handExtras: number) => {
+    const nari = nariCard();
+    const G = makeState({
+      turn: 3, currentPlayer: 0, phase: 'main',
+      players: [
+        makePlayer({
+          active: makeGameCard(BASIC_MON, 0),
+          hand: [nari, ...Array.from({ length: handExtras }, (_, i) => makeGameCard(BASIC_MON, 0, `h${i}`))],
+          deck: Array.from({ length: 10 }, (_, i) => makeGameCard(BASIC_MON, 0, `d${i}`)),
+        }),
+        makePlayer({ active: makeGameCard(BASIC_MON, 1) }),
+      ],
+    });
+    return { G, nari };
+  };
+
+  it('discards the whole hand at the end of the turn it was played on', () => {
+    const { G, nari } = boardWith(2);
+    play(G, nari.id);
+    expect(G.players[0].hand.length).toBe(6); // 2 kept + 4 drawn
+    // The turn transition is where end-of-turn effects fire; currentPlayer has flipped by then.
+    G.currentPlayer = 1;
+    processBetweenTurns(G);
+    expect(G.players[0].hand).toHaveLength(0);
+    expect(G.players[0].discardPile.filter(c => c.cardData.name !== '納莉')).toHaveLength(6);
+  });
+
+  it('leaves a hand under 5 alone, and never fires twice', () => {
+    const { G, nari } = boardWith(0);
+    play(G, nari.id);
+    G.players[0].hand = G.players[0].hand.slice(0, 4);
+    G.currentPlayer = 1;
+    processBetweenTurns(G);
+    expect(G.players[0].hand).toHaveLength(4);
+    // Next turn's transition must not re-apply it, however big the hand grows.
+    G.players[0].hand.push(makeGameCard(BASIC_MON, 0, 'later'));
+    G.currentPlayer = 1;
+    processBetweenTurns(G);
+    expect(G.players[0].hand).toHaveLength(5);
   });
 });
