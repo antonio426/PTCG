@@ -115,6 +115,8 @@ export function makePlayer(overrides: Partial<PtcgPlayerState> = {}): PtcgPlayer
     discardPile: [],
     prizes: [],
     takenPrizes: 0,
+    prizesTakenThisTurn: 0,
+    prizesTakenLastTurn: 0,
     exileZone: [],
     energyAttachedThisTurn: 0,
     basicPokemonPlayedThisTurn: 0,

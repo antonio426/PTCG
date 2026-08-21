@@ -79,6 +79,10 @@ export function processBetweenTurns(G: PtcgGameState): void {
       c.damageTakenThisTurn = 0;
     }
   }
+  for (const p of G.players) {
+    p.prizesTakenLastTurn = p.prizesTakenThisTurn;
+    p.prizesTakenThisTurn = 0;
+  }
   // 納莉: the drawback half of a draw-4, payable only at the end of the turn it was played on.
   const finisher = G.players[justFinishedIdx];
   if (finisher.discardHandAtTurnEndIfAtLeast !== undefined) {

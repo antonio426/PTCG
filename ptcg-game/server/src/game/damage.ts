@@ -391,6 +391,7 @@ export function handleKo(G: PtcgGameState, koPlayerIndex: number, koCardId: stri
       if (exile) attackingPlayer.exileZone.push(prize);
       else attackingPlayer.hand.push(prize);
       attackingPlayer.takenPrizes++;
+      attackingPlayer.prizesTakenThisTurn++;
     }
   }
 }

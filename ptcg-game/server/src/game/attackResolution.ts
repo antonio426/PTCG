@@ -136,6 +136,7 @@ export function buildAttackBoard(
     attackCostCount: attack.cost.length,
     attackerPromotedFromBenchThisTurn: player.activeIdAtTurnStart !== undefined && player.activeIdAtTurnStart !== attacker.id,
     attackerHealedThisTurn: attacker.healedThisTurn === true,
+    opponentPrizesTakenLastTurn: opponent.prizesTakenLastTurn,
     activeStadiumName: G.activeStadium?.cardData.name ?? '',
     opponentAbilityHolderCount: [opponent.active, ...opponent.bench]
       .filter((c): c is GameCard => c !== null && (c.cardData.abilities?.length ?? 0) > 0).length,
@@ -387,6 +388,46 @@ export function applyAttackOutcome(
     if (shown.length) shuffleDeck(player.deck);
     genericOutcome.baseDamage = shown.length * amount;
   }
+  if (genericOutcome?.revealBottomAttackHolderScaledDamage) {
+    const { count, attackName, amount } = genericOutcome.revealBottomAttackHolderScaledDamage;
+    // The BOTTOM of the deck: player.deck is top-at-the-end everywhere in this engine, so the
+    // bottom slice is the front of the array.
+    const revealed = player.deck.splice(0, count);
+    const holders = revealed.filter(c => c.cardData.attacks?.some(a => a.name.includes(attackName)));
+    for (const c of revealed) {
+      if (holders.includes(c)) player.deck.push(c);
+      else player.discardPile.push(c);
+    }
+    if (holders.length > 0) shuffleDeck(player.deck);
+    genericOutcome.baseDamage = holders.length * amount;
+  }
+  if (genericOutcome?.selfEnergyPaymentRider) {
+    const { count, type, all, toDeck, amount } = genericOutcome.selfEnergyPaymentRider;
+    // 「若希望」 resolves as "do it", the same convention the 若希望 combinator uses — declining
+    // would make every one of these attacks a plain vanilla hit.
+    const payable = attacker.attachedEnergy.filter(e => !type || e.type === type);
+    const paying = all ? payable : payable.slice(0, count ?? 0);
+    const enough = all ? payable.length > 0 : paying.length >= (count ?? 0);
+    if (enough && paying.length > 0) {
+      for (const energy of paying) {
+        const i = attacker.attachedEnergy.findIndex(e => e.id === energy.id);
+        if (i < 0) continue;
+        const [removed] = attacker.attachedEnergy.splice(i, 1);
+        if (toDeck && removed.cardData) {
+          player.deck.push({ id: removed.id, cardData: removed.cardData, owner: G.currentPlayer as 0 | 1, damage: 0, statusConditions: [], attachedEnergy: [] });
+        } else {
+          discardAttachedEnergy(G, G.currentPlayer as 0 | 1, removed);
+        }
+      }
+      if (toDeck) shuffleDeck(player.deck);
+      if (amount) genericOutcome.baseDamage += amount;
+      // The status rides along with the payment, so it is applied where the other status effects
+      // are — recorded here and consumed below.
+      if (genericOutcome.selfEnergyPaymentRider.status) {
+        genericOutcome.statusToInflict = [...(genericOutcome.statusToInflict ?? []), genericOutcome.selfEnergyPaymentRider.status];
+      }
+    }
+  }
   // 「在下個自己的回合，這隻寶可夢「X」的傷害改為「N」點」 — a replacement of one named attack's
   // printed number, which is why it can't be modelled as an outgoing damage bonus: the bonus
   // would apply to every attack, and would stack on top of the printed damage instead of
@@ -498,7 +539,7 @@ export function applyAttackOutcome(
     const bonus = getBonusPrizesForAttackKo(G, G.currentPlayer as 0 | 1, attacker, defender);
     for (let i = 0; i < bonus; i++) {
       const prize = player.prizes.pop();
-      if (prize) { player.hand.push(prize); player.takenPrizes++; }
+      if (prize) { player.hand.push(prize); player.takenPrizes++; player.prizesTakenThisTurn++; }
     }
   }
   if (retaliation > 0) {
@@ -1300,6 +1341,52 @@ export function applyAttackOutcome(
       }
       shuffleDeck(player.deck);
     }
+    if (genericOutcome.coinPerOpponentPokemonDamage) {
+      const { amount } = genericOutcome.coinPerOpponentPokemonDamage;
+      const benchBlocked = benchDamageFromEffectsBlocked(G);
+      const targets = [opponent.active, ...(benchBlocked ? [] : opponent.bench)].filter((c): c is GameCard => c !== null);
+      for (const target of targets) {
+        if (Math.random() >= 0.5) continue;   // tails: this one is spared
+        if (isImmuneToOpponentAttackEffects(G, target, attacker)) continue;
+        target.damage += amount;
+        const hp = effectiveMaxHp(G, target);
+        if (hp > 0 && target.damage >= hp) handleKo(G, (1 - G.currentPlayer) as 0 | 1, target.id, attacker);
+      }
+    }
+    if (genericOutcome.moveOpponentBenchCountersToActive && opponent.active && !defenderEffectImmune) {
+      let moved = 0;
+      for (const c of opponent.bench) {
+        if (!c || c.damage <= 0) continue;
+        moved += c.damage;
+        c.damage = 0;
+      }
+      if (moved > 0) {
+        opponent.active.damage += moved;
+        const hp = effectiveMaxHp(G, opponent.active);
+        if (hp > 0 && opponent.active.damage >= hp) handleKo(G, (1 - G.currentPlayer) as 0 | 1, opponent.active.id, attacker);
+      }
+    }
+    if (genericOutcome.discardAllSelfEnergyForCounters) {
+      for (const energy of attacker.attachedEnergy.splice(0)) discardAttachedEnergy(G, G.currentPlayer as 0 | 1, energy);
+      const pool = [opponent.active, ...opponent.bench].filter((c): c is GameCard => c !== null
+        && !isImmuneToOpponentAttackEffects(G, c, attacker));
+      if (pool.length > 0) {
+        const target = pool[Math.floor(Math.random() * pool.length)];
+        target.damage += genericOutcome.discardAllSelfEnergyForCounters.counters * 10;
+        const hp = effectiveMaxHp(G, target);
+        if (hp > 0 && target.damage >= hp) handleKo(G, (1 - G.currentPlayer) as 0 | 1, target.id, attacker);
+      }
+    }
+    if (genericOutcome.returnSelfTypedEnergyToHand) {
+      const { type, count } = genericOutcome.returnSelfTypedEnergyToHand;
+      const matching = attacker.attachedEnergy.filter(e => e.type === type).slice(0, count);
+      for (const energy of matching) {
+        const i = attacker.attachedEnergy.findIndex(e => e.id === energy.id);
+        if (i < 0 || !energy.cardData) continue;
+        attacker.attachedEnergy.splice(i, 1);
+        player.hand.push({ id: energy.id, cardData: energy.cardData, owner: G.currentPlayer as 0 | 1, damage: 0, statusConditions: [], attachedEnergy: [] });
+      }
+    }
     if (genericOutcome.shuffleOpponentDeck) {
       shuffleDeck(opponent.deck);
     }
@@ -1818,6 +1905,7 @@ export function applyAttackOutcome(
         if (!prize) break;
         player.hand.push(prize);
         player.takenPrizes++;
+        player.prizesTakenThisTurn++;
       }
     }
     if (genericOutcome.deckSearchAnyEnergyToSelfCount) {

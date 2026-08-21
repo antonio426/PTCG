@@ -4,7 +4,7 @@ import { moves } from '../src/game/moves';
 import { canAttack, effectiveRetreatCost } from '../src/game/validation';
 import { processBetweenTurns } from '../src/game/statusConditions';
 import { healDamage } from '../src/game/effects/primitives';
-import { resolveGenericAttackEffect, NEUTRAL_BOARD } from '../src/game/effects/genericAttacks';
+import { resolveGenericAttackEffect, NEUTRAL_BOARD, type AttackBoardContext } from '../src/game/effects/genericAttacks';
 import { BASIC_MON, attack as mkAttack, makeCard, makeGameCard, makePlayer, makeState } from './fixtures';
 
 /**
@@ -212,5 +212,66 @@ describe('the two remaining template-only texts', () => {
     expect(hurt.attachedEnergy).toHaveLength(1);
     expect(hurt.damage).toBe(0);
     expect(G.players[0].hand).toHaveLength(0);
+  });
+});
+
+/**
+ * Attacks that only became visible when repair-attacks-from-official.ts restored the second attack
+ * a third of Standard-legal Pokémon had lost. Nothing could have tested these before: the data did
+ * not contain them.
+ */
+describe('attacks recovered by the M6/MC/SV11 data repair', () => {
+  const board2 = (over: Partial<AttackBoardContext> = {}): AttackBoardContext => ({ ...NEUTRAL_BOARD, ...over });
+
+  it('reads the Stadium name, ability holders and evolutions off the board', () => {
+    expect(resolveGenericAttackEffect('若場上有名稱中有「傳說」的競技場卡，則增加170點傷害。', '100+', board2({ activeStadiumName: '傳說之泉' }))!.baseDamage).toBe(270);
+    expect(resolveGenericAttackEffect('若場上有名稱中有「傳說」的競技場卡，則增加170點傷害。', '100+', board2({ activeStadiumName: '零之大空洞' }))!.baseDamage).toBe(100);
+    expect(resolveGenericAttackEffect('增加對手的場上擁有特性的寶可夢的數量×50點傷害。', '10+', board2({ opponentAbilityHolderCount: 3 }))!.baseDamage).toBe(160);
+    expect(resolveGenericAttackEffect('增加自己的場上進化寶可夢的數量×40點傷害。', '40+', board2({ ownEvolvedCount: 2 }))!.baseDamage).toBe(120);
+  });
+
+  it('fails the attacks whose printed condition is not met', () => {
+    const needsEnergy = '若這隻寶可夢身上沒有附加「伏特【雷】能量」卡，則這個招式失敗。';
+    expect(resolveGenericAttackEffect(needsEnergy, '260', board2({ attackerEnergyCardNames: ['伏特【雷】能量'] }))!.baseDamage).toBe(260);
+    expect(resolveGenericAttackEffect(needsEnergy, '260', board2({ attackerEnergyCardNames: ['基本【雷】能量'] }))!.baseDamage).toBe(0);
+
+    const needsConfused = '若對手的戰鬥寶可夢沒有【混亂】，則這個招式失敗。';
+    expect(resolveGenericAttackEffect(needsConfused, '130', board2({ defenderStatusConditions: ['Confused'] }))!.baseDamage).toBe(130);
+    expect(resolveGenericAttackEffect(needsConfused, '130', board2())!.baseDamage).toBe(0);
+
+    const needsLastTurn = '這個招式必須在上個自己的回合這隻寶可夢使用了「滾動」才可使用。';
+    expect(resolveGenericAttackEffect(needsLastTurn, '100', board2({ attackerAttacksUsedLastTurn: ['滾動'] }))!.baseDamage).toBe(100);
+    expect(resolveGenericAttackEffect(needsLastTurn, '100', board2())!.baseDamage).toBe(0);
+  });
+
+  it('knocks the defender out only when the printed condition holds', () => {
+    const onStatus = '若對手的戰鬥寶可夢處於特殊狀態，則將那隻寶可夢【昏厥】。';
+    expect(resolveGenericAttackEffect(onStatus, '', board2({ defenderStatusConditions: ['Asleep'] }))!.koDefender).toBe(true);
+    expect(resolveGenericAttackEffect(onStatus, '', board2())!.koDefender).toBeUndefined();
+  });
+
+  it('pays Energy for a rider, and reads the bottom of the deck for damage', () => {
+    const paid = resolveGenericAttackEffect('若希望，將3個這隻寶可夢身上附加的【鋼】能量丟棄，增加150點傷害。', '150+', board2());
+    expect(paid!.selfEnergyPaymentRider).toEqual({ count: 3, type: 'Metal', amount: 150 });
+
+    const paralyse = resolveGenericAttackEffect('將2個這隻寶可夢身上附加的能量丟棄，將對手的戰鬥寶可夢【麻痺】。', '140', board2());
+    expect(paralyse!.selfEnergyPaymentRider).toEqual({ count: 2, type: undefined, status: 'Paralyzed' });
+
+    const bottom = resolveGenericAttackEffect('將自己的牌庫下方7張卡翻到正面，造成其中持有招式「蟲蟲恐慌」的寶可夢卡的張數×50點傷害。將翻到正面的寶可夢卡放回牌庫並重洗。將剩餘卡丟棄。', '50×', board2());
+    expect(bottom!.revealBottomAttackHolderScaledDamage).toEqual({ count: 7, attackName: '蟲蟲恐慌', amount: 50 });
+  });
+
+  it('resolves the Energy payment against a real board', () => {
+    const atk = makeGameCard(makeCard({
+      name: '巨金怪', hp: '150',
+      attacks: [mkAttack('金屬之錘', ['Metal'], '150+', '若希望，將3個這隻寶可夢身上附加的【鋼】能量丟棄，增加150點傷害。')],
+    }), 0);
+    atk.attachedEnergy = [energy('m1', 'Metal'), energy('m2', 'Metal'), energy('m3', 'Metal'), energy('c1')];
+    const G = battle(atk, mon('沙包鼠', '330', [], 1));
+    moves.attack({ G, ctx: ctx(0) } as any, 0);
+    expect(G.players[1].active!.damage).toBe(300);
+    // Only the three Metal pay the cost; the Colorless stays. (The discard pile is not asserted:
+    // these fixture energies carry no cardData, and discardAttachedEnergy has nothing to push.)
+    expect(atk.attachedEnergy.map(e => e.id)).toEqual(['c1']);
   });
 });
