@@ -12,6 +12,7 @@
  * and the drift guard in tests/turn-lifecycle.test.ts only covers the three that exist.
  *
  *   npx tsx src/scripts/playtest-soak.ts [--games N] [--decks N] [--seed N] [--filter 卡名] [--verbose]
+ *   ... [--synthetic] [--covered]
  */
 import * as fs from 'fs';
 import * as path from 'path';
@@ -22,6 +23,11 @@ import { HeuristicAI } from '../ai/heuristicAI';
 import { RandomAI } from '../ai/aiPlayer';
 import { boardFingerprint, checkAllInvariants, checkMoveHadEffect, Violation } from '../game/invariants';
 import { inferEvolvesFromSpecies, extractSpeciesName } from '../game/evolutionChains';
+import { resolveGenericAttackEffect, NEUTRAL_BOARD } from '../game/effects/genericAttacks';
+import { abilityEffects } from '../game/effects/abilities';
+import { PASSIVE_ABILITY_NAMES } from '../game/effects/passiveAbilities';
+import { attackEffects, attackEffectKey } from '../game/effects/attacks';
+import { normalizeAbilityName } from '../game/effects/types';
 import type { PtcgGameState } from '../game/GameState';
 
 const dataDir = path.resolve(__dirname, '../../data');
@@ -63,11 +69,17 @@ async function main() {
   // boards where "every Pokémon already has a Tool" or "nothing left to evolve into" actually
   // happen, which is where the last few bugs were hiding.
   const synthetic = process.argv.includes('--synthetic');
+  // --covered: decks made of cards whose effects the engine implements. The preset and adversarial
+  // pools contain almost none of them, so everything written for custom decks had never actually
+  // been played — see buildCoveredDecks.
+  const covered = process.argv.includes('--covered');
   // --filter <substring>: soak only the preset decks whose lists contain a card whose name
   // includes the substring. This is how "scale the batch to the change's blast radius" is done in
   // practice — after touching one card's effect, soak exactly the decks that can reach it.
   const filter = process.argv.includes('--filter') ? process.argv[process.argv.indexOf('--filter') + 1] : null;
-  const pool = synthetic
+  const pool = covered
+    ? buildCoveredDecks(cards, deckCount, baseSeed)
+    : synthetic
     ? buildAdversarialDecks(cards)
     : filter
       ? presets.filter(d => expand(d).some((id: string) => cardData[id]?.name?.includes(filter)))
@@ -161,6 +173,7 @@ async function main() {
   }
   if (verbose) process.stdout.write('\r');
 
+  console.log(`decks: ${pool.length} (${pool.map(d => d.name).join(' | ').slice(0, 160)}…)`);
   console.log(`games: ${games}  moves checked: ${movesChecked}`);
   console.log(`violations by rule:`);
   if (seenRules.size === 0) console.log('  (none)');
@@ -183,6 +196,81 @@ async function main() {
   fs.writeFileSync(OUT, JSON.stringify({ games, movesChecked, byRule: Object.fromEntries(seenRules), byCulprit: Object.fromEntries(byCulprit), findings }, null, 2), 'utf-8');
   console.log(`\nReport -> data-scraped/playtest-soak.json`);
   process.exitCode = findings.length > 0 ? 1 : 0;
+}
+
+/**
+ * `--covered`: decks built out of cards whose printed effects the engine actually implements.
+ *
+ * The preset pool and the adversarial pool between them never touch most of what got implemented
+ * for custom decks — those cards are simply not in any preset list — so every ability and attack
+ * template written for the Standard-wide push had been verified by unit tests and never once
+ * played. This samples that population instead: 8 distinct implemented Basics per deck, padded
+ * with basic Energy of the types their attacks actually cost, so the attacks are payable.
+ *
+ * The sample (not the games) is seeded, so a violation can be re-triaged with the same deck list.
+ */
+function buildCoveredDecks(cards: any[], deckCount: number, seed: number): { name: string; entries: { cardId: string; count: number }[] }[] {
+  const std = cards.filter(c => c.legalities?.standard === 'Legal');
+  const implemented = (c: any): boolean => {
+    if (c.supertype !== 'Pokémon') return false;
+    for (const ab of c.abilities || []) {
+      const n = normalizeAbilityName(ab.name || '');
+      if (n in abilityEffects || PASSIVE_ABILITY_NAMES.has(n)) return true;
+    }
+    for (const a of c.attacks || []) {
+      if (attackEffectKey(c.name, a.name) in attackEffects) return true;
+      if (!a.text) continue;
+      try {
+        const out = resolveGenericAttackEffect(a.text, a.damage || '0', NEUTRAL_BOARD);
+        if (out && Object.keys(out).some(k => k !== 'baseDamage' && k !== 'coinFlipNote')) return true;
+      } catch { /* a throwing branch still means the text is handled */ }
+    }
+    return false;
+  };
+
+  // Deterministic sample: a card's position in the shuffle is a hash of its id and the seed, so
+  // the same --seed rebuilds the same decks while a different one reaches different cards.
+  const hash = (s: string, salt: number) => {
+    let h = salt >>> 0;
+    for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619) >>> 0;
+    return h;
+  };
+  const seenName = new Set<string>();
+  const pool = std
+    .filter(c => c.subtypes?.includes('Basic') && (c.attacks?.length ?? 0) > 0 && implemented(c))
+    .filter(c => !seenName.has(c.name) && seenName.add(c.name))
+    .sort((a, b) => hash(a.id, seed) - hash(b.id, seed));
+
+  const energyByType = new Map<string, string>();
+  for (const c of std) {
+    if (c.supertype !== 'Energy' || !c.subtypes?.includes('Basic Energy')) continue;
+    for (const ty of c.types || []) if (!energyByType.has(ty)) energyByType.set(ty, c.id);
+  }
+  const colorless = energyByType.get('Colorless') ?? [...energyByType.values()][0];
+
+  const decks: { name: string; entries: { cardId: string; count: number }[] }[] = [];
+  for (let d = 0; d < deckCount; d++) {
+    const picks = pool.slice(d * 8, d * 8 + 8);
+    if (picks.length < 8) break;
+    // Pad with the Energy their own attack costs ask for, so the attacks are actually reachable —
+    // a deck of implemented Pokémon that can never pay for them tests nothing.
+    const costTypes = new Map<string, number>();
+    for (const c of picks) {
+      for (const a of c.attacks || []) {
+        for (const ty of a.cost || []) if (ty !== 'Colorless') costTypes.set(ty, (costTypes.get(ty) || 0) + 1);
+      }
+    }
+    const wanted = [...costTypes.entries()].sort((a, b) => b[1] - a[1]).slice(0, 2)
+      .map(([ty]) => energyByType.get(ty)).filter((x): x is string => !!x);
+    const energyIds = wanted.length ? wanted : [colorless];
+    const perEnergy = Math.floor((60 - picks.length * 4) / energyIds.length);
+    const entries = [
+      ...picks.map(c => ({ cardId: c.id, count: 4 })),
+      ...energyIds.map((id, i) => ({ cardId: id, count: i === 0 ? 60 - picks.length * 4 - perEnergy * (energyIds.length - 1) : perEnergy })),
+    ];
+    decks.push({ name: `covered #${d + 1}: ${picks.slice(0, 3).map(c => c.name).join('/')}…`, entries });
+  }
+  return decks;
 }
 
 main();
