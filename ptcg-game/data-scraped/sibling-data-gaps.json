@@ -1,29 +1,5 @@
 [
   {
-    "name": "彷徨夜靈",
-    "field": "abilities",
-    "missingId": "SV6a-019",
-    "missingStandardLegal": true,
-    "sourceId": "SV6a-069",
-    "confidence": "high"
-  },
-  {
-    "name": "黑夜魔靈",
-    "field": "abilities",
-    "missingId": "SV6a-020",
-    "missingStandardLegal": true,
-    "sourceId": "SV6a-070",
-    "confidence": "high"
-  },
-  {
-    "name": "小火龍",
-    "field": "abilities",
-    "missingId": "MC-083",
-    "missingStandardLegal": true,
-    "sourceId": "EXT03-001",
-    "confidence": "medium"
-  },
-  {
     "name": "古劍豹",
     "field": "abilities",
     "missingId": "M3-053",
@@ -45,14 +21,6 @@
     "missingId": "SV5a-078",
     "missingStandardLegal": true,
     "sourceId": "EXT18-008",
-    "confidence": "medium"
-  },
-  {
-    "name": "金屬怪",
-    "field": "abilities",
-    "missingId": "SV9-038",
-    "missingStandardLegal": true,
-    "sourceId": "EXT13-004",
     "confidence": "medium"
   },
   {
@@ -82,25 +50,9 @@
   {
     "name": "振翼髮",
     "field": "abilities",
-    "missingId": "SV8-059",
-    "missingStandardLegal": true,
-    "sourceId": "SV-P-225",
-    "confidence": "medium"
-  },
-  {
-    "name": "振翼髮",
-    "field": "abilities",
     "missingId": "MC-354",
     "missingStandardLegal": true,
     "sourceId": "SV-P-225",
-    "confidence": "medium"
-  },
-  {
-    "name": "赫普的啪嚓海膽ex",
-    "field": "abilities",
-    "missingId": "scr-12567",
-    "missingStandardLegal": true,
-    "sourceId": "SV-P-208",
     "confidence": "medium"
   },
   {
