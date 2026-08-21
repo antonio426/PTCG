@@ -6,6 +6,7 @@ import { playSfx, setSfxEnabled, startBgm, stopBgm, type SfxName } from '../util
 import { useCardStore } from '../stores/cardStore';
 import { useGameStore, type SanitizedGameCard } from '../stores/gameStore';
 import type { Card, LegalAction, PendingChoice, TurnAction } from '@ptcg/shared';
+import { bucketLegalMoves, type HandCardAction } from '../lib/battleMoves';
 import { exportTurnLogAsJson, exportTurnLogAsText } from '../utils/exportLog';
 import { CARD_IMAGE_FALLBACK, handleCardImgError } from '../utils/cardImageFallback';
 import HpBar from '../components/HpBar';
@@ -194,26 +195,6 @@ function formatDuration(ms: number): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-interface HandCardAction {
-  cardData: Card;
-  moves: LegalAction[];
-}
-
-function groupMovesByHandCard(legalMoves: LegalAction[], hand: Card[]): HandCardAction[] {
-  const result: HandCardAction[] = [];
-  for (const hc of hand) {
-    const moves = legalMoves.filter(m => {
-      if (m.type === 'play_pokemon' || m.type === 'evolve_pokemon' || m.type === 'attach_energy' || m.type === 'play_trainer' || m.type === 'choose_active') {
-        return m.payload?.cardId === hc.id;
-      }
-      return false;
-    });
-    if (moves.length > 0) {
-      result.push({ cardData: hc, moves });
-    }
-  }
-  return result;
-}
 
 /* ====================================================== */
 /*  Pending-choice picker — for choices with no on-field    */
@@ -728,19 +709,14 @@ export default function Battle() {
     [decks, presetDecks]
   );
 
-  // Group legal moves by hand card for the action UI
-  const handCardActions = useMemo(() => {
-    if (!battleState) return [];
-    return groupMovesByHandCard(battleState.legalMoves, battleState.player.hand);
-  }, [battleState]);
-
-  // Quick actions: moves that don't need a hand card (plus end_turn)
-  const quickActions = useMemo(() => {
-    if (!battleState) return [];
-    return battleState.legalMoves.filter(m =>
-      m.type === 'draw_card' || m.type === 'retreat' || m.type === 'end_turn' || m.type === 'attack' || m.type === 'use_stadium_action'
-    );
-  }, [battleState]);
+  // Every legal move is bucketed by the surface that renders it (see lib/battleMoves.ts — a type
+  // no surface claims is one the player can be offered but never take).
+  const buckets = useMemo(
+    () => bucketLegalMoves(battleState?.legalMoves ?? [], battleState?.player.hand ?? []),
+    [battleState],
+  );
+  const handCardActions = buckets.handCardActions;
+  const quickActions = buckets.quickActions;
 
   // Play trainer actions (shown separately)
   const trainerActions = useMemo(() => {
@@ -1604,6 +1580,18 @@ export default function Battle() {
                           className="px-3 py-2 bg-purple-800 text-white rounded-lg text-xs font-medium hover:bg-purple-700 transition-colors border border-purple-500/30 flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           <IconBuilding className="w-3.5 h-3.5" />
+                          <span>{m.description}</span>
+                        </button>
+                      ))}
+                      {/* Fossils are discarded voluntarily from play; the server has always offered this,
+                          but no surface rendered it, so a Fossil in play could never be cleared by hand. */}
+                      {quickActions.filter(m => m.type === 'discard_fossil').map((m, i) => (
+                        <button
+                          key={i}
+                          onClick={() => handleSubmitMove(m)}
+                          disabled={loading}
+                          className="px-3 py-2 bg-amber-800 text-white rounded-lg text-xs font-medium hover:bg-amber-700 transition-colors border border-amber-500/30 flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
                           <span>{m.description}</span>
                         </button>
                       ))}
