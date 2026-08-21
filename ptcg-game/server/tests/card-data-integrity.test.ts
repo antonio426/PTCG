@@ -134,3 +134,43 @@ describe('cards.json energy classification', () => {
     expect(bad).toEqual([]);
   });
 });
+
+/**
+ * Skill classification. The official page is the only source for the newest sets (MC-* isn't in
+ * TCGdex at all), and it does NOT reliably print the 「[特性] 」 prefix the scraper keys off — so an
+ * ability can land in `attacks`, taking the real attack's slot with it. Neither coverage nor the
+ * clause audit can see that: to them the card simply has a differently-named attack.
+ */
+describe('cards.json skill classification', () => {
+  const standardWithSkills = cards.filter(c => c.legalities?.standard === 'Legal');
+
+  it('never stores a nameless attack', () => {
+    // TCGdex ships placeholder `{cost: []}` entries for cards it hasn't filled in; once the
+    // official backfill supplies the real skill, the placeholder is left behind as an attack with
+    // no name, no damage and no text — offered by the engine as a real (free, blank) attack.
+    const nameless = standardWithSkills.filter(c => (c.attacks || []).some((a: any) => !(a.name || '').trim()));
+    expect(nameless.map(c => c.id)).toEqual([]);
+  });
+
+  it('never files a skill as an attack when another print of the same card calls it an ability', () => {
+    // The reciprocal check CLAUDE.md describes, applied to classification rather than to gaps:
+    // 骨紋巨聲鱷 SV8-019 prints 純樸 as an Ability, so MC-144 listing 純樸 among its attacks was
+    // provably a mis-parse — and it had swallowed that print's real attack.
+    const abilityNamesByCard = new Map<string, Set<string>>();
+    for (const c of cards) {
+      for (const a of c.abilities || []) {
+        if (!abilityNamesByCard.has(c.name)) abilityNamesByCard.set(c.name, new Set());
+        abilityNamesByCard.get(c.name)!.add((a.name || '').trim());
+      }
+    }
+    const conflicts: string[] = [];
+    for (const c of standardWithSkills) {
+      const abilityNames = abilityNamesByCard.get(c.name);
+      if (!abilityNames) continue;
+      for (const a of c.attacks || []) {
+        if (abilityNames.has((a.name || '').trim())) conflicts.push(`${c.id} ${c.name}::${a.name}`);
+      }
+    }
+    expect(conflicts).toEqual([]);
+  });
+});
