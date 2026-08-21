@@ -48,7 +48,18 @@ for (const c of official) {
   if (k && !officialByKey.has(k)) officialByKey.set(k, c);
 }
 
-let added = 0, removed = 0, agreed = 0, unmatched = 0, unsupported = 0;
+/** Ability names this dataset knows for a card of that NAME, with their text — the reciprocal
+ * signal for pages that do NOT print the 「[特性] 」 prefix (皮卡丘ex's 勤奮之心 is listed among its
+ * attacks on some prints and marked as an ability on others). */
+const abilityByCardName = new Map<string, Map<string, { name: string; text: string }>>();
+for (const c of file.data) {
+  for (const ab of c.abilities ?? []) {
+    if (!abilityByCardName.has(c.name)) abilityByCardName.set(c.name, new Map());
+    abilityByCardName.get(c.name)!.set(clean(ab.name), { name: ab.name, text: ab.text ?? '' });
+  }
+}
+
+let added = 0, removed = 0, agreed = 0, unmatched = 0, unsupported = 0, reclassified = 0;
 const addedExamples: string[] = [];
 const unsupportedExamples: string[] = [];
 
@@ -68,6 +79,21 @@ for (const card of file.data) {
   // ability with 「[特性] 」 (骨紋巨聲鱷 SV8-019 does not), so an ability we hold can legitimately
   // appear among the scrape's attacks — that is still the page confirming it exists.
   const theirNames = new Set([...theirs, ...(off.attacks ?? [])].map((a: any) => clean(a.name)));
+
+  // A skill the page lists WITHOUT the prefix, which a sibling print files as an ability, is an
+  // ability here too — two independent sources agreeing is the standard this repo already uses for
+  // backfills, and it is the only way to recover one from an unprefixed page.
+  const knownAbilities = abilityByCardName.get(card.name);
+  const unprefixedAbilities = knownAbilities
+    ? (off.attacks ?? []).filter((a: any) => knownAbilities.has(clean(a.name)) && !ourNames.has(clean(a.name)))
+        .map((a: any) => knownAbilities.get(clean(a.name))!) as { name: string; text: string }[]
+    : [];
+  if (unprefixedAbilities.length > 0) {
+    card.abilities = [...(card.abilities ?? []), ...unprefixedAbilities.map((a: { name: string; text: string }) => ({ name: a.name, text: a.text, type: 'Ability' as const }))];
+    for (const a of unprefixedAbilities) ourNames.add(clean(a.name));
+    reclassified += unprefixedAbilities.length;
+    if (addedExamples.length < 12) addedExamples.push(`${card.id} ${card.name} += ${unprefixedAbilities.map((a: { name: string }) => a.name).join(', ')} (unprefixed on the page, ability on a sibling)`);
+  }
 
   const missing = theirs.filter(a => !ourNames.has(clean(a.name)));
   if (missing.length > 0) {
@@ -91,6 +117,7 @@ for (const card of file.data) {
 }
 
 console.log(`abilities added from the official page: ${added}`);
+console.log(`abilities recovered from an unprefixed block (sibling-confirmed): ${reclassified}`);
 console.log(`prints holding an ability the page does not show: ${unsupported}${removeUnsupported ? ` (removed ${removed})` : ' (reported only)'}`);
 console.log(`prints already in agreement: ${agreed}`);
 console.log(`no usable official record: ${unmatched}`);

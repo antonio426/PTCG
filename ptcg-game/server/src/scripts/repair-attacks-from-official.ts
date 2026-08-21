@@ -44,7 +44,9 @@ const keyOf = (c: any) => {
 /** Zero-width characters ride along in scraped names; the 「[特性] 」 prefix marks an ability. */
 const clean = (n: unknown) => String(n ?? '').replace(/[​‌‍\s]/g, '');
 const isAbilityEntry = (n: unknown) => /^\[特性\]/.test(clean(n));
-const isTeraMarker = (n: unknown) => clean(n) === '太晶';
+// The marker is stored as 太晶 or [太晶] depending on the print — six cards kept a collapsed
+// attack because only the bare form was recognised.
+const isTeraMarker = (n: unknown) => clean(n) === '太晶' || clean(n) === '[太晶]';
 
 const officialByKey = new Map<string, any>();
 for (const c of official) {
@@ -90,7 +92,7 @@ for (const card of file.data) {
   if (theirs.length === 0) continue;
   checked++;
 
-  const ours = card.attacks ?? [];
+  const ours = (card.attacks ?? []).filter(a => !isTeraMarker(a.name));
   if (signature(ours) === signature(theirs)) { agreed++; continue; }
 
   // The official page renders energy costs as images; a scrape that captured none of them for this
@@ -105,8 +107,14 @@ for (const card of file.data) {
 
   // Never delete an attack we hold and they do not list: this replaces the array wholesale, and a
   // one-sided scrape must not be allowed to erase a real attack. Those go to the report instead.
+  //
+  // The 太晶 marker is the exception, and skipping it wholesale was itself a bug: it comes from
+  // TCGdex and the official page never lists it, so 88 prints whose ONLY unmatched entry was the
+  // marker were skipped entirely and kept their collapsed attack. The marker is carried across
+  // instead — the engine reads it (canAttack refuses a damage-less marker), so it must survive.
   const theirNames = new Set(theirs.map((a: any) => clean(a.name)));
-  const wouldLose = ours.filter(a => !theirNames.has(clean(a.name)));
+  const marker = ours.filter(a => isTeraMarker(a.name));
+  const wouldLose = ours.filter(a => !theirNames.has(clean(a.name)) && !isTeraMarker(a.name));
   if (wouldLose.length > 0) {
     skippedWouldLose++;
     if (needsALook.length < 15) needsALook.push(`${card.id} ${card.name}: ours has ${wouldLose.map(a => clean(a.name)).join('/')}, official does not`);
@@ -115,13 +123,16 @@ for (const card of file.data) {
 
   if (repaired < limit) {
     if (examples.length < 12) examples.push(`${card.id} ${card.name}\n    was: ${signature(ours) || '(none)'}\n    now: ${signature(theirs)}`);
-    card.attacks = theirs.map((a: any) => ({
-      name: String(a.name ?? '').replace(/[​‌‍]/g, '').trim(),
-      cost: a.cost ?? [],
-      convertedEnergyCost: (a.cost ?? []).length,
-      damage: a.damage ?? '',
-      text: a.text ?? '',
-    }));
+    card.attacks = [
+      ...marker,
+      ...theirs.map((a: any) => ({
+        name: String(a.name ?? '').replace(/[​‌‍]/g, '').trim(),
+        cost: a.cost ?? [],
+        convertedEnergyCost: (a.cost ?? []).length,
+        damage: a.damage ?? '',
+        text: a.text ?? '',
+      })),
+    ];
     repaired++;
   }
 }

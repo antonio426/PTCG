@@ -174,3 +174,86 @@ describe('cards.json skill classification', () => {
     expect(conflicts).toEqual([]);
   });
 });
+
+/**
+ * cards.json vs the official scrape.
+ *
+ * The merge that built this dataset once collapsed a card's skills into one — 赫拉克羅斯 M6-001 kept
+ * a single attack carrying BOTH attacks' Energy costs, and a third of Standard-legal Pokémon were
+ * in that state. Nothing caught it: every coverage and clause audit reads cards.json, so an attack
+ * that isn't in the file isn't a gap. This compares against the other source, which is the only way
+ * to see it. If a refetch or a re-merge reintroduces the collapse, this fails.
+ *
+ * Skipped deliberately: the 太晶 marker (ours only, from TCGdex), abilities the site does not mark
+ * (it prefixes 「[特性] 」 only sometimes, so a name may legitimately sit in either list), and prints
+ * with no official record.
+ */
+describe('cards.json agrees with the official scrape', () => {
+  const scraped: any[] = (() => {
+    const raw = JSON.parse(readFileSync(join(__dirname, '..', 'data', 'scraped-cards-all.json'), 'utf8'));
+    return Array.isArray(raw) ? raw : (raw.data ?? []);
+  })();
+
+  const numOf = (n: unknown) => {
+    const m = String(n ?? '').match(/(\d+)/);
+    return m ? parseInt(m[1], 10) : null;
+  };
+  const keyOf = (c: any) => {
+    const num = numOf(String(c.number ?? '').split('/')[0]);
+    return c.set?.id && num !== null ? `${String(c.set.id).toLowerCase()}-${num}` : null;
+  };
+  const clean = (n: unknown) => String(n ?? '').replace(/[​‌‍\s]/g, '').replace(/^\[特性\]/, '');
+  const officialByKey = new Map<string, any>();
+  for (const c of scraped) {
+    const k = keyOf(c);
+    if (k && !officialByKey.has(k)) officialByKey.set(k, c);
+  }
+
+  const standardPokemonWithOfficial = standardPokemon
+    .map(c => ({ card: c, off: officialByKey.get(keyOf(c) ?? '') }))
+    .filter(x => x.off && ((x.off.attacks?.length ?? 0) + (x.off.abilities?.length ?? 0)) > 0);
+
+  it('has an official record for nearly every Standard Pokémon', () => {
+    expect(standardPokemonWithOfficial.length).toBeGreaterThan(standardPokemon.length * 0.95);
+  });
+
+  it('never loses an attack the official page lists', () => {
+    const missing: string[] = [];
+    for (const { card, off } of standardPokemonWithOfficial) {
+      const ourNames = new Set([...(card.attacks ?? []), ...(card.abilities ?? [])].map((a: any) => clean(a.name)));
+      for (const a of off.attacks ?? []) {
+        const n = clean(a.name);
+        if (!n || n === '太晶') continue;
+        if (!ourNames.has(n)) missing.push(`${card.id} ${card.name}::${n}`);
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+
+  it('never merges another attack’s Energy cost into one', () => {
+    // The exact shape of the shipped bug: our single attack costs what several of theirs cost.
+    const wrong: string[] = [];
+    for (const { card, off } of standardPokemonWithOfficial) {
+      const theirs = new Map<string, number>();
+      for (const a of off.attacks ?? []) theirs.set(clean(a.name), (a.cost ?? []).length);
+      for (const a of card.attacks ?? []) {
+        const n = clean(a.name);
+        if (!theirs.has(n)) continue;
+        const ours = (a.cost ?? []).length;
+        if (ours !== theirs.get(n)) wrong.push(`${card.id} ${card.name}::${n} costs ${ours}, official says ${theirs.get(n)}`);
+      }
+    }
+    expect(wrong).toEqual([]);
+  });
+
+  it('never loses an ability the official page marks with 「[特性]」', () => {
+    const missing: string[] = [];
+    for (const { card, off } of standardPokemonWithOfficial) {
+      const ourNames = new Set((card.abilities ?? []).map((a: any) => clean(a.name)));
+      for (const a of off.abilities ?? []) {
+        if (!ourNames.has(clean(a.name))) missing.push(`${card.id} ${card.name}::${clean(a.name)}`);
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+});

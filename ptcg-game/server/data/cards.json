@@ -469778,17 +469778,25 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "綠葉風暴",
           "cost": [
             "Grass",
-            "Colorless",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 2,
+          "damage": "60×",
+          "text": "造成對手的所有寶可夢身上附加的能量的數量×60點傷害。"
+        },
+        {
+          "name": "苔紋瑪瑙",
+          "cost": [
             "Grass",
             "Fire",
             "Water"
           ],
-          "convertedEnergyCost": 5,
-          "damage": "60×",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "230",
+          "text": "將自己的所有備戰寶可夢各恢復「100」HP。"
         }
       ],
       "weaknesses": [
@@ -472514,7 +472522,7 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "萬葉陣雨",
           "cost": [
             "Grass",
             "Grass",
@@ -472522,7 +472530,7 @@
           ],
           "convertedEnergyCost": 3,
           "damage": "30+",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "text": "增加雙方的戰鬥寶可夢身上附加的能量的數量×30點傷害。"
         }
       ],
       "weaknesses": [
@@ -473262,17 +473270,25 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "燃燒充能",
           "cost": [
             "Fire",
-            "Colorless",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 2,
+          "damage": "130",
+          "text": "從自己的牌庫選擇最多2張基本能量卡，附於自己的1隻寶可夢身上。並且重洗牌庫。"
+        },
+        {
+          "name": "紅玉髓",
+          "cost": [
             "Fire",
             "Water",
             "Lightning"
           ],
-          "convertedEnergyCost": 5,
-          "damage": "130",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "280",
+          "text": "在下個自己的回合，這隻寶可夢無法使用招式。"
         }
       ],
       "weaknesses": [
@@ -473324,17 +473340,25 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "熾熱熔岩",
           "cost": [
             "Fire",
-            "Colorless",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 2,
+          "damage": "70",
+          "text": "將對手的戰鬥寶可夢【灼傷】。"
+        },
+        {
+          "name": "大地灼燒",
+          "cost": [
             "Fire",
             "Fire",
             "Colorless"
           ],
-          "convertedEnergyCost": 5,
-          "damage": "70",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "140+",
+          "text": "將雙方的牌庫上方各1張卡丟棄，增加其中能量卡的張數×140點傷害。"
         }
       ],
       "weaknesses": [
@@ -476181,18 +476205,26 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "閃焰強襲",
           "cost": [
             "Fire",
             "Colorless",
-            "Colorless",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 3,
+          "damage": "280",
+          "text": "在下個自己的回合，這隻寶可夢無法使用「閃焰強襲」。"
+        },
+        {
+          "name": "石榴石截擊",
+          "cost": [
             "Fire",
             "Fighting",
             "Darkness"
           ],
-          "convertedEnergyCost": 6,
-          "damage": "280",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "",
+          "text": "對手的1隻寶可夢受到180點傷害。[在備戰區不計算弱點・抵抗力。]"
         }
       ],
       "weaknesses": [
@@ -476816,18 +476848,26 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "憤怒之窯",
           "cost": [
             "Fire",
             "Colorless",
-            "Colorless",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 3,
+          "damage": "20×",
+          "text": "造成這隻寶可夢身上放置的傷害指示物的數量×20點傷害。"
+        },
+        {
+          "name": "極限火焰",
+          "cost": [
             "Fire",
             "Fire",
             "Fire"
           ],
-          "convertedEnergyCost": 6,
-          "damage": "20×",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "140+",
+          "text": "若對手的戰鬥寶可夢為進化寶可夢，則增加140點傷害。這個情況下，將這隻寶可夢身上附加的能量卡全部丟棄。"
         }
       ],
       "weaknesses": [
@@ -477535,17 +477575,25 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "重磅驟雨",
           "cost": [
             "Water",
-            "Colorless",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 2,
+          "damage": "",
+          "text": "對手的所有「寶可夢【ex】」各受到60點傷害。這個招式的傷害不計算弱點・抵抗力。"
+        },
+        {
+          "name": "海藍寶石",
+          "cost": [
             "Fire",
             "Water",
             "Lightning"
           ],
-          "convertedEnergyCost": 5,
+          "convertedEnergyCost": 3,
           "damage": "280",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "text": "在下個自己的回合，這隻寶可夢無法使用招式。"
         }
       ],
       "weaknesses": [
@@ -477597,17 +477645,25 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "冰霜子彈",
           "cost": [
             "Water",
-            "Colorless",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 2,
+          "damage": "110",
+          "text": "對手的1隻備戰寶可夢也受到30點傷害。[在備戰區不計算弱點・抵抗力。]"
+        },
+        {
+          "name": "藍柱石",
+          "cost": [
             "Grass",
             "Water",
             "Darkness"
           ],
-          "convertedEnergyCost": 5,
-          "damage": "110",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "",
+          "text": "選擇1隻對手的身上放置有6個傷害指示物的寶可夢，將其【昏厥】。"
         }
       ],
       "weaknesses": [
@@ -481630,16 +481686,24 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "啜泣",
           "cost": [
-            "Colorless",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 1,
+          "damage": "20",
+          "text": "在下個對手的回合，受到這個招式的寶可夢無法撤退。"
+        },
+        {
+          "name": "激流水泵",
+          "cost": [
             "Water",
             "Colorless",
             "Colorless"
           ],
-          "convertedEnergyCost": 4,
-          "damage": "20",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "100",
+          "text": "若希望，選擇3個這隻寶可夢身上附加的能量，放回牌庫並重洗。這個情況下，對手的1隻備戰寶可夢也受到120點傷害。[在備戰區不計算弱點・抵抗力。]"
         }
       ],
       "weaknesses": [
@@ -482676,17 +482740,25 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "閃光尖矛",
           "cost": [
             "Lightning",
-            "Colorless",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 2,
+          "damage": "60+",
+          "text": "若希望，將最多2張自己的備戰寶可夢身上附加的基本能量卡丟棄，增加其張數×90點傷害。"
+        },
+        {
+          "name": "棕碧璽",
+          "cost": [
             "Fire",
             "Water",
             "Lightning"
           ],
-          "convertedEnergyCost": 5,
-          "damage": "60+",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "280",
+          "text": "在下個自己的回合，這隻寶可夢無法使用招式。"
         }
       ],
       "weaknesses": [
@@ -483623,17 +483695,25 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "衝天之線",
           "cost": [
             "Lightning",
-            "Colorless",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 2,
+          "damage": "110+",
+          "text": "若對手的戰鬥寶可夢為「寶可夢【ex】・【V】」，則增加110點傷害。"
+        },
+        {
+          "name": "雷擊石",
+          "cost": [
             "Grass",
             "Lightning",
             "Fighting"
           ],
-          "convertedEnergyCost": 5,
-          "damage": "110+",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "180",
+          "text": "將這隻寶可夢身上附加的能量卡全部丟棄。在下個對手的回合，對手無法從手牌使出物品卡。"
         }
       ],
       "weaknesses": [
@@ -485376,16 +485456,24 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "利爪揮砍",
           "cost": [
-            "Lightning",
+            "Lightning"
+          ],
+          "convertedEnergyCost": 1,
+          "damage": "40",
+          "text": ""
+        },
+        {
+          "name": "強子電光",
+          "cost": [
             "Lightning",
             "Lightning",
             "Colorless"
           ],
-          "convertedEnergyCost": 4,
-          "damage": "40",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "120+",
+          "text": "若對手的戰鬥寶可夢為「寶可夢【ex】」，則增加120點傷害。"
         }
       ],
       "weaknesses": [
@@ -486350,18 +486438,26 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "精神出局",
           "cost": [
             "Psychic",
             "Colorless",
-            "Colorless",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 3,
+          "damage": "160",
+          "text": "在不看正面的情況下，從對手的手牌選擇1張，將其丟棄。"
+        },
+        {
+          "name": "阿賽斯特萊石",
+          "cost": [
             "Grass",
             "Psychic",
             "Darkness"
           ],
-          "convertedEnergyCost": 6,
-          "damage": "160",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "",
+          "text": "從對手的所有進化的寶可夢身上，各移除1張「進化卡」使其退化。將移除的卡放回對手的牌庫並重洗。"
         }
       ],
       "weaknesses": [
@@ -486418,18 +486514,26 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "魔法魅惑",
           "cost": [
             "Psychic",
             "Colorless",
-            "Colorless",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 3,
+          "damage": "160",
+          "text": "在下個對手的回合，受到這個招式的寶可夢使用招式的傷害「-100」點。"
+        },
+        {
+          "name": "天仙石",
+          "cost": [
             "Water",
             "Lightning",
             "Psychic"
           ],
-          "convertedEnergyCost": 6,
-          "damage": "160",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "",
+          "text": "選擇2隻對手的備戰寶可夢，將那些寶可夢與附加的卡全部放回牌庫並重洗。在上個自己的回合，若自己的寶可夢使出了「天仙石」，則無法使用這個招式。"
         }
       ],
       "weaknesses": [
@@ -494747,17 +494851,25 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "緋紅之牙",
           "cost": [
             "Fighting",
-            "Colorless",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 2,
+          "damage": "50+",
+          "text": "在上個對手的回合，若自己的寶可夢因招式的傷害而【昏厥】了，則增加120點傷害。"
+        },
+        {
+          "name": "衝擊打擊",
+          "cost": [
             "Fighting",
             "Fighting",
             "Colorless"
           ],
-          "convertedEnergyCost": 5,
-          "damage": "50+",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "200",
+          "text": "在下個自己的回合，這隻寶可夢無法使用「衝擊打擊」。"
         }
       ],
       "weaknesses": [
@@ -495012,7 +495124,7 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "打爆",
           "cost": [
             "Fighting",
             "Colorless",
@@ -495020,7 +495132,7 @@
           ],
           "convertedEnergyCost": 3,
           "damage": "140",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "text": "這個招式的傷害不計算弱點・抵抗力與對手的戰鬥寶可夢身上的附加效果。"
         }
       ],
       "weaknesses": [
@@ -496198,18 +496310,26 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "月亮幻想",
           "cost": [
             "Darkness",
             "Colorless",
-            "Colorless",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 3,
+          "damage": "160",
+          "text": "將對手的戰鬥寶可夢【混亂】。"
+        },
+        {
+          "name": "縞瑪瑙",
+          "cost": [
             "Lightning",
             "Psychic",
             "Darkness"
           ],
-          "convertedEnergyCost": 6,
-          "damage": "160",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "",
+          "text": "將這隻寶可夢身上附加的能量卡全部丟棄，獲得1張自己的獎賞卡。"
         }
       ],
       "weaknesses": [
@@ -498754,7 +498874,7 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "惡劣光束",
           "cost": [
             "Psychic",
             "Colorless",
@@ -498762,7 +498882,7 @@
           ],
           "convertedEnergyCost": 3,
           "damage": "160",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "text": "對手的1隻備戰寶可夢也受到30點傷害。[在備戰區不計算弱點・抵抗力。]"
         }
       ],
       "weaknesses": [
@@ -502316,17 +502436,25 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "熱帶狂燒",
           "cost": [
             "Grass",
-            "Water",
+            "Water"
+          ],
+          "convertedEnergyCost": 2,
+          "damage": "150",
+          "text": "從自己的手牌選擇任意數量的基本能量卡，以任意方式附於自己的寶可夢身上。"
+        },
+        {
+          "name": "嗡嗡榍石",
+          "cost": [
             "Grass",
             "Water",
             "Fighting"
           ],
-          "convertedEnergyCost": 5,
-          "damage": "150",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "",
+          "text": "擲1次硬幣若為正面，則將對手的戰鬥場的【基礎】寶可夢【昏厥】。若為反面，則選擇1隻對手的備戰區的【基礎】寶可夢，將其【昏厥】。"
         }
       ],
       "retreatCost": [
@@ -502938,15 +503066,23 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "噴射頭擊",
           "cost": [
-            "Colorless",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 1,
+          "damage": "70",
+          "text": ""
+        },
+        {
+          "name": "幻影奇襲",
+          "cost": [
             "Fire",
             "Psychic"
           ],
-          "convertedEnergyCost": 3,
-          "damage": "70",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 2,
+          "damage": "200",
+          "text": "將6個傷害指示物以任意方式放置於對手的備戰寶可夢身上。"
         }
       ],
       "retreatCost": [
@@ -504146,7 +504282,7 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "石英閃耀",
           "cost": [
             "Fire",
             "Water",
@@ -504154,7 +504290,7 @@
           ],
           "convertedEnergyCost": 3,
           "damage": "200",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "text": ""
         }
       ],
       "weaknesses": [
@@ -508418,17 +508554,25 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "聯盟擊",
           "cost": [
             "Colorless",
-            "Colorless",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 2,
+          "damage": "30×",
+          "text": "這個招式在後攻玩家的最初回合無法使用。造成自己的備戰寶可夢的數量×30點傷害。"
+        },
+        {
+          "name": "皇冠蛋白石",
+          "cost": [
             "Grass",
             "Water",
             "Lightning"
           ],
-          "convertedEnergyCost": 5,
-          "damage": "30×",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "180",
+          "text": "在下個對手的回合，這隻寶可夢不會受到【基礎】寶可夢（【無】寶可夢除外）招式的傷害。"
         }
       ],
       "weaknesses": [
@@ -513596,7 +513740,7 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "萬葉陣雨",
           "cost": [
             "Grass",
             "Grass",
@@ -513604,7 +513748,7 @@
           ],
           "convertedEnergyCost": 3,
           "damage": "30+",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "text": "增加雙方的戰鬥寶可夢身上附加的能量的數量×30點傷害。"
         }
       ],
       "weaknesses": [
@@ -514594,16 +514738,24 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "深淵熾火",
           "cost": [
-            "Fire",
+            "Fire"
+          ],
+          "convertedEnergyCost": 1,
+          "damage": "30+",
+          "text": "增加自己的棄牌區的能量卡的張數×20點傷害。"
+        },
+        {
+          "name": "紫水晶激怒",
+          "cost": [
             "Fire",
             "Psychic",
             "Metal"
           ],
-          "convertedEnergyCost": 4,
-          "damage": "30+",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "280",
+          "text": "將這隻寶可夢身上附加的能量卡全部丟棄。"
         }
       ],
       "weaknesses": [
@@ -515241,7 +515393,7 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "黃玉伏特",
           "cost": [
             "Grass",
             "Lightning",
@@ -515249,7 +515401,7 @@
           ],
           "convertedEnergyCost": 3,
           "damage": "300",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "text": "選擇3個這隻寶可夢身上附加的能量，將其丟棄。"
         }
       ],
       "weaknesses": [
@@ -515266,7 +515418,14 @@
         25
       ],
       "_enriched": true,
-      "rarity": "RR"
+      "rarity": "RR",
+      "abilities": [
+        {
+          "name": "‌‌勤奮之心",
+          "text": "‌這隻寶可夢的HP是全滿的狀態下，這隻寶可夢受到招式的傷害而【昏厥】時，這隻寶可夢不會【昏厥】，而是以剩餘HP為「10」的狀態留在場上。",
+          "type": "Ability"
+        }
+      ]
     },
     {
       "id": "M2a-045",
@@ -520677,15 +520836,23 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "噴射頭擊",
           "cost": [
-            "Colorless",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 1,
+          "damage": "70",
+          "text": ""
+        },
+        {
+          "name": "幻影奇襲",
+          "cost": [
             "Fire",
             "Psychic"
           ],
-          "convertedEnergyCost": 3,
-          "damage": "70",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 2,
+          "damage": "200",
+          "text": "將6個傷害指示物以任意方式放置於對手的備戰寶可夢身上。"
         }
       ],
       "retreatCost": [
@@ -521387,17 +521554,25 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "聯盟擊",
           "cost": [
             "Colorless",
-            "Colorless",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 2,
+          "damage": "30×",
+          "text": "這個招式在後攻玩家的最初回合無法使用。造成自己的備戰寶可夢的數量×30點傷害。"
+        },
+        {
+          "name": "皇冠蛋白石",
+          "cost": [
             "Grass",
             "Water",
             "Lightning"
           ],
-          "convertedEnergyCost": 5,
-          "damage": "30×",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "180",
+          "text": "在下個對手的回合，這隻寶可夢不會受到【基礎】寶可夢（【無】寶可夢除外）招式的傷害。"
         }
       ],
       "weaknesses": [
@@ -524999,7 +525174,7 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "黃玉伏特",
           "cost": [
             "Grass",
             "Lightning",
@@ -525007,7 +525182,7 @@
           ],
           "convertedEnergyCost": 3,
           "damage": "300",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "text": "選擇3個這隻寶可夢身上附加的能量，將其丟棄。"
         }
       ],
       "weaknesses": [
@@ -525024,7 +525199,14 @@
         25
       ],
       "_enriched": true,
-      "rarity": "SAR"
+      "rarity": "SAR",
+      "abilities": [
+        {
+          "name": "‌‌勤奮之心",
+          "text": "‌這隻寶可夢的HP是全滿的狀態下，這隻寶可夢受到招式的傷害而【昏厥】時，這隻寶可夢不會【昏厥】，而是以剩餘HP為「10」的狀態留在場上。",
+          "type": "Ability"
+        }
+      ]
     },
     {
       "id": "M2a-235",
@@ -585382,7 +585564,7 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "黃玉伏特",
           "cost": [
             "Grass",
             "Lightning",
@@ -585390,7 +585572,7 @@
           ],
           "convertedEnergyCost": 3,
           "damage": "300",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "text": "選擇3個這隻寶可夢身上附加的能量，將其丟棄。"
         }
       ],
       "weaknesses": [
@@ -585407,7 +585589,14 @@
         25
       ],
       "_enriched": true,
-      "rarity": "SR"
+      "rarity": "SR",
+      "abilities": [
+        {
+          "name": "‌‌勤奮之心",
+          "text": "‌這隻寶可夢的HP是全滿的狀態下，這隻寶可夢受到招式的傷害而【昏厥】時，這隻寶可夢不會【昏厥】，而是以剩餘HP為「10」的狀態留在場上。",
+          "type": "Ability"
+        }
+      ]
     },
     {
       "id": "SV8-123",
@@ -585441,18 +585630,26 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "流沙地獄",
           "cost": [
             "Colorless",
             "Colorless",
-            "Colorless",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 3,
+          "damage": "160",
+          "text": "在下個對手的回合，受到這個招式的寶可夢無法撤退。"
+        },
+        {
+          "name": "重晶石之獄",
+          "cost": [
             "Water",
             "Psychic",
             "Fighting"
           ],
-          "convertedEnergyCost": 6,
-          "damage": "160",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "",
+          "text": "在對手的所有備戰寶可夢身上放置傷害指示物直到各自的剩餘HP變為「100」為止。"
         }
       ],
       "weaknesses": [
@@ -585512,18 +585709,26 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "粉碎頭",
           "cost": [
             "Darkness",
-            "Colorless",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 2,
+          "damage": "200",
+          "text": "將對手的牌庫上方3張卡丟棄。"
+        },
+        {
+          "name": "黑曜石",
+          "cost": [
             "Psychic",
             "Darkness",
             "Metal",
             "Colorless"
           ],
-          "convertedEnergyCost": 6,
-          "damage": "200",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 4,
+          "damage": "130",
+          "text": "對手的2隻備戰寶可夢也各受到130點傷害。[在備戰區不計算弱點・抵抗力。]"
         }
       ],
       "weaknesses": [
@@ -585576,17 +585781,25 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "突襲水泵",
           "cost": [
             "Fire",
-            "Water",
+            "Water"
+          ],
+          "convertedEnergyCost": 2,
+          "damage": "100",
+          "text": "這個招式的傷害不計算對手的戰鬥寶可夢身上的附加效果。"
+        },
+        {
+          "name": "硃砂誘餌",
+          "cost": [
             "Fire",
             "Water",
             "Darkness"
           ],
-          "convertedEnergyCost": 5,
-          "damage": "100",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "",
+          "text": "查看自己的牌庫上方10張卡，從其中選擇任意數量的寶可夢卡，放置於備戰區。將剩餘卡放回牌庫並重洗。"
         }
       ],
       "retreatCost": [
@@ -585926,18 +586139,26 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "粉碎頭",
           "cost": [
             "Darkness",
-            "Colorless",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 2,
+          "damage": "200",
+          "text": "將對手的牌庫上方3張卡丟棄。"
+        },
+        {
+          "name": "黑曜石",
+          "cost": [
             "Psychic",
             "Darkness",
             "Metal",
             "Colorless"
           ],
-          "convertedEnergyCost": 6,
-          "damage": "200",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 4,
+          "damage": "130",
+          "text": "對手的2隻備戰寶可夢也各受到130點傷害。[在備戰區不計算弱點・抵抗力。]"
         }
       ],
       "weaknesses": [
@@ -585990,7 +586211,7 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "黃玉伏特",
           "cost": [
             "Grass",
             "Lightning",
@@ -585998,7 +586219,7 @@
           ],
           "convertedEnergyCost": 3,
           "damage": "300",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "text": "選擇3個這隻寶可夢身上附加的能量，將其丟棄。"
         }
       ],
       "weaknesses": [
@@ -586015,7 +586236,14 @@
         25
       ],
       "_enriched": true,
-      "rarity": "SAR"
+      "rarity": "SAR",
+      "abilities": [
+        {
+          "name": "‌‌勤奮之心",
+          "text": "‌這隻寶可夢的HP是全滿的狀態下，這隻寶可夢受到招式的傷害而【昏厥】時，這隻寶可夢不會【昏厥】，而是以剩餘HP為「10」的狀態留在場上。",
+          "type": "Ability"
+        }
+      ]
     },
     {
       "id": "SV8-134",
@@ -586111,7 +586339,7 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "黃玉伏特",
           "cost": [
             "Grass",
             "Lightning",
@@ -586119,7 +586347,7 @@
           ],
           "convertedEnergyCost": 3,
           "damage": "300",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "text": "選擇3個這隻寶可夢身上附加的能量，將其丟棄。"
         }
       ],
       "weaknesses": [
@@ -586136,7 +586364,14 @@
         25
       ],
       "_enriched": true,
-      "rarity": "UR"
+      "rarity": "UR",
+      "abilities": [
+        {
+          "name": "‌‌勤奮之心",
+          "text": "‌這隻寶可夢的HP是全滿的狀態下，這隻寶可夢受到招式的傷害而【昏厥】時，這隻寶可夢不會【昏厥】，而是以剩餘HP為「10」的狀態留在場上。",
+          "type": "Ability"
+        }
+      ]
     },
     {
       "id": "SV8-137",
@@ -587163,17 +587398,25 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "熱帶狂燒",
           "cost": [
             "Grass",
-            "Water",
+            "Water"
+          ],
+          "convertedEnergyCost": 2,
+          "damage": "150",
+          "text": "從自己的手牌選擇任意數量的基本能量卡，以任意方式附於自己的寶可夢身上。"
+        },
+        {
+          "name": "嗡嗡榍石",
+          "cost": [
             "Grass",
             "Water",
             "Fighting"
           ],
-          "convertedEnergyCost": 5,
-          "damage": "150",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "",
+          "text": "擲1次硬幣若為正面，則將對手的戰鬥場的【基礎】寶可夢【昏厥】。若為反面，則選擇1隻對手的備戰區的【基礎】寶可夢，將其【昏厥】。"
         }
       ],
       "retreatCost": [
@@ -587220,16 +587463,24 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "風暴返",
           "cost": [
-            "Fighting",
+            "Fighting"
+          ],
+          "convertedEnergyCost": 1,
+          "damage": "130",
+          "text": "若希望，將這隻寶可夢與備戰寶可夢互換。"
+        },
+        {
+          "name": "橄欖石音波",
+          "cost": [
             "Water",
             "Fighting",
             "Metal"
           ],
-          "convertedEnergyCost": 4,
-          "damage": "130",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "",
+          "text": "對手的所有「寶可夢【ex】・【V】」各受到100點傷害。這個招式的傷害不計算弱點・抵抗力。"
         }
       ],
       "weaknesses": [
@@ -587353,18 +587604,26 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "突圍",
           "cost": [
             "Colorless",
             "Colorless",
-            "Colorless",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 3,
+          "damage": "130",
+          "text": "對手的1隻備戰寶可夢也受到30點傷害。[在備戰區不計算弱點・抵抗力。]"
+        },
+        {
+          "name": "鋯石之路",
+          "cost": [
             "Grass",
             "Fire",
             "Psychic"
           ],
-          "convertedEnergyCost": 6,
-          "damage": "130",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "180",
+          "text": "若希望，從自己的牌庫抽出5張卡。"
         }
       ],
       "weaknesses": [
@@ -587685,17 +587944,25 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "熱帶狂燒",
           "cost": [
             "Grass",
-            "Water",
+            "Water"
+          ],
+          "convertedEnergyCost": 2,
+          "damage": "150",
+          "text": "從自己的手牌選擇任意數量的基本能量卡，以任意方式附於自己的寶可夢身上。"
+        },
+        {
+          "name": "嗡嗡榍石",
+          "cost": [
             "Grass",
             "Water",
             "Fighting"
           ],
-          "convertedEnergyCost": 5,
-          "damage": "150",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "",
+          "text": "擲1次硬幣若為正面，則將對手的戰鬥場的【基礎】寶可夢【昏厥】。若為反面，則選擇1隻對手的備戰區的【基礎】寶可夢，將其【昏厥】。"
         }
       ],
       "retreatCost": [
@@ -587773,17 +588040,25 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "熱帶狂燒",
           "cost": [
             "Grass",
-            "Water",
+            "Water"
+          ],
+          "convertedEnergyCost": 2,
+          "damage": "150",
+          "text": "從自己的手牌選擇任意數量的基本能量卡，以任意方式附於自己的寶可夢身上。"
+        },
+        {
+          "name": "嗡嗡榍石",
+          "cost": [
             "Grass",
             "Water",
             "Fighting"
           ],
-          "convertedEnergyCost": 5,
-          "damage": "150",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "",
+          "text": "擲1次硬幣若為正面，則將對手的戰鬥場的【基礎】寶可夢【昏厥】。若為反面，則選擇1隻對手的備戰區的【基礎】寶可夢，將其【昏厥】。"
         }
       ],
       "retreatCost": [
@@ -592386,17 +592661,25 @@
       ],
       "attacks": [
         {
-          "name": "[太晶]",
+          "name": "聯盟擊",
           "cost": [
             "Colorless",
-            "Colorless",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 2,
+          "damage": "30×",
+          "text": "這個招式在後攻玩家的最初回合無法使用。造成自己的備戰寶可夢的數量×30點傷害。"
+        },
+        {
+          "name": "皇冠蛋白石",
+          "cost": [
             "Grass",
             "Water",
             "Lightning"
           ],
-          "convertedEnergyCost": 5,
-          "damage": "30×",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "180",
+          "text": "在下個對手的回合，這隻寶可夢不會受到【基礎】寶可夢（【無】寶可夢除外）招式的傷害。"
         }
       ],
       "weaknesses": [
@@ -594018,16 +594301,24 @@
       ],
       "attacks": [
         {
-          "name": "[太晶]",
+          "name": "暴衝閃光",
           "cost": [
-            "Metal",
+            "Metal"
+          ],
+          "convertedEnergyCost": 1,
+          "damage": "20+",
+          "text": "在這個回合，若從備戰區將這隻寶可夢放置於戰鬥場，則增加120點傷害。"
+        },
+        {
+          "name": "高速破壞",
+          "cost": [
             "Metal",
             "Metal",
             "Metal"
           ],
-          "convertedEnergyCost": 4,
-          "damage": "20+",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "250",
+          "text": "將這隻寶可夢與附加的卡全部丟棄。"
         }
       ],
       "weaknesses": [
@@ -594930,7 +595221,7 @@
       ],
       "attacks": [
         {
-          "name": "[太晶]",
+          "name": "萬葉陣雨",
           "cost": [
             "Grass",
             "Grass",
@@ -594938,7 +595229,7 @@
           ],
           "convertedEnergyCost": 3,
           "damage": "30+",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "text": "增加雙方的戰鬥寶可夢身上附加的能量的數量×30點傷害。"
         }
       ],
       "weaknesses": [
@@ -595794,17 +596085,25 @@
       ],
       "attacks": [
         {
-          "name": "[太晶]",
+          "name": "熾熱熔岩",
           "cost": [
             "Fire",
-            "Colorless",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 2,
+          "damage": "70",
+          "text": "將對手的戰鬥寶可夢【灼傷】。"
+        },
+        {
+          "name": "大地灼燒",
+          "cost": [
             "Fire",
             "Fire",
             "Colorless"
           ],
-          "convertedEnergyCost": 5,
-          "damage": "70",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "140+",
+          "text": "將雙方的牌庫上方各1張卡丟棄，增加其中能量卡的張數×140點傷害。"
         }
       ],
       "weaknesses": [
@@ -596131,16 +596430,24 @@
       ],
       "attacks": [
         {
-          "name": "[太晶]",
+          "name": "忍之利刃",
           "cost": [
-            "Water",
+            "Water"
+          ],
+          "convertedEnergyCost": 1,
+          "damage": "170",
+          "text": "若希望，從自己的牌庫任意選擇1張卡加入手牌。並且重洗牌庫。"
+        },
+        {
+          "name": "分身連打",
+          "cost": [
             "Water",
             "Colorless",
             "Colorless"
           ],
-          "convertedEnergyCost": 4,
-          "damage": "170",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "",
+          "text": "將2個這隻寶可夢身上附加的能量丟棄，對手的2隻寶可夢各受到120點傷害。[在備戰區不計算弱點・抵抗力。]"
         }
       ],
       "weaknesses": [
@@ -596522,16 +596829,24 @@
       ],
       "attacks": [
         {
-          "name": "[太晶]",
+          "name": "忍之利刃",
           "cost": [
-            "Water",
+            "Water"
+          ],
+          "convertedEnergyCost": 1,
+          "damage": "170",
+          "text": "若希望，從自己的牌庫任意選擇1張卡加入手牌。並且重洗牌庫。"
+        },
+        {
+          "name": "分身連打",
+          "cost": [
             "Water",
             "Colorless",
             "Colorless"
           ],
-          "convertedEnergyCost": 4,
-          "damage": "170",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "convertedEnergyCost": 3,
+          "damage": "",
+          "text": "將2個這隻寶可夢身上附加的能量丟棄，對手的2隻寶可夢各受到120點傷害。[在備戰區不計算弱點・抵抗力。]"
         }
       ],
       "weaknesses": [
@@ -596950,15 +597265,23 @@
       ],
       "attacks": [
         {
-          "name": "太晶",
+          "name": "三色炮",
           "cost": [
-            "Water",
+            "Water"
+          ],
+          "convertedEnergyCost": 1,
+          "damage": "",
+          "text": "從自己的手牌將最多3張能量卡丟棄，對對手的1隻寶可夢，造成其張數×60點傷害。[在備戰區不計算弱點・抵抗力。]"
+        },
+        {
+          "name": "麻痺控制",
+          "cost": [
             "Water",
             "Water"
           ],
-          "convertedEnergyCost": 3,
+          "convertedEnergyCost": 2,
           "damage": "120",
-          "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          "text": "在下個對手的回合，受到這個招式的寶可夢無法撤退。"
         }
       ],
       "weaknesses": [
