@@ -92,6 +92,7 @@ async function clickableActions(page) {
       i,
       visible: visible(el),
       kind: el.hasAttribute('data-move') ? 'move' : el.hasAttribute('data-board-target') ? 'target' : 'hand',
+      picked: el.hasAttribute('data-picked'),
       label: `${el.innerText || el.getAttribute('alt') || ''} ${el.getAttribute('aria-label') || ''} ${el.getAttribute('title') || ''}`
         .replace(/\s+/g, ' ').trim(),
     }));
@@ -109,7 +110,7 @@ async function clickableActions(page) {
   const actions = probe.items
     .filter(it => it.visible && !AVOID.some(a => it.label.includes(a)))
     .sort((a, b) => rank[a.kind] - rank[b.kind])
-    .map(it => ({ el: scoped.nth(it.i), label: it.label, kind: it.kind }));
+    .map(it => ({ el: scoped.nth(it.i), label: it.label, kind: it.kind, picked: it.picked }));
   return { actions, inDialog: probe.inDialog };
 }
 
@@ -204,7 +205,10 @@ async function playOneGame(browser, gameNo) {
     // Prefer anything that isn't "end turn", so the run actually exercises play. Which candidate
     // rotates with `stalled`: a hand card only OPENS its action list, so always taking the first
     // one can toggle the same menu forever.
-    const playable = actions.filter(a => !a.label.includes('結束回合'));
+    // A multi-pick choice is answered by selecting DISTINCT cards and then confirming, so an
+    // already-picked one is the wrong thing to click — clicking it again just unpicks it, which is
+    // how the run used to spend a dozen clicks toggling one card.
+    const playable = actions.filter(a => !a.label.includes('結束回合') && !a.picked);
     const pool = playable.length ? playable : actions;
     const pick = pool[stalled % pool.length];
     if (VERBOSE) log(`  g${gameNo} #${moves} click: ${pick.label.slice(0, 40)}`);

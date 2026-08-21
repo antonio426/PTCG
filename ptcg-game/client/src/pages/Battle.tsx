@@ -420,6 +420,7 @@ function PokemonCardView({
       // hand cards are: targeting is done by clicking the real card, so an automated pass has no
       // other way to see that this is where the answer to a select_pokemon choice lives.
       data-board-target={targetable ? card.id : undefined}
+      data-picked={picked || undefined}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick && !loading ? 0 : undefined}
       onKeyDown={onClick ? keyActivate(onClick) : undefined}
@@ -1829,6 +1830,10 @@ export default function Battle() {
                       // themselves (the server sends no options list for those), so it carries the
                       // same marker as the playable-card row — see lib/battleMoves.ts.
                       data-hand-card={isHandTarget || isCurrentlyPlayable ? card.id : undefined}
+                      // Provisionally selected for a multi-pick choice. Rendered as a ring today;
+                      // stated here so it is also readable, which is what lets an automated pass
+                      // (and any assistive tech) tell "already chosen" from "not yet".
+                      data-picked={isPicked || undefined}
                       tabIndex={loading ? -1 : 0}
                       onKeyDown={keyActivate(() => (handTargeting ? handleTargetClick(card.id) : handleCardClick(card.id)))}
                       draggable={!loading && !handTargeting}
