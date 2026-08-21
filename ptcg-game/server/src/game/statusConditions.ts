@@ -70,6 +70,15 @@ export function processBetweenTurns(G: PtcgGameState): void {
   // Their attacks-this-turn record becomes 「上個自己的回合」 for the attack templates.
   G.players[justFinishedIdx].attacksUsedLastTurn = G.players[justFinishedIdx].attacksUsedThisTurn;
   G.players[justFinishedIdx].attacksUsedThisTurn = [];
+  // Attack damage taken during the turn that just ended becomes 「上個對手的回合受到的招式的傷害」
+  // for the side about to act — same ThisTurn/LastTurn rotation as attacksUsed* above.
+  for (const p of G.players) {
+    for (const c of [p.active, ...p.bench]) {
+      if (!c) continue;
+      c.damageTakenLastTurn = c.damageTakenThisTurn ?? 0;
+      c.damageTakenThisTurn = 0;
+    }
+  }
   // 納莉: the drawback half of a draw-4, payable only at the end of the turn it was played on.
   const finisher = G.players[justFinishedIdx];
   if (finisher.discardHandAtTurnEndIfAtLeast !== undefined) {

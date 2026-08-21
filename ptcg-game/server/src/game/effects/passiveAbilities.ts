@@ -3,7 +3,7 @@ import { PtcgGameState } from '../GameState';
 import { normalizeAbilityName, normalizeCardName } from './types';
 import { hasEvolvesFrom } from '../evolutionChains';
 import { isStadiumActive, isTeraPokemon } from './stadiums';
-import { drawCards } from './primitives';
+import { healDamage, drawCards } from './primitives';
 import { specialEnergyBlocksAttackEffects, specialEnergyBlocksBenchedDamage, specialEnergyDamageBonus, specialEnergyMaxHpBonus, specialEnergyPrizeReduction, specialEnergyWaivesRetreat } from './specialEnergy';
 
 /**
@@ -581,6 +581,14 @@ export function getPassiveRetreatCostIncrease(G: PtcgGameState, card: GameCard):
   return increase;
 }
 
+/** 「使用招式所需的能量與【撤退】所需的能量，各增加N個【無】能量」 — one timed effect covering both
+ * costs, so attack payability and retreat read the same number. */
+export function getTimedCostIncrease(G: PtcgGameState, card: GameCard): number {
+  return card.timedEffects
+    ?.filter(e => e.kind === 'costIncrease' && e.appliesOnTurn === G.turn)
+    .reduce((n, e) => n + (e.amount ?? 1), 0) ?? 0;
+}
+
 /** 化身團結: full Colorless-cost waiver, gated by all 4 named Forces of Nature being in play. */
 export function hasPassiveColorlessCostWaiver(G: PtcgGameState, card: GameCard): boolean {
   if (!hasAbility(G, card, '化身團結')) return false;
@@ -648,7 +656,7 @@ export function canEvolveOnFirstTurnOrJustPlayed(G: PtcgGameState, target: GameC
  * OPPONENT of `attachingIdx` holds 侵蝕詛咒 (unconditional on position, per printed text). */
 export function onEnergyAttachedFromHand(G: PtcgGameState, attachingIdx: 0 | 1, target: GameCard, energy?: { cardData?: GameCard['cardData'] }): void {
   if (isActivePokemon(G, target) && teamOf(G, attachingIdx).some(c => hasAbility(G, c, '自動治癒'))) {
-    target.damage = Math.max(0, target.damage - 90);
+    healDamage(target, 90);
   }
   const oppIdx = (1 - attachingIdx) as 0 | 1;
   if (teamOf(G, oppIdx).some(c => hasAbility(G, c, '侵蝕詛咒'))) {

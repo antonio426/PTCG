@@ -1,6 +1,7 @@
 import { GameCard } from '@ptcg/shared';
 import { PtcgGameState } from '../GameState';
 import { specialEnergyBlocksStatus } from './specialEnergy';
+import { healFully } from './primitives';
 
 /** The default Bench size; 零之大空洞 is the only thing that changes it (see benchLimit). */
 export const DEFAULT_BENCH_SIZE = 5;
@@ -90,7 +91,7 @@ export function enforceBenchLimit(G: PtcgGameState, flushPreEvolutions: (card: G
         }
       }
       card.attachedTool = null;
-      card.damage = 0;
+      healFully(card);
       card.statusConditions = [];
       p.discardPile.push(card);
       p.bench[i] = null;

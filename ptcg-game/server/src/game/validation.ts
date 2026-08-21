@@ -3,7 +3,7 @@ import { PtcgGameState, GamePhase, PendingChoice } from './GameState';
 import { hasAbilityEffect, canUseAbility, FROM_HAND_ABILITY_NAMES } from './effects/abilities';
 import { canPlayTrainer, hasTrainerEffect } from './effects/trainers';
 import { getRetreatCostReduction, getColorlessCostReduction } from './effects/tools';
-import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostOverride, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatCostReduction, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, isAceSpecPlayBlocked, areAbilitiesNegated, isAttackLockedByTimedEffect, isItemAndToolPlayBlocked, isItemLockedByTimedEffect, isItemPlayBlocked, isNamedAttackLockedByTimedEffect, isStadiumPlayBlocked, isRetreatLockedByTimedEffect, isProtectedFromOpponentTrainer, hasPassiveAbilityNamed, canHoldSecondTool } from './effects/passiveAbilities';
+import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostOverride, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatCostReduction, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, isAceSpecPlayBlocked, areAbilitiesNegated, isAttackLockedByTimedEffect, isItemAndToolPlayBlocked, isItemLockedByTimedEffect, isItemPlayBlocked, isNamedAttackLockedByTimedEffect, isStadiumPlayBlocked, isRetreatLockedByTimedEffect, isProtectedFromOpponentTrainer, hasPassiveAbilityNamed, canHoldSecondTool, getTimedCostIncrease } from './effects/passiveAbilities';
 import { normalizeAbilityName, normalizeCardName } from './effects/types';
 import { hasEvolvesFrom, evolvesFromMatches, inferEvolvesFromSpecies } from './evolutionChains';
 import { isFossilCard } from './fossils';
@@ -126,7 +126,8 @@ export function effectiveRetreatCost(G: PtcgGameState, card: GameCard): number {
   const base = card.cardData.retreatCost?.length ?? 0;
   const { reduction, waived } = getRetreatCostReduction(G, card);
   if (waived || getPassiveRetreatWaiver(G, card.owner, card)) return 0;
-  return Math.max(0, base - reduction - getPassiveRetreatCostReduction(G, card) + getPassiveRetreatCostIncrease(G, card));
+  return Math.max(0, base - reduction - getPassiveRetreatCostReduction(G, card)
+    + getPassiveRetreatCostIncrease(G, card) + getTimedCostIncrease(G, card));
 }
 
 export function canPlayPokemon(G: PtcgGameState, playerIndex: number, cardId: string): boolean {
@@ -321,6 +322,11 @@ export function canAttack(G: PtcgGameState, playerIndex: number, attackIndex: nu
     const ty = zh[costCut[2]];
     if (ty) cost = Array.from({ length: parseInt(costCut[1], 10) }, () => ty as EnergyType);
   }
+
+  // 「使用招式所需的能量…增加N個【無】能量」 from an opponent's earlier attack. Added after every
+  // override/waiver above, since it is a surcharge on whatever cost ends up in force.
+  const surcharge = getTimedCostIncrease(G, player.active);
+  if (surcharge > 0) cost = [...cost, ...Array.from({ length: surcharge }, () => 'Colorless' as EnergyType)];
 
   // 化身團結 waives only the Colorless portion of the cost — specific-type requirements remain.
   const colorlessInCost = cost.filter(c => c === 'Colorless').length;

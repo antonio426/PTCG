@@ -15,7 +15,7 @@ import { getBonusPrizesForAttackKo, getGrudgeVortexRetaliation, getLethalOnlyRet
 import { benchDamageFromEffectsBlocked, benchLimit, isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
 import { specialEnergyRetaliation } from './effects/specialEnergy';
-import { applyStatusCondition, discardAttachedEnergy, drawCards, drawUpTo, millDeck, shuffleDeck, asAttachedEnergy } from './effects/primitives';
+import { healFully, healDamage, applyStatusCondition, discardAttachedEnergy, drawCards, drawUpTo, millDeck, shuffleDeck, asAttachedEnergy } from './effects/primitives';
 import { AttackBoardContext, resolveGenericAttackEffect } from './effects/genericAttacks';
 import { inferEvolvesFromSpecies, evolvesFromMatches } from './evolutionChains';
 import { effectiveRetreatCost } from './validation';
@@ -135,6 +135,8 @@ export function buildAttackBoard(
     }, {} as Record<string, number>),
     attackCostCount: attack.cost.length,
     attackerPromotedFromBenchThisTurn: player.activeIdAtTurnStart !== undefined && player.activeIdAtTurnStart !== attacker.id,
+    attackerHealedThisTurn: attacker.healedThisTurn === true,
+    attackerDamageTakenLastTurn: attacker.damageTakenLastTurn ?? 0,
     ownDiscardEnergyCounts: player.discardPile.reduce((acc, c) => {
       if (!c.cardData.subtypes.includes('Basic Energy')) return acc;
       for (const ty of c.cardData.types || []) acc[ty] = (acc[ty] || 0) + 1;
@@ -340,6 +342,7 @@ export function applyAttackOutcome(
   const damage = damageBreakdown.finalDamage;
   const defenderWasFullHp = defender.damage === 0;
   defender.damage += damage;
+  if (damage > 0) defender.damageTakenThisTurn = (defender.damageTakenThisTurn ?? 0) + damage;
   addLog(G, G.currentPlayer, 'attack', `${attacker.cardData.name} 使用「${attack.name}」，對 ${defender.cardData.name} 造成 ${damage} 點傷害`, damageBreakdown, genericOutcome?.coinFlipNote);
 
   // 警備濁霧 (<火箭隊的>瓦斯彈): taking opponent-attack damage while Active benches up to 2
@@ -459,7 +462,7 @@ export function applyAttackOutcome(
     if (genericOutcome.selfStatusToInflict) {
       for (const status of genericOutcome.selfStatusToInflict) applyStatusCondition(G, attacker, status);
     }
-    if (genericOutcome.healSelfAmount) attacker.damage = Math.max(0, attacker.damage - genericOutcome.healSelfAmount);
+    if (genericOutcome.healSelfAmount) healDamage(attacker, genericOutcome.healSelfAmount);
     if (genericOutcome.drawCards) drawCards(G, G.currentPlayer as 0 | 1, genericOutcome.drawCards);
     if (genericOutcome.selfDamage) {
       attacker.damage += genericOutcome.selfDamage;
@@ -665,7 +668,7 @@ export function applyAttackOutcome(
       }
     }
     if (genericOutcome.drawToHandSize) drawUpTo(G, G.currentPlayer as 0 | 1, genericOutcome.drawToHandSize);
-    if (genericOutcome.healSelfByDamageDealt && damage > 0) attacker.damage = Math.max(0, attacker.damage - damage);
+    if (genericOutcome.healSelfByDamageDealt && damage > 0) healDamage(attacker, damage);
     if (genericOutcome.moveOpponentEnergyToTheirBench && defender.attachedEnergy.length > 0 && !defenderEffectImmune) {
       const benchTargets = opponent.bench.filter((c): c is GameCard => c !== null);
       if (benchTargets.length > 0) {
@@ -840,7 +843,7 @@ export function applyAttackOutcome(
       const damaged = [player.active, ...player.bench].filter((c): c is GameCard => c !== null && c.damage > 0);
       if (damaged.length > 0) {
         const target = damaged[Math.floor(Math.random() * damaged.length)];
-        target.damage = Math.max(0, target.damage - genericOutcome.healRandomOwnDamagedAmount);
+        healDamage(target, genericOutcome.healRandomOwnDamagedAmount);
       }
     }
     if (genericOutcome.deckSearchFamilyToHandCount) {
@@ -891,7 +894,7 @@ export function applyAttackOutcome(
     }
     if (genericOutcome.healAllOwnTeamAmount) {
       for (const c of [player.active, ...player.bench]) {
-        if (c) c.damage = Math.max(0, c.damage - genericOutcome.healAllOwnTeamAmount);
+        if (c) healDamage(c, genericOutcome.healAllOwnTeamAmount);
       }
     }
     if (genericOutcome.deckSearchTypedEnergyToOwnPokemonCount) {
@@ -948,7 +951,7 @@ export function applyAttackOutcome(
       const candidates = ownBench.filter(c => (c.cardData.types || []).includes(type as any));
       if (candidates.length > 0) {
         const target = candidates[Math.floor(Math.random() * candidates.length)];
-        target.damage = Math.max(0, target.damage - amount);
+        healDamage(target, amount);
       }
     }
     if (genericOutcome.deckSearchTypedPokemonToHandCount) {
@@ -1309,14 +1312,29 @@ export function applyAttackOutcome(
         };
       }
     }
+    if (genericOutcome.benchSubtypeTargetDamage) {
+      const { subtypes, amount } = genericOutcome.benchSubtypeTargetDamage;
+      const pool = opponent.bench.filter((c): c is GameCard => c !== null
+        && subtypes.some(s => c.cardData.subtypes.includes(s as never))
+        && !isImmuneToOpponentAttackEffects(G, c, attacker));
+      if (pool.length > 0 && !benchDamageFromEffectsBlocked(G)) {
+        const target = pool[Math.floor(Math.random() * pool.length)];
+        target.damage += amount;
+        if (effectiveMaxHp(G, target) > 0 && target.damage >= effectiveMaxHp(G, target)) {
+          handleKo(G, (1 - G.currentPlayer) as 0 | 1, target.id, attacker);
+        }
+      }
+    }
     if (genericOutcome.attachNamedFromHandHealFull) {
-      const { name, benchOnly } = genericOutcome.attachNamedFromHandHealFull;
-      const hi = player.hand.findIndex(c => c.cardData.name.includes(name) && c.cardData.supertype === 'Energy');
+      const { name, benchOnly, basicEnergyType } = genericOutcome.attachNamedFromHandHealFull;
+      const hi = player.hand.findIndex(c => c.cardData.supertype === 'Energy' && (basicEnergyType
+        ? c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes(basicEnergyType as never)
+        : c.cardData.name.includes(name)));
       const pool = (benchOnly ? player.bench : [player.active, ...player.bench]).filter((c): c is GameCard => c !== null);
       if (hi >= 0 && pool.length > 0) {
         const target = pool[Math.floor(Math.random() * pool.length)];
         target.attachedEnergy.push(asAttachedEnergy(player.hand.splice(hi, 1)[0]));
-        target.damage = 0;
+        healFully(target);
       }
     }
     if (genericOutcome.returnAllSelfEnergyToHandBonus && !isReturnToHandBlocked(G, G.currentPlayer as 0 | 1)) {
@@ -1331,7 +1349,7 @@ export function applyAttackOutcome(
         && (tagged ? c.cardData.subtypes.includes(tagged as any) : c.cardData.name.includes(name)));
       if (pool.length > 0) {
         const target = pool[Math.floor(Math.random() * pool.length)];
-        target.damage = Math.max(0, target.damage - amount);
+        healDamage(target, amount);
       }
     }
     if (genericOutcome.shuffleOpponentBenchExceptCount) {
@@ -1737,7 +1755,7 @@ export function applyAttackOutcome(
     if (genericOutcome.healAllBothSidesAmount) {
       for (const p of [player, opponent] as PtcgPlayerState[]) {
         for (const c of [p.active, ...p.bench]) {
-          if (c) c.damage = Math.max(0, c.damage - genericOutcome.healAllBothSidesAmount);
+          if (c) healDamage(c, genericOutcome.healAllBothSidesAmount);
         }
       }
     }
@@ -1776,7 +1794,7 @@ export function applyAttackOutcome(
     if (genericOutcome.healOneOwnFullHeal) {
       const pool = (genericOutcome.healOneOwnFullHeal.benchOnly ? player.bench : [player.active, ...player.bench])
         .filter((c): c is GameCard => c !== null && c.damage > 0);
-      if (pool.length > 0) pool.sort((a, b) => b.damage - a.damage)[0].damage = 0;
+      if (pool.length > 0) healFully(pool.sort((a, b) => b.damage - a.damage)[0]);
     }
     if (genericOutcome.koLowestRemainingHpExceptSelf) {
       const pool = [player.active, ...player.bench, opponent.active, ...opponent.bench]
@@ -1789,7 +1807,7 @@ export function applyAttackOutcome(
     }
     if (genericOutcome.healAllOwnBasicsAmount) {
       for (const c of [player.active, ...player.bench]) {
-        if (c?.cardData.subtypes.includes('Basic')) c.damage = Math.max(0, c.damage - genericOutcome.healAllOwnBasicsAmount);
+        if (c?.cardData.subtypes.includes('Basic')) healDamage(c, genericOutcome.healAllOwnBasicsAmount);
       }
     }
     if (genericOutcome.returnOwnBenchToHandCount && !isReturnToHandBlocked(G, G.currentPlayer as 0 | 1)) {
@@ -1977,7 +1995,7 @@ export function applyAttackOutcome(
       shuffleDeck(opponent.deck);
     }
     if (genericOutcome.healAllOwnBenchAmount) {
-      for (const c of ownBench) c.damage = Math.max(0, c.damage - genericOutcome.healAllOwnBenchAmount);
+      for (const c of ownBench) healDamage(c, genericOutcome.healAllOwnBenchAmount);
     }
     if (genericOutcome.flipUntilTailsDiscardOpponentEnergy) {
       let heads = 0;

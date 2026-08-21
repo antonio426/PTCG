@@ -5,6 +5,7 @@ import { discardAttachedEnergy, hasNoRuleBox } from './primitives';
 import { applyAttackOutcome, buildAttackBoard } from '../attackResolution';
 import { benchDamageFromEffectsBlocked, isTeraPokemon } from './stadiums';
 import { isImmuneToOpponentAttackEffects } from './passiveAbilities';
+import { hasTrainerEffect, startTrainerEffect, resumeTrainerEffect } from './trainers';
 
 /**
  * Damage from a registered handler, through the SAME path the generic templates use. It used to
@@ -22,6 +23,7 @@ function damageDefenderActive(ctx: EffectContext, baseDamage: number): void {
   const attack = { name: '', cost: [], convertedEnergyCost: 0, damage: String(baseDamage), text: '' };
   const dmg = calculateDamageBreakdown(ctx.G, ctx.playerIndex, attacker, attack, defender).finalDamage;
   defender.damage += dmg;
+  if (dmg > 0) defender.damageTakenThisTurn = (defender.damageTakenThisTurn ?? 0) + dmg;
   const hp = parseInt(defender.cardData.hp || '0', 10);
   if (hp > 0 && defender.damage >= hp) handleKo(ctx.G, (1 - ctx.playerIndex) as 0 | 1, defender.id, attacker);
 }
@@ -318,6 +320,89 @@ function copyFromPokemon(
   };
 }
 
+/**
+ * 「將那個效果作為這個招式的效果使用」 — run a Supporter's own registered effect from inside an
+ * attack. The Supporter may itself need choices, and those must come back to IT rather than to the
+ * attack that borrowed it, so the delegation is recorded in the choice's context and every resume
+ * is forwarded on. Both cards below are the effect ONLY: no card is played, so nothing is
+ * discarded and supporterPlayedThisTurn is untouched.
+ */
+function useSupporterEffect(ctx: EffectContext, supporterName: string): EffectStep {
+  if (!hasTrainerEffect(supporterName)) return 'done';
+  const step = startTrainerEffect(supporterName, ctx);
+  return step === 'done' ? 'done' : { ...step, context: { delegate: supporterName, inner: step.context } };
+}
+
+function resumeDelegated(ctx: EffectContext, context: Record<string, unknown>, selection: string[]): EffectStep {
+  const name = context.delegate as string;
+  const step = resumeTrainerEffect(name, ctx, (context.inner as Record<string, unknown>) || {}, selection);
+  return step === 'done' ? 'done' : { ...step, context: { delegate: name, inner: step.context } };
+}
+
+/**
+ * 相仿秀 (魔牆人偶): 「查看對手的手牌。若希望，選擇1張其中的支援者卡，將那個效果作為這個招式的效果
+ * 使用。」 The options are cards in the opponent's HAND, which this text explicitly reveals — the
+ * one situation revealsOpponentHand exists for.
+ */
+const copycatShow: EffectHandler = {
+  start(ctx) {
+    const supporters = opponent(ctx.G, ctx.playerIndex).hand.filter(c =>
+      c.cardData.supertype === 'Trainer' && c.cardData.subtypes.includes('Supporter')
+      && hasTrainerEffect(normalizeCardName(c.cardData.name)));
+    if (supporters.length === 0) return 'done';
+    return {
+      prompt: '相仿秀：選擇1張對手手牌中的支援者卡，使用其效果（可不選）',
+      choiceType: 'select_from_list',
+      minCount: 0,
+      maxCount: 1,
+      options: supporters.map(c => ({ id: c.id, label: c.cardData.name })),
+      revealsOpponentHand: true,
+      context: { step: 'pick' },
+    };
+  },
+  resume(ctx, context, selection) {
+    if (context.delegate) return resumeDelegated(ctx, context, selection);
+    const picked = opponent(ctx.G, ctx.playerIndex).hand.find(c => c.id === selection[0]);
+    if (!picked) return 'done';
+    return useSupporterEffect(ctx, normalizeCardName(picked.cardData.name));
+  },
+};
+
+/**
+ * 靈怪變化 (九尾): 「將自己的牌庫上方1張卡丟棄，若那張卡為支援者卡，則將那個效果作為這個招式的效果
+ * 使用。」 The 60 damage is printed on the attack and lands either way.
+ */
+const spookyShift: EffectHandler = {
+  start(ctx) {
+    damageDefenderActive(ctx, 60);
+    const p = player(ctx.G, ctx.playerIndex);
+    const top = p.deck.pop();
+    if (!top) return 'done';
+    p.discardPile.push(top);
+    if (top.cardData.supertype !== 'Trainer' || !top.cardData.subtypes.includes('Supporter')) return 'done';
+    return useSupporterEffect(ctx, normalizeCardName(top.cardData.name));
+  },
+  resume(ctx, context, selection) {
+    return context.delegate ? resumeDelegated(ctx, context, selection) : 'done';
+  },
+};
+
+/**
+ * 技能大盜 (狐大盜): 「若自己1張手牌都沒有，則選擇1個對手的場上寶可夢持有的招式，作為這個招式使用。」
+ * 「作為這個招式使用」 replaces this attack, so the borrowed attack's own damage is what lands —
+ * the printed 80 is what happens when the hand ISN'T empty, the same way 耀閃挑戰/扮晶晶酒 treat a
+ * copy as a substitution rather than an addition.
+ */
+const skillThief: EffectHandler = {
+  start(ctx) {
+    if (player(ctx.G, ctx.playerIndex).hand.length > 0) { damageDefenderActive(ctx, 80); return 'done'; }
+    return stealFromOpponentField.start(ctx);
+  },
+  resume(ctx, context, selection) {
+    return stealFromOpponentField.resume(ctx, context, selection);
+  },
+};
+
 /** 暗黑底牌 (N的索羅亞克ex): use an attack from one of your Benched 「N的」 Pokémon. */
 const darkTrumpCard = copyFromPokemon('暗黑底牌', ctx =>
   player(ctx.G, ctx.playerIndex).bench.filter(
@@ -338,6 +423,12 @@ const teraMimicry = copyFromPokemon('扮晶晶酒', ctx => {
  * `attack.text` need an entry here — plain flat-damage attacks (the vast
  * majority) are handled by the existing calculateDamage() path untouched.
  */
+/** The donor pool for 技能大盜: everything the opponent has in play. */
+const stealFromOpponentField = copyFromPokemon('技能大盜', ctx => {
+  const opp = opponent(ctx.G, ctx.playerIndex);
+  return [opp.active, ...opp.bench].filter((c): c is GameCard => c !== null);
+});
+
 export const attackEffects: Record<string, EffectHandler> = {
   '振翼髮::蠱惑挪移': beguilingShift,
   '呆呆王::耀閃挑戰': dazzlingChallenge,
@@ -347,6 +438,9 @@ export const attackEffects: Record<string, EffectHandler> = {
   '超級蒂安希ex::花冠射線': floralRay,
   '火箭隊的袋獸ex::惡棍衝擊': villainousShock,
   '太陽伊布ex::阿賽斯特萊石': alolanVulpixStone,
+  '魔牆人偶::相仿秀': copycatShow,
+  '九尾::靈怪變化': spookyShift,
+  '狐大盜::技能大盜': skillThief,
 };
 
 /** Both halves normalized — a scraped name can carry a zero-width prefix, and a raw-name key

@@ -32,6 +32,11 @@ export function applyTurnBegin(G: PtcgGameState): void {
   // setup() itself had already set — so the first player never drew.
   G.phase = 'draw';
   processWakeUpCheck(G, idx);
+  // 「在這個回合，若這隻寶可夢恢復了HP」 is scoped to the turn being played, so every card in play
+  // starts each turn having healed nothing — both sides, since either can be healed on either turn.
+  for (const p of G.players) {
+    for (const c of [p.active, ...p.bench]) if (c) c.healedThisTurn = false;
+  }
   const player = G.players[idx];
   player.energyAttachedThisTurn = 0;
   player.basicPokemonPlayedThisTurn = 0;

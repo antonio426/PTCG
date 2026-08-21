@@ -6,7 +6,7 @@ import { calculateDamageBreakdown, effectiveMaxHp, flushPreEvolutionsTo, flushPr
 import { areAbilitiesNegated, getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, getCoinFlipAttackMissCoins, hasPassiveAbilityNamed, hasTeraBenchedImmunity, isRetreatBlockedByOpponent, isStadiumPlayBlocked, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat, shouldDiscardAttackerEnergy, isProtectedFromOpponentAbility, canHoldSecondTool } from './effects/passiveAbilities';
 import { benchDamageFromEffectsBlocked, benchLimit, enforceBenchLimit, isStadiumActive, sweepStadiumStatusCures } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
-import { applyStatusCondition, discardAttachedEnergy, drawCards, drawUpTo, shuffleDeck, asAttachedEnergy } from './effects/primitives';
+import { applyStatusCondition, discardAttachedEnergy, drawCards, drawUpTo, healDamage, shuffleDeck, asAttachedEnergy } from './effects/primitives';
 import { maybeRaiseSensorEnergyBenchChoice, processAttackEnergyReturns, resolveSensorEnergyBench, watchAttackEnergyReturns } from './effects/specialEnergy';
 import { AttackBoardContext, resolveGenericAttackEffect } from './effects/genericAttacks';
 import { inferEvolvesFromSpecies, evolvesFromMatches } from './evolutionChains';
@@ -342,6 +342,14 @@ const rawMoves = {
     addLog(G, G.currentPlayer, 'attach_energy', `將 ${energyCard.cardData.name} 附加於 ${target.cardData.name}`);
     // 感應【超】能量: attaching it from hand onto a 【超】 Pokémon opens a deck search.
     maybeRaiseSensorEnergyBenchChoice(G, G.currentPlayer as 0 | 1, target, energyCard);
+
+    // 白日夢 (引夢貘人): 「若對手從手牌將能量卡附於受到這個招式的寶可夢身上，則對手的回合結束」.
+    // Last, so the attach itself and everything it triggers still resolves — the turn ends after.
+    if (target.timedEffects?.some(e => e.kind === 'attachEndsTurn' && e.appliesOnTurn === G.turn)) {
+      addLog(G, G.currentPlayer, 'attack', `${target.cardData.name} 的效果讓這個回合結束了！`);
+      G.phase = 'end';
+      ctx.events?.endTurn?.();
+    }
   },
 
   playTrainer: ({ G, ctx }: { G: PtcgGameState; ctx: any }, cardId: string) => {
@@ -591,7 +599,7 @@ const rawMoves = {
     if (effectKey === 'resident_hall_heal') {
       if (!isStadiumActive(G, '居民會館') || !player.supporterPlayedThisTurn) return;
       for (const c of [player.active, ...player.bench]) {
-        if (c) c.damage = Math.max(0, c.damage - 10);
+        if (c) healDamage(c, 10);
       }
       player.stadiumActionUsedThisTurn = true;
       addLog(G, G.currentPlayer, 'resolve_choice', '居民會館：自己的所有寶可夢各恢復 10 HP');

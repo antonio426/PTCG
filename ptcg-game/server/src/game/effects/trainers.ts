@@ -1,6 +1,6 @@
 import { GameCard } from '@ptcg/shared';
 import { EffectContext, EffectHandler, EffectStep, allPokemon, normalizeCardName, opponent, player, shuffleDeck } from './types';
-import { applyStatusCondition, discardAttachedEnergy, discardFromHand, drawCards, drawUpTo, flipCoin, hasNoRuleBox, healDamage, moveDiscardCardToHand, asAttachedEnergy } from './primitives';
+import { applyStatusCondition, discardAttachedEnergy, discardFromHand, drawCards, drawUpTo, flipCoin, hasNoRuleBox, healDamage, healFully, moveDiscardCardToHand, asAttachedEnergy } from './primitives';
 import { clearStatusConditionsOnLeaveActive } from '../statusConditions';
 import { isEnergyDiscardProtected, isProtectedFromOpponentTrainer, isReturnToHandBlocked } from './passiveAbilities';
 import { handleKo, stackAsPreEvolution, flushPreEvolutionsTo, flushPreEvolutionsToDiscard, resetCardForReentry } from '../damage';
@@ -908,7 +908,7 @@ const fullHealMegaReturnEnergy: EffectHandler = {
     const p = player(ctx.G, ctx.playerIndex);
     const target = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === selection[0]);
     if (target) {
-      target.damage = 0;
+      healFully(target);
       // 平穩境地: attached cards of this side's Pokémon can't return to hand — the heal is an
       // effect on the Pokémon and still lands, but the Energy stays attached ("do as much as
       // you can"; the card has no replacement destination for it).
@@ -2033,7 +2033,7 @@ const shiroroNoKokoro: EffectHandler = {
   },
   resume(ctx, _context, selection) {
     const target = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === selection[0]);
-    if (target) target.damage = 0;
+    if (target) healFully(target);
     return 'done';
   },
 };

@@ -27,7 +27,7 @@ import { StatusCondition } from '@ptcg/shared';
 import { normalizeAbilityName, normalizeCardName } from './types';
 
 export interface TimedEffectDescriptor {
-  kind: 'cantAttack' | 'cantRetreat' | 'damageImmune' | 'damageReduction' | 'outgoingDamageReduction' | 'outgoingDamageBoost' | 'coinFlipAttackMiss' | 'namedAttackLock' | 'weaknessRemoved' | 'retaliationCounters' | 'retaliationMirror' | 'cantAttachEnergy' | 'attachPunishCounters' | 'weaknessBecomes' | 'delayedKo' | 'delayedCounters' | 'delayedDiscard' | 'namedAttackDamageSet';
+  kind: 'cantAttack' | 'cantRetreat' | 'damageImmune' | 'damageReduction' | 'outgoingDamageReduction' | 'outgoingDamageBoost' | 'coinFlipAttackMiss' | 'namedAttackLock' | 'weaknessRemoved' | 'retaliationCounters' | 'retaliationMirror' | 'cantAttachEnergy' | 'attachPunishCounters' | 'weaknessBecomes' | 'delayedKo' | 'delayedCounters' | 'delayedDiscard' | 'namedAttackDamageSet' | 'costIncrease' | 'attachEndsTurn';
   amount?: number;
   /** For 'damageImmune': restricts the immunity to attackers of this printed Subtype only (e.g. "Basic"). */
   vsSubtype?: string;
@@ -328,7 +328,10 @@ export interface GenericAttackOutcome {
   returnSelfAndAttachmentsToDeck?: boolean;
   /** Attach 1 hand card whose name includes `name` to a random own (bench-only) Pokémon, then
    * fully heal that Pokémon. */
-  attachNamedFromHandHealFull?: { name: string; benchOnly: boolean };
+  attachNamedFromHandHealFull?: { name: string; benchOnly: boolean; basicEnergyType?: string };
+  /** N damage to one opponent BENCH Pokémon carrying any of these printed subtypes (ex / V).
+   * Bench damage never applies weakness or resistance, per the printed reminder. */
+  benchSubtypeTargetDamage?: { subtypes: string[]; amount: number };
   /** Return every Energy attached to the attacker to hand for +`amount` damage (auto-taken;
    * blocked whole by 平穩境地). */
   returnAllSelfEnergyToHandBonus?: { amount: number };
@@ -630,6 +633,10 @@ export interface AttackBoardContext {
   ownBenchTypedDamageCounters: Record<string, number>;
   /** True when the attacker itself entered play (evolved or was placed) this turn. */
   attackerEvolvedThisTurn: boolean;
+  /** Whether the attacker has recovered any HP during this turn (healDamage sets it). */
+  attackerHealedThisTurn: boolean;
+  /** Attack damage the attacker took during the opponent's turn that just ended. */
+  attackerDamageTakenLastTurn: number;
   /** Whether a Supporter with the Ancient / Future tag was played from hand this turn. */
   ownPlayedAncientSupporter: boolean;
   ownPlayedFutureSupporter: boolean;
@@ -705,7 +712,7 @@ export const NEUTRAL_BOARD: AttackBoardContext = {
   opponentExOrVCount: 0, ownDamagedBenchCount: 0, ownFieldDamagedCount: 0, ownBenchStage2Count: 0,
   ownBenchEnergyHolderCounts: {}, attackCostCount: 0, opponentTakenPrizes: 0,
   ownBenchDamageCountersByName: [], ownDiscardAbilityCounts: {},
-  attackerPromotedFromBenchThisTurn: false, ownDiscardEnergyCounts: {},
+  attackerPromotedFromBenchThisTurn: false, attackerHealedThisTurn: false, attackerDamageTakenLastTurn: 0, ownDiscardEnergyCounts: {},
   attackerEnergyCardNames: [], opponentBenchDamageCounters: [], defenderAttackNames: [],
   defenderIsTera: false, ownPokemonFaintedLastTurn: false, defenderStatusConditions: [],
   defenderName: '', ownHandCount: 0, ownHandNames: [], ownHandBasicEnergyCounts: {}, ownFieldNames: [], opponentFieldNames: [],
@@ -2177,9 +2184,24 @@ export function resolveGenericAttackEffect(text: string, damageField: string, bo
     if (rest) return { ...rest, baseDamage: parseBaseNumber(damageField) + rest.baseDamage, discardNamedFromHandCount: { name: m[2], count: need, basicEnergyType: basicType } };
   }
 
-  // 從自己的手牌選擇N張「X」卡，附於備戰寶可夢身上。然後，將附上那張卡的寶可夢的HP全部恢復。
-  m = t.match(/^從自己的手牌選擇1張「(.+?)」卡，附於備戰寶可夢身上。然後，將附上那張卡的寶可夢的HP全部恢復。$/);
-  if (m) return { baseDamage: parseBaseNumber(damageField), attachNamedFromHandHealFull: { name: m[1], benchOnly: true } };
+  // 從自己的手牌選擇1張「X」卡，附於備戰寶可夢身上。然後，將附上那張卡/這些卡的寶可夢的HP全部恢復。
+  m = t.match(/^從自己的手牌選擇1張「(.+?)」卡，附於備戰寶可夢身上。然後，將附上(?:那張卡|這些卡)的寶可夢的HP全部恢復。$/);
+  if (m) {
+    return {
+      baseDamage: parseBaseNumber(damageField),
+      // Same reason as the hand-cost family: 「基本【草】能量」 also prints as 「基本草能量」.
+      attachNamedFromHandHealFull: { name: m[1], benchOnly: true, basicEnergyType: basicEnergyTypeFromQuotedName(m[1]) },
+    };
+  }
+
+  // 對手的備戰區的1隻「寶可夢【ex】・【V】」受到N點傷害。[在備戰區不計算弱點・抵抗力。]
+  m = t.match(/^對手的備戰區的1隻「(.+?)」受到(\d+)點傷害。(?:\[在備戰區不計算弱點・抵抗力。\])?$/);
+  if (m) {
+    const subtypes = [...m[1].matchAll(/【(.+?)】/g)].map(x => x[1]).filter(s => s === 'ex' || s === 'V');
+    if (subtypes.length) {
+      return { baseDamage: parseBaseNumber(damageField), benchSubtypeTargetDamage: { subtypes, amount: parseInt(m[2], 10) } };
+    }
+  }
 
   // 將這隻寶可夢身上附加的能量卡全部丟棄。在下個對手的回合結束時，受到這個招式的寶可夢會【昏厥】。
   if (/^將這隻寶可夢身上附加的能量卡全部丟棄。在下個對手的回合結束時，受到這個招式的寶可夢會【昏厥】。$/.test(t)) {
@@ -3544,6 +3566,28 @@ export function resolveGenericAttackEffect(text: string, damageField: string, bo
   if (m) {
     const rest = resolveGenericAttackEffect(m[1], damageField, board);
     if (rest) return rest;
+  }
+
+  // 在下個對手的回合，若對手從手牌將能量卡附於受到這個招式的寶可夢身上，則對手的回合結束。
+  if (/^在下個對手的回合，若對手從手牌將能量卡附於受到這個招式的寶可夢身上，則對手的回合結束。$/.test(t)) {
+    return { baseDamage: parseBaseNumber(damageField), opponentTimedEffect: { kind: 'attachEndsTurn', turnOffset: 1 } };
+  }
+
+  // 在下個對手的回合，受到這個招式的寶可夢使用招式所需的能量與【撤退】所需的能量，各增加N個【無】能量。
+  m = t.match(/^在下個對手的回合，受到這個招式的寶可夢使用招式所需的能量與【撤退】所需的能量，各增加(\d+)個【無】能量。$/);
+  if (m) {
+    return { baseDamage: parseBaseNumber(damageField), opponentTimedEffect: { kind: 'costIncrease', amount: parseInt(m[1], 10), turnOffset: 1 } };
+  }
+
+  // 增加與在上個對手的回合這隻寶可夢受到的招式的傷害相同數值的傷害。
+  if (/^增加與在上個對手的回合這隻寶可夢受到的招式的傷害相同數值的傷害。$/.test(t)) {
+    return { baseDamage: parseBaseNumber(damageField) + board.attackerDamageTakenLastTurn };
+  }
+
+  // 在這個回合，若這隻寶可夢恢復了HP，則增加N點傷害。
+  m = t.match(/^在這個回合，若這隻寶可夢恢復了HP，則增加(\d+)點傷害。$/);
+  if (m) {
+    return { baseDamage: parseBaseNumber(damageField) + (board.attackerHealedThisTurn ? parseInt(m[1], 10) : 0) };
   }
 
   /* ---- Round 5: gaps the Standard-scope clause audit turned up ---- */

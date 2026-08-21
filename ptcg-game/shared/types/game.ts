@@ -35,10 +35,19 @@ export interface GameCard {
    * effect is active only when the current turn exactly matches it, so no active pruning is
    * needed and no timing edge case can leak into an adjacent turn. */
   timedEffects?: TimedCardEffect[];
+  /** Set by healDamage whenever this card actually recovers HP; cleared for every card in play at
+   * each turn-begin. Feeds 「在這個回合，若這隻寶可夢恢復了HP，則增加N點傷害」. */
+  healedThisTurn?: boolean;
+  /** ATTACK damage this card has taken, accumulated within a turn and rotated into
+   * damageTakenLastTurn at the turn transition — the same ThisTurn/LastTurn pattern the player's
+   * attacksUsed* fields use. Feeds 「增加與在上個對手的回合這隻寶可夢受到的招式的傷害相同數值的傷害」.
+   * Poison/Burn/effect counters are deliberately not counted: the text says 招式的傷害. */
+  damageTakenThisTurn?: number;
+  damageTakenLastTurn?: number;
 }
 
 export interface TimedCardEffect {
-  kind: 'cantAttack' | 'cantRetreat' | 'damageImmune' | 'damageReduction' | 'outgoingDamageReduction' | 'outgoingDamageBoost' | 'coinFlipAttackMiss' | 'namedAttackLock' | 'weaknessRemoved' | 'retaliationCounters' | 'retaliationMirror' | 'cantAttachEnergy' | 'attachPunishCounters' | 'weaknessBecomes' | 'delayedKo' | 'delayedCounters' | 'delayedDiscard' | 'namedAttackDamageSet';
+  kind: 'cantAttack' | 'cantRetreat' | 'damageImmune' | 'damageReduction' | 'outgoingDamageReduction' | 'outgoingDamageBoost' | 'coinFlipAttackMiss' | 'namedAttackLock' | 'weaknessRemoved' | 'retaliationCounters' | 'retaliationMirror' | 'cantAttachEnergy' | 'attachPunishCounters' | 'weaknessBecomes' | 'delayedKo' | 'delayedCounters' | 'delayedDiscard' | 'namedAttackDamageSet' | 'costIncrease' | 'attachEndsTurn';
   amount?: number;
   appliesOnTurn: number;
   /** For 'damageImmune': restricts the immunity to attackers of this Subtype only (e.g. "Basic"). */

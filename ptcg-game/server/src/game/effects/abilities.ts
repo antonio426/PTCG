@@ -1,7 +1,7 @@
 import { EnergyType, GameCard, AttachedEnergy } from '@ptcg/shared';
 import { EffectContext, EffectHandler, EffectStep, allPokemon, findOwnPokemon, normalizeAbilityName, opponent, player } from './types';
 import { handleKo, stackAsPreEvolution, flushPreEvolutionsTo, flushPreEvolutionsToDiscard, resetCardForReentry } from '../damage';
-import { applyStatusCondition, discardAttachedEnergy, discardFromHand, drawCards, drawUpTo, flipCoin, flipCoins, millDeck, moveDeckCardToBench, moveDeckCardToHand, shuffleDeck, asAttachedEnergy } from './primitives';
+import { healFully, healDamage, applyStatusCondition, discardAttachedEnergy, discardFromHand, drawCards, drawUpTo, flipCoin, flipCoins, millDeck, moveDeckCardToBench, moveDeckCardToHand, shuffleDeck, asAttachedEnergy } from './primitives';
 import { clearStatusConditionsOnLeaveActive } from '../statusConditions';
 import { hasEvolvesFrom, evolvesFromMatches } from '../evolutionChains';
 import { isProtectedFromOpponentAbility, isReturnToHandBlocked } from './passiveAbilities';
@@ -129,7 +129,7 @@ const adrenalineBrain: EffectHandler = {
     if (context.step === 'pick_count') {
       const count = parseInt(selection[0], 10);
       const source = findOwnPokemon(ctx.G, ctx.playerIndex, context.sourceId as string);
-      if (source) source.damage = Math.max(0, source.damage - count * 10);
+      if (source) healDamage(source, count * 10);
       const opp = opponent(ctx.G, ctx.playerIndex);
       const targets = [opp.active, ...opp.bench].filter((c): c is GameCard => c !== null);
       if (targets.length === 0) return 'done';
@@ -484,7 +484,7 @@ const teleporter: EffectHandler = {
       if (energy.cardData) p.deck.push({ id: energy.id, cardData: energy.cardData, owner: ctx.playerIndex, damage: 0, statusConditions: [], attachedEnergy: [] });
     }
     if (self.attachedTool) { p.deck.push(self.attachedTool); self.attachedTool = null; }
-    self.damage = 0;
+    healFully(self);
     self.statusConditions = [];
     flushPreEvolutionsTo(self, p.deck);
     p.deck.push(self);
@@ -560,7 +560,7 @@ const ripenCharge: EffectHandler = {
     if (target && i >= 0) {
       const energy = p.hand.splice(i, 1)[0];
       target.attachedEnergy.push(asAttachedEnergy(energy));
-      target.damage = Math.max(0, target.damage - 30);
+      healDamage(target, 30);
     }
     return 'done';
   },
@@ -941,7 +941,7 @@ const bellyfulTime: EffectHandler = {
     if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     for (const c of allPokemon(ctx.G, ctx.playerIndex)) {
       if (!hasEvolvesFrom(c.cardData)) continue;
-      c.damage = 0;
+      healFully(c);
       for (const energy of c.attachedEnergy.splice(0)) discardAttachedEnergy(ctx.G, ctx.playerIndex, energy);
     }
     return 'done';
@@ -1054,7 +1054,7 @@ const escapeDraw: EffectHandler = {
       if (energy.cardData) p.deck.push({ id: energy.id, cardData: energy.cardData, owner: ctx.playerIndex, damage: 0, statusConditions: [], attachedEnergy: [] });
     }
     if (self.attachedTool) { p.deck.push(self.attachedTool); self.attachedTool = null; }
-    self.damage = 0;
+    healFully(self);
     self.statusConditions = [];
     flushPreEvolutionsTo(self, p.deck);
     p.deck.push(self);
@@ -1101,7 +1101,7 @@ const fermentedJuice: EffectHandler = {
   },
   resume(ctx, _context, selection) {
     const target = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === selection[0]);
-    if (target) target.damage = Math.max(0, target.damage - 30);
+    if (target) healDamage(target, 30);
     return 'done';
   },
 };
@@ -1240,7 +1240,7 @@ const gentleHealing: EffectHandler = {
     if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const p = player(ctx.G, ctx.playerIndex);
     if (p.active && (p.active.cardData.types || []).includes('Grass')) {
-      p.active.damage = 0;
+      healFully(p.active);
       for (const energy of p.active.attachedEnergy.splice(0)) discardAttachedEnergy(ctx.G, ctx.playerIndex, energy);
     }
     return 'done';
@@ -1313,7 +1313,7 @@ const heavyStepJump: EffectHandler = {
     if (self.attachedTool) p.discardPile.push(self.attachedTool);
     for (const energy of self.attachedEnergy.splice(0)) discardAttachedEnergy(ctx.G, ctx.playerIndex, energy);
     self.attachedTool = null;
-    self.damage = 0;
+    healFully(self);
     self.statusConditions = [];
     flushPreEvolutionsToDiscard(self, p.discardPile);
     p.deck.push(self);
@@ -1832,7 +1832,7 @@ const attentiveHealing: EffectHandler = {
     if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const p = player(ctx.G, ctx.playerIndex);
     if (!p.active) return 'done';
-    p.active.damage = Math.max(0, p.active.damage - 30);
+    healDamage(p.active, 30);
     if (p.active.statusConditions.length > 0) p.active.statusConditions.shift();
     return 'done';
   },
@@ -1935,7 +1935,7 @@ const fullMelody: EffectHandler = {
   },
   resume(ctx, _context, selection) {
     const target = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === selection[0]);
-    if (target) target.damage = 0;
+    if (target) healFully(target);
     return 'done';
   },
 };
@@ -2349,7 +2349,7 @@ const targetPrey: EffectHandler = {
 const leafHealing: EffectHandler = {
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
-    if (p.active) p.active.damage = Math.max(0, p.active.damage - 20);
+    if (p.active) healDamage(p.active, 20);
     return 'done';
   },
   resume() { return 'done'; },
@@ -2360,7 +2360,7 @@ const leafHealing: EffectHandler = {
 const floralDance: EffectHandler = {
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
-    if (p.active && !p.active.cardData.subtypes.includes('Basic')) p.active.damage = Math.max(0, p.active.damage - 20);
+    if (p.active && !p.active.cardData.subtypes.includes('Basic')) healDamage(p.active, 20);
     return 'done';
   },
   resume() { return 'done'; },
@@ -2428,7 +2428,7 @@ const excitedHealing: EffectHandler = {
   },
   resume(ctx, _context, selection) {
     const target = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === selection[0]);
-    if (target) target.damage = Math.max(0, target.damage - 60);
+    if (target) healDamage(target, 60);
     return 'done';
   },
 };
@@ -2489,7 +2489,7 @@ const oceanGlow: EffectHandler = {
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     if (p.active?.id !== ctx.sourceCardId) return 'done';
-    p.active.damage = Math.max(0, p.active.damage - 50);
+    healDamage(p.active, 50);
     return 'done';
   },
   resume() { return 'done'; },
@@ -2735,7 +2735,7 @@ const scentGathering: EffectHandler = {
 /** 動人香氣: once per turn, heal all own Pokémon 30 HP each. */
 const enchantingScent: EffectHandler = {
   start(ctx) {
-    for (const c of allPokemon(ctx.G, ctx.playerIndex)) c.damage = Math.max(0, c.damage - 30);
+    for (const c of allPokemon(ctx.G, ctx.playerIndex)) healDamage(c, 30);
     return 'done';
   },
   resume() { return 'done'; },
@@ -2953,7 +2953,7 @@ const sweetGift: EffectHandler = {
   },
   resume(ctx, _context, selection) {
     const target = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === selection[0]);
-    if (target) target.damage = Math.max(0, target.damage - 30);
+    if (target) healDamage(target, 30);
     return 'done';
   },
 };

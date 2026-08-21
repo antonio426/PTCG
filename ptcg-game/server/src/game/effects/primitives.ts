@@ -72,9 +72,20 @@ export function shuffleHandIntoDeck(G: PtcgGameState, idx: 0 | 1): void {
   shuffleDeck(p.deck);
 }
 
-/** Heal `amount` HP (in raw damage points, e.g. 30 = 3 counters) off a card, floored at 0. */
+/** Heal `amount` HP (in raw damage points, e.g. 30 = 3 counters) off a card, floored at 0.
+ * Every real heal goes through here so 「在這個回合，若這隻寶可夢恢復了HP」 has one place to watch —
+ * which is also why damage-counter MOVES and leaving-play resets deliberately do not call it:
+ * neither is healing under the rules, and both would otherwise set the flag. */
 export function healDamage(card: GameCard, amount: number): void {
-  card.damage = Math.max(0, card.damage - amount);
+  const healed = Math.min(card.damage, Math.max(0, amount));
+  if (healed <= 0) return;
+  card.damage -= healed;
+  card.healedThisTurn = true;
+}
+
+/** 「HP全部恢復」. */
+export function healFully(card: GameCard): void {
+  healDamage(card, card.damage);
 }
 
 /**
