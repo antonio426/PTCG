@@ -194,6 +194,9 @@ function raiseAttackPick(
   },
 ): boolean {
   if (G.pendingChoice || opts.options.length === 0) return false;
+  // "Pick exactly one" with one candidate is not a decision — resolving it silently keeps the
+  // prompt out of the player's way, and the caller's own fallback already takes that candidate.
+  if (opts.count === 1 && opts.options.length === 1) return false;
   G.pendingChoice = {
     player: seat,
     owner: seat,
@@ -1084,7 +1087,17 @@ export function applyAttackOutcome(
       }
     }
     if (genericOutcome.randomOpponentHandCardToDeckBottom && opponent.hand.length > 0) {
-      opponent.deck.unshift(opponent.hand.splice(Math.floor(Math.random() * opponent.hand.length), 1)[0]);
+      // 「查看對手的手牌，從其中選擇1張卡，放回對手的牌庫下方」 — seeing the hand is the point of
+      // the card, so the choice carries the reveal flag and the attacker answers it.
+      if (!raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: '從對手的手牌選擇 1 張放回牌庫下方',
+        options: opponent.hand.map(c => ({ id: c.id, label: c.cardData.name })),
+        count: 1,
+        revealsOpponentHand: true,
+        context: { kind: 'opponent_hand_to_deck_bottom' },
+      })) {
+        opponent.deck.unshift(opponent.hand.splice(0, 1)[0]);
+      }
     }
     if (genericOutcome.multiTargetOpponentBenchFlatDamage && !benchDamageFromEffectsBlocked(G)) {
       const { count, amount } = genericOutcome.multiTargetOpponentBenchFlatDamage;
@@ -1435,8 +1448,13 @@ export function applyAttackOutcome(
         ? c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes(basicEnergyType as never)
         : c.cardData.name.includes(name)));
       const pool = (benchOnly ? player.bench : [player.active, ...player.bench]).filter((c): c is GameCard => c !== null);
-      if (hi >= 0 && pool.length > 0) {
-        const target = pool[Math.floor(Math.random() * pool.length)];
+      if (hi >= 0 && pool.length > 0 && !raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: '選擇要附加能量並回復HP的寶可夢',
+        options: pool.map(c => ({ id: c.id, label: c.cardData.name })),
+        count: 1,
+        context: { kind: 'attach_from_hand_heal', handCardId: player.hand[hi].id },
+      })) {
+        const target = pool[0];
         target.attachedEnergy.push(asAttachedEnergy(player.hand.splice(hi, 1)[0]));
         healFully(target);
       }
@@ -1459,7 +1477,15 @@ export function applyAttackOutcome(
     if (genericOutcome.shuffleOpponentBenchExceptCount) {
       const { keep } = genericOutcome.shuffleOpponentBenchExceptCount;
       const benched = opponent.bench.map((c, i) => ({ c, i })).filter((x): x is { c: GameCard; i: number } => x.c !== null);
-      const doomed = [...benched].sort(() => Math.random() - 0.5).slice(keep);
+      // The printed text names the ones that STAY, so that is what the player picks; everything
+      // unpicked is what goes back to the deck.
+      if (benched.length > keep && raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `選擇 ${keep} 隻留在對手備戰區的寶可夢（其餘全部放回牌庫）`,
+        options: benched.map(x => ({ id: x.c.id, label: x.c.cardData.name })),
+        count: Math.min(keep, benched.length),
+        context: { kind: 'keep_opponent_bench' },
+      })) return;
+      const doomed = [...benched].slice(keep);
       for (const { c, i } of doomed) {
         opponent.bench[i] = null;
         if (c.attachedTool) { opponent.deck.push(c.attachedTool); c.attachedTool = null; }
@@ -1599,7 +1625,14 @@ export function applyAttackOutcome(
     }
     if (genericOutcome.copyDefenderRandomAttack && opponent.active?.id === defender.id) {
       const candidates = (defender.cardData.attacks || []).filter(a => !/^[‌​\s]*\[特性\]/.test(a.name));
-      const pick = candidates[Math.floor(Math.random() * candidates.length)];
+      // Which attack to borrow is the player's call whenever the defender prints more than one.
+      if (candidates.length > 1 && raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `選擇要使用的「${defender.cardData.name}」招式`,
+        options: candidates.map((a, i) => ({ id: String(i), label: `${a.name}${a.damage ? `（${a.damage}）` : ''}` })),
+        count: 1,
+        context: { kind: 'copy_defender_attack', defenderId: defender.id },
+      })) return;
+      const pick = candidates[0];
       // Same re-entry shape as the registered copy-attack handlers: resolve the picked attack
       // against the CURRENT board. Guarded against infinite self-copy by the one-level pick
       // being a printed attack of the DEFENDER (copying a copy attack fizzles on the next level
@@ -1952,8 +1985,17 @@ export function applyAttackOutcome(
       shuffleDeck(player.deck);
     }
     if (genericOutcome.discardPileSearchAnyToHandCount) {
-      for (let i = 0; i < genericOutcome.discardPileSearchAnyToHandCount && player.discardPile.length > 0; i++) {
-        player.hand.push(player.discardPile.splice(Math.floor(Math.random() * player.discardPile.length), 1)[0]);
+      const want = genericOutcome.discardPileSearchAnyToHandCount;
+      if (!raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `從棄牌區任意選擇最多 ${want} 張卡加入手牌`,
+        options: player.discardPile.map(c => ({ id: c.id, label: c.cardData.name })),
+        minCount: 0,
+        maxCount: Math.min(want, player.discardPile.length),
+        context: { kind: 'discard_to_hand' },
+      })) {
+        for (let i = 0; i < want && player.discardPile.length > 0; i++) {
+          player.hand.push(player.discardPile.splice(0, 1)[0]);
+        }
       }
     }
     if (genericOutcome.drawFromBottomCount) {

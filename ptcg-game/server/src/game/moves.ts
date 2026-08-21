@@ -880,6 +880,49 @@ const rawMoves = {
           target.attachedEnergy.push(asAttachedEnergy(card, context.energyType as string | undefined));
         }
         shuffleDeck(seat.deck);
+      } else if (kind === 'copy_defender_attack') {
+        // Resolve the borrowed attack against the CURRENT board, exactly as the registered
+        // copy-attack handlers do — same re-entry, so weakness and every board-scaled template
+        // read the real situation.
+        const me = G.players[chooser];
+        const opp = G.players[(1 - chooser) as 0 | 1];
+        const defenderNow = opp.active;
+        const borrowed = defenderNow?.cardData.attacks?.[parseInt(selection[0] ?? '0', 10)];
+        if (me.active && defenderNow && borrowed) {
+          const subBoard = buildAttackBoard(G, me, opp, me.active, defenderNow, borrowed);
+          applyAttackOutcome(G, me, opp, me.active, defenderNow, borrowed, subBoard);
+        }
+      } else if (kind === 'keep_opponent_bench') {
+        // The picked Pokémon stay; everything else on that Bench goes back to the deck with all of
+        // its attachments and its stacked pre-evolutions (nothing may quietly leave the game).
+        const opp = G.players[(1 - chooser) as 0 | 1];
+        const oppIdx = (1 - chooser) as 0 | 1;
+        const kept = new Set(selection);
+        let moved = 0;
+        opp.bench.forEach((c, i) => {
+          if (!c || kept.has(c.id)) return;
+          opp.bench[i] = null;
+          if (c.attachedTool) { opp.deck.push(c.attachedTool); c.attachedTool = null; }
+          if (c.attachedTool2) { opp.deck.push(c.attachedTool2); c.attachedTool2 = null; }
+          for (const energy of c.attachedEnergy.splice(0)) {
+            if (energy.cardData) opp.deck.push({ id: energy.id, cardData: energy.cardData, owner: oppIdx, damage: 0, statusConditions: [], attachedEnergy: [] });
+          }
+          flushPreEvolutionsTo(c, opp.deck);
+          opp.deck.push({ ...c, damage: 0, statusConditions: [], attachedEnergy: [], attachedTool: null, attachedTool2: null, preEvolutions: undefined });
+          moved++;
+        });
+        if (moved > 0) shuffleDeck(opp.deck);
+      } else if (kind === 'attach_from_hand_heal') {
+        const target = [seat.active, ...seat.bench].find(c => c?.id === selection[0]);
+        const hi = seat.hand.findIndex(c => c.id === context.handCardId);
+        if (target && hi >= 0) {
+          target.attachedEnergy.push(asAttachedEnergy(seat.hand.splice(hi, 1)[0]));
+          healDamage(target, target.damage);
+        }
+      } else if (kind === 'opponent_hand_to_deck_bottom') {
+        const opp = G.players[(1 - chooser) as 0 | 1];
+        const i = opp.hand.findIndex(c => c.id === selection[0]);
+        if (i >= 0) opp.deck.unshift(opp.hand.splice(i, 1)[0]);
       } else if (kind === 'discard_to_hand' || kind === 'discard_to_bench' || kind === 'discard_attach') {
         // Recovery out of the discard pile. resetCardForReentry matters for the Pokémon cases:
         // a card coming back into play must not carry the damage/attachments it died with.
