@@ -35,3 +35,4 @@ temp-verify/
 
 # Picture
 *.png
+**/e2e/screenshots/

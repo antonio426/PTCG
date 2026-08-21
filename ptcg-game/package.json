@@ -11,7 +11,8 @@
     "dev:server": "npm run dev -w server",
     "dev:client": "npm run dev -w client",
     "build": "npm run build -w shared && npm run build -w server && npm run build -w client",
-    "test": "npm run test -w server && npm run test -w client"
+    "test": "npm run test -w server && npm run test -w client",
+    "e2e": "node client/e2e/battle-smoke.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.0.0",

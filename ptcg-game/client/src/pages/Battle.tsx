@@ -1092,6 +1092,7 @@ export default function Battle() {
                     <button
                       key={i}
                       onClick={() => handleSubmitMove(m)}
+                          data-move={m.type}
                       disabled={loading}
                       className="w-full text-left px-3 py-2 bg-slate-700 hover:bg-blue-700 disabled:opacity-40 text-slate-100 rounded-lg text-sm transition-colors"
                     >
@@ -1121,6 +1122,7 @@ export default function Battle() {
           {isMultiTarget && matchedTargetMove && (
             <button
               onClick={() => handleSubmitMove(matchedTargetMove)}
+                          data-move={matchedTargetMove.type}
               disabled={loading}
               className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-medium rounded-full transition-colors"
             >
@@ -1237,6 +1239,7 @@ export default function Battle() {
                 <button
                   key={i}
                   onClick={() => handleSubmitMove(m)}
+                          data-move={m.type}
                   disabled={loading}
                   className="px-8 py-3 bg-gradient-to-b from-emerald-500 to-emerald-700 text-white rounded-xl font-bold text-lg hover:from-emerald-400 hover:to-emerald-600 transition-colors shadow-lg shadow-emerald-950/50 disabled:opacity-40"
                 >
@@ -1262,6 +1265,7 @@ export default function Battle() {
                   <button
                     key={i}
                     onClick={() => handleSubmitMove(m)}
+                          data-move={m.type}
                     disabled={loading}
                     className="flex flex-col items-center gap-1 group animate-card-enter disabled:opacity-40 disabled:cursor-not-allowed"
                   >
@@ -1540,6 +1544,7 @@ export default function Battle() {
                           <button
                             key={i}
                             onClick={() => handleSubmitMove(m)}
+                          data-move={m.type}
                             disabled={loading}
                             className="px-3 py-2 bg-gradient-to-b from-red-600 to-red-800 text-white rounded-lg text-xs font-medium hover:from-red-500 hover:to-red-700 transition-colors flex items-center gap-1.5 shadow-md shadow-red-950/50 border border-red-500/30 ring-1 ring-inset ring-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
                           >
@@ -1559,6 +1564,7 @@ export default function Battle() {
                           <button
                             key={i}
                             onClick={() => handleSubmitMove(m)}
+                          data-move={m.type}
                             disabled={loading}
                             className="px-3 py-2 bg-orange-700 text-white rounded-lg text-xs font-medium hover:bg-orange-600 transition-colors border border-orange-500/30 flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
                           >
@@ -1576,6 +1582,7 @@ export default function Battle() {
                         <button
                           key={i}
                           onClick={() => handleSubmitMove(m)}
+                          data-move={m.type}
                           disabled={loading}
                           className="px-3 py-2 bg-purple-800 text-white rounded-lg text-xs font-medium hover:bg-purple-700 transition-colors border border-purple-500/30 flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
                         >
@@ -1589,6 +1596,7 @@ export default function Battle() {
                         <button
                           key={i}
                           onClick={() => handleSubmitMove(m)}
+                          data-move={m.type}
                           disabled={loading}
                           className="px-3 py-2 bg-amber-800 text-white rounded-lg text-xs font-medium hover:bg-amber-700 transition-colors border border-amber-500/30 flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
                         >
@@ -1599,6 +1607,7 @@ export default function Battle() {
                         <button
                           key={i}
                           onClick={() => handleSubmitMove(m)}
+                          data-move={m.type}
                           disabled={loading}
                           className="px-3 py-2 bg-slate-700 text-white rounded-lg text-xs font-medium hover:bg-slate-600 transition-colors ml-auto border border-slate-500/30 ring-1 ring-inset ring-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
                         >
@@ -1652,6 +1661,7 @@ export default function Battle() {
                           const btn = (
                             <button
                               onClick={() => handleSubmitMove(m)}
+                          data-move={m.type}
                               disabled={loading}
                               className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-700 text-white rounded-lg text-xs font-medium hover:bg-indigo-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             >
@@ -1676,6 +1686,7 @@ export default function Battle() {
                           const btn = (
                             <button
                               onClick={() => handleSubmitMove(m)}
+                          data-move={m.type}
                               disabled={loading}
                               className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-700 text-white rounded-lg text-xs font-medium hover:bg-emerald-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             >
