@@ -880,6 +880,30 @@ const rawMoves = {
           target.attachedEnergy.push(asAttachedEnergy(card, context.energyType as string | undefined));
         }
         shuffleDeck(seat.deck);
+      } else if (kind === 'move_energy') {
+        // Two questions: which Energy, then where it goes. `side` says whose board is involved —
+        // an attack can move the OPPONENT's Energy, with the attacker still making the call.
+        const side = context.side === 'opponent' ? G.players[(1 - chooser) as 0 | 1] : seat;
+        const from = [side.active, ...side.bench].find(c => c?.id === context.fromId);
+        if (context.phase === 'energy') {
+          const bench = side.bench.filter((c): c is GameCard => c !== null);
+          if (from && bench.length > 0 && selection.length > 0) {
+            G.pendingChoice = {
+              player: chooser, owner: chooser, effectKey: 'attack_pick',
+              prompt: '選擇要接收能量的備戰寶可夢',
+              choiceType: 'select_pokemon', count: 1,
+              options: bench.map(c => ({ id: c.id, label: c.cardData.name })),
+              context: { kind: 'move_energy', phase: 'target', fromId: context.fromId, side: context.side, energyIds: selection },
+            };
+            return;
+          }
+        } else {
+          const target = side.bench.find(c => c?.id === selection[0]);
+          for (const energyId of (context.energyIds as string[]) ?? []) {
+            const i = from?.attachedEnergy.findIndex(e => e.id === energyId) ?? -1;
+            if (from && target && i >= 0) target.attachedEnergy.push(from.attachedEnergy.splice(i, 1)[0]);
+          }
+        }
       } else if (kind === 'deck_attach_spread') {
         // 「以任意方式附於自己的寶可夢身上」: the cards are chosen first, then a destination for each
         // one in turn, since they may land on different Pokémon. The cards stay in the deck until

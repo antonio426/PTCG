@@ -1,20 +1,14 @@
 # Auto-pick audit (Standard-legal)
 
 Attacks whose text says 選擇 but whose effect the engine picks at random.
-Auto-picking outcome fields detected in attackResolution.ts: attachAllBasicEnergyFromHand, attachNamedFromHandHealFull, attachOpponentDiscardEnergyToTheirPokemonCount, benchSplashDamage, benchSubtypeTargetDamage, bothAttachHandBasicsCount, copyDefenderRandomAttack, copyFromOpponentDeckTop, deckSearchAnyCardToHand, deckSearchAnyCardsToTopOfDeck, deckSearchToolToHand, deckSearchTypedEnergyToAllBenchEach, deckSearchTypedEnergyToOwnPokemonCount, deckSearchTypedPokemonOrEnergyToHand, deckSearchTypedPokemonToHandCount, devolveOpponentToHandCount, discardNamedToDeckCountersOnOpponent, discardOpponentHandDownTo, discardPileSearchAnyEnergyToSelf, discardPileSearchAnyToHandCount, discardPileSearchFamilyToBenchCount, discardPileSearchPokemonToHandCount, discardPileSearchSupporterToHand, discardRandomOpponentHandCount, discardRandomSelfHandCount, flipCoinsDiscardSelfEnergyByTailsCount, flipUntilTailsDiscardOpponentEnergy, healBenchNamedAmount, healBenchTypedAmount, healRandomOwnDamagedAmount, koOpponentBasicCoinSplit, koOpponentWithCountersAtLeast, koRandomOpponent, moveOpponentEnergyToTheirBench, moveSelfEnergyToRandomBench, moveSelfEnergyToRandomBenchCount, multiTargetOpponentFlatDamage, multiTargetSelfBenchFlatDamage, opponentBenchDamageScaledSplash, opponentNamedFlatDamage, opponentSpecialEnergyHolderSplash, optionalEnergyToDeckForBenchDamage, placeCountersOnMultipleOpponents, placeCountersOnRandomOpponent, quadrupleCountersOnOpponents, randomOpponentHandCardToDeckBottom, revealTopAttachEnergiesCount, selfSwitchToRandomBench, shuffleOpponentBenchExceptCount, shuffleRandomOpponentHandCardIntoDeck, shuffleRandomOpponentHandCardsIntoDeckCount
+Auto-picking outcome fields detected in attackResolution.ts: attachAllBasicEnergyFromHand, attachNamedFromHandHealFull, attachOpponentDiscardEnergyToTheirPokemonCount, benchSplashDamage, benchSubtypeTargetDamage, bothAttachHandBasicsCount, copyDefenderRandomAttack, copyFromOpponentDeckTop, deckSearchAnyCardToHand, deckSearchAnyCardsToTopOfDeck, deckSearchToolToHand, deckSearchTypedEnergyToAllBenchEach, deckSearchTypedEnergyToOwnPokemonCount, deckSearchTypedPokemonOrEnergyToHand, deckSearchTypedPokemonToHandCount, devolveOpponentToHandCount, discardNamedToDeckCountersOnOpponent, discardOpponentHandDownTo, discardPileSearchAnyEnergyToSelf, discardPileSearchAnyToHandCount, discardPileSearchFamilyToBenchCount, discardPileSearchPokemonToHandCount, discardPileSearchSupporterToHand, discardRandomOpponentHandCount, discardRandomSelfHandCount, flipCoinsDiscardSelfEnergyByTailsCount, flipUntilTailsDiscardOpponentEnergy, healBenchNamedAmount, healBenchTypedAmount, healRandomOwnDamagedAmount, koOpponentBasicCoinSplit, koOpponentWithCountersAtLeast, koRandomOpponent, multiTargetOpponentFlatDamage, multiTargetSelfBenchFlatDamage, opponentBenchDamageScaledSplash, opponentNamedFlatDamage, opponentSpecialEnergyHolderSplash, optionalEnergyToDeckForBenchDamage, placeCountersOnMultipleOpponents, placeCountersOnRandomOpponent, quadrupleCountersOnOpponents, randomOpponentHandCardToDeckBottom, revealTopAttachEnergiesCount, selfSwitchToRandomBench, shuffleOpponentBenchExceptCount, shuffleRandomOpponentHandCardIntoDeck, shuffleRandomOpponentHandCardsIntoDeckCount
 
-## texts (63)
+## texts (52)
 
-- `遠古巨蜓ex::噴射旋風` (SV9a-003, 5 prints) — auto-picked: moveSelfEnergyToRandomBenchCount
-  > 選擇3個這隻寶可夢身上附加的能量，改附於1隻備戰寶可夢身上。
 - `夜巡靈::前往渡魂` (SV6a-018, 5 prints) — auto-picked: discardPileSearchFamilyToBenchCount
   > 從自己的棄牌區選擇最多3張「夜巡靈」，放置於備戰區。
 - `厄鬼椪 水井面具ex::激流水泵` (SV6-038, 5 prints) — auto-picked: optionalEnergyToDeckForBenchDamage
   > 若希望，選擇3個這隻寶可夢身上附加的能量，放回牌庫並重洗。這個情況下，對手的1隻備戰寶可夢也受到120點傷害。[在備戰區不計算弱點・抵抗力。]
-- `波爾凱尼恩ex::高溫旋風` (SV9-017, 4 prints) — auto-picked: moveSelfEnergyToRandomBench
-  > 選擇1個這隻寶可夢身上附加的能量，改附於備戰寶可夢身上。
-- `鐵荊棘ex::伏特旋風` (SV5a-033, 4 prints) — auto-picked: moveSelfEnergyToRandomBench
-  > 選擇1個這隻寶可夢身上附加的能量，改附於備戰寶可夢身上。
 - `奧利瓦ex::油之機關槍` (SV10-012, 3 prints) — auto-picked: multiTargetOpponentFlatDamage
   > 選擇6次對手的寶可夢，對所選的所有寶可夢不計算弱點・抵抗力，造成其選擇次數×20點傷害。（1隻可選擇2次以上。）
 - `焰后蜥::突然炙烤` (SV7-014, 3 prints) — auto-picked: discardRandomOpponentHandCount
@@ -23,10 +17,6 @@ Auto-picking outcome fields detected in attackResolution.ts: attachAllBasicEnerg
   > 從自己的牌庫選擇「基本【草】能量」卡與「基本【雷】能量」卡最多各2張，以任意方式附於自己的寶可夢身上。並且重洗牌庫。
 - `倫琴貓ex::突刺目光` (SV6-041, 3 prints) — auto-picked: discardRandomOpponentHandCount
   > 查看對手的手牌，從其中選擇1張卡，將其丟棄。
-- `耿鬼ex::戲法舞步` (SV5K-088, 3 prints) — auto-picked: moveOpponentEnergyToTheirBench
-  > 若希望，選擇1個對手的戰鬥寶可夢身上附加的能量，改附於對手的備戰寶可夢身上。
-- `超級耿鬼ex::空無強風` (MBG-003, 3 prints) — auto-picked: moveSelfEnergyToRandomBench
-  > 選擇1個這隻寶可夢身上附加的能量，改附於備戰寶可夢身上。
 - `熔蟻獸::舔舔捕捉` (MC-120, 3 prints) — auto-picked: deckSearchTypedPokemonOrEnergyToHand
   > 從自己的牌庫選擇【火】寶可夢卡與「基本【火】能量」卡合計最多3張，在給對手看過後加入手牌。並且重洗牌庫。
 - `墓揚犬::恐怖啃咬` (MC-350, 3 prints) — auto-picked: shuffleRandomOpponentHandCardsIntoDeckCount
@@ -51,8 +41,6 @@ Auto-picking outcome fields detected in attackResolution.ts: attachAllBasicEnerg
   > 從自己的牌庫選擇最多2張【雷】寶可夢卡，在給對手看過後加入手牌。並且重洗牌庫。
 - `皮可西::揮指` (SV6-046, 2 prints) — auto-picked: copyDefenderRandomAttack
   > 選擇1個對手的戰鬥寶可夢持有的招式，作為這個招式使用。
-- `鐵轍跡::路徑輪` (SV5M-051, 2 prints) — auto-picked: moveSelfEnergyToRandomBench
-  > 選擇1個這隻寶可夢身上附加的能量，改附於備戰寶可夢身上。
 - `N的扒手貓::暗槓` (SV9-059, 2 prints) — auto-picked: randomOpponentHandCardToDeckBottom
   > 查看對手的手牌，從其中選擇1張卡，放回對手的牌庫下方。
 - `肯泰羅::群起瞄準` (M4-067, 2 prints) — auto-picked: multiTargetOpponentFlatDamage
@@ -69,8 +57,6 @@ Auto-picking outcome fields detected in attackResolution.ts: attachAllBasicEnerg
   > 對手選擇2張對手自己的手牌，將其丟棄。
 - `流氓鱷::勒緊` (SV11B-062, 2 prints) — auto-picked: discardRandomOpponentHandCount
   > 對手選擇2張對手自己的手牌，將其丟棄。
-- `小灰怪::挪動一下` (SV11B-126, 2 prints) — auto-picked: moveOpponentEnergyToTheirBench
-  > 選擇1個對手的場上寶可夢身上附加的能量，改附於對手的其他寶可夢身上。
 - `扒手貓::邪惡邀請` (SV11W-052, 2 prints) — auto-picked: deckSearchTypedPokemonToHandCount
   > 從自己的牌庫選擇最多3張【惡】寶可夢卡，在給對手看過後加入手牌。並且重洗牌庫。
 - `長毛狗::氣味偵測` (SV11W-074, 2 prints) — auto-picked: discardPileSearchAnyToHandCount
@@ -87,8 +73,6 @@ Auto-picking outcome fields detected in attackResolution.ts: attachAllBasicEnerg
   > 從自己的牌庫選擇最多2張「基本【超】能量」卡，附於1隻備戰寶可夢身上。並且重洗牌庫。
 - `超能豔鴕::奧密之眼` (SV7a-023, 1 print) — auto-picked: devolveOpponentToHandCount
   > 選擇1隻對手的進化寶可夢，移除1張「進化卡」使其退化。將移除的卡放回對手的手牌。
-- `<火箭隊的>閃電鳥::阻礙之翼` (SV10-033, 1 print) — auto-picked: moveOpponentEnergyToTheirBench
-  > 若希望，選擇1個對手的戰鬥寶可夢身上附加的能量，改附於對手的備戰寶可夢身上。
 - `呆呆獸::垂尾巴` (SV7-038, 1 print) — auto-picked: discardPileSearchPokemonToHandCount
   > 從自己的棄牌區選擇1張寶可夢卡，在給對手看過後加入手牌。
 - `阿羅拉 椰蛋樹ex::熱帶狂燒` (SV7a-040, 1 print) — auto-picked: attachAllBasicEnergyFromHand
@@ -119,15 +103,9 @@ Auto-picking outcome fields detected in attackResolution.ts: attachAllBasicEnerg
   > 若希望，從自己的牌庫任意選擇1張卡加入手牌。並且重洗牌庫。
 - `信使鳥::幸福禮物` (M4-018, 1 print) — auto-picked: bothAttachHandBasicsCount
   > 雙方玩家若希望，各自從自己的手牌選擇最多3張基本能量卡，以任意方式附於自己的寶可夢身上。（對手先選擇。）
-- `超能妙喵::戲法舞步` (M4-037, 1 print) — auto-picked: moveOpponentEnergyToTheirBench
-  > 若希望，選擇1個對手的戰鬥寶可夢身上附加的能量，改附於對手的備戰寶可夢身上。
-- `雪絨蛾::極寒旋風` (M2a-041, 1 print) — auto-picked: moveSelfEnergyToRandomBenchCount
-  > 選擇1個這隻寶可夢身上附加的【水】能量，改附於備戰寶可夢身上。
 - `嗡蝠::搬運破爛` (M2a-130, 1 print) — auto-picked: deckSearchToolToHand
   > 從自己的牌庫選擇1張「寶可夢道具」卡，在給對手看過後加入手牌。並且重洗牌庫。
 - `差不多娃娃::招喚` (SVM-106, 1 print) — auto-picked: discardPileSearchSupporterToHand
   > 從自己的棄牌區選擇1張支援者卡，在給對手看過後加入手牌。
-- `謝米::能量反射` (SVM-105, 1 print) — auto-picked: moveSelfEnergyToRandomBench
-  > 選擇1個這隻寶可夢身上附加的能量，改附於備戰寶可夢身上。
 - `大電海燕ex::迴旋充能` (SV-P-100, 1 print) — auto-picked: selfSwitchToRandomBench
   > 將這隻寶可夢與備戰寶可夢互換。‌然後，從自己的手牌選擇最多2張「基本【雷】能量」卡，附於這隻寶可夢身上。

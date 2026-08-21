@@ -254,3 +254,33 @@ describe('attack picks: 「以任意方式」 attaches ask per card', () => {
     expect(G.phase).toBe('end');
   });
 });
+
+describe('attack picks: moving Energy already in play', () => {
+  it('asks which Energy, then which Bench Pokémon receives it', () => {
+    const atk = makeGameCard(makeCard({
+      name: '能量搬運工', hp: '120', subtypes: ['Basic'] as Subtype[],
+      attacks: [{ name: '轉移', cost: ['Colorless'], convertedEnergyCost: 1, damage: '', text: '選擇1個這隻寶可夢身上附加的能量，改附於備戰寶可夢身上。' }],
+    }), 0);
+    atk.attachedEnergy = [{ id: 'fire1', type: 'Fire' } as any, { id: 'water1', type: 'Water' } as any];
+    const b1 = makeGameCard(makeCard({ name: '備戰1', hp: '90', subtypes: ['Basic'] as Subtype[] }), 0);
+    const b2 = makeGameCard(makeCard({ name: '備戰2', hp: '90', subtypes: ['Basic'] as Subtype[] }), 0);
+    const G = makeState({
+      turn: 3, currentPlayer: 0, phase: 'main',
+      players: [
+        makePlayer({ active: atk, bench: [b1, b2, null, null, null] }),
+        makePlayer({ active: makeGameCard(makeCard({ name: '沙包鼠', hp: '150', subtypes: ['Basic'] as Subtype[] }), 1) }),
+      ],
+    });
+
+    moves.attack({ G, ctx: ctxFor(0) } as any, 0);
+    expect(G.pendingChoice!.options!.map(o => o.id)).toEqual(['fire1', 'water1']);
+    moves.resolveChoice({ G, ctx: ctxFor(0) } as any, ['water1']);
+
+    expect(G.pendingChoice!.options!.map(o => o.id).sort()).toEqual([b1.id, b2.id].sort());
+    moves.resolveChoice({ G, ctx: ctxFor(0) } as any, [b2.id]);
+
+    expect(atk.attachedEnergy.map(e => e.id)).toEqual(['fire1']);
+    expect(b2.attachedEnergy.map(e => e.id)).toEqual(['water1']);
+    expect(G.phase).toBe('end');
+  });
+});

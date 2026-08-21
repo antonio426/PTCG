@@ -673,21 +673,20 @@ export function applyAttackOutcome(
         opponent.active = b;
       }
     }
-    if (genericOutcome.moveSelfEnergyToRandomBench && attacker.attachedEnergy.length > 0) {
+    // 「選擇這隻寶可夢身上附加的N個能量，移動到自己的備戰寶可夢」 — which Energy and which Pokémon
+    // are both the player's calls, asked one Energy at a time (see 'move_energy' below).
+    const selfEnergyMove = genericOutcome.moveSelfEnergyToRandomBench ? 1 : genericOutcome.moveSelfEnergyToRandomBenchCount;
+    if (selfEnergyMove && attacker.attachedEnergy.length > 0) {
       const benchTargets = player.bench.filter((c): c is GameCard => c !== null);
-      if (benchTargets.length > 0) {
-        const target = benchTargets[Math.floor(Math.random() * benchTargets.length)];
-        const i = Math.floor(Math.random() * attacker.attachedEnergy.length);
-        target.attachedEnergy.push(attacker.attachedEnergy.splice(i, 1)[0]);
-      }
-    }
-    if (genericOutcome.moveSelfEnergyToRandomBenchCount && attacker.attachedEnergy.length > 0) {
-      const benchTargets = player.bench.filter((c): c is GameCard => c !== null);
-      if (benchTargets.length > 0) {
-        const target = benchTargets[Math.floor(Math.random() * benchTargets.length)];
-        for (let i = 0; i < genericOutcome.moveSelfEnergyToRandomBenchCount && attacker.attachedEnergy.length > 0; i++) {
-          const idx = Math.floor(Math.random() * attacker.attachedEnergy.length);
-          target.attachedEnergy.push(attacker.attachedEnergy.splice(idx, 1)[0]);
+      if (benchTargets.length > 0 && !raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `選擇要移動的能量（共 ${Math.min(selfEnergyMove, attacker.attachedEnergy.length)} 個）`,
+        options: attacker.attachedEnergy.map(e => ({ id: e.id, label: ENERGY_TYPE_ZH_LABEL[e.type] || e.type })),
+        count: Math.min(selfEnergyMove, attacker.attachedEnergy.length),
+        context: { kind: 'move_energy', phase: 'energy', fromId: attacker.id, side: 'own' },
+      })) {
+        const target = benchTargets[0];
+        for (let i = 0; i < selfEnergyMove && attacker.attachedEnergy.length > 0; i++) {
+          target.attachedEnergy.push(attacker.attachedEnergy.splice(0, 1)[0]);
         }
       }
     }
@@ -710,11 +709,17 @@ export function applyAttackOutcome(
     if (genericOutcome.drawToHandSize) drawUpTo(G, G.currentPlayer as 0 | 1, genericOutcome.drawToHandSize);
     if (genericOutcome.healSelfByDamageDealt && damage > 0) healDamage(attacker, damage);
     if (genericOutcome.moveOpponentEnergyToTheirBench && defender.attachedEnergy.length > 0 && !defenderEffectImmune) {
+      // The ATTACKER chooses here (the text reads 「選擇對手的…」), even though the Energy and the
+      // destination both belong to the opponent's side of the board.
       const benchTargets = opponent.bench.filter((c): c is GameCard => c !== null);
-      if (benchTargets.length > 0) {
-        const target = benchTargets[Math.floor(Math.random() * benchTargets.length)];
-        const i = Math.floor(Math.random() * defender.attachedEnergy.length);
-        target.attachedEnergy.push(defender.attachedEnergy.splice(i, 1)[0]);
+      if (benchTargets.length > 0 && !raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: '選擇要移動的對手能量',
+        options: defender.attachedEnergy.map(e => ({ id: e.id, label: ENERGY_TYPE_ZH_LABEL[e.type] || e.type })),
+        count: 1,
+        context: { kind: 'move_energy', phase: 'energy', fromId: defender.id, side: 'opponent' },
+      })) {
+        const target = benchTargets[0];
+        target.attachedEnergy.push(defender.attachedEnergy.splice(0, 1)[0]);
       }
     }
     if (genericOutcome.shuffleHandThenDrawCount) {
