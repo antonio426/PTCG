@@ -57,12 +57,23 @@ describe('the invariants are not vacuous', () => {
     expect(checkPendingChoiceResolvable(G)).toEqual([]);
   });
 
-  it('pending-choice resolvability fires when the choice belongs to a player who cannot act', () => {
-    // getLegalMoves returns nothing for the off-turn seat, so a choice owned by that seat can
-    // never be answered by anyone — a standing modal with no path out, which is the shape of
-    // soft-lock this rule is here to catch.
+  it('lets the off-turn seat answer a choice addressed to it', () => {
+    // 「對手回答那隻寶可夢的HP」: the seat that must answer is not the seat whose turn it is. This
+    // used to be a soft-lock (nobody had a legal move) and is now the supported shape.
     const G = healthyBoard();
     G.currentPlayer = 0;
+    G.pendingChoice = { player: 1, effectKey: 'trainer:泰姆', prompt: 'x', choiceType: 'select_from_list', count: 1, options: [{ id: 'a', label: 'a' }], context: {} } as any;
+    expect(getLegalMoves(G, 1).some(m => m.type === 'resolve_choice')).toBe(true);
+    expect(checkPendingChoiceResolvable(G)).toEqual([]);
+  });
+
+  it('pending-choice resolvability still fires when nothing can answer the choice', () => {
+    // A choice raised in a phase whose branch returns before the pendingChoice one (here the
+    // setup coin flip) is answerable by nobody — a standing modal with no path out, which is the
+    // shape of soft-lock this rule is here to catch.
+    const G = healthyBoard();
+    G.phase = 'choose_first';
+    G.coinWinner = 0;
     G.pendingChoice = { player: 1, effectKey: 'stuck', prompt: 'x', choiceType: 'select_from_list', count: 1, options: [{ id: 'a', label: 'a' }], context: {} } as any;
     expect(checkPendingChoiceResolvable(G).map(v => v.rule)).toContain('pending-choice-resolvable');
   });

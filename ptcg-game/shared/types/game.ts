@@ -153,6 +153,12 @@ export interface PendingChoice {
   context: Record<string, unknown>;
   /** The trainer/pokemon/tool instance id that started this effect — restored into EffectContext on resume. */
   sourceCardId?: string;
+  /** Whose EFFECT this is, when that is not the seat answering it (「對手回答那隻寶可夢的HP」).
+   * resume() runs from this seat's perspective; `player` is only who must answer. Absent = same. */
+  owner?: 0 | 1;
+  /** Opt-in exception to "never show the opponent's hand": this choice's options ARE cards in the
+   * opponent's hand, because the card that raised it says 「查看對手的手牌」. */
+  revealsOpponentHand?: boolean;
   /** For deck-search choices only: the rest of the searching player's own deck (beyond `options`),
    * so they can browse what else is in there before picking — same information a physical player
    * would see by fanning out their own deck. Server-side, this is only ever populated for the

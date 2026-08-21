@@ -902,22 +902,37 @@ const mammothCarry: EffectHandler = {
   },
 };
 
-/** 邀請眨眼: on evolve, look at the opponent's hand and place every Basic Pokémon card found onto their Bench. */
+/** 邀請眨眼: on evolve, look at the opponent's hand and bench any number of the Basic Pokémon
+ * found there. The choice is the ability's user's ("從其中選擇任意數量") and its options are cards
+ * in the opponent's hand, which this text explicitly reveals — hence `revealsOpponentHand`. */
 const invitingWink: EffectHandler = {
   start(ctx) {
     if (!playedOrEvolvedThisTurn(ctx)) return 'done';
     const opp = opponent(ctx.G, ctx.playerIndex);
     const movable = opp.hand.filter(c => c.cardData.supertype === 'Pokémon' && c.cardData.subtypes.includes('Basic'));
-    for (const card of movable) {
+    const freeSlots = opp.bench.filter(s => s === null).length;
+    if (movable.length === 0 || freeSlots === 0) return 'done';
+    return {
+      prompt: '邀請眨眼：選擇要放上對手備戰區的【基礎】寶可夢（可不選）',
+      choiceType: 'select_from_list',
+      minCount: 0,
+      maxCount: Math.min(movable.length, freeSlots),
+      options: movable.map(c => ({ id: c.id, label: c.cardData.name })),
+      revealsOpponentHand: true,
+      context: {},
+    };
+  },
+  resume(ctx, _context, selection) {
+    const opp = opponent(ctx.G, ctx.playerIndex);
+    for (const id of selection) {
       const slot = opp.bench.findIndex(s => s === null);
       if (slot === -1) break;
-      const i = opp.hand.findIndex(c => c.id === card.id);
+      const i = opp.hand.findIndex(c => c.id === id);
       if (i === -1) continue;
       opp.bench[slot] = opp.hand.splice(i, 1)[0];
     }
     return 'done';
   },
-  resume() { return 'done'; },
 };
 
 /** 飽腹時間: on evolve, fully heal every own evolved Pokémon, then discard all Energy attached to each healed Pokémon. */

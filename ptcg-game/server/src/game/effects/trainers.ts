@@ -2157,13 +2157,47 @@ const heapsBag: EffectHandler = {
   resume: preciousCart.resume,
 };
 
-/** 泰姆: no real guess-a-number minigame (no opponent interactivity to guess against) — resolves in the player's favor: draw 4, card returns to hand. */
+/** 泰姆: pick a Pokémon from your hand, declare its NAME, and the opponent answers its HP.
+ * Right → the opponent draws 4; wrong → you draw 4. Two choices in two different seats: the pick
+ * is the user's, the answer is the opponent's (`player` on the second step), which is what
+ * PendingChoice.owner exists for — resume() keeps running as the card's user either way.
+ * The opponent's options are the real HP plus three decoys 10-30 either side, so an opponent who
+ * knows the card can answer correctly the way a real one would. */
 const tim: EffectHandler = {
+  canPlay(ctx) { return player(ctx.G, ctx.playerIndex).hand.some(c => c.cardData.supertype === 'Pokémon'); },
   start(ctx) {
-    drawCards(ctx.G, ctx.playerIndex, 4);
+    const mons = player(ctx.G, ctx.playerIndex).hand.filter(c => c.cardData.supertype === 'Pokémon');
+    if (mons.length === 0) return 'done';
+    return {
+      prompt: '泰姆：選擇1張要向對手宣言名稱的寶可夢卡',
+      choiceType: 'select_from_list',
+      count: 1,
+      options: mons.map(c => ({ id: c.id, label: c.cardData.name })),
+      context: { stage: 'declare' },
+    };
+  },
+  resume(ctx, context, selection) {
+    const me = player(ctx.G, ctx.playerIndex);
+    if (context.stage === 'declare') {
+      const card = me.hand.find(c => c.id === selection[0]);
+      if (!card) return 'done';
+      const hp = parseInt(card.cardData.hp || '0', 10);
+      if (!hp) { drawCards(ctx.G, ctx.playerIndex, 4); return 'done'; }
+      const decoys = [hp - 30, hp - 10, hp + 20].filter(n => n > 0 && n !== hp);
+      const options = [hp, ...decoys].sort((a, b) => a - b).map(n => ({ id: String(n), label: `${n} HP` }));
+      return {
+        player: (1 - ctx.playerIndex) as 0 | 1,
+        prompt: `泰姆：對手宣言了「${card.cardData.name}」，回答那隻寶可夢的HP`,
+        choiceType: 'select_from_list',
+        count: 1,
+        options,
+        context: { stage: 'answer', hp },
+      };
+    }
+    const correct = parseInt(selection[0] ?? '0', 10) === (context.hp as number);
+    drawCards(ctx.G, correct ? ((1 - ctx.playerIndex) as 0 | 1) : ctx.playerIndex, 4);
     return 'done';
   },
-  resume() { return 'done'; },
 };
 
 /** 寶可夢旋風回收機: return 1 own field Pokémon (and its attached cards) to hand. */

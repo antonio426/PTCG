@@ -335,7 +335,10 @@ export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalActio
   const legalMoves: LegalAction[] = [];
   const player = G.players[playerIndex as 0 | 1];
 
-  if (G.currentPlayer !== playerIndex) return legalMoves;
+  // A pendingChoice can name the player whose turn it ISN'T (「對手回答那隻寶可夢的HP」). That seat
+  // still has to be able to answer it — everything below funnels them into the pendingChoice
+  // branch, since no other move is legal while one stands.
+  if (G.currentPlayer !== playerIndex && G.pendingChoice?.player !== playerIndex) return legalMoves;
 
   if (G.phase === 'choose_first') {
     if (G.coinWinner === playerIndex) {

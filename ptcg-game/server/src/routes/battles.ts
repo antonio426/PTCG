@@ -65,7 +65,7 @@ function checkWinner(G: PtcgGameState): number | null {
 }
 
 function executeMove(G: PtcgGameState, move: LegalAction, player: number): void {
-  const ctx: any = { currentPlayer: String(player), turn: G.turn, events: { endTurn: () => { G.phase = 'end'; } } };
+  const ctx: any = { currentPlayer: String(player), playerID: String(player), turn: G.turn, events: { endTurn: () => { G.phase = 'end'; } } };
   const p = move.payload || {};
   switch (move.type) {
     case 'draw_card': moves.drawCard({ G, ctx }); break;
@@ -92,13 +92,15 @@ async function simulateBattle(decks: string[][], seed: number, aiTypeA: string |
   let safety = 0;
   while (G.winner === null && safety < 200) {
     safety++;
-    const player = G.currentPlayer as 0 | 1;
     let moveSafety = 0;
     // Bounds a single turn's move count — belt-and-suspenders against any move type that
     // `executeMove` doesn't recognize (a silent no-op would otherwise spin this loop forever,
     // since `G.phase` never reaches 'end' without genuine progress).
     while (G.winner === null && G.phase !== 'end' && moveSafety < 500) {
       moveSafety++;
+      // See battleRunner's loop: a pendingChoice can name the player whose turn it ISN'T, and
+      // while one stands nobody else has a legal move — so the actor is re-read every iteration.
+      const player = (G.pendingChoice?.player ?? G.currentPlayer) as 0 | 1;
       const legalMoves = getLegalMoves(G, player);
       if (legalMoves.length === 0) break;
       const { action: move } = await ais[player].decide(G, player, legalMoves);

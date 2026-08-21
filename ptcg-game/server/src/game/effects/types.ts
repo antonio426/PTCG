@@ -9,7 +9,10 @@ export interface EffectContext {
 }
 
 /** Result of starting or resuming an effect: either it's fully resolved, or it needs another player choice. */
-export type EffectStep = 'done' | Omit<PendingChoice, 'player' | 'effectKey'>;
+/** A handler returns 'done', or the choice it now needs answered. `player` names the seat that
+ * must answer when that is not the handler's own seat — everything else about resolving it
+ * (including which seat resume() runs as) stays with the effect's owner. */
+export type EffectStep = 'done' | (Omit<PendingChoice, 'player' | 'effectKey'> & { player?: 0 | 1 });
 
 export interface EffectHandler {
   /** Begin resolving the effect. Called once when the card/ability is used. */

@@ -138,12 +138,14 @@ setInterval(() => {
  * for the client — an option whose id doesn't resolve to anything here (e.g. an energy instance
  * already attached to a Pokémon, or an abstract "move N counters" choice) just has no cardData,
  * and the client falls back to a plain text option for it. */
-function findCardDataById(G: PtcgGameState, viewerIdx: 0 | 1, id: string): Card | undefined {
+function findCardDataById(G: PtcgGameState, viewerIdx: 0 | 1, id: string, revealOpponentHand = false): Card | undefined {
   const me = G.players[viewerIdx];
   const opp = G.players[(1 - viewerIdx) as 0 | 1];
   const zones: (GameCard | null | undefined)[] = [
     ...me.hand, ...me.deck, ...me.discardPile, me.active, ...me.bench,
     opp.active, ...opp.bench, ...opp.discardPile,
+    // Only when the choice itself says the text reveals that hand (邀請眨眼).
+    ...(revealOpponentHand ? opp.hand : []),
   ];
   return zones.find((c): c is GameCard => !!c && c.id === id)?.cardData;
 }
@@ -228,7 +230,7 @@ function enrichPendingChoice(G: PtcgGameState, choice: PendingChoice | null): Pe
   if (!choice?.options) return choice;
   const enriched: PendingChoice = {
     ...choice,
-    options: choice.options.map(o => ({ ...o, cardData: findCardDataById(G, choice.player, o.id) })),
+    options: choice.options.map(o => ({ ...o, cardData: findCardDataById(G, choice.player, o.id, choice.revealsOpponentHand) })),
   };
   if (isDeckSearchChoice(G, choice)) {
     const optionIds = new Set(choice.options.map(o => o.id));
@@ -269,9 +271,10 @@ export function checkAndApplyWin(G: PtcgGameState): boolean {
   return false;
 }
 
-function executeGameAction(G: PtcgGameState, action: { type: string; payload?: Record<string, any> }): void {
+function executeGameAction(G: PtcgGameState, action: { type: string; payload?: Record<string, any> }, actor?: 0 | 1): void {
   const ctx: any = {
     currentPlayer: String(G.currentPlayer),
+    playerID: String(actor ?? G.currentPlayer),
     turn: G.turn,
     events: { endTurn: () => { G.phase = 'end'; } },
   };
@@ -306,7 +309,7 @@ async function runAiTurns(session: BattleSession): Promise<void> {
   // every iteration until the process OOMs. Mirrors the moveSafety cap in battles.ts, which never
   // got applied here.
   let aiMoveSafety = 0;
-  while (G.winner === null && G.currentPlayer === 1 && aiMoveSafety < 500) {
+  while (G.winner === null && (G.currentPlayer === 1 || G.pendingChoice?.player === 1) && aiMoveSafety < 500) {
     aiMoveSafety++;
     const legalMoves = getLegalMoves(G, 1);
     if (legalMoves.length === 0) {
@@ -315,8 +318,10 @@ async function runAiTurns(session: BattleSession): Promise<void> {
       break;
     }
     const { action } = await ai.decide(G, 1, legalMoves);
-    executeGameAction(G, action);
+    executeGameAction(G, action, 1);
     if (checkAndApplyWin(G)) break;
+    // Resolving a choice the AI owed during the HUMAN's turn hands control straight back.
+    if (G.currentPlayer === 0 && G.pendingChoice?.player !== 1) break;
     if (G.phase === 'end') {
       // Advance turn
       G.currentPlayer = 0;
@@ -436,7 +441,7 @@ router.post('/:id/move', async (ctx) => {
     // vs-AI: only seat 0 may act. Local 2P: whoever the state says must act (hotseat — the
     // device is shared, so there's no cross-seat auth concern).
     const actor: 0 | 1 = session.aiPlayer ? 0 : ((G.pendingChoice?.player ?? G.currentPlayer) as 0 | 1);
-    if (session.aiPlayer && G.currentPlayer !== 0) {
+    if (session.aiPlayer && G.currentPlayer !== 0 && G.pendingChoice?.player !== 0) {
       ctx.status = 400;
       ctx.body = { error: 'Not your turn', state: buildResponse(session) };
       return;
@@ -456,7 +461,7 @@ router.post('/:id/move', async (ctx) => {
     // per move that actually executed. structuredClone is safe — PtcgGameState is pure data.
     session.history.push(structuredClone(G));
     if (session.history.length > MAX_UNDO_HISTORY) session.history.shift();
-    executeGameAction(G, { type, payload });
+    executeGameAction(G, { type, payload }, actor);
     if (checkAndApplyWin(G)) {
       ctx.body = { sessionId: session.id, state: buildResponse(session) };
       return;
@@ -465,6 +470,10 @@ router.post('/:id/move', async (ctx) => {
     // currentPlayer without going through an 'end' phase, so run the AI here too.
     // (Fresh read: the `!== 0` guard above narrowed the type, but executeGameAction mutates it.)
     const playerAfterMove = G.currentPlayer as number;
+    if (session.aiPlayer && G.pendingChoice?.player === 1 && G.winner === null) {
+      // "The opponent chooses" mid-human-turn: the AI seat owes a decision before play can go on.
+      await runAiTurns(session);
+    }
     if (session.aiPlayer && G.phase !== 'end' && playerAfterMove === 1 && G.winner === null) {
       await runAiTurns(session);
       ctx.body = { sessionId: session.id, state: buildResponse(session) };

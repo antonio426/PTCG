@@ -63,10 +63,11 @@ export function advanceTurn(G: PtcgGameState): void {
   G.turn++;
 }
 
-export function executeMove(G: PtcgGameState, action: { type: string; payload?: Record<string, any> }): boolean {
+export function executeMove(G: PtcgGameState, action: { type: string; payload?: Record<string, any> }, actor?: 0 | 1): boolean {
   let turnEnded = false;
   const ctx = {
     currentPlayer: String(G.currentPlayer),
+    playerID: String(actor ?? G.currentPlayer),
     events: {
       endTurn: () => {
         turnEnded = true;
@@ -141,7 +142,11 @@ async function runSingleGame(
   let moveSafety = 0;
   while (G.winner === null && moveSafety < 2000) {
     moveSafety++;
-    const playerIdx = G.currentPlayer;
+    // A pendingChoice can belong to the player whose turn it ISN'T ("the opponent chooses"), and
+    // getLegalMoves returns nothing for anyone else while one is standing — polling only
+    // currentPlayer used to end the game right there with a "no legal moves" win for the wrong
+    // player, which is why such effects had to auto-resolve instead of asking.
+    const playerIdx = (G.pendingChoice?.player ?? G.currentPlayer) as 0 | 1;
     const ai = players[playerIdx];
     const legalMoves = getLegalMoves(G, playerIdx);
 
@@ -161,7 +166,7 @@ async function runSingleGame(
       timestamp: Date.now(),
     });
 
-    const turnEnded = executeMove(G, action);
+    const turnEnded = executeMove(G, action, playerIdx);
 
     checkEndCondition(G);
     if (G.winner !== null) break;

@@ -25,7 +25,10 @@ function applyEffectStep(G: PtcgGameState, player: 0 | 1, effectKey: string, ste
   if (step === 'done') {
     G.pendingChoice = null;
   } else {
-    G.pendingChoice = { player, effectKey, sourceCardId, ...step };
+    // `owner` is always the effect's own seat; `player` is whoever has to answer, which for
+    // "the opponent chooses/answers" effects is the other one.
+    const { player: answerer, ...rest } = step;
+    G.pendingChoice = { player: answerer ?? player, owner: player, effectKey, sourceCardId, ...rest };
   }
 }
 
@@ -598,7 +601,16 @@ const rawMoves = {
 
   resolveChoice: ({ G, ctx }: { G: PtcgGameState; ctx: any }, selection: string[]) => {
     if (!G.pendingChoice) return;
-    if (G.pendingChoice.player !== G.currentPlayer) return;
+    // A pendingChoice belongs to whoever it names, which is NOT always the player whose turn it
+    // is — "the opponent chooses" effects raise one against the other seat. Everything below acts
+    // for `chooser` rather than G.currentPlayer for that reason; the two are identical whenever a
+    // player is resolving their own turn's choice.
+    const chooser = G.pendingChoice.player;
+    // `ctx.playerID` is the seat the engine says is acting. humanBattle sets it (its client is
+    // untrusted); the headless engines don't, and are trusted — they only ever route the action to
+    // the seat getLegalMoves offered it to.
+    const actor = ctx?.playerID !== undefined ? Number(ctx.playerID) : chooser;
+    if (chooser !== actor) return;
 
     const { effectKey, context } = G.pendingChoice;
 
@@ -606,7 +618,7 @@ const rawMoves = {
     // Stage 2 (below) optionally benches any Basics among the drawn cards — reference-site
     // behavior. Only after both stages does turn 1 hand over to the coin flip's firstPlayer.
     if (effectKey === 'mulligan_bonus') {
-      const player = G.players[G.currentPlayer];
+      const player = G.players[chooser];
       const n = parseInt(selection[0] ?? '0', 10) || 0;
       const drawnIds: string[] = [];
       for (let i = 0; i < n && player.deck.length > 0; i++) {
@@ -614,13 +626,13 @@ const rawMoves = {
         player.hand.push(card);
         drawnIds.push(card.id);
       }
-      addLog(G, G.currentPlayer, 'mulligan_bonus_draw', `選擇補抽 ${n} 張（對手重抽懲罰補償）`);
+      addLog(G, chooser, 'mulligan_bonus_draw', `選擇補抽 ${n} 張（對手重抽懲罰補償）`);
       const drawnBasics = player.hand.filter(c => drawnIds.includes(c.id)
         && c.cardData.supertype === 'Pokémon' && c.cardData.subtypes.includes('Basic'));
       const freeSlots = player.bench.filter(s => s === null).length;
       if (drawnBasics.length > 0 && freeSlots > 0) {
         G.pendingChoice = {
-          player: G.currentPlayer as 0 | 1,
+          player: chooser,
           effectKey: 'mulligan_bonus_bench',
           prompt: '可將補抽到的基礎寶可夢直接放上備戰區（可不選）',
           choiceType: 'select_from_list',
@@ -636,7 +648,7 @@ const rawMoves = {
       return;
     }
     if (effectKey === 'mulligan_bonus_bench') {
-      const player = G.players[G.currentPlayer];
+      const player = G.players[chooser];
       const placed: string[] = [];
       for (const id of selection) {
         const idx = player.hand.findIndex(c => c.id === id);
@@ -646,22 +658,22 @@ const rawMoves = {
         player.bench[slot] = card;
         placed.push(card.cardData.name);
       }
-      if (placed.length > 0) addLog(G, G.currentPlayer, 'mulligan_bonus_bench', `放到備戰區：${placed.join('、')}`);
+      if (placed.length > 0) addLog(G, chooser, 'mulligan_bonus_bench', `放到備戰區：${placed.join('、')}`);
       G.pendingChoice = null;
       raiseNextMulliganBonusOrFinish(G);
       return;
     }
 
     if (effectKey === 'sensor_energy_bench') {
-      const placed = resolveSensorEnergyBench(G, G.currentPlayer as 0 | 1, selection);
+      const placed = resolveSensorEnergyBench(G, chooser, selection);
       G.pendingChoice = null;
-      addLog(G, G.currentPlayer, 'resolve_choice',
+      addLog(G, chooser, 'resolve_choice',
         placed.length > 0 ? `感應【超】能量：${placed.join('、')} 放上備戰區` : '感應【超】能量：未選擇寶可夢');
       return;
     }
 
     if (effectKey === 'tool_attach') {
-      const player = G.players[G.currentPlayer];
+      const player = G.players[chooser];
       const toolCard = context.toolCard as GameCard;
       const target = player.active?.id === selection[0] ? player.active : player.bench.find(c => c?.id === selection[0]);
       if (target && !target.attachedTool) target.attachedTool = toolCard;
@@ -669,18 +681,18 @@ const rawMoves = {
       else if (target && !target.attachedTool2 && canHoldSecondTool(G, target)) target.attachedTool2 = toolCard;
       else player.hand.push(toolCard);
       G.pendingChoice = null;
-      addLog(G, G.currentPlayer, 'resolve_choice', `將道具「${toolCard.cardData.name}」附加於 ${target?.cardData.name ?? '?'}`);
+      addLog(G, chooser, 'resolve_choice', `將道具「${toolCard.cardData.name}」附加於 ${target?.cardData.name ?? '?'}`);
       return;
     }
 
     if (effectKey === 'retreat') {
-      const player = G.players[G.currentPlayer];
+      const player = G.players[chooser];
       if (context.step === 'pick_bench') {
         const benchIdx = player.bench.findIndex(c => c?.id === selection[0]);
         if (context.needsEnergyChoice && player.active) {
           const retreatCost = effectiveRetreatCost(G, player.active);
           G.pendingChoice = {
-            player: G.currentPlayer as 0 | 1,
+            player: chooser,
             effectKey: 'retreat',
             prompt: `選擇 ${retreatCost} 張要棄置的能量（撤退費用）`,
             choiceType: 'select_from_list',
@@ -688,7 +700,7 @@ const rawMoves = {
             options: player.active.attachedEnergy.map(e => ({ id: e.id, label: ENERGY_TYPE_ZH_LABEL[e.type] || e.type })),
             context: { step: 'pick_energy', benchIdx },
           };
-          addLog(G, G.currentPlayer, 'resolve_choice', '撤退：已選擇要換上場的備戰寶可夢');
+          addLog(G, chooser, 'resolve_choice', '撤退：已選擇要換上場的備戰寶可夢');
         } else {
           G.pendingChoice = null;
           performRetreat(G, benchIdx, undefined);
@@ -706,14 +718,14 @@ const rawMoves = {
     }
 
     if (effectKey === 'ko_promotion') {
-      const player = G.players[G.currentPlayer];
+      const player = G.players[chooser];
       const idx = player.bench.findIndex(c => c?.id === selection[0]);
       if (idx >= 0) {
         player.active = player.bench[idx];
         player.bench[idx] = null;
       }
       G.pendingChoice = null;
-      addLog(G, G.currentPlayer, 'resolve_choice', `${player.active?.cardData.name ?? '?'} 上場成為新的戰鬥寶可夢`);
+      addLog(G, chooser, 'resolve_choice', `${player.active?.cardData.name ?? '?'} 上場成為新的戰鬥寶可夢`);
       return;
     }
 
@@ -721,7 +733,7 @@ const rawMoves = {
       // 全能變身: swap the freshly-benched 海豚俠 with 海豚俠ex from the deck. Everything on it
       // (energy, Tool, damage, conditions, the stacked lower Stage) carries over — only the
       // 海豚俠 top card itself returns to the deck.
-      const player = G.players[G.currentPlayer];
+      const player = G.players[chooser];
       const benchIdx = player.bench.findIndex(c => c?.id === G.pendingChoice!.sourceCardId);
       const pickedId = selection[0];
       if (benchIdx >= 0 && pickedId) {
@@ -738,7 +750,7 @@ const rawMoves = {
           player.bench[benchIdx] = ex;
           player.deck.push({ ...dolphin, attachedEnergy: [], attachedTool: null, attachedTool2: null, damage: 0, statusConditions: [], preEvolutions: undefined });
           player.abilitiesUsedThisTurn.push(ex.id);
-          addLog(G, G.currentPlayer, 'use_ability', `全能變身：海豚俠 與 海豚俠ex 互換`);
+          addLog(G, chooser, 'use_ability', `全能變身：海豚俠 與 海豚俠ex 互換`);
         }
       }
       // The deck was searched to build the options either way — reshuffle even on a decline.
@@ -748,59 +760,59 @@ const rawMoves = {
     }
 
     if (effectKey === 'stadium:prism_tower_draw') {
-      const player = G.players[G.currentPlayer];
+      const player = G.players[chooser];
       for (const id of selection) {
         const idx = player.hand.findIndex(c => c.id === id);
         if (idx >= 0) player.discardPile.push(player.hand.splice(idx, 1)[0]);
       }
-      drawCards(G, G.currentPlayer as 0 | 1, 1);
+      drawCards(G, chooser, 1);
       player.stadiumActionUsedThisTurn = true;
       G.pendingChoice = null;
-      addLog(G, G.currentPlayer, 'resolve_choice', '稜鏡塔：丟棄2張手牌，抽1張卡');
+      addLog(G, chooser, 'resolve_choice', '稜鏡塔：丟棄2張手牌，抽1張卡');
       return;
     }
 
     if (effectKey === 'stadium:mystery_garden_draw') {
-      const player = G.players[G.currentPlayer];
+      const player = G.players[chooser];
       const idx = player.hand.findIndex(c => c.id === selection[0]);
       if (idx >= 0) player.discardPile.push(player.hand.splice(idx, 1)[0]);
       const ownPsychicCount = [player.active, ...player.bench].filter((c): c is GameCard => c !== null && (c.cardData.types || []).includes('Psychic')).length;
       const toDraw = Math.max(0, ownPsychicCount - player.hand.length);
-      drawCards(G, G.currentPlayer as 0 | 1, toDraw);
+      drawCards(G, chooser, toDraw);
       player.stadiumActionUsedThisTurn = true;
       G.pendingChoice = null;
-      addLog(G, G.currentPlayer, 'resolve_choice', `神秘花園：丟棄能量卡，抽${toDraw}張卡`);
+      addLog(G, chooser, 'resolve_choice', `神秘花園：丟棄能量卡，抽${toDraw}張卡`);
       return;
     }
 
     if (effectKey === 'stadium:spike_town_gym_search') {
-      const player = G.players[G.currentPlayer];
+      const player = G.players[chooser];
       const idx = player.deck.findIndex(c => c.id === selection[0]);
       if (idx >= 0) player.hand.push(player.deck.splice(idx, 1)[0]);
       shuffleDeck(player.deck);
       player.stadiumActionUsedThisTurn = true;
       G.pendingChoice = null;
-      addLog(G, G.currentPlayer, 'resolve_choice', '尖釘鎮道館：搜尋「瑪俐的寶可夢」加入手牌');
+      addLog(G, chooser, 'resolve_choice', '尖釘鎮道館：搜尋「瑪俐的寶可夢」加入手牌');
       return;
     }
 
     if (effectKey === 'stadium:night_school_topdeck') {
-      const player = G.players[G.currentPlayer];
+      const player = G.players[chooser];
       const idx = player.hand.findIndex(c => c.id === selection[0]);
       if (idx >= 0) player.deck.push(player.hand.splice(idx, 1)[0]);
       player.stadiumActionUsedThisTurn = true;
       G.pendingChoice = null;
-      addLog(G, G.currentPlayer, 'resolve_choice', '夜間學院：將手牌放回牌庫上方');
+      addLog(G, chooser, 'resolve_choice', '夜間學院：將手牌放回牌庫上方');
       return;
     }
 
     if (effectKey === 'stadium:surf_beach_swap') {
-      const player = G.players[G.currentPlayer];
+      const player = G.players[chooser];
       const benchIdx = player.bench.findIndex(c => c?.id === selection[0]);
       if (benchIdx >= 0) performActiveBenchSwap(G, benchIdx);
       player.stadiumActionUsedThisTurn = true;
       G.pendingChoice = null;
-      addLog(G, G.currentPlayer, 'resolve_choice', '衝浪海灘：與備戰區的【水】寶可夢互換');
+      addLog(G, chooser, 'resolve_choice', '衝浪海灘：與備戰區的【水】寶可夢互換');
       return;
     }
 
@@ -809,17 +821,17 @@ const rawMoves = {
     // Finishes the turn immediately after, same as the custom attackEffects path below does once
     // its own pendingChoice clears — this choice IS the last thing the attack has left to do.
     if (effectKey === 'attack_self_energy_discard') {
-      const player = G.players[G.currentPlayer];
+      const player = G.players[chooser];
       const attackerId = context.attackerId as string;
       const attacker = player.active?.id === attackerId ? player.active : player.bench.find(c => c?.id === attackerId);
       if (attacker) {
         for (const id of selection) {
           const idx = attacker.attachedEnergy.findIndex(e => e.id === id);
-          if (idx >= 0) discardAttachedEnergy(G, G.currentPlayer as 0 | 1, attacker.attachedEnergy.splice(idx, 1)[0]);
+          if (idx >= 0) discardAttachedEnergy(G, chooser, attacker.attachedEnergy.splice(idx, 1)[0]);
         }
       }
       G.pendingChoice = null;
-      addLog(G, G.currentPlayer, 'resolve_choice', `從 ${attacker?.cardData.name ?? '?'} 身上丟棄了 ${selection.length} 張能量`);
+      addLog(G, chooser, 'resolve_choice', `從 ${attacker?.cardData.name ?? '?'} 身上丟棄了 ${selection.length} 張能量`);
       G.phase = 'end';
       ctx.events?.endTurn?.();
       return;
@@ -832,11 +844,11 @@ const rawMoves = {
     // deliberately doesn't end the turn, which is correct for its own start-of-turn job but was
     // exactly the bug here when reused mid-attack).
     if (effectKey === 'attack_self_return_promotion') {
-      const player = G.players[G.currentPlayer];
+      const player = G.players[chooser];
       const idx = player.bench.findIndex(c => c?.id === selection[0]);
       if (idx >= 0) { player.active = player.bench[idx]; player.bench[idx] = null; }
       G.pendingChoice = null;
-      addLog(G, G.currentPlayer, 'resolve_choice', `${player.active?.cardData.name ?? '?'} 上場成為新的戰鬥寶可夢`);
+      addLog(G, chooser, 'resolve_choice', `${player.active?.cardData.name ?? '?'} 上場成為新的戰鬥寶可夢`);
       G.phase = 'end';
       ctx.events?.endTurn?.();
       return;
@@ -847,7 +859,10 @@ const rawMoves = {
     const name = effectKey.slice(colonIdx + 1);
     // Restore the same sourceCardId the effect started with — several handlers' resume()
     // need it (e.g. to re-find the Pokémon that triggered the effect).
-    const ctxInfo: EffectContext = { G, playerIndex: G.currentPlayer as 0 | 1, sourceCardId: G.pendingChoice.sourceCardId || '' };
+    // The effect belongs to `owner`, which is not the answering seat for 「對手回答…」 effects —
+    // resume() must keep running as the player who used the card.
+    const owner = (G.pendingChoice.owner ?? chooser) as 0 | 1;
+    const ctxInfo: EffectContext = { G, playerIndex: owner, sourceCardId: G.pendingChoice.sourceCardId || '' };
 
     let step: EffectStep;
     if (kind === 'trainer') step = resumeTrainerEffect(name, ctxInfo, context, selection);
@@ -856,14 +871,14 @@ const rawMoves = {
       const [pokemonName, attackName] = name.split('::');
       step = resumeAttackEffect(pokemonName, attackName, ctxInfo, context, selection);
     }
-    applyEffectStep(G, G.currentPlayer as 0 | 1, effectKey, step, ctxInfo.sourceCardId);
+    applyEffectStep(G, owner, effectKey, step, ctxInfo.sourceCardId);
     // Fallback line for effects with no custom log message. `effectKey` is an internal
     // discriminator ("ability:支配鎖鏈", "trainer:艾莉絲的鬥志") and `selection` holds instance ids
     // ("SV6a-050_101") — both were going straight to the player's battle log. Show the card name
     // and resolve each selected id to a name where the board knows one.
     const prettyName = name.replace('::', '的');
     const chosenLabels = selection.map(id => findCardNameById(G, id) ?? id);
-    addLog(G, G.currentPlayer, 'resolve_choice', `「${prettyName}」結算：${chosenLabels.join('、') || '(未選擇)'}`);
+    addLog(G, chooser, 'resolve_choice', `「${prettyName}」結算：${chosenLabels.join('、') || '(未選擇)'}`);
 
     // An attack's pending choices (e.g. distributing damage counters) block the rest of the
     // turn; once they're all resolved, finish the turn exactly like a normal attack would.
