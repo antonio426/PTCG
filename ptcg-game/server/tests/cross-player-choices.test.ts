@@ -102,3 +102,58 @@ describe('邀請眨眼: the user picks from the opponent’s hand', () => {
     expect(G.players[1].hand.map(c => c.id)).toEqual([b.id]);
   });
 });
+
+/**
+ * Attacks whose text says the PLAYER chooses used to have applyAttackOutcome pick at random. The
+ * three biggest families (by print count, per data-scraped/auto-pick-audit.md) now raise a real
+ * choice — including one the OPPONENT answers, which is what the owner/player split enables.
+ */
+describe('attack picks go back to the player who owns the decision', () => {
+  const mon = (name: string, hp: string, attacks: any[] = [], seat: 0 | 1 = 0) =>
+    makeGameCard(makeCard({ name, hp, subtypes: ['Basic'] as Subtype[], attacks }), seat);
+  const energy = (id: string, type = 'Colorless') => ({ id, type } as any);
+
+  it('lets the attacker choose which Basics come out of the deck', () => {
+    const atk = mon('聒噪鳥', '90', [{ name: '無伴奏合唱', cost: ['Colorless'], convertedEnergyCost: 1, damage: '', text: '從自己的牌庫選擇最多3張【基礎】寶可夢卡，放置於備戰區。並且重洗牌庫。' }]);
+    atk.attachedEnergy = [energy('e1')];
+    const a = mon('可可多拉', '70'), b = mon('波加曼', '60'), c = mon('皮丘', '40');
+    const G = makeState({
+      turn: 3, currentPlayer: 0, phase: 'main',
+      players: [makePlayer({ active: atk, deck: [a, b, c] }), makePlayer({ active: mon('沙包鼠', '150', [], 1) })],
+    });
+    moves.attack({ G, ctx: ctxFor(0) } as any, 0);
+    expect(G.pendingChoice!.player).toBe(0);
+    expect(G.pendingChoice!.options!.map(o => o.id).sort()).toEqual([a.id, b.id, c.id].sort());
+    // The turn is held open while the choice stands — otherwise the pick would be unanswerable.
+    expect(G.phase).not.toBe('end');
+
+    moves.resolveChoice({ G, ctx: ctxFor(0) } as any, [a.id, c.id]);
+    expect(G.players[0].bench.filter(Boolean).map(x => x!.id)).toEqual([a.id, c.id]);
+    expect(G.players[0].deck.map(x => x.id)).toEqual([b.id]);
+    expect(G.phase).toBe('end');
+  });
+
+  it('lets the DEFENDER choose who they promote, per the printed reminder', () => {
+    const atk = mon('蜻蜻蜓', '90', [{ name: '吹飛', cost: ['Colorless'], convertedEnergyCost: 1, damage: '', text: '將對手的戰鬥寶可夢與備戰寶可夢互換。[由對手選擇放置於戰鬥場的寶可夢。]' }]);
+    atk.attachedEnergy = [energy('e1')];
+    const theirActive = mon('主戰', '150', [], 1);
+    const benchA = mon('備戰A', '90', [], 1), benchB = mon('備戰B', '90', [], 1);
+    const G = makeState({
+      turn: 3, currentPlayer: 0, phase: 'main',
+      players: [
+        makePlayer({ active: atk }),
+        makePlayer({ active: theirActive, bench: [benchA, benchB, null, null, null] }),
+      ],
+    });
+    moves.attack({ G, ctx: ctxFor(0) } as any, 0);
+    expect(G.pendingChoice!.player).toBe(1);       // the opponent answers
+    expect(getLegalMoves(G, 1).some(m => m.type === 'resolve_choice')).toBe(true);
+    expect(getLegalMoves(G, 0).some(m => m.type === 'resolve_choice')).toBe(false);
+
+    moves.resolveChoice({ G, ctx: ctxFor(1, 0) } as any, [benchB.id]);
+    expect(G.players[1].active!.id).toBe(benchB.id);
+    expect(G.players[1].bench.filter(Boolean).map(c => c!.id).sort()).toEqual([benchA.id, theirActive.id].sort());
+    // The attacker's turn still ends, even though the defender was the one answering.
+    expect(G.phase).toBe('end');
+  });
+});

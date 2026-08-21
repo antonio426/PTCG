@@ -851,6 +851,45 @@ const rawMoves = {
     // has left to do (this is NOT the shared 'ko_promotion' key — that one's resolveChoice branch
     // deliberately doesn't end the turn, which is correct for its own start-of-turn job but was
     // exactly the bug here when reused mid-attack).
+    // Choices an attack handed back to a player instead of picking for them (see raiseAttackPick).
+    // `chooser` is whoever must answer — for 「由對手選擇」 that is the defending player, on the
+    // attacker's turn, which is why every zone below is resolved from the choice's own seat.
+    if (effectKey === 'attack_pick') {
+      const seat = G.players[chooser];
+      const kind = context.kind as string;
+      if (kind === 'deck_to_bench') {
+        for (const id of selection) {
+          const slot = seat.bench.findIndex(s => s === null);
+          const deckIdx = seat.deck.findIndex(c => c.id === id);
+          if (slot === -1 || deckIdx === -1) break;
+          seat.bench[slot] = seat.deck.splice(deckIdx, 1)[0];
+        }
+        shuffleDeck(seat.deck);
+      } else if (kind === 'deck_to_hand') {
+        for (const id of selection) {
+          const deckIdx = seat.deck.findIndex(c => c.id === id);
+          if (deckIdx >= 0) seat.hand.push(seat.deck.splice(deckIdx, 1)[0]);
+        }
+        shuffleDeck(seat.deck);
+      } else if (kind === 'opponent_switch') {
+        const idx = seat.bench.findIndex(c => c?.id === selection[0]);
+        if (idx >= 0 && seat.active) {
+          const promoted = seat.bench[idx]!;
+          clearStatusConditionsOnLeaveActive(seat.active);
+          seat.bench[idx] = seat.active;
+          seat.active = promoted;
+        }
+      }
+      const picked = selection.map(id => findCardNameById(G, id) ?? id);
+      addLog(G, chooser, 'resolve_choice', `${G.pendingChoice.prompt}：${picked.join('、') || '(未選擇)'}`);
+      G.pendingChoice = null;
+      // The attack was waiting on this, so the turn ends now — the same hand-off moves.attack does
+      // when no choice is pending. It ends the ATTACKER's turn even when the opponent answered.
+      G.phase = 'end';
+      ctx.events?.endTurn?.();
+      return;
+    }
+
     if (effectKey === 'attack_self_return_promotion') {
       const player = G.players[chooser];
       const idx = player.bench.findIndex(c => c?.id === selection[0]);

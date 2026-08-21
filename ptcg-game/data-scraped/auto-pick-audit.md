@@ -1,0 +1,259 @@
+# Auto-pick audit (Standard-legal)
+
+Attacks whose text says 選擇 but whose effect the engine picks at random.
+Auto-picking outcome fields detected in attackResolution.ts: attachAllBasicEnergyFromHand, attachNamedFromHandHealFull, attachOpponentDiscardEnergyToTheirPokemonCount, benchSplashDamage, benchSubtypeTargetDamage, bothAttachHandBasicsCount, copyDefenderRandomAttack, copyFromOpponentDeckTop, deckSearchAnyCardToHand, deckSearchAnyCardsToHandCount, deckSearchAnyCardsToTopOfDeck, deckSearchBasicEnergyToHandCount, deckSearchBasicEnergyToOwnPokemonCount, deckSearchFamilyToBenchCount, deckSearchFamilyToHandCount, deckSearchNamedEnergyAttachCount, deckSearchPokemonToHandCount, deckSearchToolToHand, deckSearchTypedEnergyToAllBenchEach, deckSearchTypedEnergyToOwnPokemonCount, deckSearchTypedEnergyToSelfCount, deckSearchTypedPokemonOrEnergyToHand, deckSearchTypedPokemonToHandCount, devolveOpponentToHandCount, discardNamedToDeckCountersOnOpponent, discardOpponentHandDownTo, discardPileSearchAnyEnergyToSelf, discardPileSearchAnyToHandCount, discardPileSearchFamilyToBenchCount, discardPileSearchPokemonToHandCount, discardPileSearchSupporterToHand, discardRandomOpponentHandCount, discardRandomSelfHandCount, evolveSelfFromDeck, flipCoinsDiscardSelfEnergyByTailsCount, flipUntilTailsDiscardOpponentEnergy, healBenchNamedAmount, healBenchTypedAmount, healRandomOwnDamagedAmount, koOpponentBasicCoinSplit, koOpponentWithCountersAtLeast, koRandomOpponent, moveOpponentEnergyToTheirBench, moveSelfEnergyToRandomBench, moveSelfEnergyToRandomBenchCount, multiTargetOpponentFlatDamage, multiTargetSelfBenchFlatDamage, opponentBenchDamageScaledSplash, opponentNamedFlatDamage, opponentSpecialEnergyHolderSplash, optionalEnergyToDeckForBenchDamage, placeCountersOnMultipleOpponents, placeCountersOnRandomOpponent, quadrupleCountersOnOpponents, randomOpponentHandCardToDeckBottom, revealTopAttachEnergiesCount, selfSwitchToRandomBench, shuffleOpponentBenchExceptCount, shuffleRandomOpponentHandCardIntoDeck, shuffleRandomOpponentHandCardsIntoDeckCount
+
+## texts (126)
+
+- `遠古巨蜓ex::噴射旋風` (SV9a-003, 5 prints) — auto-picked: moveSelfEnergyToRandomBenchCount
+  > 選擇3個這隻寶可夢身上附加的能量，改附於1隻備戰寶可夢身上。
+- `夜巡靈::前往渡魂` (SV6a-018, 5 prints) — auto-picked: discardPileSearchFamilyToBenchCount
+  > 從自己的棄牌區選擇最多3張「夜巡靈」，放置於備戰區。
+- `夠讚狗ex::猛毒筋力` (SV6a-036, 5 prints) — auto-picked: deckSearchTypedEnergyToSelfCount
+  > 從自己的牌庫選擇最多2張「基本【惡】能量」卡，附於這隻寶可夢身上。並且重洗牌庫。附上卡的情況下，將這隻寶可夢【中毒】。
+- `厄鬼椪 水井面具ex::激流水泵` (SV6-038, 5 prints) — auto-picked: optionalEnergyToDeckForBenchDamage
+  > 若希望，選擇3個這隻寶可夢身上附加的能量，放回牌庫並重洗。這個情況下，對手的1隻備戰寶可夢也受到120點傷害。[在備戰區不計算弱點・抵抗力。]
+- `波爾凱尼恩ex::高溫旋風` (SV9-017, 4 prints) — auto-picked: moveSelfEnergyToRandomBench
+  > 選擇1個這隻寶可夢身上附加的能量，改附於備戰寶可夢身上。
+- `鐵荊棘ex::伏特旋風` (SV5a-033, 4 prints) — auto-picked: moveSelfEnergyToRandomBench
+  > 選擇1個這隻寶可夢身上附加的能量，改附於備戰寶可夢身上。
+- `密勒頓::暴衝高點` (SV5M-052, 4 prints) — auto-picked: deckSearchBasicEnergyToOwnPokemonCount
+  > 從自己的牌庫選擇最多2張基本能量卡，以任意方式附於自己的「未來」寶可夢身上。並且重洗牌庫。
+- `君主蛇ex::青草命令` (MC-042, 4 prints) — auto-picked: deckSearchAnyCardsToHandCount
+  > 若希望，從自己的牌庫任意選擇最多3張卡加入手牌。並且重洗牌庫。
+- `風妖精ex::能量之禮` (MC-044, 4 prints) — auto-picked: deckSearchBasicEnergyToOwnPokemonCount
+  > 從自己的牌庫選擇最多3張基本能量卡，以任意方式附於自己的寶可夢身上。並且重洗牌庫。
+- `蛋蛋::早熟進化` (SV7a-001, 3 prints) — auto-picked: evolveSelfFromDeck
+  > 這個招式可在先攻玩家的最初回合使用。從自己的牌庫選擇1張從這隻寶可夢進化而來的卡，放置於這隻寶可夢身上完成進化。並且重洗牌庫。
+- `石居蟹::覺醒` (SV9a-007, 3 prints) — auto-picked: evolveSelfFromDeck
+  > 從自己的牌庫選擇1張從這隻寶可夢進化而來的卡，放置於這隻寶可夢身上完成進化。並且重洗牌庫。
+- `奧利瓦ex::油之機關槍` (SV10-012, 3 prints) — auto-picked: multiTargetOpponentFlatDamage
+  > 選擇6次對手的寶可夢，對所選的所有寶可夢不計算弱點・抵抗力，造成其選擇次數×20點傷害。（1隻可選擇2次以上。）
+- `焰后蜥::突然炙烤` (SV7-014, 3 prints) — auto-picked: discardRandomOpponentHandCount
+  > 對手選擇對手自己的1張手牌，將其丟棄。在這個回合，若這隻寶可夢從「夜盜火蜥」進化，則再丟棄2張。
+- `急凍鳥::冰冷羽擊` (SV9-018, 3 prints) — auto-picked: deckSearchTypedEnergyToSelfCount
+  > 從自己的牌庫選擇最多2張「基本【水】能量」卡，附於這隻寶可夢身上。並且重洗牌庫。
+- `電電蟲::電電充能` (SV7-032, 3 prints) — auto-picked: deckSearchNamedEnergyAttachCount, deckSearchTypedEnergyToOwnPokemonCount
+  > 從自己的牌庫選擇「基本【草】能量」卡與「基本【雷】能量」卡最多各2張，以任意方式附於自己的寶可夢身上。並且重洗牌庫。
+- `倫琴貓ex::突刺目光` (SV6-041, 3 prints) — auto-picked: discardRandomOpponentHandCount
+  > 查看對手的手牌，從其中選擇1張卡，將其丟棄。
+- `耿鬼ex::戲法舞步` (SV5K-088, 3 prints) — auto-picked: moveOpponentEnergyToTheirBench
+  > 若希望，選擇1個對手的戰鬥寶可夢身上附加的能量，改附於對手的備戰寶可夢身上。
+- `太樂巴戈斯::稜鏡充能` (SV8-093, 3 prints) — auto-picked: deckSearchBasicEnergyToOwnPokemonCount
+  > 從自己的牌庫選擇最多3張各不同屬性的基本能量卡，以任意方式附於自己的「太晶」寶可夢身上。並且重洗牌庫。
+- `超級耿鬼ex::空無強風` (MBG-003, 3 prints) — auto-picked: moveSelfEnergyToRandomBench
+  > 選擇1個這隻寶可夢身上附加的能量，改附於備戰寶可夢身上。
+- `呱頭蛙::招集之術` (M4-021, 3 prints) — auto-picked: deckSearchPokemonToHandCount
+  > 從自己的牌庫選擇最多3張寶可夢卡，在給對手看過後加入手牌。並且重洗牌庫。
+- `熔蟻獸::舔舔捕捉` (MC-120, 3 prints) — auto-picked: deckSearchTypedPokemonOrEnergyToHand
+  > 從自己的牌庫選擇【火】寶可夢卡與「基本【火】能量」卡合計最多3張，在給對手看過後加入手牌。並且重洗牌庫。
+- `雷電雲::充電` (MC-258, 3 prints) — auto-picked: deckSearchTypedEnergyToSelfCount
+  > 從自己的牌庫選擇1張「基本【雷】能量」卡，附於這隻寶可夢身上。並且重洗牌庫。
+- `墓揚犬::恐怖啃咬` (MC-350, 3 prints) — auto-picked: shuffleRandomOpponentHandCardsIntoDeckCount
+  > 擲硬幣直到出現反面，在不看手牌正面的情況下，從對手的手牌選擇與正面出現的次數相同數量的卡，查看那些卡的正面後放回對手的牌庫並重洗。
+- `奇魯莉安::呼喚信號` (M2a-070, 3 prints) — auto-picked: deckSearchPokemonToHandCount
+  > 從自己的牌庫選擇最多3張寶可夢卡，在給對手看過後加入手牌。並且重洗牌庫。
+- `小火馬::蓄能量` (SVHK-001, 2 prints) — auto-picked: deckSearchBasicEnergyToHandCount
+  > 從自己的牌庫選擇1張基本能量卡，在給對手看過後加入手牌。並且重洗牌庫。
+- `逐電犬::輸電衝刺` (SVHM-003, 2 prints) — auto-picked: deckSearchNamedEnergyAttachCount
+  > 從自己的牌庫選擇最多2張「基本【雷】能量」卡，以任意方式附於備戰寶可夢身上。並且重洗牌庫。
+- `狡猾天狗::驅趕龍捲風` (SV5M-005, 2 prints) — auto-picked: shuffleOpponentBenchExceptCount
+  > 選擇3隻對手的備戰寶可夢。然後，將對手的沒有選擇的所有備戰寶可夢與附加的卡，全部放回對手的牌庫並重洗。
+- `葉伊布::嫩葉之恩` (SV5a-006, 2 prints) — auto-picked: attachNamedFromHandHealFull
+  > 從自己的手牌選擇1張「基本【草】能量」卡，附於備戰寶可夢身上。然後，將附上那張卡的寶可夢的HP全部恢復。
+- `海刺龍::援軍` (SV6a-011, 2 prints) — auto-picked: deckSearchPokemonToHandCount
+  > 從自己的牌庫選擇最多3張寶可夢卡，在給對手看過後加入手牌。並且重洗牌庫。
+- `厄鬼椪 碧草面具::草之神樂` (SV9a-012, 2 prints) — auto-picked: deckSearchNamedEnergyAttachCount
+  > 從自己的牌庫選擇1張「基本【草】能量」卡，附於自己的寶可夢身上。並且重洗牌庫。
+- `厄鬼椪 碧草面具::步山` (SV6-015, 2 prints) — auto-picked: deckSearchBasicEnergyToHandCount
+  > 從自己的牌庫選擇最多2張基本能量卡，在給對手看過後加入手牌。並且重洗牌庫。
+- `巨牙鯊::咬棄` (SV5K-017, 2 prints) — auto-picked: discardRandomOpponentHandCount
+  > 擲3次硬幣，在不看手牌正面的情況下，選擇與正面出現的次數相同數量的對手的手牌，將其丟棄。
+- `拉普拉斯ex::海紋石之雨` (SV7-019, 2 prints) — auto-picked: revealTopAttachEnergiesCount
+  > 查看自己的牌庫上方20張卡，從其中選擇任意數量的能量卡，以任意方式附於自己的寶可夢身上。將剩餘卡放回牌庫並重洗。
+- `厄鬼椪 火灶面具::火之神樂` (SV9a-021, 2 prints) — auto-picked: deckSearchNamedEnergyAttachCount
+  > 從自己的牌庫選擇1張「基本【火】能量」卡，附於自己的寶可夢身上。並且重洗牌庫。
+- `霏歐納::招喚` (SV5a-022, 2 prints) — auto-picked: discardPileSearchSupporterToHand
+  > 從自己的棄牌區選擇1張支援者卡，在給對手看過後加入手牌。
+- `火伊布ex::燃燒充能` (SV8a-022, 2 prints) — auto-picked: deckSearchBasicEnergyToOwnPokemonCount
+  > 從自己的牌庫選擇最多2張基本能量卡，附於自己的1隻寶可夢身上。並且重洗牌庫。
+- `<小霞的>拉普拉斯::一起游水` (SV9a-027, 2 prints) — auto-picked: deckSearchFamilyToHandCount
+  > 從自己的牌庫選擇最多3張「小霞的寶可夢」，在給對手看過後加入手牌。並且重洗牌庫。
+- `土地雲::真氣之拳` (SV7a-030, 2 prints) — auto-picked: discardPileSearchAnyEnergyToSelf
+  > 從自己的棄牌區選擇1張能量卡，附於這隻寶可夢身上。
+- `厄鬼椪 水井面具::水之神樂` (SV9a-033, 2 prints) — auto-picked: deckSearchNamedEnergyAttachCount
+  > 從自己的牌庫選擇1張「基本【水】能量」卡，附於自己的寶可夢身上。並且重洗牌庫。
+- `詛咒娃娃::詛咒言語` (SV9-036, 2 prints) — auto-picked: shuffleRandomOpponentHandCardsIntoDeckCount
+  > 對手選擇3張對手自己的手牌，放回牌庫並重洗。
+- `花葉蒂::小使者` (SV5a-037, 2 prints) — auto-picked: deckSearchBasicEnergyToHandCount
+  > 從自己的牌庫選擇最多3張基本能量卡，在給對手看過後加入手牌。並且重洗牌庫。
+- `冰伊布ex::藍柱石` (SV8a-041, 2 prints) — auto-picked: koOpponentWithCountersAtLeast
+  > 選擇1隻對手的身上放置有6個傷害指示物的寶可夢，將其【昏厥】。
+- `卡璞・鳴鳴::召喚雷電` (SV8-041, 2 prints) — auto-picked: deckSearchTypedPokemonToHandCount
+  > 從自己的牌庫選擇最多2張【雷】寶可夢卡，在給對手看過後加入手牌。並且重洗牌庫。
+- `莉莉艾的花療環環::招花` (SV9-043, 2 prints) — auto-picked: deckSearchFamilyToBenchCount
+  > 從自己的牌庫選擇任意數量的【基礎】寶可夢的「莉莉艾的寶可夢」，放置於備戰區。並且重洗牌庫。
+- `皮可西::揮指` (SV6-046, 2 prints) — auto-picked: copyDefenderRandomAttack
+  > 選擇1個對手的戰鬥寶可夢持有的招式，作為這個招式使用。
+- `厄鬼椪 礎石面具::石之神樂` (SV9a-049, 2 prints) — auto-picked: deckSearchNamedEnergyAttachCount
+  > 從自己的牌庫選擇1張「基本【鬥】能量」卡，附於自己的寶可夢身上。並且重洗牌庫。
+- `伊布::覺醒` (SV5a-050, 2 prints) — auto-picked: evolveSelfFromDeck
+  > 從自己的牌庫選擇1張從這隻寶可夢進化而來的卡，放置於這隻寶可夢身上完成進化。並且重洗牌庫。
+- `鐵轍跡::路徑輪` (SV5M-051, 2 prints) — auto-picked: moveSelfEnergyToRandomBench
+  > 選擇1個這隻寶可夢身上附加的能量，改附於備戰寶可夢身上。
+- `N的扒手貓::暗槓` (SV9-059, 2 prints) — auto-picked: randomOpponentHandCardToDeckBottom
+  > 查看對手的手牌，從其中選擇1張卡，放回對手的牌庫下方。
+- `溜溜糖球::增長` (M6-002, 2 prints) — auto-picked: deckSearchFamilyToBenchCount
+  > 從自己的牌庫選擇最多2張「溜溜糖球」，放置於備戰區。並且重洗牌庫。
+- `鴨嘴火獸::集力` (M6-012, 2 prints) — auto-picked: deckSearchBasicEnergyToHandCount
+  > 從自己的牌庫選擇最多2張基本能量卡，在給對手看過後加入手牌。並且重洗牌庫。
+- `燈火幽靈::亮光增長` (M5-035, 2 prints) — auto-picked: deckSearchFamilyToBenchCount
+  > 從自己的牌庫選擇最多3張「燈火幽靈」，放置於備戰區。並且重洗牌庫。
+- `代歐奇希斯::基因充能` (M4-031, 2 prints) — auto-picked: deckSearchTypedEnergyToSelfCount
+  > 從自己的牌庫選擇最多2張「基本【超】能量」卡，附於這隻寶可夢身上。並且重洗牌庫。
+- `肯泰羅::群起瞄準` (M4-067, 2 prints) — auto-picked: multiTargetOpponentFlatDamage
+  > 選擇1隻對手的寶可夢，擲與自己的場上的，名稱中有「肯泰羅」的寶可夢的數量相同次數的硬幣。所選的寶可夢受到正面出現的次數×50點傷害。[在備戰區不計算弱點・抵抗力。]
+- `步哨鼠::臨檢` (M4-069, 2 prints) — auto-picked: shuffleRandomOpponentHandCardsIntoDeckCount
+  > 擲3次硬幣。若出現正面，則查看對手的手牌，從其中選擇與正面出現的次數相同數量的卡，放回對手的牌庫並重洗。
+- `謝米::親送花朵` (M3-003, 2 prints) — auto-picked: deckSearchNamedEnergyAttachCount
+  > 從自己的牌庫選擇1張能量卡，附於備戰區的【草】寶可夢身上。並且重洗牌庫。
+- `焰后蜥ex::詭計` (M3-016, 2 prints) — auto-picked: deckSearchAnyCardsToHandCount
+  > 從自己的牌庫任意選擇最多2張卡加入手牌。並且重洗牌庫。
+- `黑魯加::鼓勵` (MC-450, 2 prints) — auto-picked: deckSearchBasicEnergyToOwnPokemonCount
+  > 從自己的牌庫選擇最多2張基本能量卡，以任意方式附於自己的寶可夢身上。並且重洗牌庫。
+- `賽富豪::抓到飽` (MC-535, 2 prints) — auto-picked: deckSearchAnyCardsToHandCount
+  > 擲硬幣直到出現反面，從自己的牌庫任意選擇最多與正面出現的次數相同數量的卡，加入手牌。並且重洗牌庫。
+- `火箭隊的貓老大ex::高傲指令` (MC-560, 2 prints) — auto-picked: copyFromOpponentDeckTop
+  > 將對手的牌庫上方10張卡翻到正面。若希望，選擇1個其中的寶可夢持有的招式，作為這個招式使用。將翻到正面的卡放回牌庫並重洗。
+- `超級差不多娃娃ex::萬花筒華爾滋` (MC-602, 2 prints) — auto-picked: deckSearchBasicEnergyToOwnPokemonCount
+  > 擲3次硬幣，從自己的牌庫選擇最多與正面出現的次數×2張相同數量的基本能量卡，以任意方式附於自己的寶可夢身上。並且重洗牌庫。
+- `夢妖::覺醒` (M2a-067, 2 prints) — auto-picked: evolveSelfFromDeck
+  > 從自己的牌庫選擇1張從這隻寶可夢進化而來的卡，放置於這隻寶可夢身上完成進化。並且重洗牌庫。
+- `炭小侍::集力` (M2-019, 2 prints) — auto-picked: deckSearchBasicEnergyToHandCount
+  > 從自己的牌庫選擇最多2張基本能量卡，在給對手看過後加入手牌。並且重洗牌庫。
+- `時拉比::時間輪轉` (M1L-006, 2 prints) — auto-picked: deckSearchAnyCardsToHandCount
+  > 從自己的牌庫選擇【草】寶可夢卡與競技場卡合計最多3張，在給對手看過後加入手牌。並且重洗牌庫。
+- `信使鳥::急速之禮` (M1S-052, 2 prints) — auto-picked: deckSearchAnyCardToHand
+  > 這個招式在先攻玩家的最初回合也可使用。從自己的牌庫任意選擇1張卡加入手牌。並且重洗牌庫。
+- `夢夢蝕::夢境呼喚` (SV11B-039, 2 prints) — auto-picked: deckSearchFamilyToHandCount
+  > 從自己的牌庫選擇任意數量的「真菰」，在給對手看過後加入手牌。並且重洗牌庫。
+- `黑眼鱷::勒緊` (SV11B-060, 2 prints) — auto-picked: discardRandomOpponentHandCount
+  > 對手選擇1張對手自己的手牌，將其丟棄。
+- `混混鱷::勒緊` (SV11B-061, 2 prints) — auto-picked: discardRandomOpponentHandCount
+  > 對手選擇2張對手自己的手牌，將其丟棄。
+- `流氓鱷::勒緊` (SV11B-062, 2 prints) — auto-picked: discardRandomOpponentHandCount
+  > 對手選擇2張對手自己的手牌，將其丟棄。
+- `牙牙::集力` (SV11B-070, 2 prints) — auto-picked: deckSearchBasicEnergyToHandCount
+  > 從自己的牌庫選擇最多2張基本能量卡，在給對手看過後加入手牌。並且重洗牌庫。
+- `小灰怪::挪動一下` (SV11B-126, 2 prints) — auto-picked: moveOpponentEnergyToTheirBench
+  > 選擇1個對手的場上寶可夢身上附加的能量，改附於對手的其他寶可夢身上。
+- `扒手貓::邪惡邀請` (SV11W-052, 2 prints) — auto-picked: deckSearchTypedPokemonToHandCount
+  > 從自己的牌庫選擇最多3張【惡】寶可夢卡，在給對手看過後加入手牌。並且重洗牌庫。
+- `長毛狗::氣味偵測` (SV11W-074, 2 prints) — auto-picked: discardPileSearchAnyToHandCount
+  > 擲3次硬幣，從自己的棄牌區任意選擇最多與正面出現的次數相同數量的卡，在給對手看過後加入手牌。
+- `葉伊布::嫩葉之恩` (SV8a-002, 1 print) — auto-picked: attachNamedFromHandHealFull
+  > 從自己的手牌選擇1張「基本【草】能量」卡，附於備戰寶可夢身上。然後，將附上這些卡的寶可夢的HP全部恢復。
+- `破破舵輪::救援船錨` (SV7a-004, 1 print) — auto-picked: discardPileSearchPokemonToHandCount
+  > 從自己的棄牌區選擇最多2張寶可夢卡，在給對手看過後加入手牌。
+- `鐵斑葉::補全之網` (SV5a-007, 1 print) — auto-picked: discardPileSearchPokemonToHandCount
+  > 從自己的棄牌區選擇最多2張寶可夢卡，在給對手看過後加入手牌。
+- `熔蟻獸::滑燒火焰` (SV5K-009, 1 print) — auto-picked: flipCoinsDiscardSelfEnergyByTailsCount
+  > 擲3次硬幣，選擇與反面出現的次數相同數量的這隻寶可夢身上附加的能量，將其丟棄。
+- `白蓬蓬::微風之禮` (SV7-009, 1 print) — auto-picked: deckSearchAnyCardsToHandCount
+  > 將這隻寶可夢與附加的卡，全部放回自己的牌庫。然後，從牌庫任意選擇最多3張卡加入手牌。並且重洗牌庫。
+- `強顎雞母蟲::群聚` (SV5M-010, 1 print) — auto-picked: deckSearchFamilyToBenchCount
+  > 從自己的牌庫選擇最多2張「強顎雞母蟲」，放置於備戰區。並且重洗牌庫。
+- `迷唇娃::樂呵呵之吻` (SV7a-018, 1 print) — auto-picked: deckSearchTypedEnergyToOwnPokemonCount
+  > 從自己的牌庫選擇最多2張「基本【超】能量」卡，附於1隻備戰寶可夢身上。並且重洗牌庫。
+- `呱呱泡蛙::群聚` (SV5a-023, 1 print) — auto-picked: deckSearchFamilyToBenchCount
+  > 從自己的牌庫選擇最多2張「呱呱泡蛙」，放置於備戰區。並且重洗牌庫。
+- `超能豔鴕::奧密之眼` (SV7a-023, 1 print) — auto-picked: devolveOpponentToHandCount
+  > 選擇1隻對手的進化寶可夢，移除1張「進化卡」使其退化。將移除的卡放回對手的手牌。
+- `索財靈::小使者` (SV7a-024, 1 print) — auto-picked: deckSearchBasicEnergyToHandCount
+  > 從自己的牌庫選擇最多2張基本能量卡，在給對手看過後加入手牌。並且重洗牌庫。
+- `<火箭隊的>閃電鳥::阻礙之翼` (SV10-033, 1 print) — auto-picked: moveOpponentEnergyToTheirBench
+  > 若希望，選擇1個對手的戰鬥寶可夢身上附加的能量，改附於對手的備戰寶可夢身上。
+- `蟲電寶::並排` (SV7-034, 1 print) — auto-picked: deckSearchFamilyToBenchCount
+  > 從自己的牌庫選擇最多3張「蟲電寶」，放置於備戰區。並且重洗牌庫。
+- `呆呆獸::垂尾巴` (SV7-038, 1 print) — auto-picked: discardPileSearchPokemonToHandCount
+  > 從自己的棄牌區選擇1張寶可夢卡，在給對手看過後加入手牌。
+- `阿羅拉 椰蛋樹ex::熱帶狂燒` (SV7a-040, 1 print) — auto-picked: attachAllBasicEnergyFromHand
+  > 從自己的手牌選擇任意數量的基本能量卡，以任意方式附於自己的寶可夢身上。
+- `阿羅拉 椰蛋樹ex::嗡嗡榍石` (SV7a-040, 1 print) — auto-picked: koOpponentBasicCoinSplit
+  > 擲1次硬幣若為正面，則將對手的戰鬥場的【基礎】寶可夢【昏厥】。若為反面，則選擇1隻對手的備戰區的【基礎】寶可夢，將其【昏厥】。
+- `七夕青鳥::哼唱充能` (SV7a-041, 1 print) — auto-picked: deckSearchBasicEnergyToOwnPokemonCount
+  > 從自己的牌庫選擇最多2張基本能量卡，以任意方式附於自己的寶可夢身上。並且重洗牌庫。
+- `<火箭隊的>謎擬Ｑ::扮晶晶酒` (SV10-042, 1 print) — auto-picked: copyDefenderRandomAttack
+  > 選擇1個對手的戰鬥場的「太晶」寶可夢持有的招式，作為這個招式使用。
+- `帝牙盧卡::時間掌控` (SV7a-042, 1 print) — auto-picked: deckSearchAnyCardsToTopOfDeck
+  > 從自己的牌庫任意選擇2張卡。重洗剩餘牌庫，將所選的卡以任意順序排列，放回牌庫上方。
+- `霜奶仙::彩色甜點` (SV7-044, 1 print) — auto-picked: deckSearchTypedPokemonToHandCount
+  > 從自己的牌庫選擇與這隻寶可夢身上附加的基本能量卡相同屬性的寶可夢卡合計最多5張，在給對手看過後加入手牌。並且重洗牌庫。
+- `甲賀忍蛙ex::忍之利刃` (SV5a-045, 1 print) — auto-picked: deckSearchAnyCardToHand
+  > 若希望，從自己的牌庫任意選擇1張卡加入手牌。並且重洗牌庫。
+- `<火箭隊的>沙基拉斯::爆裂覺醒` (SV10-049, 1 print) — auto-picked: evolveSelfFromDeck
+  > 從自己的牌庫選擇1張從這隻寶可夢進化而來的卡，放置於這隻寶可夢身上完成進化。並且重洗牌庫。
+- `伊布::鮮豔捕捉` (SV6a-050, 1 print) — auto-picked: deckSearchBasicEnergyToHandCount
+  > 從自己的牌庫選擇最多3張各不同屬性的基本能量卡，在給對手看過後加入手牌。並且重洗牌庫。
+- `美錄坦::搬運破爛` (SV7-070, 1 print) — auto-picked: deckSearchToolToHand
+  > 從自己的牌庫選擇1張「寶可夢道具」卡，在給對手看過後加入手牌。並且重洗牌庫。
+- `塗標客::惡作劇作畫` (SV8-074, 1 print) — auto-picked: attachOpponentDiscardEnergyToTheirPokemonCount
+  > 從對手的棄牌區選擇最多3張能量卡，以任意方式附於對手的寶可夢身上。
+- `<火箭隊的>貓老大ex::高傲指令` (SV10-079, 1 print) — auto-picked: copyFromOpponentDeckTop
+  > 將對手的牌庫上方10張卡翻到正面。若希望，選擇1個其中的寶可夢持有的招式，作為這個招式使用。將翻到正面的卡放回牌庫並重洗。
+- `<火箭隊的>多邊獸::駭客攻擊` (SV10-081, 1 print) — auto-picked: discardRandomSelfHandCount, discardRandomOpponentHandCount
+  > 選擇1張自己的手牌，將其丟棄。然後，對手選擇1張對手自己的手牌，將其丟棄。
+- `一家鼠::家族行軍` (SV8-092, 1 print) — auto-picked: deckSearchFamilyToBenchCount
+  > 從自己的牌庫選擇最多2張「一家鼠（包含『寶可夢【ex】』）」，放置於備戰區。並且重洗牌庫。
+- `超級阿勃梭魯ex::惡之鉤爪` (M1L-038, 1 print) — auto-picked: discardRandomOpponentHandCount
+  > 查看對手的手牌，從其中選擇1張卡，將其丟棄。
+- `洛奇亞ex::破壞潮旋` (SVM-097, 1 print) — auto-picked: flipUntilTailsDiscardOpponentEnergy
+  > 擲硬幣直到出現反面，選擇與正面出現的次數相同數量的對手的戰鬥寶可夢身上附加的能量，將其丟棄。
+- `露力麗::蹦蹦充能` (M6-054, 1 print) — auto-picked: deckSearchNamedEnergyAttachCount
+  > 從自己的牌庫選擇1張能量卡，附於備戰寶可夢身上。並且重洗牌庫。
+- `烈箭鷹ex::鉤爪搜尋` (M6-062, 1 print) — auto-picked: deckSearchAnyCardsToHandCount
+  > 若希望，從自己的牌庫任意選擇最多2張卡加入手牌。並且重洗牌庫。
+- `穿山鼠::覺醒` (M6-035, 1 print) — auto-picked: evolveSelfFromDeck
+  > 從自己的牌庫選擇1張從這隻寶可夢進化而來的卡，放置於這隻寶可夢身上完成進化。並且重洗牌庫。
+- `詛咒娃娃::玩偶捕捉` (M5-032, 1 print) — auto-picked: deckSearchAnyCardToHand
+  > 若希望，從自己的牌庫任意選擇1張卡加入手牌。並且重洗牌庫。
+- `胖胖哈力::綠葉充能` (M4-006, 1 print) — auto-picked: deckSearchTypedEnergyToSelfCount
+  > 從自己的牌庫選擇1張「基本【草】能量」卡，附於這隻寶可夢身上。並且重洗牌庫。
+- `信使鳥::幸福禮物` (M4-018, 1 print) — auto-picked: bothAttachHandBasicsCount
+  > 雙方玩家若希望，各自從自己的手牌選擇最多3張基本能量卡，以任意方式附於自己的寶可夢身上。（對手先選擇。）
+- `電飛鼠::小使者` (M4-030, 1 print) — auto-picked: deckSearchBasicEnergyToHandCount
+  > 從自己的牌庫選擇最多2張基本能量卡，在給對手看過後加入手牌。並且重洗牌庫。
+- `超能妙喵::戲法舞步` (M4-037, 1 print) — auto-picked: moveOpponentEnergyToTheirBench
+  > 若希望，選擇1個對手的戰鬥寶可夢身上附加的能量，改附於對手的備戰寶可夢身上。
+- `樹才怪::考驗之旅` (M4-043, 1 print) — auto-picked: deckSearchFamilyToHandCount
+  > 從自己的牌庫選擇最多2張「變化之書」，在給對手看過後加入手牌。並且重洗牌庫。
+- `小箭雀::鳥笛` (M3-065, 1 print) — auto-picked: deckSearchPokemonToHandCount
+  > 從自己的牌庫選擇最多2張抵抗力為【鬥】屬性的寶可夢卡，在給對手看過後加入手牌。並且重洗牌庫。
+- `小霞的拉普拉斯::一起游水` (MC-160, 1 print) — auto-picked: deckSearchFamilyToHandCount
+  > 從自己的牌庫選擇最多3張「小霞的寶可夢」，在給對手看過後加入手牌。並且重洗牌庫。
+- `青木的姆克兒::小使者` (MC-590, 1 print) — auto-picked: deckSearchBasicEnergyToHandCount
+  > 從自己的牌庫選擇最多2張基本能量卡，在給對手看過後加入手牌。並且重洗牌庫。
+- `雪絨蛾::極寒旋風` (M2a-041, 1 print) — auto-picked: moveSelfEnergyToRandomBenchCount
+  > 選擇1個這隻寶可夢身上附加的【水】能量，改附於備戰寶可夢身上。
+- `洛托姆::洛托呼喚` (M2a-076, 1 print) — auto-picked: deckSearchFamilyToBenchCount
+  > 從自己的牌庫選擇任意數量的名稱中有「洛托姆」的寶可夢卡，放置於備戰區。並且重洗牌庫。
+- `嗡蝠::搬運破爛` (M2a-130, 1 print) — auto-picked: deckSearchToolToHand
+  > 從自己的牌庫選擇1張「寶可夢道具」卡，在給對手看過後加入手牌。並且重洗牌庫。
+- `克雷色利亞::充溢之光` (MBD-004, 1 print) — auto-picked: deckSearchTypedEnergyToSelfCount
+  > 從自己的牌庫選擇最多2張「基本【超】能量」卡，附於這隻寶可夢身上。並且重洗牌庫。
+- `蛋蛋::果實盈滿` (M1L-004, 1 print) — auto-picked: deckSearchTypedEnergyToSelfCount
+  > 從自己的牌庫選擇1張「基本【草】能量」卡，附於這隻寶可夢身上。並且重洗牌庫。
+- `大吾的天秤偶::召集標誌` (SVOD-001, 1 print) — auto-picked: deckSearchFamilyToBenchCount
+  > 從自己的牌庫選擇最多2張【基礎】寶可夢的「大吾的寶可夢」，放置於備戰區。並且重洗牌庫。
+- `蒼響ex::鋼鐵武器` (SVM-089, 1 print) — auto-picked: deckSearchTypedEnergyToSelfCount
+  > 從自己的牌庫選擇1張「基本【鋼】能量」卡，附於這隻寶可夢身上。並且重洗牌庫。
+- `差不多娃娃::招喚` (SVM-106, 1 print) — auto-picked: discardPileSearchSupporterToHand
+  > 從自己的棄牌區選擇1張支援者卡，在給對手看過後加入手牌。
+- `謝米::能量反射` (SVM-105, 1 print) — auto-picked: moveSelfEnergyToRandomBench
+  > 選擇1個這隻寶可夢身上附加的能量，改附於備戰寶可夢身上。
+- `貓頭夜鷹::鉤爪搜尋` (SV5K-055, 1 print) — auto-picked: deckSearchAnyCardsToHandCount
+  > 若希望，從自己的牌庫任意選擇最多2張卡加入手牌。並且重洗牌庫。
+- `大電海燕ex::迴旋充能` (SV-P-100, 1 print) — auto-picked: selfSwitchToRandomBench
+  > 將這隻寶可夢與備戰寶可夢互換。‌然後，從自己的手牌選擇最多2張「基本【雷】能量」卡，附於這隻寶可夢身上。
+- `閃焰王牌::閃焰渦輪` (M1L-017, 1 print) — auto-picked: deckSearchNamedEnergyAttachCount
+  > 從自己的牌庫選擇最多3張基本能量卡，以任意方式附於備戰寶可夢身上。並且重洗牌庫。

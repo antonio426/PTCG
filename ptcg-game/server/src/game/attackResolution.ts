@@ -168,6 +168,39 @@ export function buildAttackBoard(
  * attack resolves the same way whether it came from the attacker's own card or another one.
  * moves.attack still owns the Confusion flip, the miss debuff and the turn hand-off.
  */
+/**
+ * Hand a choice the card's text gives the player back to the player.
+ *
+ * applyAttackOutcome resolves choice-shaped effects by picking at random, which is right for 「隨機」
+ * texts and wrong for 「選擇」 ones — where the decision IS the card. Raising a real pendingChoice is
+ * possible here because moves.attack defers the end of the turn while one is open (the same way the
+ * self-return promotion choice already works); moves.resolveChoice finishes the effect.
+ *
+ * `seat` is who answers: for 「由對手選擇」 that is the opponent, which the choice plumbing supports.
+ * Returns false when there is nothing to decide (no candidates, or a choice already standing), so
+ * the caller can fall back to its own resolution rather than dropping the effect.
+ */
+function raiseAttackPick(
+  G: PtcgGameState,
+  seat: 0 | 1,
+  opts: { prompt: string; options: { id: string; label: string }[]; count?: number; minCount?: number; maxCount?: number; context: Record<string, unknown> },
+): boolean {
+  if (G.pendingChoice || opts.options.length === 0) return false;
+  G.pendingChoice = {
+    player: seat,
+    owner: seat,
+    effectKey: 'attack_pick',
+    prompt: opts.prompt,
+    choiceType: 'select_from_list',
+    count: opts.count,
+    minCount: opts.minCount,
+    maxCount: opts.maxCount,
+    options: opts.options,
+    context: opts.context,
+  };
+  return true;
+}
+
 export function applyAttackOutcome(
   G: PtcgGameState,
   player: PtcgPlayerState,
@@ -509,20 +542,20 @@ export function applyAttackOutcome(
       const e = genericOutcome.opponentTimedEffect;
       defender.timedEffects = [...(defender.timedEffects || []), { kind: e.kind, amount: e.amount, vsSubtype: e.vsSubtype, maxImmuneDamage: e.maxImmuneDamage, attackName: e.attackName, coins: e.coins, appliesOnTurn: G.turn + e.turnOffset }];
     }
-    // Choice-requiring generic effects (deck search, switches) auto-pick randomly among
-    // the valid options — see genericAttacks.ts's file header for why.
+    // Choice-requiring generic effects still auto-pick where the text does not actually ask the
+    // player (「隨機」), and where nobody has converted them yet — see data-scraped/auto-pick-audit.md
+    // for what is left. The ones below hand the decision back.
     if (genericOutcome.deckSearchBasicPokemonToBenchCount) {
       const matches = player.deck.filter(c => c.cardData.supertype === 'Pokémon' && c.cardData.subtypes.includes('Basic'));
-      let remaining = genericOutcome.deckSearchBasicPokemonToBenchCount;
-      while (remaining > 0 && matches.length > 0) {
-        const slot = player.bench.findIndex(s => s === null);
-        if (slot === -1) break;
-        const pick = matches.splice(Math.floor(Math.random() * matches.length), 1)[0];
-        const deckIdx = player.deck.findIndex(c => c.id === pick.id);
-        if (deckIdx >= 0) player.bench[slot] = player.deck.splice(deckIdx, 1)[0];
-        remaining--;
-      }
-      shuffleDeck(player.deck);
+      const free = player.bench.filter(s => s === null).length;
+      const max = Math.min(genericOutcome.deckSearchBasicPokemonToBenchCount, free);
+      if (!raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `從牌庫選擇最多 ${max} 張【基礎】寶可夢放上備戰區`,
+        options: matches.map(c => ({ id: c.id, label: c.cardData.name })),
+        minCount: 0,
+        maxCount: max,
+        context: { kind: 'deck_to_bench' },
+      })) shuffleDeck(player.deck);
     }
     if (genericOutcome.deckSearchBasicEnergyToHandCount) {
       const matches = player.deck.filter(c => c.cardData.subtypes.includes('Basic Energy'));
@@ -542,12 +575,12 @@ export function applyAttackOutcome(
       const matches = player.deck.filter(c => wanted === 'Pokémon'
         ? c.cardData.supertype === 'Pokémon'
         : c.cardData.subtypes.includes(wanted));
-      if (matches.length > 0) {
-        const pick = matches[Math.floor(Math.random() * matches.length)];
-        const deckIdx = player.deck.findIndex(c => c.id === pick.id);
-        if (deckIdx >= 0) player.hand.push(player.deck.splice(deckIdx, 1)[0]);
-      }
-      shuffleDeck(player.deck);
+      if (!raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `從牌庫選擇 1 張${wanted === 'Pokémon' ? '寶可夢' : wanted}卡加入手牌`,
+        options: matches.map(c => ({ id: c.id, label: c.cardData.name })),
+        count: 1,
+        context: { kind: 'deck_to_hand' },
+      })) shuffleDeck(player.deck);
     }
     if (genericOutcome.millOpponentDeckCount) {
       // Via millDeck so 整人擊落 sees an opponent-caused deck discard.
@@ -624,9 +657,16 @@ export function applyAttackOutcome(
       }
     }
     if (genericOutcome.forceOpponentSwitchToRandomBench) {
-      const benchIdxs = opponent.bench.map((c, i) => c ? i : -1).filter(i => i >= 0);
-      if (benchIdxs.length > 0 && opponent.active) {
-        const idx = benchIdxs[Math.floor(Math.random() * benchIdxs.length)];
+      // 「[由對手選擇放置於戰鬥場的寶可夢。]」 — the printed reminder says whose decision it is, and
+      // it is not the attacker's. This is the effect PendingChoice.owner/player were split for.
+      const benched = opponent.bench.filter((c): c is GameCard => c !== null);
+      if (opponent.active && !raiseAttackPick(G, (1 - G.currentPlayer) as 0 | 1, {
+        prompt: '對手的招式效果：選擇要換上戰鬥場的寶可夢',
+        options: benched.map(c => ({ id: c.id, label: c.cardData.name })),
+        count: 1,
+        context: { kind: 'opponent_switch' },
+      }) && benched.length > 0) {
+        const idx = opponent.bench.findIndex(c => c !== null);
         const b = opponent.bench[idx]!;
         clearStatusConditionsOnLeaveActive(opponent.active);
         opponent.bench[idx] = opponent.active;
