@@ -1,26 +1,29 @@
 import { GameCard } from '@ptcg/shared';
 import { EffectContext, EffectHandler, EffectStep, normalizeCardName, opponent, player, shuffleDeck } from './types';
-import { applyWeaknessResistance, handleKo } from '../damage';
+import { calculateDamageBreakdown, handleKo } from '../damage';
 import { discardAttachedEnergy, hasNoRuleBox } from './primitives';
 import { applyAttackOutcome, buildAttackBoard } from '../attackResolution';
-import { isTeraPokemon } from './stadiums';
+import { benchDamageFromEffectsBlocked, isTeraPokemon } from './stadiums';
+import { isImmuneToOpponentAttackEffects } from './passiveAbilities';
 
 /**
- * Attacks whose text does something beyond flat weakness/resistance damage
- * (bench damage distribution, discard-for-damage, self-damage, etc.) are
- * keyed by "寶可夢名稱::招式名稱" since the same attack name can appear on
- * different Pokémon with different costs. Only attacks with non-empty
- * `attack.text` need an entry here — plain flat-damage attacks (the vast
- * majority) are handled by the existing calculateDamage() path untouched.
+ * Damage from a registered handler, through the SAME path the generic templates use. It used to
+ * call applyWeaknessResistance directly, which skipped everything else calculateDamageBreakdown
+ * knows: damage immunity (「不會受到招式的傷害」, Tera bench protection), Tool and passive damage
+ * bonuses, timed outgoing nerfs. A 幻影奇襲 through a damage-immune Active still landed 200.
  */
 function damageDefenderActive(ctx: EffectContext, baseDamage: number): void {
   const attacker = player(ctx.G, ctx.playerIndex).active;
   const defender = opponent(ctx.G, ctx.playerIndex).active;
   if (!attacker || !defender) return;
-  const dmg = applyWeaknessResistance(baseDamage, attacker, defender);
+  // A handler that resolved to "no damage" means it: bonuses apply to an attack's damage, not to
+  // the absence of one (花冠射線 with nothing to discard).
+  if (baseDamage <= 0) return;
+  const attack = { name: '', cost: [], convertedEnergyCost: 0, damage: String(baseDamage), text: '' };
+  const dmg = calculateDamageBreakdown(ctx.G, ctx.playerIndex, attacker, attack, defender).finalDamage;
   defender.damage += dmg;
   const hp = parseInt(defender.cardData.hp || '0', 10);
-  if (hp > 0 && defender.damage >= hp) handleKo(ctx.G, (1 - ctx.playerIndex) as 0 | 1, defender.id);
+  if (hp > 0 && defender.damage >= hp) handleKo(ctx.G, (1 - ctx.playerIndex) as 0 | 1, defender.id, attacker);
 }
 
 /** 幻影奇襲 (Dragapult ex-style): 200 to the Active, then freely distribute 6 damage counters across the opponent's bench. */
@@ -31,8 +34,9 @@ const phantomDive: EffectHandler = {
   },
   resume(ctx, context, selection) {
     const opp = opponent(ctx.G, ctx.playerIndex);
+    const attacker = player(ctx.G, ctx.playerIndex).active;
     const target = opp.bench.find(c => c?.id === selection[0]);
-    if (target) {
+    if (target && !(attacker && isImmuneToOpponentAttackEffects(ctx.G, target, attacker))) {
       target.damage += 10;
       const hp = parseInt(target.cardData.hp || '0', 10);
       if (hp > 0 && target.damage >= hp) handleKo(ctx.G, (1 - ctx.playerIndex) as 0 | 1, target.id);
@@ -45,7 +49,13 @@ const phantomDive: EffectHandler = {
 function placeNextBenchCounter(ctx: EffectContext, remaining: number): EffectStep {
   if (remaining <= 0) return 'done';
   const opp = opponent(ctx.G, ctx.playerIndex);
-  const targets = opp.bench.filter((c): c is GameCard => c !== null);
+  const attacker = player(ctx.G, ctx.playerIndex).active;
+  // Placing damage counters is an attack EFFECT, not attack damage, so the same two protections
+  // the generic path honours apply: a Stadium that stops bench damage from effects, and a Pokémon
+  // that ignores opponents' attack effects entirely (薄霧能量, 純樸, …).
+  if (benchDamageFromEffectsBlocked(ctx.G)) return 'done';
+  const targets = opp.bench.filter((c): c is GameCard => c !== null
+    && !(attacker && isImmuneToOpponentAttackEffects(ctx.G, c, attacker)));
   if (targets.length === 0) return 'done';
   return {
     prompt: `幻影奇襲：將傷害指示物自由分配到對手備戰寶可夢（剩餘 ${remaining} 個）`,
@@ -118,9 +128,13 @@ const alolanVulpixStone: EffectHandler = {
     opp.bench.forEach((c, i) => { if (c) inPlay.push({ card: c, place: i }); });
 
     let deEvolved = 0;
+    const attacker = player(ctx.G, ctx.playerIndex).active;
     for (const { card, place } of inPlay) {
       const stack = card.preEvolutions;
       if (!stack || stack.length === 0) continue; // never evolved — nothing to remove
+      // 「不會受到對手的寶可夢使用招式的效果的影響」 — de-evolving is an effect, so a protected
+      // Pokémon keeps its stage.
+      if (attacker && isImmuneToOpponentAttackEffects(ctx.G, card, attacker)) continue;
 
       const newTop = stack[stack.length - 1];
       newTop.preEvolutions = stack.slice(0, -1);
@@ -187,7 +201,11 @@ const beguilingShift: EffectHandler = {
 /** Moves every counter off `donor` and onto the defending Active, KO-checking the result. */
 function moveCountersToDefender(ctx: EffectContext, donor: GameCard): void {
   const defender = opponent(ctx.G, ctx.playerIndex).active;
+  const attacker = player(ctx.G, ctx.playerIndex).active;
   if (!defender) return;
+  // Relocating damage counters is an attack EFFECT — a protected defender takes none of them,
+  // and the donor keeps its own (nothing moved).
+  if (attacker && isImmuneToOpponentAttackEffects(ctx.G, defender, attacker)) return;
   const moved = donor.damage;
   donor.damage = 0;
   defender.damage += moved;
@@ -312,6 +330,14 @@ const teraMimicry = copyFromPokemon('扮晶晶酒', ctx => {
   return oppActive && isTeraPokemon(oppActive) ? [oppActive] : [];
 });
 
+/**
+ * Attacks whose text does something beyond flat weakness/resistance damage
+ * (bench damage distribution, discard-for-damage, self-damage, etc.) are
+ * keyed by "寶可夢名稱::招式名稱" since the same attack name can appear on
+ * different Pokémon with different costs. Only attacks with non-empty
+ * `attack.text` need an entry here — plain flat-damage attacks (the vast
+ * majority) are handled by the existing calculateDamage() path untouched.
+ */
 export const attackEffects: Record<string, EffectHandler> = {
   '振翼髮::蠱惑挪移': beguilingShift,
   '呆呆王::耀閃挑戰': dazzlingChallenge,

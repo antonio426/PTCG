@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
+import type { Subtype } from '@ptcg/shared';
 import { hasAttackEffect, startAttackEffect } from '../src/game/effects/attacks';
+import { moves } from '../src/game/moves';
 import { stackAsPreEvolution } from '../src/game/damage';
 import { PtcgGameState } from '../src/game/GameState';
 import { BASIC_ENERGY, BASIC_MON, STAGE1_MON, attack as mkAttack, makeCard, makeGameCard, makePlayer, makeState } from './fixtures';
@@ -7,6 +9,8 @@ import { BASIC_ENERGY, BASIC_MON, STAGE1_MON, attack as mkAttack, makeCard, make
 const KANGASKHAN = makeCard({ name: '火箭隊的袋獸ex', hp: '230', types: ['Colorless'], subtypes: ['Basic', 'ex'] });
 const ESPEON = makeCard({ name: '太陽伊布ex', hp: '270', types: ['Psychic'], subtypes: ['Stage 1', 'ex'] });
 const PLAIN = makeCard({ name: '木頭鼠', hp: '300', types: ['Colorless'], subtypes: ['Basic'] });
+
+const ctx0 = { currentPlayer: '0', turn: 3, events: { endTurn: () => {} } } as any;
 
 const fire = (G: PtcgGameState, pokemon: string, attack: string) =>
   startAttackEffect(pokemon, attack, { G, playerIndex: 0, sourceCardId: G.players[0].active!.id } as any);
@@ -348,5 +352,59 @@ describe('copying another Pokémon\'s attack', () => {
       expect(fire(G, '火箭隊的謎擬Q', '扮晶晶酒')).toBe('done');
       expect(G.players[1].active?.damage).toBe(0);
     });
+  });
+});
+
+/**
+ * The eight per-card attack handlers in effects/attacks.ts bypassed everything the generic path
+ * checks: they wrote damage through applyWeaknessResistance (no damage immunity, no Tool/passive
+ * bonuses) and placed counters / de-evolved without asking whether the target ignores opponents'
+ * attack effects at all.
+ */
+describe('registered attack handlers respect the same protections as the generic path', () => {
+  const plain = (name: string, hp: string, seat: 0 | 1) => makeGameCard(makeCard({ name, hp, subtypes: ['Basic'] as Subtype[] }), seat);
+  const withPlainness = (name: string, hp: string, seat: 0 | 1) => makeGameCard(makeCard({
+    name, hp, subtypes: ['Basic'] as Subtype[],
+    abilities: [{ name: '純樸', text: '這隻寶可夢不會受到對手的寶可夢使用招式的效果的影響。', type: 'Ability' }],
+  }), seat);
+
+  const dragapult = () => {
+    const c = makeGameCard(makeCard({
+      name: '多龍巴魯托ex', hp: '320',
+      attacks: [{ name: '幻影奇襲', cost: ['Psychic', 'Psychic'], convertedEnergyCost: 2, damage: '200', text: '在對手的備戰寶可夢身上，放置6個傷害指示物。' }],
+    }), 0);
+    c.attachedEnergy = [{ id: 'p1', type: 'Psychic' } as any, { id: 'p2', type: 'Psychic' } as any];
+    return c;
+  };
+
+  it('does not place its bench counters on a Pokémon immune to attack effects', () => {
+    const protectedBench = withPlainness('骨紋巨聲鱷', '150', 1);
+    const openBench = plain('沙包鼠', '150', 1);
+    const G = makeState({
+      turn: 3, currentPlayer: 0, phase: 'main',
+      players: [
+        makePlayer({ active: dragapult() }),
+        makePlayer({ active: plain('對手主戰', '330', 1), bench: [protectedBench, openBench, null, null, null] }),
+      ],
+    });
+    moves.attack({ G, ctx: ctx0 } as any, 0);
+    // The protected one is never offered as a counter target...
+    const options = G.pendingChoice?.options?.map(o => o.id) ?? [];
+    expect(options).not.toContain(protectedBench.id);
+    expect(options).toContain(openBench.id);
+    // ...and cannot be hit by naming it directly either.
+    moves.resolveChoice({ G, ctx: ctx0 } as any, [protectedBench.id]);
+    expect(protectedBench.damage).toBe(0);
+  });
+
+  it('routes its damage through the full breakdown, so damage immunity applies', () => {
+    const immune = plain('對手主戰', '330', 1);
+    immune.timedEffects = [{ kind: 'damageImmune', appliesOnTurn: 3 }];
+    const G = makeState({
+      turn: 3, currentPlayer: 0, phase: 'main',
+      players: [makePlayer({ active: dragapult() }), makePlayer({ active: immune })],
+    });
+    moves.attack({ G, ctx: ctx0 } as any, 0);
+    expect(immune.damage).toBe(0);
   });
 });
