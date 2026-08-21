@@ -17,7 +17,7 @@ import { getToolRetaliationDamage } from './effects/tools';
 import { specialEnergyRetaliation } from './effects/specialEnergy';
 import { healFully, healDamage, applyStatusCondition, discardAttachedEnergy, drawCards, drawUpTo, millDeck, shuffleDeck, asAttachedEnergy } from './effects/primitives';
 import { AttackBoardContext, resolveGenericAttackEffect } from './effects/genericAttacks';
-import { inferEvolvesFromSpecies, evolvesFromMatches } from './evolutionChains';
+import { inferEvolvesFromSpecies, evolvesFromMatches, hasEvolvesFrom } from './evolutionChains';
 import { effectiveRetreatCost } from './validation';
 import { normalizeAbilityName } from './effects/types';
 import { clearStatusConditionsOnLeaveActive } from './statusConditions';
@@ -136,6 +136,19 @@ export function buildAttackBoard(
     attackCostCount: attack.cost.length,
     attackerPromotedFromBenchThisTurn: player.activeIdAtTurnStart !== undefined && player.activeIdAtTurnStart !== attacker.id,
     attackerHealedThisTurn: attacker.healedThisTurn === true,
+    activeStadiumName: G.activeStadium?.cardData.name ?? '',
+    opponentAbilityHolderCount: [opponent.active, ...opponent.bench]
+      .filter((c): c is GameCard => c !== null && (c.cardData.abilities?.length ?? 0) > 0).length,
+    ownEvolvedCount: [player.active, ...player.bench]
+      .filter((c): c is GameCard => c !== null && hasEvolvesFrom(c.cardData)).length,
+    opponentHandTrainerCount: opponent.hand.filter(c => c.cardData.supertype === 'Trainer').length,
+    opponentHandEnergyCount: opponent.hand.filter(c => c.cardData.supertype === 'Energy').length,
+    bothFieldToolCount: [player.active, ...player.bench, opponent.active, ...opponent.bench]
+      .filter((c): c is GameCard => c !== null)
+      .reduce((n, c) => n + (c.attachedTool ? 1 : 0) + (c.attachedTool2 ? 1 : 0), 0),
+    ownFieldEnergyCardNames: [player.active, ...player.bench]
+      .filter((c): c is GameCard => c !== null)
+      .flatMap(c => c.attachedEnergy.map(e => e.cardData?.name ?? '')),
     attackerDamageTakenLastTurn: attacker.damageTakenLastTurn ?? 0,
     ownDiscardEnergyCounts: player.discardPile.reduce((acc, c) => {
       if (!c.cardData.subtypes.includes('Basic Energy')) return acc;

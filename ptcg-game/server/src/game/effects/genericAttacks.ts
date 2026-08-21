@@ -623,6 +623,20 @@ export interface AttackBoardContext {
   attackerRemainingHp: number;
   /** True when the Stadium in play belongs to the attacking side. */
   ownStadiumInPlay: boolean;
+  /** Name of the Stadium in play, for 「若場上有名稱中有「X」的競技場卡」 conditions. */
+  activeStadiumName: string;
+  /** How many of the opponent's in-play Pokémon print an ability. */
+  opponentAbilityHolderCount: number;
+  /** How many of the attacker's own in-play Pokémon are evolutions. */
+  ownEvolvedCount: number;
+  /** Composition of the opponent's hand, for 「查看對手的手牌，造成其中X卡的張數×N點傷害」. */
+  opponentHandTrainerCount: number;
+  opponentHandEnergyCount: number;
+  /** Pokémon Tools attached anywhere, both sides. */
+  bothFieldToolCount: number;
+  /** Names of the Energy CARDS attached across the attacker's own field, and on the attacker
+   * itself — 「若…身上附有「暗影【惡】能量」卡」 asks by printed name, not by energy type. */
+  ownFieldEnergyCardNames: string[];
   /** Item cards in the opponent's discard pile. */
   opponentDiscardItemCount: number;
   /** The defender's printed resistance types. */
@@ -721,6 +735,9 @@ export const NEUTRAL_BOARD: AttackBoardContext = {
   attackerAttacksUsedLastTurn: [], ownOtherAncientAttackedLastTurn: false,
   ownSupporterNamesPlayedThisTurn: [], ownDiscardAncientCount: 0, ownHandPokemonTypeCount: 0,
   attackerRemainingHp: 0, ownStadiumInPlay: false, opponentDiscardItemCount: 0,
+  activeStadiumName: '', opponentAbilityHolderCount: 0, ownEvolvedCount: 0,
+  opponentHandTrainerCount: 0, opponentHandEnergyCount: 0, bothFieldToolCount: 0,
+  ownFieldEnergyCardNames: [],
   defenderResistanceTypes: [], ownFieldDamagedNames: [], ownBenchTypedDamageCounters: {},
   attackerEvolvedThisTurn: false, ownPlayedAncientSupporter: false, ownPlayedFutureSupporter: false,
 };
@@ -3589,6 +3606,152 @@ export function resolveGenericAttackEffect(text: string, damageField: string, bo
   if (m) {
     return { baseDamage: parseBaseNumber(damageField) + (board.attackerHealedThisTurn ? parseInt(m[1], 10) : 0) };
   }
+
+  /* ---- Round 6: attacks the M6/MC/SV11 data repair uncovered ---- */
+
+  // 若場上有名稱中有「X」的競技場卡，則增加N點傷害。
+  m = t.match(/^若場上有名稱中有「(.+?)」的競技場卡，則增加(\d+)點傷害。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField) + (board.activeStadiumName.includes(m[1]) ? parseInt(m[2], 10) : 0) };
+
+  // 若場上有名稱中有「X」的競技場卡，則對手的所有備戰寶可夢也各受到N點傷害。
+  m = t.match(/^若場上有名稱中有「(.+?)」的競技場卡，則對手的所有備戰寶可夢也各受到(\d+)點傷害。(?:\[在備戰區不計算弱點・抵抗力。\])?$/);
+  if (m) {
+    const on = board.activeStadiumName.includes(m[1]);
+    return { baseDamage: parseBaseNumber(damageField), ...(on ? { opponentAllBenchSplashDamage: parseInt(m[2], 10) } : {}) };
+  }
+
+  // 增加對手的場上擁有特性的寶可夢的數量×N點傷害。
+  m = t.match(/^增加對手的場上擁有特性的寶可夢的數量×(\d+)點傷害。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField) + board.opponentAbilityHolderCount * parseInt(m[1], 10) };
+
+  // 增加自己的場上進化寶可夢的數量×N點傷害。
+  m = t.match(/^增加自己的場上進化寶可夢的數量×(\d+)點傷害。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField) + board.ownEvolvedCount * parseInt(m[1], 10) };
+
+  // 查看對手的手牌，造成其中X卡的張數×N點傷害。
+  m = t.match(/^查看對手的手牌，造成其中(訓練家|能量)卡的張數×(\d+)點傷害。$/);
+  if (m) {
+    const count = m[1] === '訓練家' ? board.opponentHandTrainerCount : board.opponentHandEnergyCount;
+    return { baseDamage: count * parseInt(m[2], 10) };
+  }
+
+  // 造成雙方的所有寶可夢身上附加的「寶可夢道具」卡的數量×N點傷害。
+  m = t.match(/^造成雙方的所有寶可夢身上附加的「寶可夢道具」卡的數量×(\d+)點傷害。$/);
+  if (m) return { baseDamage: board.bothFieldToolCount * parseInt(m[1], 10) };
+
+  // 造成自己備戰區的所有「X」身上放置的傷害指示物的數量×N點傷害。
+  m = t.match(/^造成自己備戰區的所有「(.+?)」身上放置的傷害指示物的數量×(\d+)點傷害。$/);
+  if (m) {
+    const counters = board.ownBenchDamageCountersByName
+      .filter(x => x.name.includes(m![1]))
+      .reduce((n, x) => n + x.counters, 0);
+    return { baseDamage: counters * parseInt(m[2], 10) };
+  }
+
+  // 若自己的備戰寶可夢身上附有「X」卡，則增加N點傷害。
+  m = t.match(/^若自己的備戰寶可夢身上附有「(.+?)」卡，則增加(\d+)點傷害。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField) + (board.ownFieldEnergyCardNames.some(n => n.includes(m![1])) ? parseInt(m[2], 10) : 0) };
+
+  // 若自己的棄牌區有「X」，則增加N點傷害。
+  m = t.match(/^若自己的棄牌區有「(.+?)」，則增加(\d+)點傷害。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField) + (board.ownDiscardCardNames.some(n => n.includes(m![1])) ? parseInt(m[2], 10) : 0) };
+
+  // 若這隻寶可夢身上附有「寶可夢道具」卡，則增加N點傷害。
+  m = t.match(/^若這隻寶可夢身上附有「寶可夢道具」卡，則增加(\d+)點傷害。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField) + (board.attackerHasTool ? parseInt(m[1], 10) : 0) };
+
+  // 若這隻寶可夢身上沒有附加「X」卡，則這個招式失敗。
+  m = t.match(/^若這隻寶可夢身上沒有附加「(.+?)」卡，則這個招式失敗。$/);
+  if (m) {
+    const required = m[1];
+    return { baseDamage: board.attackerEnergyCardNames.some(n => n.includes(required)) ? parseBaseNumber(damageField) : 0 };
+  }
+
+  // 若對手的戰鬥寶可夢沒有【X】，則這個招式失敗。
+  m = t.match(/^若對手的戰鬥寶可夢沒有【(.+?)】，則這個招式失敗。$/);
+  if (m) {
+    const status = STATUS_ZH[m[1]];
+    if (status) return { baseDamage: board.defenderStatusConditions.includes(status) ? parseBaseNumber(damageField) : 0 };
+  }
+
+  // 若對手的戰鬥寶可夢身上沒有放置傷害指示物，則這個招式失敗。
+  if (/^若對手的戰鬥寶可夢身上沒有放置傷害指示物，則這個招式失敗。$/.test(t)) {
+    return { baseDamage: board.opponentDamageCounters > 0 ? parseBaseNumber(damageField) : 0 };
+  }
+
+  // 若對手的戰鬥寶可夢不是「寶可夢【ex】」，則這個招式失敗。這個招式的傷害不計算弱點・抵抗力。
+  if (/^若對手的戰鬥寶可夢不是「寶可夢【ex】」，則這個招式失敗。這個招式的傷害不計算弱點・抵抗力。$/.test(t)) {
+    return { baseDamage: board.defenderIsEx ? parseBaseNumber(damageField) : 0, ignoreWeakness: true, ignoreResistance: true };
+  }
+
+  // 若對手的戰鬥寶可夢處於特殊狀態，則將那隻寶可夢【昏厥】。
+  if (/^若對手的戰鬥寶可夢處於特殊狀態，則將那隻寶可夢【昏厥】。$/.test(t)) {
+    return { baseDamage: parseBaseNumber(damageField), ...(board.defenderStatusConditions.length > 0 ? { koDefender: true } : {}) };
+  }
+
+  // 若對手的戰鬥寶可夢為【基礎】寶可夢，則將那隻寶可夢【昏厥】。
+  if (/^若對手的戰鬥寶可夢為【基礎】寶可夢，則將那隻寶可夢【昏厥】。$/.test(t)) {
+    const isBasic = board.defenderSubtypes.includes('Basic');
+    return { baseDamage: parseBaseNumber(damageField), ...(isBasic ? { koDefender: true } : {}) };
+  }
+
+  // 在下個對手的回合，這隻寶可夢受到進化寶可夢招式的傷害「-N」點。
+  m = t.match(/^在下個對手的回合，這隻寶可夢受到進化寶可夢招式的傷害「-(\d+)」點。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), selfTimedEffect: { kind: 'damageReduction', amount: parseInt(m[1], 10), vsSubtype: 'Evolved', turnOffset: 1 } };
+
+  // 在下個對手的回合，這隻寶可夢受到招式的傷害「+N」點。
+  m = t.match(/^在下個對手的回合，這隻寶可夢受到招式的傷害「\+(\d+)」點。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), selfTimedEffect: { kind: 'damageReduction', amount: -parseInt(m[1], 10), turnOffset: 1 } };
+
+  // 擲2次硬幣，造成正面出現的次數×N點傷害。只要出現1次正面，則將對手的戰鬥寶可夢【X】。
+  m = t.match(/^擲(\d+)次硬幣，造成正面出現的次數×(\d+)點傷害。只要出現1次正面，則將對手的戰鬥寶可夢【(.+?)】。$/);
+  if (m) {
+    const heads = flipCoins(parseInt(m[1], 10));
+    const status = STATUS_ZH[m[3]];
+    return {
+      baseDamage: heads * parseInt(m[2], 10),
+      coinFlipNote: `擲${m[1]}次硬幣，${heads}次正面`,
+      ...(heads > 0 && status ? { statusToInflict: [status] } : {}),
+    };
+  }
+
+  // 擲N次硬幣，若全部為正面，則增加M點傷害。
+  m = t.match(/^擲(\d+)次硬幣，若全部為正面，則增加(\d+)點傷害。$/);
+  if (m) {
+    const flips = parseInt(m[1], 10);
+    const heads = flipCoins(flips);
+    return { baseDamage: parseBaseNumber(damageField) + (heads === flips ? parseInt(m[2], 10) : 0), coinFlipNote: `擲${flips}次硬幣，${heads}次正面` };
+  }
+
+  // 擲1次硬幣若為反面，則這隻寶可夢也受到N點傷害。
+  m = t.match(/^擲1次硬幣若為反面，則這隻寶可夢也受到(\d+)點傷害。$/);
+  if (m) {
+    const heads = flipCoins(1);
+    return { baseDamage: parseBaseNumber(damageField), coinFlipNote: heads ? '正面' : '反面', ...(heads ? {} : { selfDamage: parseInt(m[1], 10) }) };
+  }
+
+  // 擲與這隻寶可夢身上附加的【T】能量的數量相同次數的硬幣，造成正面出現的次數×N點傷害。
+  m = t.match(/^擲與這隻寶可夢身上附加的【(.+?)】能量的數量相同次數的硬幣，造成正面出現的次數×(\d+)點傷害。$/);
+  if (m) {
+    const type = ENERGY_TYPE_FROM_ZH[m[1]];
+    if (type) {
+      const flips = board.attackerEnergyCounts[type] || 0;
+      const heads = flipCoins(flips);
+      return { baseDamage: heads * parseInt(m[2], 10), coinFlipNote: `擲${flips}次硬幣，${heads}次正面` };
+    }
+  }
+
+  // 對手的1隻寶可夢受到N點傷害。這個招式的傷害不計算弱點・抵抗力。
+  m = t.match(/^對手的1隻寶可夢受到(\d+)點傷害。這個招式的傷害不計算弱點・抵抗力。$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), benchSplashDamage: parseInt(m[1], 10), ignoreWeakness: true, ignoreResistance: true };
+
+  // 對手的所有備戰寶可夢，也各受到對手已經獲得的獎賞卡的張數×N點傷害。
+  m = t.match(/^對手的所有備戰寶可夢，也各受到對手已經獲得的獎賞卡的張數×(\d+)點傷害。(?:\[在備戰區不計算弱點・抵抗力。\])?$/);
+  if (m) return { baseDamage: parseBaseNumber(damageField), opponentAllBenchSplashDamage: board.opponentTakenPrizes * parseInt(m[1], 10) };
+
+  // 這個招式必須在上個自己的回合這隻寶可夢使用了「X」才可使用。
+  m = t.match(/^這個招式必須在上個自己的回合這隻寶可夢使用了「(.+?)」才可使用。$/);
+  if (m) return { baseDamage: board.attackerAttacksUsedLastTurn.includes(m[1]) ? parseBaseNumber(damageField) : 0 };
 
   /* ---- Round 5: gaps the Standard-scope clause audit turned up ---- */
 
