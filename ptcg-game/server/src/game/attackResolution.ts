@@ -11,7 +11,7 @@
 import { Attack, DamageDetail, GameCard, TurnAction } from '@ptcg/shared';
 import { PtcgGameState, PtcgPlayerState } from './GameState';
 import { calculateDamageBreakdown, effectiveMaxHp, flushPreEvolutionsTo, flushPreEvolutionsToDiscard, handleKo, prizesForKo, resetCardForReentry, stackAsPreEvolution } from './damage';
-import { getBonusPrizesForAttackKo, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getScaledRetaliation, getTimedRetaliationCounters, hasPassiveAbilityNamed, hasTeraBenchedImmunity, isImmuneToOpponentAttackEffects, shouldDiscardAttackerEnergy, isProtectedFromOpponentAbility, isReturnToHandBlocked } from './effects/passiveAbilities';
+import { areCounterMovesBlocked, getBonusPrizesForAttackKo, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getScaledRetaliation, getTimedRetaliationCounters, hasPassiveAbilityNamed, hasTeraBenchedImmunity, isImmuneToOpponentAttackEffects, shouldDiscardAttackerEnergy, isProtectedFromOpponentAbility, isReturnToHandBlocked } from './effects/passiveAbilities';
 import { benchDamageFromEffectsBlocked, benchLimit, isStadiumActive } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
 import { specialEnergyRetaliation } from './effects/specialEnergy';
@@ -1353,7 +1353,8 @@ export function applyAttackOutcome(
         if (hp > 0 && target.damage >= hp) handleKo(G, (1 - G.currentPlayer) as 0 | 1, target.id, attacker);
       }
     }
-    if (genericOutcome.moveOpponentBenchCountersToActive && opponent.active && !defenderEffectImmune) {
+    if (genericOutcome.moveOpponentBenchCountersToActive && opponent.active && !defenderEffectImmune
+      && !areCounterMovesBlocked(G)) {
       let moved = 0;
       for (const c of opponent.bench) {
         if (!c || c.damage <= 0) continue;

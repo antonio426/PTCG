@@ -814,7 +814,29 @@ export function getGrudgeVortexRetaliation(G: PtcgGameState, defender: GameCard)
 export { hasAbility as hasPassiveAbilityNamed };
 
 /** Every ability name this module gives real, non-default behavior to — used by coverage-report.ts. */
+/**
+ * 繁茂 (大竺葵): 「自己的所有寶可夢身上附加的「基本【草】能量」卡，視為各提供2個【草】能量」.
+ * Returns the energy types whose BASIC cards count double for this card's owner. 「這個特性的效果
+ * 不會重複」 — two copies in play still double, not quadruple, so this is a set membership rather
+ * than a count.
+ */
+export function doubledBasicEnergyTypes(G: PtcgGameState, holder: GameCard): string[] {
+  const ownerIdx = ownerIndexOf(G, holder);
+  if (ownerIdx === null) return [];
+  return teamOf(G, ownerIdx).some(c => hasAbility(G, c, '繁茂')) ? ['Grass'] : [];
+}
+
+/** 監視之眼 (探探鼠): 「雙方的所有寶可夢身上放置的傷害指示物，無法改放於其他寶可夢身上」 — it stops
+ * counter RELOCATION on both sides, not damage. Checked wherever counters move between Pokémon. */
+export function areCounterMovesBlocked(G: PtcgGameState): boolean {
+  for (const idx of [0, 1] as const) {
+    if (teamOf(G, idx).some(c => hasAbility(G, c, '監視之眼'))) return true;
+  }
+  return false;
+}
+
 export const PASSIVE_ABILITY_NAMES = new Set([
+  '繁茂', '監視之眼',
   '暗夜羽擊',
   '輝煌聲援', '閃焰象徵', '鈷藍指令', '腎上腺力量', '礎石之勢', '藏隱', '天空徑線', '鋼之橋',
   '妖精領域', '劇毒支配', '老練招式', '虹色DNA', '放逐區障礙', '祭典樂舞', '崗哨',

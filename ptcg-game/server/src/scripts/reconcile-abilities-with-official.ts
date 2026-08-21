@@ -64,7 +64,10 @@ for (const card of file.data) {
 
   const theirs = (off.abilities ?? []) as { name: string; text: string; type?: string }[];
   const ourNames = new Set((card.abilities ?? []).map(a => clean(a.name)));
-  const theirNames = new Set(theirs.map(a => clean(a.name)));
+  // Supported = named ANYWHERE in the page's skill list. The site only sometimes prefixes an
+  // ability with 「[特性] 」 (骨紋巨聲鱷 SV8-019 does not), so an ability we hold can legitimately
+  // appear among the scrape's attacks — that is still the page confirming it exists.
+  const theirNames = new Set([...theirs, ...(off.attacks ?? [])].map((a: any) => clean(a.name)));
 
   const missing = theirs.filter(a => !ourNames.has(clean(a.name)));
   if (missing.length > 0) {

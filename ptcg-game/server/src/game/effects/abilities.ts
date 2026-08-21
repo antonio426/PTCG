@@ -2945,6 +2945,53 @@ const cleansingSupport: EffectHandler = {
 };
 
 /** 甜點之禮: once per turn, heal 1 chosen own Pokémon 30 HP. */
+/**
+ * 沸騰鬥志 (火焰雞ex): 「在自己的回合時可使用1次。從自己的棄牌區選擇1張基本能量卡，附於自己的寶可夢
+ * 身上。」 Two picks — the card, then where it goes — because both are the player's call.
+ */
+const boilingSpirit: EffectHandler = {
+  canPlay(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    return p.discardPile.some(c => c.cardData.subtypes.includes('Basic Energy'))
+      && allPokemon(ctx.G, ctx.playerIndex).length > 0;
+  },
+  start(ctx) {
+    const p = player(ctx.G, ctx.playerIndex);
+    const options = p.discardPile.filter(c => c.cardData.subtypes.includes('Basic Energy'));
+    if (options.length === 0 || allPokemon(ctx.G, ctx.playerIndex).length === 0) return 'done';
+    return {
+      prompt: '沸騰鬥志：從棄牌區選擇 1 張基本能量卡',
+      choiceType: 'select_from_list',
+      count: 1,
+      options: options.map(c => ({ id: c.id, label: c.cardData.name })),
+      context: { step: 'card' },
+    };
+  },
+  resume(ctx, context, selection) {
+    const p = player(ctx.G, ctx.playerIndex);
+    if (context.step === 'card') {
+      const targets = allPokemon(ctx.G, ctx.playerIndex);
+      if (!selection[0] || targets.length === 0) return 'done';
+      if (targets.length === 1) {
+        const i = p.discardPile.findIndex(c => c.id === selection[0]);
+        if (i >= 0) targets[0].attachedEnergy.push(asAttachedEnergy(p.discardPile.splice(i, 1)[0]));
+        return 'done';
+      }
+      return {
+        prompt: '沸騰鬥志：選擇要附加的寶可夢',
+        choiceType: 'select_pokemon',
+        count: 1,
+        options: targets.map(c => ({ id: c.id, label: c.cardData.name })),
+        context: { step: 'target', cardId: selection[0] },
+      };
+    }
+    const target = allPokemon(ctx.G, ctx.playerIndex).find(c => c.id === selection[0]);
+    const i = p.discardPile.findIndex(c => c.id === context.cardId);
+    if (target && i >= 0) target.attachedEnergy.push(asAttachedEnergy(p.discardPile.splice(i, 1)[0]));
+    return 'done';
+  },
+};
+
 const sweetGift: EffectHandler = {
   start(ctx) {
     const targets = allPokemon(ctx.G, ctx.playerIndex).filter(c => c.damage > 0);
@@ -3071,6 +3118,7 @@ export const abilityEffects: Record<string, EffectHandler> = {
   '毛象搬運': mammothCarry,
   '邀請眨眼': invitingWink,
   '飽腹時間': bellyfulTime,
+  '沸騰鬥志': boilingSpirit,
   '金屬製造者': metalMaker,
   '暗中咬住': stealthBite,
   '幸福切換': happinessSwitch,

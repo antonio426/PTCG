@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { Subtype } from '@ptcg/shared';
 import { moves } from '../src/game/moves';
-import { getLegalMoves, canEvolve } from '../src/game/validation';
+import { getLegalMoves, canEvolve, canAttack } from '../src/game/validation';
 import { effectiveMaxHp } from '../src/game/damage';
 import { millDeck } from '../src/game/effects/primitives';
 import {
@@ -696,5 +696,65 @@ describe('璀璨鱗片 (美納斯ex): untouchable by 太晶 attackers', () => {
     const G2 = plainBoard(plain, makeGameCard(scale.cardData, 1));
     expect(isDamageBlocked(G2, plain, G2.players[1].active!)).toBe(false);
     expect(isImmuneToOpponentAttackEffects(G2, G2.players[1].active!, plain)).toBe(false);
+  });
+});
+
+/**
+ * Abilities that only existed once the official re-scrape restored them: the stored scrape had been
+ * produced by a parser that dropped every 「[特性]」 block, so for cards TCGdex does not carry (the
+ * MC-* compilation set above all) we simply had no ability data.
+ */
+describe('繁茂 / 監視之眼 (recovered by the ability re-scrape)', () => {
+  it('繁茂 makes a friendly basic Grass Energy pay for two', () => {
+    const grass = (id: string) => ({
+      id, type: 'Grass',
+      cardData: makeCard({ name: '基本草能量', supertype: 'Energy', subtypes: ['Basic Energy'] as Subtype[], types: ['Grass'] }),
+    } as any);
+    const attacker = makeGameCard(makeCard({
+      name: '大針蜂', hp: '120',
+      attacks: [mkAttack('雙針', ['Grass', 'Grass'], '60', '')],
+    }), 0);
+    attacker.attachedEnergy = [grass('g1')];
+    const helper = makeGameCard(makeCard({
+      name: '大竺葵', hp: '110',
+      abilities: [{ name: '繁茂', text: '只要這隻寶可夢在場上，自己的所有寶可夢身上附加的「基本【草】能量」卡，視為各提供2個【草】能量。這個特性的效果不會重複。', type: 'Ability' }],
+    }), 0);
+    const G = makeState({
+      turn: 3, currentPlayer: 0, phase: 'main',
+      players: [
+        makePlayer({ active: attacker, bench: [helper, null, null, null, null] }),
+        makePlayer({ active: makeGameCard(BASIC_MON, 1) }),
+      ],
+    });
+    expect(canAttack(G, 0, 0)).toBe(true);
+
+    // Without 大竺葵 in play, one Grass cannot pay a two-Grass cost.
+    G.players[0].bench = [null, null, null, null, null];
+    expect(canAttack(G, 0, 0)).toBe(false);
+  });
+
+  it('監視之眼 stops damage counters being relocated, on either side', () => {
+    const watcher = makeGameCard(makeCard({
+      name: '探探鼠', hp: '70',
+      abilities: [{ name: '監視之眼', text: '只要這隻寶可夢在場上，雙方的所有寶可夢身上放置的傷害指示物，無法改放於其他寶可夢身上。', type: 'Ability' }],
+    }), 1);
+    const donor = makeGameCard(makeCard({ name: '古代夥伴', hp: '90', subtypes: ['Basic', 'Ancient'] as Subtype[] }), 0);
+    donor.damage = 50;
+    const mover = makeGameCard(makeCard({
+      name: '振翼髮', hp: '110',
+      attacks: [mkAttack('蠱惑挪移', ['Psychic'], '', '選擇1隻自己的備戰區的「古代」寶可夢，將所選的寶可夢身上放置的傷害指示物，全部改放於對手的戰鬥寶可夢身上。')],
+    }), 0);
+    mover.attachedEnergy = [{ id: 'p1', type: 'Psychic' } as any];
+    const defender = makeGameCard(makeCard({ name: '沙包鼠', hp: '150' }), 1);
+    const G = makeState({
+      turn: 3, currentPlayer: 0, phase: 'main',
+      players: [
+        makePlayer({ active: mover, bench: [donor, null, null, null, null] }),
+        makePlayer({ active: defender, bench: [watcher, null, null, null, null] }),
+      ],
+    });
+    moves.attack({ G, ctx: { currentPlayer: '0', turn: 3, events: { endTurn: () => {} } } as any }, 0);
+    expect(donor.damage).toBe(50);      // nothing moved
+    expect(defender.damage).toBe(0);
   });
 });

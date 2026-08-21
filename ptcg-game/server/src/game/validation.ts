@@ -3,7 +3,7 @@ import { PtcgGameState, GamePhase, PendingChoice } from './GameState';
 import { hasAbilityEffect, canUseAbility, FROM_HAND_ABILITY_NAMES } from './effects/abilities';
 import { canPlayTrainer, hasTrainerEffect } from './effects/trainers';
 import { getRetreatCostReduction, getColorlessCostReduction } from './effects/tools';
-import { canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostOverride, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatCostReduction, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, isAceSpecPlayBlocked, areAbilitiesNegated, isAttackLockedByTimedEffect, isItemAndToolPlayBlocked, isItemLockedByTimedEffect, isItemPlayBlocked, isNamedAttackLockedByTimedEffect, isStadiumPlayBlocked, isRetreatLockedByTimedEffect, isProtectedFromOpponentTrainer, hasPassiveAbilityNamed, canHoldSecondTool, getTimedCostIncrease } from './effects/passiveAbilities';
+import { doubledBasicEnergyTypes, canAttackOnFirstTurn, canEvolveOnFirstTurnOrJustPlayed, canEvolveViaPassive, canUsePassiveGatedAttack, getPassiveAttackCostOverride, getPassiveAttackCostReduction, getPassiveRetreatCostIncrease, getPassiveRetreatCostReduction, getPassiveRetreatWaiver, hasPassiveColorlessCostWaiver, isAbilityPokemonPlayBlocked, isAceSpecPlayBlocked, areAbilitiesNegated, isAttackLockedByTimedEffect, isItemAndToolPlayBlocked, isItemLockedByTimedEffect, isItemPlayBlocked, isNamedAttackLockedByTimedEffect, isStadiumPlayBlocked, isRetreatLockedByTimedEffect, isProtectedFromOpponentTrainer, hasPassiveAbilityNamed, canHoldSecondTool, getTimedCostIncrease } from './effects/passiveAbilities';
 import { normalizeAbilityName, normalizeCardName } from './effects/types';
 import { hasEvolvesFrom, evolvesFromMatches, inferEvolvesFromSpecies } from './evolutionChains';
 import { isFossilCard } from './fossils';
@@ -97,12 +97,23 @@ export function canPayEnergyCost(
   cost: EnergyType[],
   colorlessReduction = 0,
   holder?: GameCard,
+  G?: PtcgGameState,
 ): boolean {
   if (cost.length === 0) return true;
 
   const units = holder
     ? attachedEnergy.flatMap(e => energyUnitsProvided(e, holder))
     : attachedEnergy.map(e => ({ types: [e.type] }));
+  // 繁茂: a friendly 大竺葵 makes each BASIC card of its type count twice. Needs G (the ability
+  // lives on another Pokémon), so callers without it — the AI's what-if scoring — simply miss the
+  // bonus and under-estimate, which is the safe direction.
+  if (G && holder) {
+    for (const type of doubledBasicEnergyTypes(G, holder)) {
+      for (const e of attachedEnergy) {
+        if (e.cardData?.subtypes?.includes('Basic Energy') && e.type === type) units.push({ types: [type] });
+      }
+    }
+  }
 
   const specificCosts = cost.filter(c => c !== 'Colorless');
   const colorlessCount = Math.max(0, cost.filter(c => c === 'Colorless').length - colorlessReduction);
@@ -334,7 +345,7 @@ export function canAttack(G: PtcgGameState, playerIndex: number, attackIndex: nu
     ? colorlessInCost
     : getColorlessCostReduction(G, player.active, playerIndex as 0 | 1)
       + getPassiveAttackCostReduction(G, playerIndex as 0 | 1, player.active, attack.name);
-  return canPayEnergyCost(player.active.attachedEnergy, cost, colorlessReduction, player.active);
+  return canPayEnergyCost(player.active.attachedEnergy, cost, colorlessReduction, player.active, G);
 }
 
 export function getLegalMoves(G: PtcgGameState, playerIndex: number): LegalAction[] {

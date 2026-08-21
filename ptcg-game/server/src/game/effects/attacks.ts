@@ -4,7 +4,7 @@ import { calculateDamageBreakdown, handleKo } from '../damage';
 import { discardAttachedEnergy, hasNoRuleBox } from './primitives';
 import { applyAttackOutcome, buildAttackBoard } from '../attackResolution';
 import { benchDamageFromEffectsBlocked, isTeraPokemon } from './stadiums';
-import { isImmuneToOpponentAttackEffects } from './passiveAbilities';
+import { areCounterMovesBlocked, isImmuneToOpponentAttackEffects } from './passiveAbilities';
 import { hasTrainerEffect, startTrainerEffect, resumeTrainerEffect } from './trainers';
 
 /**
@@ -205,6 +205,8 @@ function moveCountersToDefender(ctx: EffectContext, donor: GameCard): void {
   const defender = opponent(ctx.G, ctx.playerIndex).active;
   const attacker = player(ctx.G, ctx.playerIndex).active;
   if (!defender) return;
+  // 監視之眼: counters may not be relocated at all while it is in play, on either side.
+  if (areCounterMovesBlocked(ctx.G)) return;
   // Relocating damage counters is an attack EFFECT — a protected defender takes none of them,
   // and the donor keeps its own (nothing moved).
   if (attacker && isImmuneToOpponentAttackEffects(ctx.G, defender, attacker)) return;
