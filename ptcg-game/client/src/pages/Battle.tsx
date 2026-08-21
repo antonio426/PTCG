@@ -416,6 +416,10 @@ function PokemonCardView({
         ${onClick ? 'hover:-translate-y-1 focus-visible:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 focus-visible:outline-offset-2 rounded-xl' : ''} ${shake ? 'animate-shake' : ''}
         ${onClick && loading ? 'opacity-40 !cursor-not-allowed' : ''}`}
       onClick={onClick}
+      // A board Pokémon that is a legal click-target right now. Marked for the same reason the
+      // hand cards are: targeting is done by clicking the real card, so an automated pass has no
+      // other way to see that this is where the answer to a select_pokemon choice lives.
+      data-board-target={targetable ? card.id : undefined}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick && !loading ? 0 : undefined}
       onKeyDown={onClick ? keyActivate(onClick) : undefined}
@@ -1296,6 +1300,7 @@ export default function Battle() {
                 const drawMove = quickActions.find(m => m.type === 'draw_card');
                 if (drawMove) handleSubmitMove(drawMove);
               }}
+              data-move="draw_card"
               disabled={loading}
               className="px-8 py-4 bg-gradient-to-b from-emerald-500 to-emerald-700 text-white rounded-xl text-lg font-medium hover:from-emerald-400 hover:to-emerald-600 transition-colors shadow-lg shadow-emerald-950/50 ring-1 ring-inset ring-white/15 disabled:opacity-40 disabled:cursor-not-allowed"
             >
@@ -1637,6 +1642,10 @@ export default function Battle() {
                                     focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 focus-visible:outline-offset-2`}
                                   onClick={() => handleCardClick(hca.cardData.id)}
                                   role="button"
+                                  // Opens this card's action list (or plays it, when it has exactly
+                                  // one action). Not data-move — it may submit nothing at all — but
+                                  // the e2e harness has to be able to reach the hand.
+                                  data-hand-card={hca.cardData.id}
                                   tabIndex={loading ? -1 : 0}
                                   onKeyDown={keyActivate(() => handleCardClick(hca.cardData.id))}
                                 />
@@ -1816,6 +1825,10 @@ export default function Battle() {
                         focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 focus-visible:outline-offset-2`}
                       onClick={() => (handTargeting ? handleTargetClick(card.id) : handleCardClick(card.id))}
                       role="button"
+                      // The hand row answers select_hand_cards choices by clicking the cards
+                      // themselves (the server sends no options list for those), so it carries the
+                      // same marker as the playable-card row — see lib/battleMoves.ts.
+                      data-hand-card={isHandTarget || isCurrentlyPlayable ? card.id : undefined}
                       tabIndex={loading ? -1 : 0}
                       onKeyDown={keyActivate(() => (handTargeting ? handleTargetClick(card.id) : handleCardClick(card.id)))}
                       draggable={!loading && !handTargeting}

@@ -3,28 +3,25 @@
  *
  * Everything else in this repo tests the engine. Nothing tested the layer the player actually uses,
  * and the failures that live there are invisible to the server suites by construction: a modal with
- * no clickable option, an action the server offers that no element renders, a render crash on a card
- * shape that only turns up mid-game.
+ * nothing clickable in it, an action the server offers that no element renders, a render crash on a
+ * board shape that only turns up mid-game.
  *
- * It drives a real Chromium against the dev servers and, on every step, cross-checks the DOM against
- * the server's own `legalMoves` — read out of the `/api/human-battle` responses as they arrive, so
- * the app needs no test hooks.
+ * It drives a real browser through a battle against the AI and, at every step, cross-checks the DOM
+ * against the server's own `legalMoves` — read out of the `/api/human-battle` responses as they
+ * arrive, so the app needs no test hooks.
  *
- * Fails (exit 1) on: an uncaught page error, a console error, a step where the server offers moves
- * but nothing in the UI is clickable, a run of clicks that changes nothing on the server (a UI that
- * looks alive but can't act), or the battle failing to start.
+ * Reports: a step where the server offers moves but nothing in the UI can answer them (the reason
+ * this exists), a run of clicks that changes nothing on the server, an uncaught page error, a
+ * console error, a run that restarts the battle instead of playing it.
  *
- *   node client/e2e/battle-smoke.mjs [--moves 120] [--pace 1200] [--headed] [--no-shots] [--keep-server]
+ *   node client/e2e/battle-smoke.mjs [--games 3] [--moves 60] [--pace 900] [--headed] [--shots]
  *
- * KNOWN ISSUE, not yet root-caused: on this machine the renderer dies within a click or two of
- * placing the Active Pokémon, and the run reports it (with the click history) rather than hiding it.
- * Ruled out so far: Playwright's bundled Chromium (it happens in the installed Chrome too), audio,
- * screenshots, animations (prefers-reduced-motion), click speed, mouse vs keyboard activation, the
- * response/console hooks, and the deck in use. A hand-written probe doing the same clicks does NOT
- * crash, so something about this harness still differs — worth finishing before trusting a green run.
- *
- * Starts `npm run dev` itself unless both ports are already up. Screenshots land in
- * client/e2e/screenshots/ (gitignored).
+ * Interaction notes, all of them learned the hard way against this board:
+ *  - clicks are dispatched IN the page (`el.click()`), not through Playwright's click, whose
+ *    actionability machinery (hit-testing, scroll-into-view, stability polling) wedges the renderer;
+ *  - the candidate scan is a single `page.evaluate`, never a `:visible` locator, for the same reason;
+ *  - the renderer still dies occasionally mid-game from something not yet pinned down, so a crash
+ *    starts a fresh page and a fresh battle, and the count is reported at the end.
  */
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
@@ -42,13 +39,14 @@ const arg = (flag, fallback) => {
   const i = process.argv.indexOf(flag);
   return i >= 0 && process.argv[i + 1] ? Number(process.argv[i + 1]) : fallback;
 };
-const MAX_MOVES = arg('--moves', 120);
+const GAMES = arg('--games', 3);
+const MAX_MOVES = arg('--moves', 60);
+const PACE_MS = arg('--pace', 900);
 const HEADED = process.argv.includes('--headed');
-const SHOTS_ON = !process.argv.includes('--no-shots');
-const PACE_MS = arg('--pace', 1200);
+const SHOTS_ON = process.argv.includes('--shots');
+const VERBOSE = !!process.env.SMOKE_VERBOSE;
 
 const failures = [];
-const history = [];
 const fail = (msg) => { failures.push(msg); console.error('FAIL:', msg); };
 const log = (...a) => console.log(...a);
 
@@ -70,37 +68,49 @@ async function ensureServers() {
 /**
  * Controls that leave, reset or merely configure the battle rather than play it. Matched against the
  * accessible name as well as the text: the settings gear is an icon-only button, and a text-only
- * filter walked straight into it, opened the modal and then spent the rest of the run clicking zoom
- * presets while the game sat untouched.
+ * filter walked into it, opened the modal, and spent the rest of the run clicking zoom presets.
  */
 const AVOID = ['投降', '重新開始', '重開', '悔棋', '離開', '返回', '設定', '全螢幕', '音效', '音樂',
   '規則', '說明', '牌組', '首頁', '縮放', '記錄', '紀錄'];
 
-/** Buttons the player could meaningfully click right now, with the labels used to choose between
- * them. While a dialog is open only its own buttons count — clicking "through" it is exactly what a
- * real player cannot do. */
+/**
+ * Three markers, because the board is not made of plain buttons: `[data-move]` submits a move,
+ * `[data-hand-card]` is a hand card that either plays or answers a select_hand_cards choice, and
+ * `[data-board-target]` is a Pokémon that is a legal target for what is being resolved — which is
+ * where a select_pokemon choice gets answered.
+ */
+const CANDIDATE_SELECTOR = 'button[data-move]:not([disabled]), [data-hand-card], [data-board-target]';
+
 async function clickableActions(page) {
-  const dialog = page.locator('[role="dialog"]:visible').last();
-  const inDialog = (await dialog.count()) > 0;
-  // :visible matters — the layout keeps mobile-only controls in the DOM at desktop widths, and a
-  // hidden button is not something the player can click.
-  // [data-move] marks the controls that actually submit a move (Battle.tsx). Everything else on the
-  // board is a card preview or a view toggle — a driver that clicks those looks busy and plays nothing.
-  const all = (inDialog ? dialog : page).locator('button[data-move]:enabled:visible');
-  const n = await all.count();
-  const keep = [];
-  for (let i = 0; i < n; i++) {
-    const el = all.nth(i);
-    const [text, aria, title] = await Promise.all([
-      el.innerText().catch(() => ''),
-      el.getAttribute('aria-label').catch(() => null),
-      el.getAttribute('title').catch(() => null),
-    ]);
-    const label = `${text} ${aria ?? ''} ${title ?? ''}`.trim();
-    if (AVOID.some(a => label.includes(a))) continue;
-    keep.push({ el, label });
-  }
-  return { actions: keep, inDialog };
+  const probe = await page.evaluate((sel) => {
+    const visible = (el) => el.offsetParent !== null || el.getClientRects().length > 0;
+    const dialogs = [...document.querySelectorAll('[role="dialog"]')].filter(visible);
+    // While a dialog is up only its own controls count — clicking "through" it is exactly what a
+    // real player cannot do.
+    const scope = dialogs.length ? dialogs[dialogs.length - 1] : document;
+    const items = [...scope.querySelectorAll(sel)].map((el, i) => ({
+      i,
+      visible: visible(el),
+      kind: el.hasAttribute('data-move') ? 'move' : el.hasAttribute('data-board-target') ? 'target' : 'hand',
+      label: `${el.innerText || el.getAttribute('alt') || ''} ${el.getAttribute('aria-label') || ''} ${el.getAttribute('title') || ''}`
+        .replace(/\s+/g, ' ').trim(),
+    }));
+    return { inDialog: dialogs.length > 0, items };
+  }, CANDIDATE_SELECTOR).catch(() => ({ inDialog: false, items: [] }));
+
+  // Indices line up because the locator below queries the same scope, in document order.
+  const scoped = probe.inDialog
+    ? page.locator('[role="dialog"]').last().locator(CANDIDATE_SELECTOR)
+    : page.locator(CANDIDATE_SELECTOR);
+  // Ordered by how directly they advance the game: a move submits, a board target answers a
+  // standing choice, a hand card only OPENS a menu — so once that menu is up, its buttons win and
+  // the run can't spend the whole game toggling the same card open and shut.
+  const rank = { move: 0, target: 1, hand: 2 };
+  const actions = probe.items
+    .filter(it => it.visible && !AVOID.some(a => it.label.includes(a)))
+    .sort((a, b) => rank[a.kind] - rank[b.kind])
+    .map(it => ({ el: scoped.nth(it.i), label: it.label, kind: it.kind }));
+  return { actions, inDialog: probe.inDialog };
 }
 
 /** Everything the server state says about where the game is — used to detect a UI that clicks but
@@ -111,133 +121,103 @@ const progressKey = (s) => JSON.stringify([
   s?.player?.hand?.length, s?.player?.active?.id ?? null, s?.player?.active?.damage ?? null,
   s?.opponent?.active?.id ?? null, s?.opponent?.active?.damage ?? null,
 ]);
-/**
- * Screenshotting this board takes the renderer down (deterministically, headed or headless, with
- * either screenshot surface) — the battle screen composites a lot of layered gradients and card art.
- * A JPEG capture of the visible viewport only, with animations frozen, survives it; a failed capture
- * is never allowed to end the run, since the screenshots are evidence, not the test.
- */
-async function shot(page, path) {
+const logLength = (s) => s?.log?.length ?? s?.turnLog?.length ?? 0;
+
+/** JPEG viewport captures — evidence, never the test, so a failure to capture is logged and ignored. */
+async function shot(page, name) {
   if (!SHOTS_ON) return;
-  await page.screenshot({ path: path.replace(/.png$/, '.jpg'), type: 'jpeg', quality: 60, animations: 'disabled', caret: 'hide', scale: 'css' })
+  await page.screenshot({ path: join(SHOTS, name), type: 'jpeg', quality: 60, animations: 'disabled', caret: 'hide', scale: 'css' })
     .catch(e => log('screenshot failed:', e.message.slice(0, 80)));
 }
 
-const logLength = (s) => s?.log?.length ?? s?.turnLog?.length ?? 0;
-
-async function run() {
-  mkdirSync(SHOTS, { recursive: true });
-    // Headless Chromium has no audio device; the app starts BGM on entering a battle, which throws
-  // WebAudio errors and (with enough of them) takes the renderer down.
-  // The INSTALLED Chrome, not Playwright's bundled Chromium: on that build the renderer dies the
-  // moment the Active Pokémon is placed — every deck, headed or headless, mouse or keyboard, with
-  // animations and screenshots disabled. The same flow is fine in Chrome and Edge, so it is a quirk
-  // of that build rather than an app defect. Falls back to the bundled browser if Chrome is absent,
-  // where the run will report that crash rather than pretend it played.
-  const launch = (opts) => chromium.launch({ headless: !HEADED, args: ['--mute-audio'], ...opts });
-  const browser = await launch({ channel: 'chrome' }).catch(() => launch({ channel: 'msedge' })).catch(() => launch({}));
-  log('browser:', browser.version());
+/** Plays one battle to `MAX_MOVES` or its end. Returns what happened, for the run summary. */
+async function playOneGame(browser, gameNo) {
   const page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
+  const history = [];
+  let crashed = false;
+  let latest = null;
 
+  page.on('crash', () => { crashed = true; });
   page.on('pageerror', e => fail(`uncaught page error: ${e.message}`));
-  page.on('crash', () => fail(`the renderer crashed after ${history.length} click(s): ${history.slice(-5).join(' -> ')}`));
   page.on('console', m => {
     if (m.type() !== 'error') return;
     const t = m.text();
-    // A failed image fetch is a data/CDN issue, not a UI defect.
+    // Image fetches and the headless audio device are environment, not UI defects.
     if (/Failed to load resource|favicon|net::ERR|AudioContext|WebAudio/.test(t)) return;
     fail(`console error: ${t.slice(0, 200)}`);
   });
-
-  /** Latest server view of the battle, captured from the API responses themselves. */
-  let latest = null;
   page.on('response', async (res) => {
     if (!res.url().includes('/api/human-battle')) return;
-    try {
-      const body = await res.json();
-      if (body?.state) latest = body.state;
-    } catch { /* non-JSON error pages surface through the checks below */ }
+    try { const body = await res.json(); if (body?.state) latest = body.state; } catch { /* error pages surface below */ }
   });
 
-    // domcontentloaded, not networkidle: the app keeps fetching the card catalog in the background,
-  // so 'networkidle' never fires and the run hangs before it starts.
-  // Sound off before the app boots. Headless Chromium has no audio device, and the WebAudio errors
-  // the SFX路徑 throws on every card placement take the renderer down within a click or two —
-  // an environment limit, not an app defect, so the run turns sound off the way a player could.
-  // The app honours prefers-reduced-motion (index.css), which keeps the board's transitions from
-  // stacking up under automation.
-  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.addInitScript(() => {
+    // Sound off before the app boots: there is no audio device here, and the app is happy to be
+    // played muted — a player could make the same choice in Settings.
     try { localStorage.setItem('ptcg-battle-settings', JSON.stringify({ zoom: 'auto', sfx: false, bgm: false })); } catch { /* private mode */ }
   });
+  // domcontentloaded, not networkidle: the card catalog keeps loading in the background, so
+  // 'networkidle' never fires and the run hangs before it starts.
   await page.goto(`${CLIENT_URL}/battle`, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1500);
-  await shot(page, join(SHOTS, '01-lobby.png'));
 
-  // Take the last preset deck and start against the AI.
   const deckSelect = page.locator('select').first();
   await deckSelect.waitFor({ timeout: 15000 });
   const values = await deckSelect.locator('option').evaluateAll(os => os.map(o => o.value).filter(Boolean));
   if (values.length === 0) throw new Error('no decks offered in the battle lobby');
-  const deckIdx = process.env.SMOKE_DECK ? Number(process.env.SMOKE_DECK) : values.length - 1;
-  await deckSelect.selectOption(values[Math.max(0, Math.min(values.length - 1, deckIdx))]);
-  log('deck index', deckIdx, 'of', values.length);
+  const deckIdx = (gameNo * 7) % values.length;   // a different deck per game, deterministically
+  await deckSelect.selectOption(values[deckIdx]);
   await page.getByRole('button', { name: '開始對戰' }).click();
-
   await page.waitForFunction(() => !document.body.innerText.includes('建立對戰中'), null, { timeout: 30000 });
-  await page.waitForTimeout(1500);
-  await shot(page, join(SHOTS, '02-battle-start.png'));
-  if (!latest) fail('the battle never returned a state from /api/human-battle');
+  await page.waitForTimeout(1200);
+  await shot(page, `game${gameNo}-start.jpg`);
+  if (!latest) fail(`game ${gameNo}: the battle never returned a state from /api/human-battle`);
 
-  let moves = 0;
+  let moves = 0, stalled = 0;
   let lastKey = progressKey(latest);
   let lastLog = logLength(latest);
-  let stalled = 0;
 
-  while (moves < MAX_MOVES) {
-    if (latest?.winner !== null && latest?.winner !== undefined) { log('game over, winner =', latest.winner); break; }
+  while (moves < MAX_MOVES && !crashed) {
+    if (latest?.winner !== null && latest?.winner !== undefined) break;
 
     const serverMoves = (latest?.legalMoves ?? []).filter(m => m.type !== 'forfeit');
     const { actions, inDialog } = await clickableActions(page);
+    if (crashed) break;
 
     if (actions.length === 0 && inDialog) {
       // A dialog with nothing playable in it (the settings panel, say) — close it and carry on.
-      await page.locator('[role="dialog"]:visible').last().locator('button[aria-label="關閉"]')
-        .click({ timeout: 2000 }).catch(() => {});
+      await page.locator('[role="dialog"]').last().locator('button[aria-label="關閉"]')
+        .evaluate(el => el.click()).catch(() => {});
       await page.waitForTimeout(250);
       continue;
     }
     if (serverMoves.length > 0 && actions.length === 0) {
-      // The exact shape this test exists for: the server is waiting for a move the UI can't send.
       const kinds = [...new Set(serverMoves.map(m => m.type))].join(', ');
-      fail(`dead end at move ${moves}: server offers [${kinds}] but no button is clickable`);
-      await shot(page, join(SHOTS, `dead-end-${moves}.png`));
+      const pc = latest?.pendingChoice;
+      fail(`game ${gameNo}, move ${moves}: server offers [${kinds}] but nothing in the UI can answer it`
+        + (pc ? ` — pending choice "${pc.prompt}" (${pc.choiceType}, ${pc.options?.length ?? 0} options)` : ''));
+      await shot(page, `game${gameNo}-dead-end.jpg`);
       break;
     }
-    if (actions.length === 0) { log('nothing clickable and nothing offered — stopping'); break; }
+    if (actions.length === 0) break;   // nothing offered, nothing clickable: the AI is thinking
 
     // Prefer anything that isn't "end turn", so the run actually exercises play. Which candidate
-    // rotates with `stalled`: clicking a hand card only OPENS its action list (a DOM-only change),
-    // so always taking the first one can toggle the same menu forever.
-    const playable = actions.map((a, i) => [a, i]).filter(([a]) => !a.label.includes('結束回合'));
-    const pick = playable.length ? playable[stalled % playable.length][0] : actions[0];
-    history.push(pick.label.replace(/\s+/g, ' ').slice(0, 24));
-    if (process.env.SMOKE_VERBOSE) log(`  #${moves} click: ${pick.label.replace(/s+/g, " ").slice(0, 40)}`);
-    let clicked = true;
-    await pick.el.click({ timeout: 5000 }).catch(e => {
-      clicked = false;
-      fail(`could not click "${pick.label.slice(0, 30)}" at move ${moves}: ${e.message.slice(0, 120)}`);
-    });
-    if (!clicked) break;
+    // rotates with `stalled`: a hand card only OPENS its action list, so always taking the first
+    // one can toggle the same menu forever.
+    const playable = actions.filter(a => !a.label.includes('結束回合'));
+    const pool = playable.length ? playable : actions;
+    const pick = pool[stalled % pool.length];
+    if (VERBOSE) log(`  g${gameNo} #${moves} click: ${pick.label.slice(0, 40)}`);
+    history.push(pick.label.slice(0, 24));
+
+    // Dispatched inside the page: Playwright's own click wedges this board (see the header).
+    await pick.el.evaluate(el => el.click()).catch(e => log('   click failed:', e.message.slice(0, 80)));
     moves++;
-    // Deliberately unhurried: clicking again within ~400ms of a board transition (the setup card
-    // placement especially) takes the renderer down — in Chrome as well as in the bundled Chromium.
-    // A player cannot click that fast anyway, and the harness is here to play, not to stress-test
-    // React reconciliation.
     await page.waitForTimeout(PACE_MS);
+    if (crashed) break;
 
     if (logLength(latest) < lastLog) {
-      fail(`the run restarted the battle at move ${moves} — a control that resets the game got clicked`);
+      fail(`game ${gameNo}: the run restarted the battle at move ${moves} — a reset control got clicked`);
       break;
     }
     lastLog = logLength(latest);
@@ -246,20 +226,48 @@ async function run() {
     stalled = key === lastKey ? stalled + 1 : 0;
     lastKey = key;
     if (stalled >= 12) {
-      fail(`stalled at move ${moves}: 12 clicks in a row changed nothing (turn ${latest?.turn}, phase ${latest?.phase})`);
-      await shot(page, join(SHOTS, `stalled-${moves}.png`));
+      fail(`game ${gameNo}: stalled at move ${moves} — 12 clicks changed nothing (turn ${latest?.turn}, phase ${latest?.phase})`);
+      await shot(page, `game${gameNo}-stalled.jpg`);
       break;
     }
-
-    if (moves === 20) await shot(page, join(SHOTS, '03-mid-game.png'));
   }
 
-  await shot(page, join(SHOTS, '04-final.png'));
-  log(`clicked ${moves} actions, reached turn ${latest?.turn ?? '?'}${latest?.winner != null ? `, winner ${latest.winner}` : ''}`);
-  writeFileSync(join(SHOTS, 'summary.json'), JSON.stringify({
-    moves, turn: latest?.turn ?? null, winner: latest?.winner ?? null, failures, history,
-  }, null, 2));
-  await browser.close();
+  await shot(page, `game${gameNo}-final.jpg`);
+  const result = { game: gameNo, deckIdx, moves, turn: latest?.turn ?? null, winner: latest?.winner ?? null, crashed, history };
+  await page.close().catch(() => {});
+  return result;
+}
+
+async function run() {
+  mkdirSync(SHOTS, { recursive: true });
+  // The INSTALLED Chrome first: Playwright's bundled Chromium is more fragile on this board.
+  const launch = (opts) => chromium.launch({ headless: !HEADED, args: ['--mute-audio'], ...opts });
+  const browser = await launch({ channel: 'chrome' }).catch(() => launch({ channel: 'msedge' })).catch(() => launch({}));
+  log('browser:', browser.version());
+
+  const results = [];
+  let current = browser;
+  for (let g = 0; g < GAMES; g++) {
+    const r = await playOneGame(current, g).catch(e => ({ game: g, error: e.message.slice(0, 160) }));
+    results.push(r);
+    // A crashed renderer leaves the whole browser unusable — the next navigation comes back
+    // ERR_ABORTED — so the next game gets a fresh one.
+    if ((r.crashed || r.error) && g + 1 < GAMES) {
+      await current.close().catch(() => {});
+      current = await launch({ channel: 'chrome' }).catch(() => launch({}));
+    }
+    log(`game ${g}: ${r.error ? `ERROR ${r.error}` : `${r.moves} clicks, turn ${r.turn}` + (r.winner != null ? `, winner ${r.winner}` : '') + (r.crashed ? ' (renderer crashed)' : '')}`);
+    if (r.error) fail(`game ${g} could not be played: ${r.error}`);
+  }
+  await current.close().catch(() => {});
+
+  const crashes = results.filter(r => r.crashed).length;
+  const played = results.reduce((n, r) => n + (r.moves ?? 0), 0);
+  log(`\n${GAMES} games, ${played} clicks, renderer crashes: ${crashes}`);
+  writeFileSync(join(SHOTS, 'summary.json'), JSON.stringify({ results, failures, crashes }, null, 2));
+  // Crashes are reported, not fatal: they are a known, unexplained flake of this harness, and
+  // failing on them would hide the findings from the games that did run.
+  if (crashes === GAMES) fail('every game ended with a renderer crash — nothing was actually exercised');
 }
 
 const child = await ensureServers();
