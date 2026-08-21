@@ -1625,10 +1625,18 @@ export function applyAttackOutcome(
       }
     }
     if (genericOutcome.devolveOpponentToHandCount && !defenderEffectImmune) {
-      for (let i = 0; i < genericOutcome.devolveOpponentToHandCount; i++) {
+      const evolved = [opponent.active, ...opponent.bench].filter((c): c is GameCard => c !== null && (c.preEvolutions?.length ?? 0) > 0);
+      const asked = raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `選擇最多 ${genericOutcome.devolveOpponentToHandCount} 隻要退化的對手寶可夢`,
+        options: evolved.map(c => ({ id: c.id, label: c.cardData.name })),
+        minCount: 0,
+        maxCount: Math.min(genericOutcome.devolveOpponentToHandCount, evolved.length),
+        context: { kind: 'devolve_targets' },
+      });
+      for (let i = 0; !asked && i < genericOutcome.devolveOpponentToHandCount; i++) {
         const targets = [opponent.active, ...opponent.bench].filter((c): c is GameCard => c !== null && (c.preEvolutions?.length ?? 0) > 0);
         if (targets.length === 0) break;
-        const target = targets[Math.floor(Math.random() * targets.length)];
+        const target = targets[0];
         const stack = target.preEvolutions!;
         const prior = stack[stack.length - 1];
         prior.preEvolutions = stack.slice(0, -1);
@@ -1690,7 +1698,17 @@ export function applyAttackOutcome(
     if (genericOutcome.attachAllBasicEnergyFromHand || genericOutcome.attachNamedFromHandCount) {
       const targets = [player.active, ...player.bench].filter((c): c is GameCard => c !== null);
       const filter = genericOutcome.attachNamedFromHandCount;
-      let remaining = filter?.count ?? Infinity;
+      const fromHand = player.hand.filter(c => filter
+        ? c.cardData.name.includes(filter.name) && c.cardData.supertype === 'Energy'
+        : c.cardData.subtypes.includes('Basic Energy'));
+      const askedHand = targets.length > 0 && raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `從手牌選擇要附加的能量卡（接著逐張選擇對象）`,
+        options: fromHand.map(c => ({ id: c.id, label: c.cardData.name })),
+        minCount: 0,
+        maxCount: Math.min(filter?.count ?? fromHand.length, fromHand.length),
+        context: { kind: 'hand_attach_spread', phase: 'cards' },
+      });
+      let remaining = askedHand ? 0 : (filter?.count ?? Infinity);
       for (let i = player.hand.length - 1; i >= 0 && remaining > 0 && targets.length > 0; i--) {
         const c = player.hand[i];
         const eligible = filter
@@ -1720,8 +1738,15 @@ export function applyAttackOutcome(
     if (genericOutcome.koOpponentWithCountersAtLeast) {
       const { counters } = genericOutcome.koOpponentWithCountersAtLeast;
       const pool = [opponent.active, ...opponent.bench].filter((c): c is GameCard => c !== null && c.damage >= counters * 10);
-      const target = pool[Math.floor(Math.random() * pool.length)];
-      if (target) handleKo(G, 1 - G.currentPlayer, target.id, attacker);
+      if (!raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `選擇 1 隻要【昏厥】的對手寶可夢（身上有 ${counters} 個以上傷害指示物）`,
+        options: pool.map(c => ({ id: c.id, label: `${c.cardData.name}（${c.damage / 10} 個指示物）` })),
+        count: 1,
+        context: { kind: 'ko_target' },
+      })) {
+        const target = pool[0];
+        if (target) handleKo(G, 1 - G.currentPlayer, target.id, attacker);
+      }
     }
     if (genericOutcome.copyDefenderRandomAttack && opponent.active?.id === defender.id) {
       const candidates = (defender.cardData.attacks || []).filter(a => !/^[‌​\s]*\[特性\]/.test(a.name));
@@ -2268,10 +2293,21 @@ export function applyAttackOutcome(
       player.deck.push(...picked);
     }
     if (genericOutcome.shuffleRandomOpponentHandCardsIntoDeckCount) {
-      for (let i = 0; i < genericOutcome.shuffleRandomOpponentHandCardsIntoDeckCount && opponent.hand.length > 0; i++) {
-        opponent.deck.push(opponent.hand.splice(Math.floor(Math.random() * opponent.hand.length), 1)[0]);
+      const want = genericOutcome.shuffleRandomOpponentHandCardsIntoDeckCount;
+      // 「對手選擇對手自己的手牌」 — theirs to choose, and they do not reveal it to pick.
+      const opponentPicks = /對手選擇/.test(attack.text ?? '');
+      const asked = opponentPicks && raiseAttackPick(G, (1 - G.currentPlayer) as 0 | 1, {
+        prompt: `選擇 ${Math.min(want, opponent.hand.length)} 張自己的手牌放回牌庫`,
+        options: opponent.hand.map(c => ({ id: c.id, label: c.cardData.name })),
+        count: Math.min(want, opponent.hand.length),
+        context: { kind: 'hand_to_deck' },
+      });
+      if (!asked) {
+        for (let i = 0; i < want && opponent.hand.length > 0; i++) {
+          opponent.deck.push(opponent.hand.splice(Math.floor(Math.random() * opponent.hand.length), 1)[0]);
+        }
+        shuffleDeck(opponent.deck);
       }
-      shuffleDeck(opponent.deck);
     }
     if (genericOutcome.flipCoinsDiscardSelfEnergyByTailsCount) {
       for (let i = 0; i < genericOutcome.flipCoinsDiscardSelfEnergyByTailsCount && attacker.attachedEnergy.length > 0; i++) {

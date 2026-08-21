@@ -947,6 +947,66 @@ const rawMoves = {
             seat.hand.push(card);
           }
         }
+      } else if (kind === 'ko_target') {
+        const opp = G.players[(1 - chooser) as 0 | 1];
+        const target = [opp.active, ...opp.bench].find(c => c?.id === selection[0]);
+        if (target) handleKo(G, (1 - chooser) as 0 | 1, target.id, G.players[chooser].active ?? undefined);
+      } else if (kind === 'devolve_targets') {
+        const opp = G.players[(1 - chooser) as 0 | 1];
+        for (const id of selection) {
+          const target = [opp.active, ...opp.bench].find(c => c?.id === id);
+          const stack = target?.preEvolutions;
+          if (!target || !stack || stack.length === 0) continue;
+          const prior = stack[stack.length - 1];
+          prior.preEvolutions = stack.slice(0, -1);
+          prior.attachedEnergy = target.attachedEnergy;
+          prior.attachedTool = target.attachedTool;
+          prior.attachedTool2 = target.attachedTool2;
+          prior.damage = target.damage;
+          prior.statusConditions = [];
+          target.preEvolutions = undefined;
+          target.attachedEnergy = [];
+          target.attachedTool = null;
+          target.attachedTool2 = null;
+          target.damage = 0;
+          target.statusConditions = [];
+          opp.hand.push(target);
+          if (opp.active?.id === target.id) opp.active = prior;
+          else {
+            const bi = opp.bench.findIndex(c => c?.id === target.id);
+            if (bi >= 0) opp.bench[bi] = prior;
+          }
+          const hp = effectiveMaxHp(G, prior);
+          if (hp > 0 && prior.damage >= hp) handleKo(G, (1 - chooser) as 0 | 1, prior.id);
+        }
+      } else if (kind === 'hand_to_deck') {
+        for (const id of selection) {
+          const i = seat.hand.findIndex(c => c.id === id);
+          if (i >= 0) seat.deck.push(seat.hand.splice(i, 1)[0]);
+        }
+        shuffleDeck(seat.deck);
+      } else if (kind === 'hand_attach_spread') {
+        // Same two-phase walk as deck_attach_spread, sourced from hand.
+        const targets = [seat.active, ...seat.bench].filter((c): c is GameCard => c !== null);
+        const queue = context.phase === 'cards' ? [...selection] : (context.queue as string[]);
+        if (context.phase !== 'cards') {
+          const cardId = (context.queue as string[])[0];
+          const target = targets.find(c => c.id === selection[0]);
+          const hi = seat.hand.findIndex(c => c.id === cardId);
+          if (target && hi >= 0) target.attachedEnergy.push(asAttachedEnergy(seat.hand.splice(hi, 1)[0]));
+          queue.shift();
+        }
+        if (queue.length > 0 && targets.length > 0) {
+          const next = seat.hand.find(c => c.id === queue[0]);
+          G.pendingChoice = {
+            player: chooser, owner: chooser, effectKey: 'attack_pick',
+            prompt: `選擇要附加「${next?.cardData.name ?? '能量'}」的寶可夢`,
+            choiceType: 'select_pokemon', count: 1,
+            options: targets.map(c => ({ id: c.id, label: c.cardData.name })),
+            context: { kind: 'hand_attach_spread', phase: 'target', queue },
+          };
+          return;
+        }
       } else if (kind === 'discard_opponent_hand') {
         // The chooser is the attacker for 「查看對手的手牌…選擇」 and the DEFENDER for
         // 「對手選擇對手自己的1張手牌」, so the hand being emptied is always the opponent of whoever
