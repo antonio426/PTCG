@@ -38,7 +38,10 @@ function autoPickFields(): Set<string> {
       if (src[i] === '{') depth++;
       else if (src[i] === '}') { depth--; if (depth === 0) { end = i; break; } }
     }
-    if (/Math\.random\(\)/.test(src.slice(m.index, end))) found.add(m[1]);
+    const body = src.slice(m.index, end);
+    // A block that calls raiseAttackPick has been converted: it asks the player, and only falls
+    // back to picking when there is nothing to decide (no candidates, or a choice already up).
+    if (/Math\.random\(\)/.test(body) && !/raiseAttackPick\(/.test(body)) found.add(m[1]);
   }
   return found;
 }
@@ -46,7 +49,7 @@ function autoPickFields(): Set<string> {
 const AUTO = autoPickFields();
 const CHOOSES = /選擇/;
 /** 「隨機」 texts are supposed to be random; so are coin flips. */
-const REALLY_RANDOM = /隨機|不看正面/;
+const REALLY_RANDOM = /隨機|不看.{0,4}正面/;
 
 interface Row { key: string; id: string; prints: number; text: string; fields: string[] }
 const rows = new Map<string, Row>();

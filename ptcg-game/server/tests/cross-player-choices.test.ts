@@ -284,3 +284,59 @@ describe('attack picks: moving Energy already in play', () => {
     expect(G.phase).toBe('end');
   });
 });
+
+describe('attack picks: opponent hand and target selection', () => {
+  const mon = (name: string, hp: string, attacks: any[] = [], seat: 0 | 1 = 0) =>
+    makeGameCard(makeCard({ name, hp, subtypes: ['Basic'] as Subtype[], attacks }), seat);
+  const handCard = (id: string, name: string, seat: 0 | 1) =>
+    makeGameCard(makeCard({ id, name, supertype: 'Trainer', subtypes: ['Item'] as Subtype[] }), seat);
+
+  it('「查看對手的手牌」 lets the attacker pick, and says the hand is revealed', () => {
+    const atk = mon('偷窺者', '110', [{ name: '窺視', cost: ['Colorless'], convertedEnergyCost: 1, damage: '', text: '查看對手的手牌，從其中選擇1張卡，將其丟棄。' }]);
+    atk.attachedEnergy = [{ id: 'e1', type: 'Colorless' } as any];
+    const a = handCard('OH-1', '高級球', 1), b = handCard('OH-2', '寶可平板', 1);
+    const G = makeState({
+      turn: 3, currentPlayer: 0, phase: 'main',
+      players: [makePlayer({ active: atk }), makePlayer({ active: mon('沙包鼠', '150', [], 1), hand: [a, b] })],
+    });
+    moves.attack({ G, ctx: ctxFor(0) } as any, 0);
+    expect(G.pendingChoice!.player).toBe(0);
+    expect(G.pendingChoice!.revealsOpponentHand).toBe(true);
+    moves.resolveChoice({ G, ctx: ctxFor(0) } as any, [b.id]);
+    expect(G.players[1].hand.map(c => c.id)).toEqual([a.id]);
+    expect(G.players[1].discardPile.map(c => c.id)).toEqual([b.id]);
+  });
+
+  it('「對手選擇對手自己的1張手牌」 is answered by the opponent, unrevealed', () => {
+    const atk = mon('逼迫者', '110', [{ name: '逼棄', cost: ['Colorless'], convertedEnergyCost: 1, damage: '', text: '對手選擇1張對手自己的手牌，將其丟棄。' }]);
+    atk.attachedEnergy = [{ id: 'e1', type: 'Colorless' } as any];
+    const a = handCard('OH-3', '高級球', 1), b = handCard('OH-4', '寶可平板', 1);
+    const G = makeState({
+      turn: 3, currentPlayer: 0, phase: 'main',
+      players: [makePlayer({ active: atk }), makePlayer({ active: mon('沙包鼠', '150', [], 1), hand: [a, b] })],
+    });
+    moves.attack({ G, ctx: ctxFor(0) } as any, 0);
+    expect(G.pendingChoice!.player).toBe(1);
+    expect(G.pendingChoice!.revealsOpponentHand).toBeFalsy();
+    moves.resolveChoice({ G, ctx: ctxFor(1, 0) } as any, [a.id]);
+    expect(G.players[1].hand.map(c => c.id)).toEqual([b.id]);
+    expect(G.phase).toBe('end');
+  });
+
+  it('lets the attacker choose the target of a multi-pick damage attack', () => {
+    const atk = mon('奧利瓦ex', '260', [{ name: '油之機關槍', cost: ['Colorless'], convertedEnergyCost: 1, damage: '', text: '選擇6次對手的寶可夢，對所選的所有寶可夢不計算弱點・抵抗力，造成其選擇次數×20點傷害。（1隻可選擇2次以上。）' }]);
+    atk.attachedEnergy = [{ id: 'e1', type: 'Colorless' } as any];
+    const active = mon('主戰', '330', [], 1), bench = mon('備戰', '330', [], 1);
+    const G = makeState({
+      turn: 3, currentPlayer: 0, phase: 'main',
+      players: [makePlayer({ active: atk }), makePlayer({ active, bench: [bench, null, null, null, null] })],
+    });
+    moves.attack({ G, ctx: ctxFor(0) } as any, 0);
+    expect(G.pendingChoice!.options!.map(o => o.id).sort()).toEqual([active.id, bench.id].sort());
+    // The template collapses 「選擇6次…×20點」 into one 120-damage pick (a documented
+    // simplification — see genericAttacks.ts); what changed here is WHO picks the target.
+    moves.resolveChoice({ G, ctx: ctxFor(0) } as any, [bench.id]);
+    expect(bench.damage).toBe(120);
+    expect(active.damage).toBe(0);
+  });
+});

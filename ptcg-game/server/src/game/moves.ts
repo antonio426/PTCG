@@ -880,6 +880,53 @@ const rawMoves = {
           target.attachedEnergy.push(asAttachedEnergy(card, context.energyType as string | undefined));
         }
         shuffleDeck(seat.deck);
+      } else if (kind === 'discard_to_hand' || kind === 'discard_to_bench' || kind === 'discard_attach') {
+        // Recovery out of the discard pile. resetCardForReentry matters for the Pokémon cases:
+        // a card coming back into play must not carry the damage/attachments it died with.
+        const target = kind === 'discard_attach'
+          ? [seat.active, ...seat.bench].find(c => c?.id === context.targetId)
+          : undefined;
+        for (const id of selection) {
+          const i = seat.discardPile.findIndex(c => c.id === id);
+          if (i < 0) continue;
+          if (kind === 'discard_to_bench') {
+            const slot = seat.bench.findIndex(sl => sl === null);
+            if (slot === -1) break;
+            const card = seat.discardPile.splice(i, 1)[0];
+            resetCardForReentry(card, seat.discardPile);
+            seat.bench[slot] = card;
+          } else if (kind === 'discard_attach') {
+            if (!target) break;
+            target.attachedEnergy.push(asAttachedEnergy(seat.discardPile.splice(i, 1)[0]));
+          } else {
+            const card = seat.discardPile.splice(i, 1)[0];
+            if (card.cardData.supertype === 'Pokémon') resetCardForReentry(card, seat.discardPile);
+            seat.hand.push(card);
+          }
+        }
+      } else if (kind === 'discard_opponent_hand') {
+        // The chooser is the attacker for 「查看對手的手牌…選擇」 and the DEFENDER for
+        // 「對手選擇對手自己的1張手牌」, so the hand being emptied is always the opponent of whoever
+        // owns the attack — which is the seat that did NOT raise this when the defender answers.
+        const holder: PtcgPlayerState | undefined = G.players.find(pl => pl.hand.some(c => selection.includes(c.id)));
+        for (const id of selection) {
+          const idx = holder?.hand.findIndex(c => c.id === id) ?? -1;
+          if (holder && idx >= 0) holder.discardPile.push(holder.hand.splice(idx, 1)[0]);
+        }
+      } else if (kind === 'damage_targets') {
+        // 「1隻可選擇2次以上」 — a repeated id means repeated damage, so this counts occurrences
+        // rather than deduplicating, and KO-checks each Pokémon once at the end.
+        const amount = context.amount as number;
+        const opp = G.players[(1 - chooser) as 0 | 1];
+        const hits = new Map<string, number>();
+        for (const id of selection) hits.set(id, (hits.get(id) ?? 0) + 1);
+        for (const [id, times] of hits) {
+          const target = [opp.active, ...opp.bench].find(c => c?.id === id);
+          if (!target) continue;
+          target.damage += amount * times;
+          const hp = effectiveMaxHp(G, target);
+          if (hp > 0 && target.damage >= hp) handleKo(G, (1 - chooser) as 0 | 1, target.id);
+        }
       } else if (kind === 'move_energy') {
         // Two questions: which Energy, then where it goes. `side` says whose board is involved —
         // an attack can move the OPPONENT's Energy, with the attacker still making the call.

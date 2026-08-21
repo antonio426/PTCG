@@ -183,7 +183,15 @@ export function buildAttackBoard(
 function raiseAttackPick(
   G: PtcgGameState,
   seat: 0 | 1,
-  opts: { prompt: string; options: { id: string; label: string }[]; count?: number; minCount?: number; maxCount?: number; context: Record<string, unknown> },
+  opts: {
+    prompt: string;
+    options: { id: string; label: string }[];
+    count?: number; minCount?: number; maxCount?: number;
+    /** Only for choices whose options are the OPPONENT's hand cards, and only when the text says
+     * the hand is revealed — see PendingChoice.revealsOpponentHand. */
+    revealsOpponentHand?: boolean;
+    context: Record<string, unknown>;
+  },
 ): boolean {
   if (G.pendingChoice || opts.options.length === 0) return false;
   G.pendingChoice = {
@@ -196,6 +204,7 @@ function raiseAttackPick(
     minCount: opts.minCount,
     maxCount: opts.maxCount,
     options: opts.options,
+    revealsOpponentHand: opts.revealsOpponentHand,
     context: opts.context,
   };
   return true;
@@ -587,8 +596,26 @@ export function applyAttackOutcome(
       millDeck(G, (1 - G.currentPlayer) as 0 | 1, genericOutcome.millOpponentDeckCount, true);
     }
     if (genericOutcome.discardRandomOpponentHandCount) {
-      for (let i = 0; i < genericOutcome.discardRandomOpponentHandCount && opponent.hand.length > 0; i++) {
-        opponent.discardPile.push(opponent.hand.splice(Math.floor(Math.random() * opponent.hand.length), 1)[0]);
+      const count = genericOutcome.discardRandomOpponentHandCount;
+      // Three different printings end up here and they are NOT the same effect:
+      //   「查看對手的手牌，從其中選擇…」 — the attacker sees the hand and picks;
+      //   「對手選擇對手自己的1張手牌」  — the opponent picks, from their own hand;
+      //   「在不看正面的情況下…」        — genuinely blind, so random is correct and it stays below.
+      const opponentPicks = /對手選擇/.test(attack.text ?? '');
+      const attackerSees = /查看對手的手牌/.test(attack.text ?? '');
+      const seat = opponentPicks ? ((1 - G.currentPlayer) as 0 | 1) : (G.currentPlayer as 0 | 1);
+      const asks = (opponentPicks || attackerSees) && raiseAttackPick(G, seat, {
+        prompt: opponentPicks ? `選擇自己要丟棄的 ${count} 張手牌` : `從對手的手牌選擇 ${count} 張丟棄`,
+        options: opponent.hand.map(c => ({ id: c.id, label: c.cardData.name })),
+        count: Math.min(count, opponent.hand.length),
+        // The attacker only gets to see the hand when the card says so.
+        revealsOpponentHand: attackerSees,
+        context: { kind: 'discard_opponent_hand' },
+      });
+      if (!asks) {
+        for (let i = 0; i < count && opponent.hand.length > 0; i++) {
+          opponent.discardPile.push(opponent.hand.splice(Math.floor(Math.random() * opponent.hand.length), 1)[0]);
+        }
       }
     }
     if (genericOutcome.shuffleRandomOpponentHandCardIntoDeck && opponent.hand.length > 0) {
@@ -770,31 +797,33 @@ export function applyAttackOutcome(
     }
     if (genericOutcome.deckSearchToolToHand) {
       const matches = player.deck.filter(c => c.cardData.subtypes.includes('Pokémon Tool'));
-      if (matches.length > 0) {
-        const pick = matches[Math.floor(Math.random() * matches.length)];
-        const deckIdx = player.deck.findIndex(c => c.id === pick.id);
-        if (deckIdx >= 0) player.hand.push(player.deck.splice(deckIdx, 1)[0]);
-      }
-      shuffleDeck(player.deck);
+      if (!raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: '從牌庫選擇 1 張寶可夢道具卡加入手牌',
+        options: matches.map(c => ({ id: c.id, label: c.cardData.name })),
+        count: 1,
+        context: { kind: 'deck_to_hand' },
+      })) shuffleDeck(player.deck);
     }
     if (genericOutcome.deckSearchTypedPokemonOrEnergyToHand) {
       const { type, count } = genericOutcome.deckSearchTypedPokemonOrEnergyToHand;
       const eligible = player.deck.filter(c =>
         (c.cardData.supertype === 'Pokémon' && (c.cardData.types || []).includes(type as any)) ||
         (c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes(type as any)));
-      for (let n = 0; n < count && eligible.length > 0; n++) {
-        const pick = eligible.splice(Math.floor(Math.random() * eligible.length), 1)[0];
-        const i = player.deck.findIndex(c => c.id === pick.id);
-        if (i >= 0) player.hand.push(player.deck.splice(i, 1)[0]);
-      }
-      shuffleDeck(player.deck);
+      if (!raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `從牌庫選擇最多 ${count} 張卡加入手牌`,
+        options: eligible.map(c => ({ id: c.id, label: c.cardData.name })),
+        minCount: 0,
+        maxCount: Math.min(count, eligible.length),
+        context: { kind: 'deck_to_hand' },
+      })) shuffleDeck(player.deck);
     }
     if (genericOutcome.deckSearchAnyCardToHand) {
-      if (player.deck.length > 0) {
-        const i = Math.floor(Math.random() * player.deck.length);
-        player.hand.push(player.deck.splice(i, 1)[0]);
-      }
-      shuffleDeck(player.deck);
+      if (!raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: '從牌庫任意選擇 1 張卡加入手牌',
+        options: player.deck.map(c => ({ id: c.id, label: c.cardData.name })),
+        count: 1,
+        context: { kind: 'deck_to_hand' },
+      })) shuffleDeck(player.deck);
     }
     if (genericOutcome.discardEnergyToOwnBench) {
       const { type, count } = genericOutcome.discardEnergyToOwnBench;
@@ -852,36 +881,44 @@ export function applyAttackOutcome(
     }
     if (genericOutcome.discardPileSearchPokemonToHandCount) {
       const matches = player.discardPile.filter(c => c.cardData.supertype === 'Pokémon');
-      let remaining = genericOutcome.discardPileSearchPokemonToHandCount;
-      while (remaining > 0 && matches.length > 0) {
-        const pick = matches.splice(Math.floor(Math.random() * matches.length), 1)[0];
-        const i = player.discardPile.findIndex(c => c.id === pick.id);
-        if (i >= 0) {
-          const card = player.discardPile.splice(i, 1)[0];
-          resetCardForReentry(card, player.discardPile);
-          player.hand.push(card);
+      const want = genericOutcome.discardPileSearchPokemonToHandCount;
+      if (!raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `從棄牌區選擇最多 ${want} 張寶可夢卡加入手牌`,
+        options: matches.map(c => ({ id: c.id, label: c.cardData.name })),
+        minCount: 0,
+        maxCount: Math.min(want, matches.length),
+        context: { kind: 'discard_to_hand' },
+      })) {
+        let remaining = want;
+        while (remaining > 0 && matches.length > 0) {
+          const pick = matches.splice(0, 1)[0];
+          const i = player.discardPile.findIndex(c => c.id === pick.id);
+          if (i >= 0) {
+            const card = player.discardPile.splice(i, 1)[0];
+            resetCardForReentry(card, player.discardPile);
+            player.hand.push(card);
+          }
+          remaining--;
         }
-        remaining--;
       }
     }
     if (genericOutcome.discardPileSearchSupporterToHand) {
       const matches = player.discardPile.filter(c => c.cardData.subtypes.includes('Supporter'));
-      if (matches.length > 0) {
-        const pick = matches[Math.floor(Math.random() * matches.length)];
-        const i = player.discardPile.findIndex(c => c.id === pick.id);
-        if (i >= 0) player.hand.push(player.discardPile.splice(i, 1)[0]);
-      }
+      raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: '從棄牌區選擇 1 張支援者卡加入手牌',
+        options: matches.map(c => ({ id: c.id, label: c.cardData.name })),
+        count: 1,
+        context: { kind: 'discard_to_hand' },
+      });
     }
     if (genericOutcome.discardPileSearchAnyEnergyToSelf) {
       const matches = player.discardPile.filter(c => c.cardData.supertype === 'Energy');
-      if (matches.length > 0) {
-        const pick = matches[Math.floor(Math.random() * matches.length)];
-        const i = player.discardPile.findIndex(c => c.id === pick.id);
-        if (i >= 0) {
-          const energy = player.discardPile.splice(i, 1)[0];
-          attacker.attachedEnergy.push(asAttachedEnergy(energy));
-        }
-      }
+      raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: '從棄牌區選擇 1 張能量卡，附於這隻寶可夢身上',
+        options: matches.map(c => ({ id: c.id, label: c.cardData.name })),
+        count: 1,
+        context: { kind: 'discard_attach', targetId: attacker.id },
+      });
     }
     if (genericOutcome.millOwnDeckCount) {
       for (let i = 0; i < genericOutcome.millOwnDeckCount && player.deck.length > 0; i++) {
@@ -921,19 +958,14 @@ export function applyAttackOutcome(
     if (genericOutcome.discardPileSearchFamilyToBenchCount) {
       const { name, count } = genericOutcome.discardPileSearchFamilyToBenchCount;
       const matches = player.discardPile.filter(c => c.cardData.supertype === 'Pokémon' && c.cardData.name.includes(name));
-      let remaining = count;
-      while (remaining > 0 && matches.length > 0) {
-        const slot = player.bench.findIndex(s => s === null);
-        if (slot === -1) break;
-        const pick = matches.splice(Math.floor(Math.random() * matches.length), 1)[0];
-        const i = player.discardPile.findIndex(c => c.id === pick.id);
-        if (i >= 0) {
-          const card = player.discardPile.splice(i, 1)[0];
-          resetCardForReentry(card, player.discardPile);
-          player.bench[slot] = card;
-        }
-        remaining--;
-      }
+      const freeSlots = player.bench.filter(sl => sl === null).length;
+      raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `從棄牌區選擇最多 ${Math.min(count, freeSlots)} 張「${name}」放上備戰區`,
+        options: matches.map(c => ({ id: c.id, label: c.cardData.name })),
+        minCount: 0,
+        maxCount: Math.min(count, matches.length, freeSlots),
+        context: { kind: 'discard_to_bench' },
+      });
     }
     if (genericOutcome.cureAllSelfStatus) {
       attacker.statusConditions = [];
@@ -947,11 +979,18 @@ export function applyAttackOutcome(
       const { type, count } = genericOutcome.deckSearchTypedEnergyToOwnPokemonCount;
       const matches = player.deck.filter(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes(type as any));
       const ownTargets = [player.active, ...player.bench].filter((c): c is GameCard => c !== null);
-      if (matches.length > 0 && ownTargets.length > 0) {
-        const target = ownTargets[Math.floor(Math.random() * ownTargets.length)];
+      const askedTyped = ownTargets.length > 0 && raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `從牌庫選擇最多 ${count} 張能量卡（接著逐張選擇附加對象）`,
+        options: matches.map(c => ({ id: c.id, label: c.cardData.name })),
+        minCount: 0,
+        maxCount: Math.min(count, matches.length),
+        context: { kind: 'deck_attach_spread', phase: 'cards' },
+      });
+      if (!askedTyped && matches.length > 0 && ownTargets.length > 0) {
+        const target = ownTargets[0];
         let remaining = count;
         while (remaining > 0 && matches.length > 0) {
-          const pick = matches.splice(Math.floor(Math.random() * matches.length), 1)[0];
+          const pick = matches.splice(0, 1)[0];
           const deckIdx = player.deck.findIndex(c => c.id === pick.id);
           if (deckIdx >= 0) {
             player.deck.splice(deckIdx, 1);
@@ -1003,14 +1042,13 @@ export function applyAttackOutcome(
     if (genericOutcome.deckSearchTypedPokemonToHandCount) {
       const { type, count } = genericOutcome.deckSearchTypedPokemonToHandCount;
       const matches = player.deck.filter(c => c.cardData.supertype === 'Pokémon' && (c.cardData.types || []).includes(type as any));
-      let remaining = count;
-      while (remaining > 0 && matches.length > 0) {
-        const pick = matches.splice(Math.floor(Math.random() * matches.length), 1)[0];
-        const deckIdx = player.deck.findIndex(c => c.id === pick.id);
-        if (deckIdx >= 0) player.hand.push(player.deck.splice(deckIdx, 1)[0]);
-        remaining--;
-      }
-      shuffleDeck(player.deck);
+      if (!raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `從牌庫選擇最多 ${count} 張該屬性的寶可夢卡加入手牌`,
+        options: matches.map(c => ({ id: c.id, label: c.cardData.name })),
+        minCount: 0,
+        maxCount: Math.min(count, matches.length),
+        context: { kind: 'deck_to_hand' },
+      })) shuffleDeck(player.deck);
     }
     if (genericOutcome.damageToEachDamagedOpponentAmount) {
       const benchBlocked = benchDamageFromEffectsBlocked(G);
@@ -1029,11 +1067,20 @@ export function applyAttackOutcome(
       const { count, amount } = genericOutcome.multiTargetOpponentFlatDamage;
       const benchBlocked = benchDamageFromEffectsBlocked(G);
       const pool = (benchBlocked ? [opponent.active] : [opponent.active, ...opponent.bench]).filter((c): c is GameCard => c !== null);
-      const picked = [...pool].sort(() => Math.random() - 0.5).slice(0, count);
-      for (const target of picked) {
-        target.damage += amount;
-        const hp = effectiveMaxHp(G, target);
-        if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id, attacker);
+      // 「（1隻可選擇2次以上。）」 — repeats are allowed, so the same Pokémon may be named more than
+      // once; the resolution below counts how often each id appears rather than deduplicating.
+      if (!raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `選擇 ${count} 次對手的寶可夢（每次各 ${amount} 點傷害）`,
+        options: pool.map(c => ({ id: c.id, label: c.cardData.name })),
+        minCount: 0,
+        maxCount: Math.min(count, pool.length),
+        context: { kind: 'damage_targets', amount, repeats: count },
+      })) {
+        for (const target of [...pool].sort(() => Math.random() - 0.5).slice(0, count)) {
+          target.damage += amount;
+          const hp = effectiveMaxHp(G, target);
+          if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id, attacker);
+        }
       }
     }
     if (genericOutcome.randomOpponentHandCardToDeckBottom && opponent.hand.length > 0) {
@@ -1138,10 +1185,18 @@ export function applyAttackOutcome(
       const blocked = benchDamageFromEffectsBlocked(G);
       const pool = (benchOnly ? (blocked ? [] : opponent.bench) : (blocked ? [opponent.active] : [opponent.active, ...opponent.bench]))
         .filter((c): c is GameCard => c !== null && c.cardData.name.includes(name));
-      for (const target of [...pool].sort(() => Math.random() - 0.5).slice(0, count)) {
-        target.damage += amount;
-        const hp = effectiveMaxHp(G, target);
-        if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id, attacker);
+      if (!raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `選擇最多 ${count} 隻對手的寶可夢，各受到 ${amount} 點傷害`,
+        options: pool.map(c => ({ id: c.id, label: c.cardData.name })),
+        minCount: 0,
+        maxCount: Math.min(count, pool.length),
+        context: { kind: 'damage_targets', amount, repeats: count },
+      })) {
+        for (const target of [...pool].sort(() => Math.random() - 0.5).slice(0, count)) {
+          target.damage += amount;
+          const hp = effectiveMaxHp(G, target);
+          if (hp > 0 && target.damage >= hp) handleKo(G, 1 - G.currentPlayer, target.id, attacker);
+        }
       }
     }
     if (genericOutcome.moveNamedBenchDamageToDefender && !defenderEffectImmune) {
