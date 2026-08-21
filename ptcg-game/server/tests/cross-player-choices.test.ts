@@ -214,3 +214,43 @@ describe('attack picks: deck attach and deck evolve', () => {
     expect(G2.players[0].active!.id).toBe(only.id);
   });
 });
+
+describe('attack picks: 「以任意方式」 attaches ask per card', () => {
+  it('walks one destination choice per chosen Energy, then ends the turn', () => {
+    const atk = makeGameCard(makeCard({
+      name: '風妖精ex', hp: '260', subtypes: ['Basic'] as Subtype[],
+      attacks: [{ name: '能量之禮', cost: ['Colorless'], convertedEnergyCost: 1, damage: '', text: '從自己的牌庫選擇最多3張基本能量卡，以任意方式附於自己的寶可夢身上。並且重洗牌庫。' }],
+    }), 0);
+    atk.attachedEnergy = [{ id: 'e0', type: 'Colorless' } as any];
+    const benched = makeGameCard(makeCard({ name: '備戰', hp: '90', subtypes: ['Basic'] as Subtype[] }), 0);
+    const en = (id: string) => makeGameCard(makeCard({ id, name: '基本草能量', supertype: 'Energy', subtypes: ['Basic Energy'] as Subtype[], types: ['Grass'] }), 0);
+    const g1 = en('G1'), g2 = en('G2');
+    const G = makeState({
+      turn: 3, currentPlayer: 0, phase: 'main',
+      players: [
+        makePlayer({ active: atk, bench: [benched, null, null, null, null], deck: [g1, g2] }),
+        makePlayer({ active: makeGameCard(makeCard({ name: '沙包鼠', hp: '150', subtypes: ['Basic'] as Subtype[] }), 1) }),
+      ],
+    });
+
+    moves.attack({ G, ctx: ctxFor(0) } as any, 0);
+    expect(G.pendingChoice!.context.phase).toBe('cards');
+    moves.resolveChoice({ G, ctx: ctxFor(0) } as any, [g1.id, g2.id]);
+
+    // First destination question, for the first chosen card.
+    expect(G.pendingChoice!.context.phase).toBe('target');
+    expect(G.pendingChoice!.options!.map(o => o.id).sort()).toEqual([atk.id, benched.id].sort());
+    moves.resolveChoice({ G, ctx: ctxFor(0) } as any, [benched.id]);
+
+    // Second card, second question — the turn is still open.
+    expect(G.pendingChoice!.context.phase).toBe('target');
+    expect(G.phase).not.toBe('end');
+    moves.resolveChoice({ G, ctx: ctxFor(0) } as any, [atk.id]);
+
+    expect(benched.attachedEnergy.map(e => e.id)).toEqual([g1.id]);
+    expect(atk.attachedEnergy.map(e => e.id)).toEqual(['e0', g2.id]);
+    expect(G.players[0].deck).toHaveLength(0);
+    expect(G.pendingChoice).toBeNull();
+    expect(G.phase).toBe('end');
+  });
+});

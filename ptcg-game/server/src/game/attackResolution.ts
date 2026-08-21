@@ -725,19 +725,16 @@ export function applyAttackOutcome(
     }
     if (genericOutcome.deckSearchBasicEnergyToOwnPokemonCount) {
       const matches = player.deck.filter(c => c.cardData.subtypes.includes('Basic Energy'));
-      const ownTargets = [player.active, ...player.bench].filter((c): c is GameCard => c !== null);
-      if (matches.length > 0 && ownTargets.length > 0) {
-        const target = ownTargets[Math.floor(Math.random() * ownTargets.length)];
-        let remaining = genericOutcome.deckSearchBasicEnergyToOwnPokemonCount;
-        while (remaining > 0 && matches.length > 0) {
-          const pick = matches.splice(Math.floor(Math.random() * matches.length), 1)[0];
-          const deckIdx = player.deck.findIndex(c => c.id === pick.id);
-          if (deckIdx >= 0) target.attachedEnergy.push(asAttachedEnergy(pick));
-          if (deckIdx >= 0) player.deck.splice(deckIdx, 1);
-          remaining--;
-        }
-      }
-      shuffleDeck(player.deck);
+      const want = genericOutcome.deckSearchBasicEnergyToOwnPokemonCount;
+      // 「以任意方式」 means each card can land on a different Pokémon, so the pick is two-phase:
+      // the cards here, then one destination per card as each is resolved (see 'deck_attach_spread').
+      if (!raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `從牌庫選擇最多 ${want} 張基本能量卡（接著逐張選擇附加對象）`,
+        options: matches.map(c => ({ id: c.id, label: c.cardData.name })),
+        minCount: 0,
+        maxCount: Math.min(want, matches.length),
+        context: { kind: 'deck_attach_spread', phase: 'cards' },
+      })) shuffleDeck(player.deck);
     }
     if (genericOutcome.deckSearchTypedEnergyToSelfCount) {
       const { type, count } = genericOutcome.deckSearchTypedEnergyToSelfCount;
@@ -839,14 +836,14 @@ export function applyAttackOutcome(
     }
     if (genericOutcome.deckSearchPokemonToHandCount) {
       const matches = player.deck.filter(c => c.cardData.supertype === 'Pokémon');
-      let remaining = genericOutcome.deckSearchPokemonToHandCount;
-      while (remaining > 0 && matches.length > 0) {
-        const pick = matches.splice(Math.floor(Math.random() * matches.length), 1)[0];
-        const deckIdx = player.deck.findIndex(c => c.id === pick.id);
-        if (deckIdx >= 0) player.hand.push(player.deck.splice(deckIdx, 1)[0]);
-        remaining--;
-      }
-      shuffleDeck(player.deck);
+      const want = genericOutcome.deckSearchPokemonToHandCount;
+      if (!raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `從牌庫選擇最多 ${want} 張寶可夢卡加入手牌`,
+        options: matches.map(c => ({ id: c.id, label: c.cardData.name })),
+        minCount: 0,
+        maxCount: Math.min(want, matches.length),
+        context: { kind: 'deck_to_hand' },
+      })) shuffleDeck(player.deck);
     }
     if (genericOutcome.discardPileSearchPokemonToHandCount) {
       const matches = player.discardPile.filter(c => c.cardData.supertype === 'Pokémon');
@@ -896,28 +893,25 @@ export function applyAttackOutcome(
     if (genericOutcome.deckSearchFamilyToHandCount) {
       const { name, count } = genericOutcome.deckSearchFamilyToHandCount;
       const matches = player.deck.filter(c => c.cardData.supertype === 'Pokémon' && c.cardData.name.includes(name));
-      let remaining = count;
-      while (remaining > 0 && matches.length > 0) {
-        const pick = matches.splice(Math.floor(Math.random() * matches.length), 1)[0];
-        const deckIdx = player.deck.findIndex(c => c.id === pick.id);
-        if (deckIdx >= 0) player.hand.push(player.deck.splice(deckIdx, 1)[0]);
-        remaining--;
-      }
-      shuffleDeck(player.deck);
+      if (!raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `從牌庫選擇最多 ${count} 張「${name}」加入手牌`,
+        options: matches.map(c => ({ id: c.id, label: c.cardData.name })),
+        minCount: 0,
+        maxCount: Math.min(count, matches.length),
+        context: { kind: 'deck_to_hand' },
+      })) shuffleDeck(player.deck);
     }
     if (genericOutcome.deckSearchFamilyToBenchCount) {
       const { name, count } = genericOutcome.deckSearchFamilyToBenchCount;
       const matches = player.deck.filter(c => c.cardData.supertype === 'Pokémon' && c.cardData.name.includes(name));
-      let remaining = count;
-      while (remaining > 0 && matches.length > 0) {
-        const slot = player.bench.findIndex(s => s === null);
-        if (slot === -1) break;
-        const pick = matches.splice(Math.floor(Math.random() * matches.length), 1)[0];
-        const deckIdx = player.deck.findIndex(c => c.id === pick.id);
-        if (deckIdx >= 0) player.bench[slot] = player.deck.splice(deckIdx, 1)[0];
-        remaining--;
-      }
-      shuffleDeck(player.deck);
+      const freeSlots = player.bench.filter(s => s === null).length;
+      if (!raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `從牌庫選擇最多 ${Math.min(count, freeSlots)} 張「${name}」放上備戰區`,
+        options: matches.map(c => ({ id: c.id, label: c.cardData.name })),
+        minCount: 0,
+        maxCount: Math.min(count, matches.length, freeSlots),
+        context: { kind: 'deck_to_bench' },
+      })) shuffleDeck(player.deck);
     }
     if (genericOutcome.discardPileSearchFamilyToBenchCount) {
       const { name, count } = genericOutcome.discardPileSearchFamilyToBenchCount;
@@ -1106,15 +1100,14 @@ export function applyAttackOutcome(
     if (genericOutcome.deckSearchNamedEnergyAttachCount) {
       const { name, count, benchOnly } = genericOutcome.deckSearchNamedEnergyAttachCount;
       const pool = (benchOnly ? player.bench : [player.active, ...player.bench]).filter((c): c is GameCard => c !== null);
-      if (pool.length > 0) {
-        for (let i = 0; i < count; i++) {
-          const di = player.deck.findIndex(c => c.cardData.name.includes(name) && c.cardData.supertype === 'Energy');
-          if (di === -1) break;
-          const [card] = player.deck.splice(di, 1);
-          pool[Math.floor(Math.random() * pool.length)].attachedEnergy.push(asAttachedEnergy(card));
-        }
-      }
-      shuffleDeck(player.deck);
+      const matches = player.deck.filter(c => c.cardData.supertype === 'Energy' && c.cardData.name.includes(name));
+      if (pool.length === 0 || !raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `從牌庫選擇最多 ${count} 張「${name}」（接著逐張選擇附加對象）`,
+        options: matches.map(c => ({ id: c.id, label: c.cardData.name })),
+        minCount: 0,
+        maxCount: Math.min(count, matches.length),
+        context: { kind: 'deck_attach_spread', phase: 'cards', benchOnly: benchOnly === true },
+      })) shuffleDeck(player.deck);
     }
     if (genericOutcome.deckSearchAnyCardsToHandCount) {
       const want = genericOutcome.deckSearchAnyCardsToHandCount;

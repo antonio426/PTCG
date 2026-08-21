@@ -880,6 +880,33 @@ const rawMoves = {
           target.attachedEnergy.push(asAttachedEnergy(card, context.energyType as string | undefined));
         }
         shuffleDeck(seat.deck);
+      } else if (kind === 'deck_attach_spread') {
+        // 「以任意方式附於自己的寶可夢身上」: the cards are chosen first, then a destination for each
+        // one in turn, since they may land on different Pokémon. The cards stay in the deck until
+        // their own destination is answered — parking them in the choice's context would put real
+        // cards in no zone at all, which the card-conservation invariant counts as lost.
+        const targets = [seat.active, ...seat.bench].filter((c): c is GameCard => c !== null)
+          .filter(c => !context.benchOnly || seat.active?.id !== c.id);
+        const queue = context.phase === 'cards' ? [...selection] : (context.queue as string[]);
+        if (context.phase !== 'cards') {
+          const cardId = (context.queue as string[])[0];
+          const target = targets.find(c => c.id === selection[0]);
+          const deckIdx = seat.deck.findIndex(c => c.id === cardId);
+          if (target && deckIdx >= 0) target.attachedEnergy.push(asAttachedEnergy(seat.deck.splice(deckIdx, 1)[0]));
+          queue.shift();
+        }
+        if (queue.length > 0 && targets.length > 0) {
+          const next = seat.deck.find(c => c.id === queue[0]);
+          G.pendingChoice = {
+            player: chooser, owner: chooser, effectKey: 'attack_pick',
+            prompt: `選擇要附加「${next?.cardData.name ?? '能量'}」的寶可夢`,
+            choiceType: 'select_pokemon', count: 1,
+            options: targets.map(c => ({ id: c.id, label: c.cardData.name })),
+            context: { kind: 'deck_attach_spread', phase: 'target', queue, benchOnly: context.benchOnly },
+          };
+          return;   // more to answer: the turn stays open
+        }
+        shuffleDeck(seat.deck);
       } else if (kind === 'deck_evolve') {
         const target = [seat.active, ...seat.bench].find(c => c?.id === context.targetId);
         const deckIdx = seat.deck.findIndex(c => c.id === selection[0]);
