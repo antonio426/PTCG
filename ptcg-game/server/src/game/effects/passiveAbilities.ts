@@ -176,9 +176,12 @@ export function getOutgoingDamageReduction(G: PtcgGameState, attacker: GameCard)
 export function isNamedAttackLockedByTimedEffect(G: PtcgGameState, card: GameCard, attackName: string): boolean {
   return !!card.timedEffects?.some(e => e.kind === 'namedAttackLock' && e.appliesOnTurn === G.turn && e.attackName === attackName);
 }
-/** Consumes (and returns whether present) a "next attack has a 50% chance to fail" timed debuff. */
-export function hasCoinFlipAttackMissDebuff(G: PtcgGameState, card: GameCard): boolean {
-  return hasTimedEffect(G, card, 'coinFlipAttackMiss');
+/** How many coins that debuff makes the attacker flip (any tails fails the attack). Cards print
+ * either one coin or two — 「對手擲2次硬幣。只要出現1次反面」 is a 75% miss, so collapsing it to one
+ * coin would have halved the effect the card is paying for. 0 = no debuff. */
+export function getCoinFlipAttackMissCoins(G: PtcgGameState, card: GameCard): number {
+  const e = card.timedEffects?.find(x => x.kind === 'coinFlipAttackMiss' && x.appliesOnTurn === G.turn);
+  return e ? (e.coins ?? 1) : 0;
 }
 export function isItemLockedByTimedEffect(G: PtcgGameState, playerIndex: 0 | 1): boolean {
   return G.players[playerIndex].itemLockedUntilTurn === G.turn;

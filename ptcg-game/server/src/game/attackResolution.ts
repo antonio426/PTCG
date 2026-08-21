@@ -85,6 +85,11 @@ export function buildAttackBoard(
     defenderName: defender.cardData.name,
     ownHandCount: player.hand.length,
     ownHandNames: player.hand.map(c => c.cardData.name),
+    ownHandBasicEnergyCounts: player.hand.reduce((acc, c) => {
+      if (!c.cardData.subtypes.includes('Basic Energy')) return acc;
+      for (const ty of c.cardData.types || []) acc[ty] = (acc[ty] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>),
     attackerStatusConditions: [...attacker.statusConditions],
     defenderHasTool: !!defender.attachedTool || !!defender.attachedTool2,
     defenderHasSpecialEnergy: defender.attachedEnergy.some(e => e.cardData?.subtypes?.includes('Special Energy')),
@@ -312,7 +317,25 @@ export function applyAttackOutcome(
     shuffleDeck(player.deck);
     genericOutcome.baseDamage = matches * amount;
   }
-  const effectiveAttack = genericOutcome ? { ...attack, damage: String(genericOutcome.baseDamage) } : attack;
+  if (genericOutcome?.discardPileBasicEnergyScaledDamageToDeck) {
+    const { type, amount } = genericOutcome.discardPileBasicEnergyScaledDamageToDeck;
+    const shown = player.discardPile.filter(c => c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes(type as any));
+    for (const c of shown) {
+      const idx = player.discardPile.findIndex(x => x.id === c.id);
+      if (idx >= 0) player.deck.push(player.discardPile.splice(idx, 1)[0]);
+    }
+    if (shown.length) shuffleDeck(player.deck);
+    genericOutcome.baseDamage = shown.length * amount;
+  }
+  // 「在下個自己的回合，這隻寶可夢「X」的傷害改為「N」點」 — a replacement of one named attack's
+  // printed number, which is why it can't be modelled as an outgoing damage bonus: the bonus
+  // would apply to every attack, and would stack on top of the printed damage instead of
+  // replacing it.
+  const damageSet = attacker.timedEffects?.find(e => e.kind === 'namedAttackDamageSet'
+    && e.appliesOnTurn === G.turn && e.attackName === attack.name && e.amount !== undefined);
+  if (damageSet && genericOutcome) genericOutcome.baseDamage = damageSet.amount!;
+  const overriddenDamage = genericOutcome ? genericOutcome.baseDamage : damageSet?.amount;
+  const effectiveAttack = overriddenDamage !== undefined ? { ...attack, damage: String(overriddenDamage) } : attack;
   const damageBreakdown = calculateDamageBreakdown(G, G.currentPlayer as 0 | 1, attacker, effectiveAttack, defender, genericOutcome?.ignoreResistance, genericOutcome?.ignoreWeakness);
   const damage = damageBreakdown.finalDamage;
   const defenderWasFullHp = defender.damage === 0;
@@ -477,11 +500,11 @@ export function applyAttackOutcome(
     }
     if (genericOutcome.selfTimedEffect) {
       const e = genericOutcome.selfTimedEffect;
-      attacker.timedEffects = [...(attacker.timedEffects || []), { kind: e.kind, amount: e.amount, vsSubtype: e.vsSubtype, maxImmuneDamage: e.maxImmuneDamage, attackName: e.attackName, appliesOnTurn: G.turn + e.turnOffset }];
+      attacker.timedEffects = [...(attacker.timedEffects || []), { kind: e.kind, amount: e.amount, vsSubtype: e.vsSubtype, maxImmuneDamage: e.maxImmuneDamage, attackName: e.attackName, coins: e.coins, appliesOnTurn: G.turn + e.turnOffset }];
     }
     if (damage > 0 && genericOutcome.opponentTimedEffect && !defenderEffectImmune) {
       const e = genericOutcome.opponentTimedEffect;
-      defender.timedEffects = [...(defender.timedEffects || []), { kind: e.kind, amount: e.amount, vsSubtype: e.vsSubtype, maxImmuneDamage: e.maxImmuneDamage, attackName: e.attackName, appliesOnTurn: G.turn + e.turnOffset }];
+      defender.timedEffects = [...(defender.timedEffects || []), { kind: e.kind, amount: e.amount, vsSubtype: e.vsSubtype, maxImmuneDamage: e.maxImmuneDamage, attackName: e.attackName, coins: e.coins, appliesOnTurn: G.turn + e.turnOffset }];
     }
     // Choice-requiring generic effects (deck search, switches) auto-pick randomly among
     // the valid options — see genericAttacks.ts's file header for why.
@@ -1108,16 +1131,23 @@ export function applyAttackOutcome(
       }
     }
     if (genericOutcome.discardNamedFromHandCount) {
-      const { name, count } = genericOutcome.discardNamedFromHandCount;
+      const { name, count, basicEnergyType } = genericOutcome.discardNamedFromHandCount;
+      // Same reason the resolver counts these by type: 「基本【草】能量」 and 「基本草能量」 are the
+      // same card printed two ways, and a name match only ever finds one of them.
+      const matches = (c: GameCard) => (basicEnergyType
+        ? c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes(basicEnergyType as any)
+        : c.cardData.name.includes(name));
       for (let i = 0; i < count; i++) {
-        const hi = player.hand.findIndex(c => c.cardData.name.includes(name));
+        const hi = player.hand.findIndex(matches);
         if (hi === -1) break;
         player.discardPile.push(player.hand.splice(hi, 1)[0]);
       }
     }
     if (genericOutcome.massEvolveBenchFromDeck) {
-      const { type } = genericOutcome.massEvolveBenchFromDeck;
+      const { type, max } = genericOutcome.massEvolveBenchFromDeck;
+      let evolvedSoFar = 0;
       for (let i = 0; i < player.bench.length; i++) {
+        if (max !== undefined && evolvedSoFar >= max) break;
         const benched = player.bench[i];
         if (!benched) continue;
         if (type && !(benched.cardData.types || []).includes(type as any)) continue;
@@ -1133,8 +1163,17 @@ export function applyAttackOutcome(
         stackAsPreEvolution(evo, benched);
         player.bench[i] = evo;
         player.pokemonPlayedThisTurn.push(evo.id);
+        evolvedSoFar++;
       }
       shuffleDeck(player.deck);
+    }
+    if (genericOutcome.shuffleOpponentDeck) {
+      shuffleDeck(opponent.deck);
+    }
+    if (genericOutcome.selfDiscardTopCount) {
+      for (let i = 0; i < genericOutcome.selfDiscardTopCount && player.deck.length > 0; i++) {
+        player.discardPile.push(player.deck.pop()!);
+      }
     }
     if (genericOutcome.returnSelfToHandDiscardAttachments && player.active?.id === attacker.id
       && !isReturnToHandBlocked(G, G.currentPlayer as 0 | 1)) {

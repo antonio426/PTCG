@@ -316,3 +316,101 @@ describe('round-4 late mechanisms', () => {
     expect(victim.damage).toBe(10 + 50 + 120);
   });
 });
+
+/**
+ * Leads the Standard-scope run of attack-clause-audit.ts turned up. The audit had only ever
+ * looked at preset-deck-reachable attacks, so none of these texts — all on cards a custom deck
+ * can play — had been checked once.
+ */
+describe('Standard-scope clause audit follow-ups', () => {
+  const grassEnergy = (i: number, name: string) => makeGameCard(makeCard({
+    id: `GE-${i}`, name, supertype: 'Energy', subtypes: ['Basic Energy'] as Subtype[], types: ['Grass'],
+  }), 0);
+
+  it('pays a Basic Energy hand cost by energy type, not by printed name', () => {
+    // 蜜集大蛇::大蛇吐息. The dataset prints this card as both 「基本【草】能量」 and 「基本草能量」,
+    // so the old name-substring count saw none of the second kind and failed the attack.
+    const text = '從自己的手牌將6張「基本【草】能量」卡丟棄，將對手的戰鬥寶可夢【昏厥】。若無法丟棄6張，則這個招式失敗。';
+    const paid = resolveGenericAttackEffect(text, '0', board({ ownHandBasicEnergyCounts: { Grass: 6 } }));
+    expect(paid!.koDefender).toBe(true);
+    expect(paid!.discardNamedFromHandCount).toEqual({ name: '基本【草】能量', count: 6, basicEnergyType: 'Grass' });
+    const short = resolveGenericAttackEffect(text, '0', board({ ownHandBasicEnergyCounts: { Grass: 5 } }));
+    expect(short).toEqual({ baseDamage: 0 });
+  });
+
+  it('discards the bracket-less prints of that energy and Knocks Out the defender', () => {
+    const atk = makeGameCard(makeCard({
+      name: '蜜集大蛇', hp: '150',
+      attacks: [mkAttack('大蛇吐息', ['Grass'], '0', '從自己的手牌將6張「基本【草】能量」卡丟棄，將對手的戰鬥寶可夢【昏厥】。若無法丟棄6張，則這個招式失敗。')],
+    }), 0);
+    atk.attachedEnergy = [{ id: 'e1', type: 'Grass' } as any];
+    const def = makeGameCard(makeCard({ name: '沙包鼠', hp: '200' }), 1);
+    const G = battle(atk, def);
+    G.players[0].hand = [0, 1, 2, 3, 4, 5].map(i => grassEnergy(i, '基本草能量'));
+    G.players[1].prizes = [makeGameCard(BASIC_MON, 1)];
+    moves.attack({ G, ctx: ctx0 } as any, 0);
+    expect(G.players[0].hand).toHaveLength(0);
+    expect(G.players[0].discardPile).toHaveLength(6);
+    expect(G.players[1].active).toBeNull();
+  });
+
+  it('replaces one named attack’s damage instead of boosting every attack', () => {
+    // 步哨鼠::聚氣 resolved as outgoingDamageBoost +240 before, which applied to whatever attack
+    // came next AND stacked on top of its printed damage.
+    const out = resolveGenericAttackEffect('在下個自己的回合，這隻寶可夢「必殺門牙」的傷害改為「240」點。', '0', board());
+    expect(out!.selfTimedEffect).toEqual({ kind: 'namedAttackDamageSet', attackName: '必殺門牙', amount: 240, turnOffset: 2 });
+  });
+
+  it('sets exactly the named attack, and only on the turn it applies to', () => {
+    const mon = makeGameCard(makeCard({
+      name: '步哨鼠', hp: '90',
+      attacks: [mkAttack('必殺門牙', ['Colorless'], '20', ''), mkAttack('撞擊', ['Colorless'], '10', '')],
+    }), 0);
+    mon.attachedEnergy = [colorless('e1'), colorless('e2')];
+    mon.timedEffects = [{ kind: 'namedAttackDamageSet', attackName: '必殺門牙', amount: 240, appliesOnTurn: 3 }];
+    const def = makeGameCard(makeCard({ name: '沙包鼠', hp: '330' }), 1);
+    const G = battle(mon, def);
+    moves.attack({ G, ctx: ctx0 } as any, 0);
+    expect(G.players[1].active!.damage).toBe(240);
+
+    // The other attack is untouched by the override.
+    const G2 = battle(mon, makeGameCard(makeCard({ name: '沙包鼠2', hp: '330' }), 1));
+    G2.players[0].active!.timedEffects = [{ kind: 'namedAttackDamageSet', attackName: '必殺門牙', amount: 240, appliesOnTurn: 3 }];
+    moves.attack({ G: G2, ctx: ctx0 } as any, 1);
+    expect(G2.players[1].active!.damage).toBe(10);
+  });
+
+  it('keeps the printed coin count on the "your next attack may fail" debuff', () => {
+    // 章魚桶::墨汁噴射 — two coins with "any tails fails it" is a 75% miss, not 50%.
+    const out = resolveGenericAttackEffect('在下個對手的回合，受到這個招式的寶可夢使用招式時，對手擲2次硬幣。只要出現1次反面，則那個招式失敗。', '30', board());
+    expect(out!.opponentTimedEffect).toEqual({ kind: 'coinFlipAttackMiss', coins: 2, turnOffset: 1 });
+  });
+
+  it('honours "up to N" on the mass evolve', () => {
+    const out = resolveGenericAttackEffect('選擇最多2隻自己的【惡】寶可夢，從自己的牌庫選擇從那些寶可夢進化而來的卡各1張，放置於各自身上完成進化。並且重洗牌庫。', '0', board());
+    expect(out!.massEvolveBenchFromDeck).toEqual({ type: 'Darkness', max: 2 });
+  });
+
+  it('scales damage off the discard pile and then returns that energy to the deck', () => {
+    const text = '在給對手看過自己的棄牌區的所有「基本【火】能量」卡後，造成其張數×30點傷害。然後，將給對手看過的能量卡放回牌庫並重洗。';
+    const out = resolveGenericAttackEffect(text, '0', board({ ownDiscardEnergyCounts: { Fire: 4 } }));
+    expect(out!.baseDamage).toBe(120);
+    expect(out!.discardPileBasicEnergyScaledDamageToDeck).toEqual({ type: 'Fire', amount: 30 });
+
+    const atk = makeGameCard(makeCard({ name: '加熱洛托姆ex', hp: '200', attacks: [mkAttack('再次加熱', ['Fire'], '0', text)] }), 0);
+    atk.attachedEnergy = [{ id: 'e1', type: 'Fire' } as any];
+    const G = battle(atk, makeGameCard(makeCard({ name: '沙包鼠', hp: '330' }), 1));
+    G.players[0].discardPile = [0, 1, 2].map(i => makeGameCard(makeCard({
+      id: `FE-${i}`, name: '基本火能量', supertype: 'Energy', subtypes: ['Basic Energy'] as Subtype[], types: ['Fire'],
+    }), 0));
+    moves.attack({ G, ctx: ctx0 } as any, 0);
+    expect(G.players[1].active!.damage).toBe(90);
+    expect(G.players[0].discardPile).toHaveLength(0);
+    expect(G.players[0].deck).toHaveLength(3);
+  });
+
+  it('acts on the two "look at the top card" texts instead of resolving them to nothing', () => {
+    expect(resolveGenericAttackEffect('查看自己的牌庫上方1張卡，回復原樣。若希望，將那張卡丟棄。', '10', board())!.selfDiscardTopCount).toBe(1);
+    expect(resolveGenericAttackEffect('查看對手的牌庫上方1張卡，回復原樣。若希望，重洗那個牌庫。', '20', board())!.shuffleOpponentDeck).toBe(true);
+  });
+});

@@ -3,7 +3,7 @@ import { PtcgGameState, PtcgPlayerState, PendingChoice } from './GameState';
 import { canPlayPokemon, canEvolve, canAttachEnergy, canRetreat, canAttack, effectiveRetreatCost, usableAttacks, FIRST_TURN_SUPPORTER_EXCEPTIONS } from './validation';
 import { clearBenchStatusConditions, clearStatusConditionsOnLeaveActive } from './statusConditions';
 import { calculateDamageBreakdown, effectiveMaxHp, flushPreEvolutionsTo, flushPreEvolutionsToDiscard, handleKo, prizesForKo, promoteActiveIfNeeded, resetCardForReentry, stackAsPreEvolution, sweepKnockedOut } from './damage';
-import { areAbilitiesNegated, getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, hasCoinFlipAttackMissDebuff, hasPassiveAbilityNamed, hasTeraBenchedImmunity, isRetreatBlockedByOpponent, isStadiumPlayBlocked, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat, shouldDiscardAttackerEnergy, isProtectedFromOpponentAbility, canHoldSecondTool } from './effects/passiveAbilities';
+import { areAbilitiesNegated, getBonusPrizesForAttackKo, getEvolveCountersFromOpponent, getGrudgeVortexRetaliation, getLethalOnlyRetaliation, getRetreatPunishmentCounters, getScaledRetaliation, getCoinFlipAttackMissCoins, hasPassiveAbilityNamed, hasTeraBenchedImmunity, isRetreatBlockedByOpponent, isStadiumPlayBlocked, onEnergyAttachedFromHand, shouldBurnOnOpponentRetreat, shouldConfuseOnOpponentRetreat, shouldDiscardAttackerEnergy, isProtectedFromOpponentAbility, canHoldSecondTool } from './effects/passiveAbilities';
 import { benchDamageFromEffectsBlocked, benchLimit, enforceBenchLimit, isStadiumActive, sweepStadiumStatusCures } from './effects/stadiums';
 import { getToolRetaliationDamage } from './effects/tools';
 import { applyStatusCondition, discardAttachedEnergy, drawCards, drawUpTo, shuffleDeck, asAttachedEnergy } from './effects/primitives';
@@ -987,9 +987,11 @@ const rawMoves = {
     // Timed "next attack has a 50% chance to fail" debuff (e.g. from an opponent's earlier
     // attack) — consumed (removed) the moment it's checked, whether it fires or not, since it
     // only ever covers exactly one attack attempt.
-    if (hasCoinFlipAttackMissDebuff(G, attacker)) {
+    const missCoins = getCoinFlipAttackMissCoins(G, attacker);
+    if (missCoins > 0) {
       attacker.timedEffects = (attacker.timedEffects || []).filter(e => !(e.kind === 'coinFlipAttackMiss' && e.appliesOnTurn === G.turn));
-      if (Math.random() < 0.5) {
+      // Any tails fails it, so more coins is strictly worse for the attacker.
+      if (Array.from({ length: missCoins }, () => Math.random() < 0.5).some(tails => tails)) {
         addLog(G, G.currentPlayer, 'attack', `${attacker.cardData.name} 的攻擊失敗了！`);
         G.phase = 'end';
         ctx.events?.endTurn?.();

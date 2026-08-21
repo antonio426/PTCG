@@ -38,7 +38,7 @@ export interface GameCard {
 }
 
 export interface TimedCardEffect {
-  kind: 'cantAttack' | 'cantRetreat' | 'damageImmune' | 'damageReduction' | 'outgoingDamageReduction' | 'outgoingDamageBoost' | 'coinFlipAttackMiss' | 'namedAttackLock' | 'weaknessRemoved' | 'retaliationCounters' | 'retaliationMirror' | 'cantAttachEnergy' | 'attachPunishCounters' | 'weaknessBecomes' | 'delayedKo' | 'delayedCounters' | 'delayedDiscard';
+  kind: 'cantAttack' | 'cantRetreat' | 'damageImmune' | 'damageReduction' | 'outgoingDamageReduction' | 'outgoingDamageBoost' | 'coinFlipAttackMiss' | 'namedAttackLock' | 'weaknessRemoved' | 'retaliationCounters' | 'retaliationMirror' | 'cantAttachEnergy' | 'attachPunishCounters' | 'weaknessBecomes' | 'delayedKo' | 'delayedCounters' | 'delayedDiscard' | 'namedAttackDamageSet';
   amount?: number;
   appliesOnTurn: number;
   /** For 'damageImmune': restricts the immunity to attackers of this Subtype only (e.g. "Basic"). */
@@ -46,8 +46,12 @@ export interface TimedCardEffect {
   /** For 'damageImmune': only attacks whose printed damage is at most this are blocked
    * (「不會受到「60」以下的招式的傷害」); absent = every attack. */
   maxImmuneDamage?: number;
-  /** For 'namedAttackLock': only this one named attack is blocked, not all of them. */
+  /** For 'namedAttackLock': only this one named attack is blocked, not all of them.
+   * For 'namedAttackDamageSet': the attack whose printed damage `amount` replaces. */
   attackName?: string;
+  /** For 'coinFlipAttackMiss': how many coins are flipped (any tails = the attack fails).
+   * Absent = 1. 「對手擲2次硬幣。只要出現1次反面，則那個招式失敗」 is a 75% miss, not 50%. */
+  coins?: number;
 }
 
 export interface AttachedEnergy {
