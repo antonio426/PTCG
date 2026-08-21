@@ -275,3 +275,27 @@ describe('attacks recovered by the M6/MC/SV11 data repair', () => {
     expect(atk.attachedEnergy.map(e => e.id)).toEqual(['c1']);
   });
 });
+
+describe('席多藍恩 熔岩牆: immunity conditioned on the ATTACKER’s Special Condition', () => {
+  it('ignores a Burned attacker and takes damage from everyone else', () => {
+    const text = '在下個對手的回合，這隻寶可夢不會受到【灼傷】的寶可夢招式的傷害。';
+    const out = resolveGenericAttackEffect(text, '120', { ...NEUTRAL_BOARD });
+    expect(out!.selfTimedEffect).toEqual({ kind: 'damageImmune', vsStatus: 'Burned', turnOffset: 1 });
+
+    const guarded = mon('席多藍恩', '160', [], 1);
+    guarded.timedEffects = [{ kind: 'damageImmune', vsStatus: 'Burned', appliesOnTurn: 3 }];
+    const burned = mon('攻擊方', '150', [mkAttack('揍', ['Colorless'], '90', '')]);
+    burned.attachedEnergy = [energy('e1')];
+    burned.statusConditions = ['Burned'];
+    const G = battle(burned, guarded);
+    moves.attack({ G, ctx: ctx(0) } as any, 0);
+    expect(guarded.damage).toBe(0);
+
+    // The same attack from a healthy attacker still lands.
+    const healthy = mon('攻擊方2', '150', [mkAttack('揍', ['Colorless'], '90', '')]);
+    healthy.attachedEnergy = [energy('e2')];
+    const G2 = battle(healthy, guarded);
+    moves.attack({ G: G2, ctx: ctx(0) } as any, 0);
+    expect(guarded.damage).toBe(90);
+  });
+});

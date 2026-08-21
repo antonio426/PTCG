@@ -31,6 +31,9 @@ export interface TimedEffectDescriptor {
   amount?: number;
   /** For 'damageImmune': restricts the immunity to attackers of this printed Subtype only (e.g. "Basic"). */
   vsSubtype?: string;
+  /** For 'damageImmune': restricts the immunity to attackers currently in this Special Condition
+   * (席多藍恩's 熔岩牆 — 「不會受到【灼傷】的寶可夢招式的傷害」). Absent = any attacker. */
+  vsStatus?: StatusCondition;
   /** For 'damageImmune': only attacks printing at most this much damage are blocked. */
   maxImmuneDamage?: number;
   /** For 'namedAttackLock': the one specific attack name this locks out.
@@ -3623,6 +3626,12 @@ export function resolveGenericAttackEffect(text: string, damageField: string, bo
   m = t.match(/^在這個回合，若這隻寶可夢恢復了HP，則增加(\d+)點傷害。$/);
   if (m) {
     return { baseDamage: parseBaseNumber(damageField) + (board.attackerHealedThisTurn ? parseInt(m[1], 10) : 0) };
+  }
+
+  // 在下個對手的回合，這隻寶可夢不會受到【X】的寶可夢招式的傷害。
+  m = t.match(/^在下個對手的回合，這隻寶可夢不會受到【(.+?)】的寶可夢招式的傷害。$/);
+  if (m && STATUS_ZH[m[1]]) {
+    return { baseDamage: parseBaseNumber(damageField), selfTimedEffect: { kind: 'damageImmune', vsStatus: STATUS_ZH[m[1]], turnOffset: 1 } };
   }
 
   /* ---- Round 6: attacks the M6/MC/SV11 data repair uncovered ---- */

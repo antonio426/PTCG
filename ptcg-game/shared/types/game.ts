@@ -52,6 +52,9 @@ export interface TimedCardEffect {
   appliesOnTurn: number;
   /** For 'damageImmune': restricts the immunity to attackers of this Subtype only (e.g. "Basic"). */
   vsSubtype?: string;
+  /** For 'damageImmune': restricts the immunity to attackers currently in this Special Condition
+   * (席多藍恩's 熔岩牆 — 「不會受到【灼傷】的寶可夢招式的傷害」). Absent = any attacker. */
+  vsStatus?: StatusCondition;
   /** For 'damageImmune': only attacks whose printed damage is at most this are blocked
    * (「不會受到「60」以下的招式的傷害」); absent = every attack. */
   maxImmuneDamage?: number;

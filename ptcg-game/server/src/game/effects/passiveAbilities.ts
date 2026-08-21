@@ -212,7 +212,10 @@ export function isDamageBlocked(G: PtcgGameState, attacker: GameCard, defender: 
     if (vs === 'HasAbility') return !!attacker.cardData.abilities?.some(a => a.text);
     return attacker.cardData.subtypes.includes(vs as any);
   };
-  if (immuneEffect && vsSubtypeHit(immuneEffect.vsSubtype)
+  // vsStatus restricts it to attackers in a given Special Condition (熔岩牆 only ignores Burned
+  // attackers) — a condition on the ATTACKER, which is why it can't ride on vsSubtype.
+  const vsStatusHit = !immuneEffect?.vsStatus || attacker.statusConditions.includes(immuneEffect.vsStatus);
+  if (immuneEffect && vsSubtypeHit(immuneEffect.vsSubtype) && vsStatusHit
     && (immuneEffect.maxImmuneDamage === undefined || (attackPrintedDamage ?? 0) <= immuneEffect.maxImmuneDamage)) return true;
   // 礎石之勢: immune to damage from any Pokémon that itself has an ability.
   if (hasAbility(G, defender, '礎石之勢') && attacker.cardData.abilities?.some(a => a.text)) return true;

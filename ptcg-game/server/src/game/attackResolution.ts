@@ -602,11 +602,11 @@ export function applyAttackOutcome(
     }
     if (genericOutcome.selfTimedEffect) {
       const e = genericOutcome.selfTimedEffect;
-      attacker.timedEffects = [...(attacker.timedEffects || []), { kind: e.kind, amount: e.amount, vsSubtype: e.vsSubtype, maxImmuneDamage: e.maxImmuneDamage, attackName: e.attackName, coins: e.coins, appliesOnTurn: G.turn + e.turnOffset }];
+      attacker.timedEffects = [...(attacker.timedEffects || []), { kind: e.kind, amount: e.amount, vsSubtype: e.vsSubtype, vsStatus: e.vsStatus, maxImmuneDamage: e.maxImmuneDamage, attackName: e.attackName, coins: e.coins, appliesOnTurn: G.turn + e.turnOffset }];
     }
     if (damage > 0 && genericOutcome.opponentTimedEffect && !defenderEffectImmune) {
       const e = genericOutcome.opponentTimedEffect;
-      defender.timedEffects = [...(defender.timedEffects || []), { kind: e.kind, amount: e.amount, vsSubtype: e.vsSubtype, maxImmuneDamage: e.maxImmuneDamage, attackName: e.attackName, coins: e.coins, appliesOnTurn: G.turn + e.turnOffset }];
+      defender.timedEffects = [...(defender.timedEffects || []), { kind: e.kind, amount: e.amount, vsSubtype: e.vsSubtype, vsStatus: e.vsStatus, maxImmuneDamage: e.maxImmuneDamage, attackName: e.attackName, coins: e.coins, appliesOnTurn: G.turn + e.turnOffset }];
     }
     // Choice-requiring generic effects still auto-pick where the text does not actually ask the
     // player (「隨機」), and where nobody has converted them yet — see data-scraped/auto-pick-audit.md
