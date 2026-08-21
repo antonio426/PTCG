@@ -248,7 +248,12 @@ async function run() {
   const results = [];
   let current = browser;
   for (let g = 0; g < GAMES; g++) {
-    const r = await playOneGame(current, g).catch(e => ({ game: g, error: e.message.slice(0, 160) }));
+    // A crash surfaces as whatever call was in flight when the renderer died ("Page crashed" out
+    // of waitForTimeout, "Target crashed" out of a query), so it is classified as a crash rather
+    // than as a broken run — the distinction the summary reports.
+    const r = await playOneGame(current, g).catch(e => (/crash/i.test(e.message)
+      ? { game: g, moves: 0, crashed: true }
+      : { game: g, error: e.message.slice(0, 160) }));
     results.push(r);
     // A crashed renderer leaves the whole browser unusable — the next navigation comes back
     // ERR_ABORTED — so the next game gets a fresh one.
