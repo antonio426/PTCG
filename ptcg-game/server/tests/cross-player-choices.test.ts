@@ -157,3 +157,60 @@ describe('attack picks go back to the player who owns the decision', () => {
     expect(G.phase).toBe('end');
   });
 });
+
+describe('attack picks: deck attach and deck evolve', () => {
+  const mon = (name: string, hp: string, attacks: any[] = [], seat: 0 | 1 = 0, subtypes: Subtype[] = ['Basic']) =>
+    makeGameCard(makeCard({ name, hp, subtypes, attacks }), seat);
+  const energyCard = (id: string, type: string) => makeGameCard(makeCard({
+    id, name: `基本${type}能量`, supertype: 'Energy', subtypes: ['Basic Energy'] as Subtype[], types: [type as never],
+  }), 0);
+
+  it('lets the player choose which Energy comes out of the deck onto the attacker', () => {
+    const atk = mon('夠讚狗ex', '260', [{ name: '猛毒筋力', cost: ['Darkness'], convertedEnergyCost: 1, damage: '', text: '從自己的牌庫選擇最多2張「基本【惡】能量」卡，附於這隻寶可夢身上。並且重洗牌庫。' }]);
+    atk.attachedEnergy = [{ id: 'e0', type: 'Darkness' } as any];
+    const d1 = energyCard('D1', 'Darkness'), d2 = energyCard('D2', 'Darkness'), d3 = energyCard('D3', 'Darkness');
+    const G = makeState({
+      turn: 3, currentPlayer: 0, phase: 'main',
+      players: [makePlayer({ active: atk, deck: [d1, d2, d3] }), makePlayer({ active: mon('沙包鼠', '150', [], 1) })],
+    });
+    moves.attack({ G, ctx: ctxFor(0) } as any, 0);
+    expect(G.pendingChoice!.options!.map(o => o.id).sort()).toEqual([d1.id, d2.id, d3.id].sort());
+    moves.resolveChoice({ G, ctx: ctxFor(0) } as any, [d2.id]);
+    expect(atk.attachedEnergy.map(e => e.id)).toEqual(['e0', d2.id]);
+    expect(G.players[0].deck).toHaveLength(2);
+  });
+
+  it('asks which evolution to become only when the deck holds more than one', () => {
+    const text = '從自己的牌庫選擇1張從這隻寶可夢進化而來的卡，放置於這隻寶可夢身上完成進化。並且重洗牌庫。';
+    const base = () => {
+      const c = mon('石居蟹', '70', [{ name: '覺醒', cost: ['Water'], convertedEnergyCost: 1, damage: '', text }]);
+      c.attachedEnergy = [{ id: 'w1', type: 'Water' } as any];
+      return c;
+    };
+    const evoA = makeGameCard(makeCard({ id: 'EVO-A', name: '鋼砲臂蝦', hp: '120', subtypes: ['Stage 1'] as Subtype[], evolvesFrom: '石居蟹' }), 0);
+    const evoB = makeGameCard(makeCard({ id: 'EVO-B', name: '鋼砲臂蝦ex', hp: '260', subtypes: ['Stage 1', 'ex'] as Subtype[], evolvesFrom: '石居蟹' }), 0);
+
+    const two = base();
+    const G = makeState({
+      turn: 3, currentPlayer: 0, phase: 'main',
+      players: [makePlayer({ active: two, deck: [evoA, evoB] }), makePlayer({ active: mon('沙包鼠', '150', [], 1) })],
+    });
+    moves.attack({ G, ctx: ctxFor(0) } as any, 0);
+    expect(G.pendingChoice!.options!.map(o => o.id).sort()).toEqual([evoA.id, evoB.id].sort());
+    moves.resolveChoice({ G, ctx: ctxFor(0) } as any, [evoB.id]);
+    expect(G.players[0].active!.id).toBe(evoB.id);
+    expect(G.players[0].active!.attachedEnergy.map(e => e.id)).toEqual(['w1']);
+    expect(G.players[0].active!.preEvolutions?.map(c => c.id)).toEqual([two.id]);
+
+    // With one candidate there is nothing to decide, and it resolves without a prompt.
+    const one = base();
+    const only = makeGameCard(makeCard({ id: 'EVO-C', name: '鋼砲臂蝦', hp: '120', subtypes: ['Stage 1'] as Subtype[], evolvesFrom: '石居蟹' }), 0);
+    const G2 = makeState({
+      turn: 3, currentPlayer: 0, phase: 'main',
+      players: [makePlayer({ active: one, deck: [only] }), makePlayer({ active: mon('沙包鼠', '150', [], 1) })],
+    });
+    moves.attack({ G: G2, ctx: ctxFor(0) } as any, 0);
+    expect(G2.pendingChoice).toBeNull();
+    expect(G2.players[0].active!.id).toBe(only.id);
+  });
+});

@@ -871,6 +871,30 @@ const rawMoves = {
           if (deckIdx >= 0) seat.hand.push(seat.deck.splice(deckIdx, 1)[0]);
         }
         shuffleDeck(seat.deck);
+      } else if (kind === 'deck_attach') {
+        const target = [seat.active, ...seat.bench].find(c => c?.id === context.targetId);
+        for (const id of selection) {
+          const deckIdx = seat.deck.findIndex(c => c.id === id);
+          if (deckIdx === -1 || !target) break;
+          const [card] = seat.deck.splice(deckIdx, 1);
+          target.attachedEnergy.push(asAttachedEnergy(card, context.energyType as string | undefined));
+        }
+        shuffleDeck(seat.deck);
+      } else if (kind === 'deck_evolve') {
+        const target = [seat.active, ...seat.bench].find(c => c?.id === context.targetId);
+        const deckIdx = seat.deck.findIndex(c => c.id === selection[0]);
+        if (target && deckIdx >= 0) {
+          const isActive = seat.active?.id === target.id;
+          const benchIdx = isActive ? -1 : seat.bench.findIndex(c => c?.id === target.id);
+          const evolution = seat.deck.splice(deckIdx, 1)[0];
+          evolution.attachedEnergy = target.attachedEnergy;
+          evolution.damage = target.damage;
+          evolution.attachedTool = target.attachedTool;
+          evolution.attachedTool2 = target.attachedTool2;
+          stackAsPreEvolution(evolution, target);
+          if (isActive) seat.active = evolution; else if (benchIdx >= 0) seat.bench[benchIdx] = evolution;
+        }
+        shuffleDeck(seat.deck);
       } else if (kind === 'opponent_switch') {
         const idx = seat.bench.findIndex(c => c?.id === selection[0]);
         if (idx >= 0 && seat.active) {
