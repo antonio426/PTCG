@@ -6,8 +6,8 @@ import type { GameCard } from '@ptcg/shared';
 import { setup } from '../game/setup';
 import { getLegalMoves } from '../game/validation';
 import { moves } from '../game/moves';
-import { processBetweenTurns, processWakeUpCheck } from '../game/statusConditions';
-import { promoteActiveIfNeeded, effectiveMaxHp } from '../game/damage';
+import { applyTurnBegin } from '../game/turnLifecycle';
+import { effectiveMaxHp } from '../game/damage';
 import { fetchCardsByIds } from '../card-api/tcgdex';
 import { RandomAI, ClaudeAI, IAIPlayer } from '../ai/aiPlayer';
 import { HeuristicAI } from '../ai/heuristicAI';
@@ -267,36 +267,6 @@ export function checkAndApplyWin(G: PtcgGameState): boolean {
     return true;
   }
   return false;
-}
-
-function applyTurnBegin(G: PtcgGameState): void {
-  // Before promoteActiveIfNeeded: a KO replacement promoted now also counts as
-  // "placed from the Bench this turn".
-  G.players[G.currentPlayer].activeIdAtTurnStart = G.players[G.currentPlayer].active?.id;
-  // If this player's Active was Knocked Out last turn, they choose their new one now — see
-  // promoteActiveIfNeeded's own comment for why this timing is always safe.
-  promoteActiveIfNeeded(G, G.currentPlayer as 0 | 1);
-  if (G.turn > 1) processBetweenTurns(G);
-  // Always 'draw' — see battleRunner.ts's applyTurnBegin for why the first turn draws too.
-  // Latent here today (this function is only reached from turn 2 onward, since turn 1 comes in
-  // via setup()'s 'choose_active' -> chooseActive's phase='draw'), but kept identical so the two
-  // hand-copied turn-lifecycle implementations can't drift apart on the rule.
-  G.phase = 'draw';
-  processWakeUpCheck(G, G.currentPlayer as 0 | 1);
-  const player = G.players[G.currentPlayer];
-  player.energyAttachedThisTurn = 0;
-  player.basicPokemonPlayedThisTurn = 0;
-  player.supporterPlayedThisTurn = false;
-  player.supporterNamesPlayedThisTurn = [];
-  player.pokemonPlayedThisTurn = [];
-  player.cardsPlayedThisTurn = 0;
-  player.abilitiesUsedThisTurn = [];
-  player.usedBonusAttackThisTurn = false;
-  player.turnDamageBoosts = [];
-  player.bonusPrizeNextKo = 0;
-  player.incomingDamageReduction = [];
-  player.retreatedThisTurn = false;
-  player.stadiumActionUsedThisTurn = false;
 }
 
 function executeGameAction(G: PtcgGameState, action: { type: string; payload?: Record<string, any> }): void {

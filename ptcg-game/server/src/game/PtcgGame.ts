@@ -4,7 +4,7 @@ import { GameCard } from '@ptcg/shared';
 import { PtcgGameState } from './GameState';
 import { setup } from './setup';
 import { moves } from './moves';
-import { processBetweenTurns, processWakeUpCheck } from './statusConditions';
+import { applyTurnBegin } from './turnLifecycle';
 import { promoteActiveIfNeeded } from './damage';
 
 /** The shared `moves.ts` calls `ctx.events?.endTurn?.()` to end a turn — that was boardgame.io's
@@ -104,35 +104,13 @@ export const PtcgGame: Game<PtcgGameState> = {
           // picked for turn 1 and alternates correctly from there.
           G.currentPlayer = parseInt(ctx.currentPlayer) as 0 | 1;
           // G.turn is this shared engine's own counter (validation.ts's isFirstTurnOfGame etc.
-          // read G.turn, not ctx.turn) — self-incremented here exactly like battleRunner.ts's
-          // applyTurnBegin/humanBattle.ts's equivalent, NOT derived from ctx.turn, which also
+          // read G.turn, not ctx.turn) — self-incremented here (the shared
+          // applyTurnBegin below does not touch it), NOT derived from ctx.turn, which also
           // counts every setupPhase moveLimit:1 micro-turn and would badly over-count "turn 1"
           // of real gameplay if used directly. Safe to always increment: setupPhase.onEnd above
           // reset G.turn to 0 right before this phase's first turn begins.
           G.turn++;
-          G.players[G.currentPlayer].activeIdAtTurnStart = G.players[G.currentPlayer].active?.id;
-          promoteActiveIfNeeded(G, G.currentPlayer as 0 | 1);
-          if (G.turn > 1) processBetweenTurns(G);
-          // Every turn begins with a draw, including the first player's first turn — see the
-          // identical comment in battleRunner.ts's applyTurnBegin for why (verified against the
-          // reference site; going first is paid for by the no-attack/evolve/Supporter
-          // restriction, not by skipping the draw).
-          G.phase = 'draw';
-          processWakeUpCheck(G, G.currentPlayer as 0 | 1);
-          const player = G.players[G.currentPlayer];
-          player.energyAttachedThisTurn = 0;
-          player.basicPokemonPlayedThisTurn = 0;
-          player.supporterPlayedThisTurn = false;
-          player.supporterNamesPlayedThisTurn = [];
-          player.pokemonPlayedThisTurn = [];
-          player.cardsPlayedThisTurn = 0;
-          player.abilitiesUsedThisTurn = [];
-          player.usedBonusAttackThisTurn = false;
-          player.turnDamageBoosts = [];
-          player.bonusPrizeNextKo = 0;
-          player.incomingDamageReduction = [];
-          player.retreatedThisTurn = false;
-          player.stadiumActionUsedThisTurn = false;
+          applyTurnBegin(G);
         },
       },
     },

@@ -7,7 +7,7 @@ import { moves } from '../game/moves';
 import { getLegalMoves } from '../game/validation';
 import { fetchCardsByIds } from '../card-api/tcgdex';
 import { promoteActiveIfNeeded } from '../game/damage';
-import { processBetweenTurns, processWakeUpCheck } from '../game/statusConditions';
+import { applyTurnBegin } from '../game/turnLifecycle';
 import { IAIPlayer, RandomAI, MockAI, ClaudeAI } from '../ai/aiPlayer';
 import { HeuristicAI } from '../ai/heuristicAI';
 
@@ -82,35 +82,13 @@ function executeMove(G: PtcgGameState, move: LegalAction, player: number): void 
   }
 }
 
-function runTurnBegin(G: PtcgGameState): void {
-  // Mirrors humanBattle.ts's applyTurnBegin ordering — this engine had never wired up
-  // processBetweenTurns at all, so Poison/Burn damage-over-time, Paralysis clearing, and
-  // Sleep's wake-up check were all silently inert in AI-vs-AI (BattleLab) simulations: the
-  // status conditions could be applied but none of their between-turn effects ever fired.
-  promoteActiveIfNeeded(G, G.currentPlayer as 0 | 1);
-  if (G.turn > 1) processBetweenTurns(G);
-  G.phase = G.turn === 1 ? 'main' : 'draw';
-  processWakeUpCheck(G, G.currentPlayer as 0 | 1);
-  const player = G.players[G.currentPlayer as 0 | 1];
-  if (player) {
-    player.energyAttachedThisTurn = 0; player.basicPokemonPlayedThisTurn = 0;
-    player.supporterPlayedThisTurn = false; player.pokemonPlayedThisTurn = []; player.cardsPlayedThisTurn = 0;
-    player.abilitiesUsedThisTurn = [];
-    player.usedBonusAttackThisTurn = false;
-    player.turnDamageBoosts = [];
-    player.bonusPrizeNextKo = 0;
-    player.incomingDamageReduction = [];
-    player.retreatedThisTurn = false;
-  }
-}
-
 async function simulateBattle(decks: string[][], seed: number, aiTypeA: string | undefined, aiTypeB: string | undefined): Promise<{ winner: number; winReason: string | null; turns: number; logs: any[] }> {
   const allIds = [...new Set([...decks[0], ...decks[1]])];
   const cardData = await fetchCardsByIds(allIds);
   const cardDataMap = cardData as unknown as Record<string, Card>;
   const G = setup({ decks, cardData: cardDataMap, seed });
   const ais: [IAIPlayer, IAIPlayer] = [resolveAiPlayer(aiTypeA), resolveAiPlayer(aiTypeB)];
-  runTurnBegin(G);
+  applyTurnBegin(G);
   let safety = 0;
   while (G.winner === null && safety < 200) {
     safety++;
@@ -132,7 +110,7 @@ async function simulateBattle(decks: string[][], seed: number, aiTypeA: string |
     if (G.winner !== null) break;
     G.currentPlayer = (1 - G.currentPlayer) as 0 | 1;
     G.turn++;
-    runTurnBegin(G);
+    applyTurnBegin(G);
   }
   return { winner: G.winner ?? 0, winReason: G.winReason, turns: G.turn, logs: [...G.turnLog] };
 }

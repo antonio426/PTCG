@@ -4,65 +4,61 @@ import { join } from 'node:path';
 import { setup } from '../src/game/setup';
 import { basicOnlyDeckIds, testCardData } from './fixtures';
 
-const GAME_DIR = join(__dirname, '..', 'src', 'game');
+const SRC = join(__dirname, '..', 'src');
+const SHARED = join(SRC, 'game', 'turnLifecycle.ts');
 
 /**
- * The turn-begin block is hand-copied into three engines (see CLAUDE.md, "Two parallel battle
- * engines"). Extract it from each so they can be compared as text — the documented failure mode
- * here is one copy silently getting a rule right that the others get wrong.
+ * The turn-begin block used to be hand-copied into every engine (see CLAUDE.md, "Two parallel
+ * battle engines") and drifted twice. The last time, routes/battles.ts kept the pre-fix
+ * `turn === 1 ? 'main' : 'draw'` (its first player never drew) plus four per-turn resets it had
+ * never learned about — while the three copies the previous version of this guard listed were all
+ * correct and agreed with each other. Guarding "the copies match" can never catch a copy the guard
+ * doesn't know about, so the rule is now the stronger one: there is exactly ONE implementation,
+ * and every engine calls it.
  */
-function turnBeginBlock(file: string): string {
-  const src = readFileSync(file, 'utf8');
-  const start = src.indexOf('activeIdAtTurnStart = ');
-  expect(start, `no turn-begin block found in ${file}`).toBeGreaterThan(-1);
-  const endMarker = 'stadiumActionUsedThisTurn = false;';
-  const end = src.indexOf(endMarker, start);
-  expect(end, `turn-begin block in ${file} has no stadiumActionUsedThisTurn reset`).toBeGreaterThan(-1);
-  return src.slice(start, end + endMarker.length);
-}
-
-/** Comments and indentation differ freely between the copies; the statements must not. */
-function normalizeBlock(block: string): string {
-  return block
-    .replace(/\/\/[^\n]*/g, '')
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-const COPIES = {
-  'battleRunner.ts': join(GAME_DIR, '..', 'ai', 'battleRunner.ts'),
-  'humanBattle.ts': join(GAME_DIR, '..', 'routes', 'humanBattle.ts'),
-  'PtcgGame.ts': join(GAME_DIR, 'PtcgGame.ts'),
+const ENGINES = {
+  'battleRunner.ts': join(SRC, 'ai', 'battleRunner.ts'),
+  'humanBattle.ts': join(SRC, 'routes', 'humanBattle.ts'),
+  'PtcgGame.ts': join(SRC, 'game', 'PtcgGame.ts'),
+  'battles.ts': join(SRC, 'routes', 'battles.ts'),
 };
 
-describe('turn-begin lifecycle is identical across all three engines', () => {
-  it('resets the same per-turn state in the same way', () => {
-    const [reference, ...rest] = Object.entries(COPIES).map(
-      ([name, file]) => [name, normalizeBlock(turnBeginBlock(file))] as const,
-    );
-    for (const [name, block] of rest) {
-      expect(block, `${name} drifted from ${reference[0]}`).toBe(reference[1]);
+/** Per-turn work that only the shared implementation may do. */
+const RESET_MARKERS = [
+  'activeIdAtTurnStart =',
+  'energyAttachedThisTurn = 0',
+  'supporterNamesPlayedThisTurn = []',
+  'stadiumActionUsedThisTurn = false',
+  'processBetweenTurns(',
+];
+
+const stripComments = (src: string) =>
+  src.replace(/\/\/[^\n]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
+
+describe('turn-begin lifecycle has exactly one implementation', () => {
+  it.each(Object.entries(ENGINES))('%s calls the shared applyTurnBegin', (_name, file) => {
+    const src = readFileSync(file, 'utf8');
+    expect(src).toMatch(/applyTurnBegin\(G\)/);
+    expect(src).toContain("turnLifecycle'");
+  });
+
+  it.each(Object.entries(ENGINES))('%s does not re-implement the per-turn reset', (_name, file) => {
+    const src = stripComments(readFileSync(file, 'utf8'));
+    for (const marker of RESET_MARKERS) {
+      expect(src, `${marker} belongs in turnLifecycle.ts, not in this engine`).not.toContain(marker);
     }
   });
 
-  it.each(Object.entries(COPIES))(
-    '%s sets phase to draw unconditionally (never `turn === 1 ? main : draw`)',
-    (_name, file) => {
-      const block = normalizeBlock(turnBeginBlock(file));
-      expect(block).toContain("phase = 'draw'");
-      // The exact shape of the shipped bug: a ternary that clobbered setup()'s own 'draw',
-      // so the player going first never drew. Guard the shape, not just the string.
-      expect(block).not.toMatch(/turn === 1 \?/);
-    },
-  );
+  it('draws every turn, including the first player’s first one', () => {
+    const shared = stripComments(readFileSync(SHARED, 'utf8'));
+    expect(shared).toContain("G.phase = 'draw'");
+    // The exact shape of the shipped bug: a ternary that clobbered setup()'s own 'draw'.
+    expect(shared).not.toMatch(/turn === 1 \?/);
+  });
 
-  it.each(Object.entries(COPIES))(
-    '%s only runs between-turn effects from turn 2 onward',
-    (_name, file) => {
-      expect(normalizeBlock(turnBeginBlock(file))).toContain('if (G.turn > 1) processBetweenTurns(G)');
-    },
-  );
+  it('only runs between-turn effects from turn 2 onward', () => {
+    expect(readFileSync(SHARED, 'utf8')).toContain('if (G.turn > 1) processBetweenTurns(G)');
+  });
 });
 
 describe('setup()', () => {
