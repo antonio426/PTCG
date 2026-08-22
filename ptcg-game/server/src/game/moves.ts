@@ -117,6 +117,38 @@ function performActiveBenchSwap(G: PtcgGameState, benchIdx: number): void {
   player.active = benchPokemon;
 }
 
+/**
+ * Everything that has to happen once an attack is completely finished — including after the
+ * pending choices it raised have all been answered.
+ *
+ * It lives here rather than inline in `moves.attack` because an attack can finish in four
+ * different places: `moves.attack` itself (no choice raised), the `attack_pick` branch, the
+ * `attack_self_return_promotion` branch, and the generic `kind === 'attack'` tail of
+ * `resolveChoice`. Only the first one used to consult 祭典樂舞 — the other three ended the turn
+ * unconditionally, so any attack that asked the player a question silently ate the second attack
+ * 祭典會場 grants. That was a narrow hole when two attacks raised choices; it is a wide one now
+ * that dozens do.
+ *
+ * Always resolved for the ATTACKER (`G.currentPlayer`), never for whoever answered the choice —
+ * 「由對手選擇」 effects are answered by the defending seat, but it is the attacker's turn that
+ * ends and the attacker's bonus attack that is granted.
+ */
+function finishAttack(G: PtcgGameState, ctx: any): void {
+  if (G.pendingChoice) return; // a multi-step pick is still mid-flight
+  const attacker = G.players[G.currentPlayer].active;
+  // 祭典樂舞: while 祭典會場 is active, this Pokémon may attack a second time this turn.
+  // Simplified vs. the printed text's KO/promote timing nuance — just allows one bonus
+  // attack this turn rather than modeling the exact "opponent must first promote" sequencing.
+  if (attacker && !G.players[G.currentPlayer].usedBonusAttackThisTurn
+    && hasPassiveAbilityNamed(G, attacker, '祭典樂舞') && isStadiumActive(G, '祭典會場')) {
+    G.players[G.currentPlayer].usedBonusAttackThisTurn = true;
+    addLog(G, G.currentPlayer, 'ability', `${attacker.cardData.name}'s 祭典樂舞 grants a second attack this turn`);
+    return;
+  }
+  G.phase = 'end';
+  ctx.events?.endTurn?.();
+}
+
 /** After every human Active is placed: raise the next queued mulligan compensation (one at a
  * time — local 2P can owe BOTH sides), or, once the queue is empty, hand turn 1 to the coin
  * flip's decided first player. */
@@ -1108,10 +1140,9 @@ const rawMoves = {
       const picked = selection.map(id => findCardNameById(G, id) ?? id);
       addLog(G, chooser, 'resolve_choice', `${G.pendingChoice.prompt}：${picked.join('、') || '(未選擇)'}`);
       G.pendingChoice = null;
-      // The attack was waiting on this, so the turn ends now — the same hand-off moves.attack does
-      // when no choice is pending. It ends the ATTACKER's turn even when the opponent answered.
-      G.phase = 'end';
-      ctx.events?.endTurn?.();
+      // The attack was waiting on this, so it finishes now — same hand-off moves.attack does when
+      // no choice is pending. It resolves for the ATTACKER even when the opponent answered.
+      finishAttack(G, ctx);
       return;
     }
 
@@ -1121,8 +1152,7 @@ const rawMoves = {
       if (idx >= 0) { player.active = player.bench[idx]; player.bench[idx] = null; }
       G.pendingChoice = null;
       addLog(G, chooser, 'resolve_choice', `${player.active?.cardData.name ?? '?'} 上場成為新的戰鬥寶可夢`);
-      G.phase = 'end';
-      ctx.events?.endTurn?.();
+      finishAttack(G, ctx);
       return;
     }
 
@@ -1154,10 +1184,7 @@ const rawMoves = {
 
     // An attack's pending choices (e.g. distributing damage counters) block the rest of the
     // turn; once they're all resolved, finish the turn exactly like a normal attack would.
-    if (kind === 'attack' && !G.pendingChoice) {
-      G.phase = 'end';
-      ctx.events?.endTurn?.();
-    }
+    if (kind === 'attack' && !G.pendingChoice) finishAttack(G, ctx);
   },
 
   // Fossils ("陳舊的○○化石"): the printed rule lets the owner voluntarily discard one from play
@@ -1312,20 +1339,8 @@ const rawMoves = {
       applyAttackOutcome(G, player, opponent, attacker, defender, attack, attackBoard);
     }
 
-    // 祭典樂舞: while 祭典會場 is active, this Pokémon may attack a second time this turn.
-    // Simplified vs. the printed text's KO/promote timing nuance — just allows one bonus
-    // attack this turn rather than modeling the exact "opponent must first promote" sequencing.
-    if (!G.pendingChoice && !player.usedBonusAttackThisTurn
-      && hasPassiveAbilityNamed(G, attacker, '祭典樂舞') && isStadiumActive(G, '祭典會場')) {
-      player.usedBonusAttackThisTurn = true;
-      addLog(G, G.currentPlayer, 'ability', `${attacker.cardData.name}'s 祭典樂舞 grants a second attack this turn`);
-      return;
-    }
-
-    if (!G.pendingChoice) {
-      G.phase = 'end';
-      ctx.events?.endTurn?.();
-    }
+    // If the attack raised a choice, the turn stays open until resolveChoice finishes it off.
+    finishAttack(G, ctx);
   },
 
   endTurn: ({ G, ctx }: { G: PtcgGameState; ctx: any }) => {
