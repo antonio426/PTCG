@@ -1,8 +1,8 @@
 import type { PtcgGameState } from '../game/GameState';
 import { setup } from '../game/setup';
-import { moves } from '../game/moves';
 import { getLegalMoves } from '../game/validation';
 import { applyTurnBegin } from '../game/turnLifecycle';
+import { applyMove } from '../game/moveDispatch';
 import { IAIPlayer } from './aiPlayer';
 import { AIThought, AIPlayerResult } from './types';
 
@@ -75,50 +75,7 @@ export function executeMove(G: PtcgGameState, action: { type: string; payload?: 
     },
   };
 
-  const payload = (action.payload || {}) as Record<string, any>;
-
-  switch (action.type) {
-    case 'draw_card':
-      moves.drawCard({ G, ctx });
-      break;
-    case 'play_pokemon':
-      moves.playPokemon({ G, ctx }, payload.cardId, payload.benchPosition);
-      break;
-    case 'evolve_pokemon':
-      moves.evolvePokemon({ G, ctx }, payload.cardId, payload.targetId);
-      break;
-    case 'attach_energy':
-      moves.attachEnergy({ G, ctx }, payload.cardId, payload.targetId);
-      break;
-    case 'play_trainer':
-      moves.playTrainer({ G, ctx }, payload.cardId);
-      break;
-    case 'use_ability':
-      moves.useAbility({ G, ctx }, payload.cardId);
-      break;
-    case 'resolve_choice':
-      moves.resolveChoice({ G, ctx }, payload.selection);
-      break;
-    case 'retreat':
-      moves.retreat({ G, ctx }, payload.targetBenchPosition, payload.discardEnergyIds);
-      break;
-    case 'discard_fossil':
-      moves.discardFossil({ G, ctx }, payload.cardId);
-      break;
-    case 'attack':
-      moves.attack({ G, ctx }, payload.attackIndex);
-      break;
-    case 'use_stadium_action':
-      moves.useStadiumAction({ G, ctx }, payload.effectKey);
-      break;
-    case 'end_turn':
-      moves.endTurn({ G, ctx });
-      break;
-    case 'forfeit':
-      moves.forfeit({ G, ctx });
-      break;
-  }
-
+  applyMove(G, action, ctx);
   return turnEnded;
 }
 

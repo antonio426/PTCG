@@ -3,11 +3,11 @@ import { randomUUID } from 'crypto';
 import type { Card, LegalAction } from '@ptcg/shared';
 import type { PtcgGameState } from '../game/GameState';
 import { setup } from '../game/setup';
-import { moves } from '../game/moves';
 import { getLegalMoves } from '../game/validation';
 import { fetchCardsByIds } from '../card-api/tcgdex';
 import { promoteActiveIfNeeded } from '../game/damage';
 import { applyTurnBegin } from '../game/turnLifecycle';
+import { applyMove } from '../game/moveDispatch';
 import { IAIPlayer, RandomAI, MockAI, ClaudeAI } from '../ai/aiPlayer';
 import { HeuristicAI } from '../ai/heuristicAI';
 
@@ -66,20 +66,7 @@ function checkWinner(G: PtcgGameState): number | null {
 
 function executeMove(G: PtcgGameState, move: LegalAction, player: number): void {
   const ctx: any = { currentPlayer: String(player), playerID: String(player), turn: G.turn, events: { endTurn: () => { G.phase = 'end'; } } };
-  const p = move.payload || {};
-  switch (move.type) {
-    case 'draw_card': moves.drawCard({ G, ctx }); break;
-    case 'play_pokemon': moves.playPokemon({ G, ctx }, p.cardId as string, p.benchPosition as number); break;
-    case 'evolve_pokemon': moves.evolvePokemon({ G, ctx }, p.cardId as string, p.targetId as string); break;
-    case 'attach_energy': moves.attachEnergy({ G, ctx }, p.cardId as string, p.targetId as string); break;
-    case 'play_trainer': moves.playTrainer({ G, ctx }, p.cardId as string); break;
-    case 'use_ability': moves.useAbility({ G, ctx }, p.cardId as string); break;
-    case 'resolve_choice': moves.resolveChoice({ G, ctx }, p.selection as string[]); break;
-    case 'retreat': moves.retreat({ G, ctx }, p.targetBenchPosition as number, p.discardEnergyIds as string[]); break;
-    case 'attack': moves.attack({ G, ctx }, p.attackIndex as number); break;
-    case 'end_turn': moves.endTurn({ G, ctx }); break;
-    case 'forfeit': moves.forfeit({ G, ctx }); break;
-  }
+  applyMove(G, move, ctx);
 }
 
 async function simulateBattle(decks: string[][], seed: number, aiTypeA: string | undefined, aiTypeB: string | undefined): Promise<{ winner: number; winReason: string | null; turns: number; logs: any[] }> {

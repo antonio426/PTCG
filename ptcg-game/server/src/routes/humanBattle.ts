@@ -5,8 +5,8 @@ import type { PtcgGameState, PendingChoice } from '../game/GameState';
 import type { GameCard } from '@ptcg/shared';
 import { setup } from '../game/setup';
 import { getLegalMoves } from '../game/validation';
-import { moves } from '../game/moves';
 import { applyTurnBegin } from '../game/turnLifecycle';
+import { applyMove } from '../game/moveDispatch';
 import { effectiveMaxHp } from '../game/damage';
 import { fetchCardsByIds } from '../card-api/tcgdex';
 import { RandomAI, ClaudeAI, IAIPlayer } from '../ai/aiPlayer';
@@ -278,24 +278,7 @@ function executeGameAction(G: PtcgGameState, action: { type: string; payload?: R
     turn: G.turn,
     events: { endTurn: () => { G.phase = 'end'; } },
   };
-  const p = action.payload || {};
-  switch (action.type) {
-    case 'choose_first': moves.chooseFirst({ G, ctx }, p.goFirst as boolean); break;
-    case 'choose_active': moves.chooseActive({ G, ctx }, p.cardId as string); break;
-    case 'draw_card': moves.drawCard({ G, ctx }); break;
-    case 'play_pokemon': moves.playPokemon({ G, ctx }, p.cardId as string, p.benchPosition as number); break;
-    case 'evolve_pokemon': moves.evolvePokemon({ G, ctx }, p.cardId as string, p.targetId as string); break;
-    case 'attach_energy': moves.attachEnergy({ G, ctx }, p.cardId as string, p.targetId as string); break;
-    case 'play_trainer': moves.playTrainer({ G, ctx }, p.cardId as string); break;
-    case 'use_ability': moves.useAbility({ G, ctx }, p.cardId as string); break;
-    case 'resolve_choice': moves.resolveChoice({ G, ctx }, p.selection as string[]); break;
-    case 'retreat': moves.retreat({ G, ctx }, p.targetBenchPosition as number, p.discardEnergyIds as string[]); break;
-    case 'discard_fossil': moves.discardFossil({ G, ctx }, p.cardId as string); break;
-    case 'attack': moves.attack({ G, ctx }, p.attackIndex as number); break;
-    case 'use_stadium_action': moves.useStadiumAction({ G, ctx }, p.effectKey as string); break;
-    case 'end_turn': moves.endTurn({ G, ctx }); break;
-    case 'forfeit': moves.forfeit({ G, ctx }); break;
-  }
+  applyMove(G, action, ctx);
 }
 
 /** Run AI turns until it's the human's turn again or game ends */
