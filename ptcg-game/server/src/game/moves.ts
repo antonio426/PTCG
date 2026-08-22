@@ -1009,7 +1009,7 @@ const rawMoves = {
             if (bi >= 0) opp.bench[bi] = prior;
           }
           const hp = effectiveMaxHp(G, prior);
-          if (hp > 0 && prior.damage >= hp) handleKo(G, (1 - chooser) as 0 | 1, prior.id);
+          if (hp > 0 && prior.damage >= hp) handleKo(G, (1 - chooser) as 0 | 1, prior.id, G.players[chooser].active ?? undefined);
         }
       } else if (kind === 'hand_to_deck') {
         for (const id of selection) {
@@ -1060,7 +1060,10 @@ const rawMoves = {
           if (!target) continue;
           target.damage += amount * times;
           const hp = effectiveMaxHp(G, target);
-          if (hp > 0 && target.damage >= hp) handleKo(G, (1 - chooser) as 0 | 1, target.id);
+          // Passing the attacker is what makes this count as "KO'd by an attack" — the
+          // defender-side KO triggers (潛者捕捉 / 光子纜線 / 最後鎖鏈) only fire when handleKo gets
+          // one. Damage dealt through a player-answered pick is still the attack's damage.
+          if (hp > 0 && target.damage >= hp) handleKo(G, (1 - chooser) as 0 | 1, target.id, G.players[chooser].active ?? undefined);
         }
       } else if (kind === 'move_energy') {
         // Two questions: which Energy, then where it goes. `side` says whose board is involved —
