@@ -557,8 +557,21 @@ export default function Battle() {
   const { cards, fetchCards } = useCardStore();
   const {
     battleState, loading, error, battlePhase,
-    createBattle, submitMove, undo, leaveGame,
+    createBattle, submitMove, undo, leaveGame, resumeBattle,
   } = useGameStore();
+
+  // A battle lives on the server for two hours, but the store only ever held its id in memory —
+  // so a reload or a stray Back button dropped a game that was still perfectly resumable. Try to
+  // re-attach once on mount, and hold the deck picker back until we know, so a resumable game
+  // doesn't flash the lobby on its way back in.
+  const [resuming, setResuming] = useState(true);
+  useEffect(() => {
+    if (battleState) { setResuming(false); return; } // already in a game (client-side nav)
+    let cancelled = false;
+    void resumeBattle().finally(() => { if (!cancelled) setResuming(false); });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [selectedDeckId, setSelectedDeckId] = useState('');
   const [selectedDeckIdB, setSelectedDeckIdB] = useState('');
@@ -829,6 +842,10 @@ export default function Battle() {
   /* ======================== */
   /*  Phase: Select Deck (no server battle active)     */
   /* ======================== */
+  if (battlePhase === 'select' && resuming) {
+    return <div className="min-h-[70vh]" data-resuming="1" />;
+  }
+
   if (battlePhase === 'select') {
     return (
       <div className="flex items-center justify-center min-h-[70vh] relative overflow-hidden rounded-2xl">

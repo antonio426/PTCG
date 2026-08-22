@@ -76,6 +76,8 @@ interface GameState {
   playerName: string;
 
   createBattle: (deckA: string[], deckB?: string[], difficulty?: 'easy' | 'normal' | 'hard', mode?: 'ai' | 'local') => Promise<string>;
+  /** Re-attach to the battle this browser was in before a reload. Resolves to whether it worked. */
+  resumeBattle: () => Promise<boolean>;
   submitMove: (type: string, payload?: Record<string, unknown>) => Promise<void>;
   undo: () => Promise<void>;
   refreshState: () => Promise<void>;
@@ -85,6 +87,24 @@ interface GameState {
 }
 
 const BASE = '/api/human-battle';
+
+/* The server keeps a battle session alive for two hours and will hand its full state back from
+ * GET /api/human-battle/:id — but the id only ever lived in this store's memory, so a reload or a
+ * stray Back button threw away a game that was still sitting on the server. Persisted under the
+ * same `ptcg-` prefix the deck keys use. */
+const SESSION_KEY = 'ptcg-battle-session';
+
+// localStorage throws in Safari private mode and when storage is disabled entirely — losing the
+// ability to reconnect is not worth taking the battle down over.
+function rememberSession(id: string): void {
+  try { localStorage.setItem(SESSION_KEY, id); } catch { /* storage unavailable */ }
+}
+function forgetSession(): void {
+  try { localStorage.removeItem(SESSION_KEY); } catch { /* storage unavailable */ }
+}
+function storedSession(): string | null {
+  try { return localStorage.getItem(SESSION_KEY); } catch { return null; }
+}
 
 export const useGameStore = create<GameState>((set, get) => ({
   sessionId: null,
@@ -108,6 +128,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         throw new Error(errData.error || 'Failed to create battle');
       }
       const data = await res.json();
+      rememberSession(data.sessionId);
       set({
         sessionId: data.sessionId,
         battleState: data.state,
@@ -121,6 +142,23 @@ export const useGameStore = create<GameState>((set, get) => ({
         error: err instanceof Error ? err.message : 'Unknown error',
       });
       throw err;
+    }
+  },
+
+  resumeBattle: async () => {
+    const id = storedSession();
+    if (!id) return false;
+    try {
+      const res = await fetch(`${BASE}/${id}`);
+      // 404 = swept by the server's TTL or lost to a restart. Drop the key and go back to the
+      // lobby silently: a stale id is not an error the player did anything about.
+      if (!res.ok) { forgetSession(); return false; }
+      const data = await res.json();
+      if (!data?.state || data.state.winner !== null) { forgetSession(); return false; }
+      set({ sessionId: data.sessionId ?? id, battleState: data.state, battlePhase: 'playing', error: null });
+      return true;
+    } catch {
+      return false; // network blip — keep the key so the next attempt can still reconnect
     }
   },
 
@@ -161,6 +199,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       set({ battleState: data.state, loading: false });
 
       if (data.state.winner !== null) {
+        forgetSession(); // nothing left to reconnect to
         set((s) => ({
           battlePhase: 'ended',
           matchResult: {
@@ -192,6 +231,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   leaveGame: () => {
+    forgetSession();
     set({
       sessionId: null,
       battleState: null,
