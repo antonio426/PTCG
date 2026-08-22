@@ -302,6 +302,11 @@ function PendingChoicePicker({
                   key={item.id}
                   onClick={() => toggle(item.id)}
                   disabled={loading}
+                  // e2e markers (client/e2e/battle-smoke.mjs). Without them the harness saw a
+                  // dialog with nothing clickable in it and spun; more to the point, a choice
+                  // the automated player cannot answer is the exact defect it exists to find.
+                  data-choice-option={item.id}
+                  data-picked={isChecked || undefined}
                   className={`relative flex flex-col items-center gap-1 rounded-lg p-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
                     isChecked ? 'bg-emerald-900/40' : 'hover:bg-slate-700/60'
                   }`}
@@ -334,6 +339,7 @@ function PendingChoicePicker({
         <button
           onClick={() => matchedMove && onSubmit(matchedMove)}
           disabled={!matchedMove || loading}
+          data-move="resolve_choice"
           className="w-full py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex-shrink-0"
         >
           {checked.size === 0 && minCount === 0 ? '不選（跳過）' : `確定（${checked.size}張）`}
@@ -346,6 +352,7 @@ function PendingChoicePicker({
         <button
           onClick={() => onSubmit(skipMove)}
           disabled={loading}
+          data-move="resolve_choice"
           className="w-full py-2 bg-slate-700 text-slate-200 rounded-lg text-sm font-medium hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex-shrink-0"
         >
           不選（跳過）

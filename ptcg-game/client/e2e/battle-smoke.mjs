@@ -44,7 +44,9 @@ const MAX_MOVES = arg('--moves', 60);
 const PACE_MS = arg('--pace', 900);
 const HEADED = process.argv.includes('--headed');
 const SHOTS_ON = process.argv.includes('--shots');
-const VERBOSE = !!process.env.SMOKE_VERBOSE;
+// Both spellings: every other switch here is a CLI flag, so `--verbose` silently doing nothing
+// made a stuck run look even more like a dead process than it already did.
+const VERBOSE = !!process.env.SMOKE_VERBOSE || process.argv.includes('--verbose');
 
 const failures = [];
 const fail = (msg) => { failures.push(msg); console.error('FAIL:', msg); };
@@ -74,12 +76,18 @@ const AVOID = ['投降', '重新開始', '重開', '悔棋', '離開', '返回',
   '規則', '說明', '牌組', '首頁', '縮放', '記錄', '紀錄'];
 
 /**
- * Three markers, because the board is not made of plain buttons: `[data-move]` submits a move,
- * `[data-hand-card]` is a hand card that either plays or answers a select_hand_cards choice, and
+ * Four markers, because the board is not made of plain buttons: `[data-move]` submits a move,
+ * `[data-hand-card]` is a hand card that either plays or answers a select_hand_cards choice,
  * `[data-board-target]` is a Pokémon that is a legal target for what is being resolved — which is
- * where a select_pokemon choice gets answered.
+ * where a select_pokemon choice gets answered — and `[data-choice-option]` is one option inside
+ * the pendingChoice picker (a deck search's results, say).
+ *
+ * That last one was missing, and its absence is why runs hung: the picker is a dialog, its option
+ * buttons were invisible to this scan, so every lap took the "close a stray dialog" branch — which
+ * could not close it either. A choice the UI can't answer is exactly what this harness exists to
+ * report, so the marker has to be on the control that answers it.
  */
-const CANDIDATE_SELECTOR = 'button[data-move]:not([disabled]), [data-hand-card], [data-board-target]';
+const CANDIDATE_SELECTOR = 'button[data-move]:not([disabled]), [data-hand-card], [data-board-target], [data-choice-option]:not([disabled])';
 
 async function clickableActions(page) {
   const probe = await page.evaluate((sel) => {
@@ -91,9 +99,13 @@ async function clickableActions(page) {
     const items = [...scope.querySelectorAll(sel)].map((el, i) => ({
       i,
       visible: visible(el),
-      kind: el.hasAttribute('data-move') ? 'move' : el.hasAttribute('data-board-target') ? 'target' : 'hand',
+      kind: el.hasAttribute('data-choice-option') ? 'choice'
+        : el.hasAttribute('data-move') ? 'move'
+        : el.hasAttribute('data-board-target') ? 'target' : 'hand',
       picked: el.hasAttribute('data-picked'),
-      label: `${el.innerText || el.getAttribute('alt') || ''} ${el.getAttribute('aria-label') || ''} ${el.getAttribute('title') || ''}`
+      // A choice option is a card image with the name in a child <span>/<img alt>, so innerText
+      // alone logs a row of blanks — which is unreadable exactly when the log matters most.
+      label: `${el.innerText || el.getAttribute('alt') || el.querySelector('img')?.getAttribute('alt') || ''} ${el.getAttribute('aria-label') || ''} ${el.getAttribute('title') || ''}`
         .replace(/\s+/g, ' ').trim(),
     }));
     return { inDialog: dialogs.length > 0, items };
@@ -106,7 +118,9 @@ async function clickableActions(page) {
   // Ordered by how directly they advance the game: a move submits, a board target answers a
   // standing choice, a hand card only OPENS a menu — so once that menu is up, its buttons win and
   // the run can't spend the whole game toggling the same card open and shut.
-  const rank = { move: 0, target: 1, hand: 2 };
+  // A choice option outranks everything: while the picker is open its own confirm/skip button is
+  // also a `[data-move]`, and taking that first would answer every deck search with "不選（跳過）".
+  const rank = { choice: 0, move: 1, target: 2, hand: 3 };
   const actions = probe.items
     .filter(it => it.visible && !AVOID.some(a => it.label.includes(a)))
     .sort((a, b) => rank[a.kind] - rank[b.kind])
@@ -156,6 +170,11 @@ async function playOneGame(browser, gameNo) {
     // Sound off before the app boots: there is no audio device here, and the app is happy to be
     // played muted — a player could make the same choice in Settings.
     try { localStorage.setItem('ptcg-battle-settings', JSON.stringify({ zoom: 'auto', sfx: false, bgm: false })); } catch { /* private mode */ }
+    // Every game in a run must start from the lobby. The browser is shared across games, so the
+    // battle page's reconnect (see gameStore's ptcg-battle-session) would otherwise drop game 2
+    // straight back into game 1 — the deck this game meant to exercise never gets played, and
+    // `latest` reports the previous game's finished state.
+    try { localStorage.removeItem('ptcg-battle-session'); } catch { /* private mode */ }
   });
   // domcontentloaded, not networkidle: the card catalog keeps loading in the background, so
   // 'networkidle' never fires and the run hangs before it starts.
@@ -174,7 +193,7 @@ async function playOneGame(browser, gameNo) {
   await shot(page, `game${gameNo}-start.jpg`);
   if (!latest) fail(`game ${gameNo}: the battle never returned a state from /api/human-battle`);
 
-  let moves = 0, stalled = 0;
+  let moves = 0, stalled = 0, stuckDialog = 0;
   let lastKey = progressKey(latest);
   let lastLog = logLength(latest);
 
@@ -187,11 +206,26 @@ async function playOneGame(browser, gameNo) {
 
     if (actions.length === 0 && inDialog) {
       // A dialog with nothing playable in it (the settings panel, say) — close it and carry on.
-      await page.locator('[role="dialog"]').last().locator('button[aria-label="關閉"]')
-        .evaluate(el => el.click()).catch(() => {});
+      // Bounded and counted, because this branch does NOT advance `moves`: with the default
+      // 30s timeout and a swallowed error, a dialog carrying no 關閉 button (the pendingChoice
+      // picker, until its options got markers) spun here forever — 30s a lap, MAX_MOVES never
+      // approached, not one line printed. Every "the e2e run hangs" report was this.
+      const closed = await page.locator('[role="dialog"]').last().locator('button[aria-label="關閉"]')
+        .evaluate(el => el.click(), undefined, { timeout: 2000 }).then(() => true).catch(() => false);
       await page.waitForTimeout(250);
+      if (closed) { stuckDialog = 0; continue; }
+      if (++stuckDialog >= 3) {
+        const kinds = [...new Set(serverMoves.map(m => m.type))].join(', ');
+        const pc = latest?.pendingChoice;
+        fail(`game ${gameNo}, move ${moves}: a dialog is up that the run can neither answer nor close`
+          + (kinds ? ` — server offers [${kinds}]` : '')
+          + (pc ? ` — pending choice "${pc.prompt}" (${pc.choiceType}, ${pc.options?.length ?? 0} options)` : ''));
+        await shot(page, `game${gameNo}-stuck-dialog.jpg`);
+        break;
+      }
       continue;
     }
+    stuckDialog = 0;
     if (serverMoves.length > 0 && actions.length === 0) {
       const kinds = [...new Set(serverMoves.map(m => m.type))].join(', ');
       const pc = latest?.pendingChoice;
