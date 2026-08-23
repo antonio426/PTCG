@@ -48,6 +48,12 @@ const SHOTS_ON = process.argv.includes('--shots');
 // made a stuck run look even more like a dead process than it already did.
 const VERBOSE = !!process.env.SMOKE_VERBOSE || process.argv.includes('--verbose');
 
+// Rotated per game so one run covers more than a single configuration. Local 2P was never
+// exercised at all before the handoff overlay became reachable.
+const MODES = ['ai', 'local'];
+// 'hard' is skipped where the server has no API key, which is the normal case here.
+const DIFFICULTIES = ['normal', 'easy'];
+
 const failures = [];
 const fail = (msg) => { failures.push(msg); console.error('FAIL:', msg); };
 const log = (...a) => console.log(...a);
@@ -181,19 +187,35 @@ async function playOneGame(browser, gameNo) {
   await page.goto(`${CLIENT_URL}/battle`, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1500);
 
-  const deckSelect = page.locator('select').first();
-  await deckSelect.waitFor({ timeout: 15000 });
-  const values = await deckSelect.locator('option').evaluateAll(os => os.map(o => o.value).filter(Boolean));
+  // Every lobby control is addressed by its own [data-lobby] marker rather than by "the first
+  // <select> on the page" — that ad-hoc locator is why every run before this one played vs-AI on
+  // normal difficulty, and never once entered 本機雙人.
+  const lobby = (name) => page.locator(`[data-lobby="${name}"]`);
+  await lobby('deck-a').waitFor({ timeout: 15000 });
+
+  // Rotate the mode and the difficulty across games so a run covers more than one of each. Local
+  // 2P needs a second deck and has no AI, so it gets its own branch.
+  const local = MODES[gameNo % MODES.length] === 'local';
+  if (local) await lobby('mode-local').evaluate(el => el.click());
+
+  const values = await lobby('deck-a').locator('option').evaluateAll(os => os.map(o => o.value).filter(Boolean));
   if (values.length === 0) throw new Error('no decks offered in the battle lobby');
   const deckIdx = (gameNo * 7) % values.length;   // a different deck per game, deterministically
-  await deckSelect.selectOption(values[deckIdx]);
-  await page.getByRole('button', { name: '開始對戰' }).click();
+  await lobby('deck-a').selectOption(values[deckIdx]);
+  if (local) {
+    await lobby('deck-b').waitFor({ timeout: 5000 });
+    await lobby('deck-b').selectOption(values[(deckIdx + 3) % values.length]);
+  } else {
+    const difficulty = DIFFICULTIES[gameNo % DIFFICULTIES.length];
+    await lobby('difficulty').selectOption(difficulty).catch(() => {});   // 'hard' needs a key
+  }
+  await lobby('start').evaluate(el => el.click());
   await page.waitForFunction(() => !document.body.innerText.includes('建立對戰中'), null, { timeout: 30000 });
   await page.waitForTimeout(1200);
   await shot(page, `game${gameNo}-start.jpg`);
   if (!latest) fail(`game ${gameNo}: the battle never returned a state from /api/human-battle`);
 
-  let moves = 0, stalled = 0, stuckDialog = 0;
+  let moves = 0, stalled = 0, stuckDialog = 0, idle = 0, undoTried = false;
   let lastKey = progressKey(latest);
   let lastLog = logLength(latest);
 
@@ -234,7 +256,23 @@ async function playOneGame(browser, gameNo) {
       await shot(page, `game${gameNo}-dead-end.jpg`);
       break;
     }
-    if (actions.length === 0) break;   // nothing offered, nothing clickable: the AI is thinking
+    if (actions.length === 0) {
+      // "Nothing clickable" has two very different meanings and this used to treat them alike:
+      // the AI is thinking (fine, and the check above already caught the case where the SERVER
+      // was offering something), or the UI is showing a screen the run has no way through — which
+      // is how local 2P's handoff overlay ended every such game silently, mislabelled as the
+      // former. Give the app a couple of paces to come back before believing it.
+      if (++idle < 3) { await page.waitForTimeout(PACE_MS); continue; }
+      const pc = latest?.pendingChoice;
+      if (pc || latest?.isPlayerTurn) {
+        fail(`game ${gameNo}, move ${moves}: nothing in the UI to click while it is this player's `
+          + `turn (turn ${latest?.turn}, phase ${latest?.phase})`
+          + (pc ? ` — pending choice "${pc.prompt}"` : ''));
+        await shot(page, `game${gameNo}-no-way-through.jpg`);
+      }
+      break;
+    }
+    idle = 0;
 
     // Prefer anything that isn't "end turn", so the run actually exercises play. Which candidate
     // rotates with `stalled`: a hand card only OPENS its action list, so always taking the first
@@ -260,6 +298,25 @@ async function playOneGame(browser, gameNo) {
     }
     lastLog = logLength(latest);
 
+    // 悔棋 is a shipped feature with no coverage at all, and it can't join the random walk: it
+    // rewinds the very progress the walk is making, and AVOID blocks it by name for that reason.
+    // So it gets one deliberate press per game, halfway through, and has to actually rewind.
+    if (!undoTried && moves === Math.floor(MAX_MOVES / 2)) {
+      undoTried = true;
+      const btn = page.locator('[data-undo]:not([disabled])');
+      if (await btn.count() > 0) {
+        const before = logLength(latest);
+        await btn.first().evaluate(el => el.click()).catch(() => {});
+        await page.waitForTimeout(PACE_MS);
+        if (logLength(latest) >= before) {
+          fail(`game ${gameNo}: 悔棋 changed nothing — log stayed at ${before} entries`);
+        } else if (VERBOSE) {
+          log(`  g${gameNo} #${moves} undo: log ${before} -> ${logLength(latest)}`);
+        }
+        lastLog = logLength(latest);
+      }
+    }
+
     const key = progressKey(latest);
     stalled = key === lastKey ? stalled + 1 : 0;
     lastKey = key;
@@ -267,6 +324,22 @@ async function playOneGame(browser, gameNo) {
       fail(`game ${gameNo}: stalled at move ${moves} — 12 clicks changed nothing (turn ${latest?.turn}, phase ${latest?.phase})`);
       await shot(page, `game${gameNo}-stalled.jpg`);
       break;
+    }
+  }
+
+  // The end-of-game screen was unreachable for this run by construction — the loop breaks on
+  // `winner` — so 再來一場 shipped untested. Press it when a game really did finish, and require
+  // a fresh battle to come back.
+  if (latest?.winner !== null && latest?.winner !== undefined) {
+    const rematch = page.locator('[data-endgame="rematch"]');
+    if (await rematch.count() > 0) {
+      await rematch.first().evaluate(el => el.click()).catch(() => {});
+      await page.waitForTimeout(2500);
+      if (latest?.winner !== null && latest?.winner !== undefined) {
+        fail(`game ${gameNo}: 再來一場 did not start a new battle — still showing a finished one`);
+      } else if (VERBOSE) {
+        log(`  g${gameNo} rematch: new game at turn ${latest?.turn}`);
+      }
     }
   }
 

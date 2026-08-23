@@ -883,6 +883,10 @@ export default function Battle() {
                 <button
                   key={m}
                   onClick={() => setBattleMode(m)}
+                  // Lobby markers exist so the e2e harness can pick a mode, decks and a difficulty
+                  // by name rather than by "the first <select> on the page" — which is why it only
+                  // ever played vs-AI on normal and never entered 本機雙人 at all.
+                  data-lobby={`mode-${m}`}
                   className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-colors ${
                     battleMode === m ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-slate-800 border-slate-600 text-slate-300 hover:border-slate-500'
                   }`}
@@ -901,6 +905,7 @@ export default function Battle() {
                 <select
                   value={selectedDeckId}
                   onChange={(e) => setSelectedDeckId(e.target.value)}
+                  data-lobby="deck-a"
                   className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 text-slate-100 focus:outline-none focus:border-emerald-500"
                 >
                   <option value="">選擇牌組...</option>
@@ -927,6 +932,7 @@ export default function Battle() {
                 <select
                   value={selectedDeckIdB}
                   onChange={(e) => setSelectedDeckIdB(e.target.value)}
+                  data-lobby="deck-b"
                   className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 text-slate-100 focus:outline-none focus:border-emerald-500"
                 >
                   <option value="">選擇牌組...</option>
@@ -953,6 +959,7 @@ export default function Battle() {
               <select
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value as 'easy' | 'normal' | 'hard')}
+                data-lobby="difficulty"
                 className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 text-slate-100 focus:outline-none focus:border-emerald-500"
               >
                 <option value="easy">簡單（隨機出牌）</option>
@@ -966,6 +973,7 @@ export default function Battle() {
             <button
               onClick={handleStartBattle}
               disabled={!selectedDeckId || (battleMode === 'local' && !selectedDeckIdB) || loading}
+              data-lobby="start"
               className="w-full py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-lg shadow-emerald-900/40 ring-1 ring-inset ring-white/15"
             >
               {loading ? '建立對戰中...' : '開始對戰'}
@@ -1162,6 +1170,10 @@ export default function Battle() {
             <button
               onClick={() => setManualTargeting(null)}
               aria-label="取消"
+              // Marked because it is the ONLY exit: while manualTargeting is on, no hand card
+              // carries data-hand-card (see isCurrentlyPlayable), so an automated player that
+              // walks in here has no other way back out.
+              data-move="cancel_targeting"
               className="w-7 h-7 flex items-center justify-center rounded-full text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
             >
               <IconX className="w-3.5 h-3.5" />
@@ -1181,12 +1193,17 @@ export default function Battle() {
           entirely — confirmed via a real click landing on the Player-area header div instead of
           the "先攻" button before this was moved out. */}
       {handoffPending && !isOver && (
-        <div className="fixed inset-0 z-[70] bg-slate-950 flex flex-col items-center justify-center gap-6">
+        // role="dialog": it IS one — it takes the whole screen and blocks every control behind
+        // it — and until it said so, screen readers and the e2e harness both walked straight past.
+        // The harness in particular scanned, found nothing clickable and no dialog, and quietly
+        // left the game labelled "the AI is thinking", so local 2P was never once smoke-tested.
+        <div role="dialog" aria-modal="true" aria-label="換手" className="fixed inset-0 z-[70] bg-slate-950 flex flex-col items-center justify-center gap-6">
           <div className="text-6xl">🔄</div>
           <p className="text-xl font-bold text-slate-100">請將裝置交給 玩家 {viewerIndex + 1}</p>
           <p className="text-sm text-slate-400">為避免看到對方手牌，畫面已遮蔽</p>
           <button
             onClick={() => setHandoffPending(false)}
+            data-move="handoff_continue"
             className="px-8 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition-colors"
           >
             我是玩家 {viewerIndex + 1}，繼續
@@ -1228,12 +1245,14 @@ export default function Battle() {
             </div>
             <button
               onClick={handleRetry}
+              data-endgame="lobby"
               className="px-8 py-2.5 bg-gradient-to-b from-emerald-500 to-emerald-700 text-white rounded-xl font-medium hover:from-emerald-400 hover:to-emerald-600 transition-colors shadow-lg shadow-emerald-950/50"
             >
               返回大廳
             </button>
             <button
               onClick={() => handleRematch(false)}
+              data-endgame="rematch"
               className="mt-2 px-8 py-2.5 bg-gradient-to-b from-sky-500 to-sky-700 text-white rounded-xl font-medium hover:from-sky-400 hover:to-sky-600 transition-colors shadow-lg shadow-sky-950/50"
             >
               🔄 再來一場
@@ -1374,6 +1393,10 @@ export default function Battle() {
             <button
               onClick={() => undo()}
               disabled={loading || !bs.canUndo || bs.winner !== null}
+              // Not data-move: the smoke harness must NOT wander into undo mid-walk (it would
+              // rewind the very progress it is trying to make). It drives this one deliberately,
+              // once per game, and asserts the log actually rewinds.
+              data-undo="1"
               title="悔棋：回到你上一步行動之前（含其後的 AI 回合）"
               className="flex items-center gap-1 text-emerald-500/70 hover:text-emerald-300 text-xs transition-colors mr-1 disabled:opacity-30 disabled:cursor-not-allowed"
             >
