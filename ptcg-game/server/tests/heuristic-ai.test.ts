@@ -560,4 +560,35 @@ describe('resolve_choice answers', () => {
     // attacker out for nothing and never attacking — a real multi-turn loop.
     expect(chosen.description).toBe('end_turn');
   });
+  it('will not spend a switch Trainer that changes nothing', async () => {
+    // Watched in a real game: the AI played 寶可夢交替 and then retreated in the same turn, the
+    // two undoing each other — a flat 770 for any Item meant the card looked free.
+    const striker = mon({ name: '主攻手', attacks: [attack('猛擊', ['Grass'], '120')] });
+    const G = duel(striker, mon({ name: '對手', hp: '300' }));
+    G.players[0].active!.attachedEnergy = [energy('e1')];
+    G.players[0].bench = [makeGameCard(mon({ name: '弱雞', hp: '60' }), 0), null, null, null, null];
+    const swap = makeGameCard(makeCard({
+      name: '寶可夢交替', supertype: 'Trainer', subtypes: ['Item'],
+      rules: ['將自己的戰鬥寶可夢與備戰寶可夢互換。'],
+    }), 0);
+    G.players[0].hand = [swap];
+    const chosen = await pick(G, [
+      mv('play_trainer', { cardId: swap.id }, '打交替'),
+      mv('end_turn'),
+    ]);
+    expect(chosen.description).toBe('end_turn');
+  });
+
+  it('keeps every "does nothing" score clear of the random tie band', async () => {
+    // The design rule, not one instance of it: POINTLESS must lose to end_turn OUTRIGHT. At 2 vs
+    // 5 the gap was 3, inside TIE_EPSILON, so every pointless move was a coin flip against
+    // passing — caught as a flaky spec rather than by reading the numbers.
+    const G = duel(mon({ name: '主戰' }));
+    const results = new Set<string>();
+    for (let i = 0; i < 40; i++) {
+      const chosen = await pick(G, [mv('discard_fossil', { cardId: 'fossil-1' }, '棄化石'), mv('end_turn')]);
+      results.add(chosen.description);
+    }
+    expect([...results]).toEqual(['end_turn']);
+  });
 });

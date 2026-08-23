@@ -11,6 +11,11 @@ import type { IAIPlayer } from './aiPlayer';
 // randomly — keeps the AI from being a fully deterministic, memorizable opponent.
 const TIE_EPSILON = 5;
 
+// A move worth taking only if there is literally nothing else. Must sit MORE than TIE_EPSILON
+// below end_turn, or the random tie-break turns "this does nothing" into a coin flip against
+// passing — which is exactly what a flaky spec caught it doing.
+const POINTLESS = -20;
+
 export function remainingHp(G: PtcgGameState, card: GameCard): number {
   return Math.max(0, effectiveMaxHp(G, card) - card.damage);
 }
@@ -285,7 +290,7 @@ export class HeuristicAI implements IAIPlayer {
       case 'choose_active': return this.scoreChooseActive(G, playerIndex, move);
       // Harmless unknowns sit BELOW end_turn — the old default of 10 sat above it, which is how
       // the AI came to discard its own fossils and mill itself on stadium actions for no reason.
-      default: return 2;
+      default: return POINTLESS;
     }
   }
 
@@ -402,6 +407,10 @@ export class HeuristicAI implements IAIPlayer {
     const subtypes = card.cardData.subtypes || [];
     const score = subtypes.includes('Supporter') ? 790 : subtypes.includes('Stadium') ? 740 : 770;
     const text = (card.cardData.rules || []).join(' ');
+    // Same trap as the swap abilities: 寶可夢交替 (「將自己的戰鬥寶可夢與備戰寶可夢互換」) scored a
+    // flat 770, so the AI spent the card to switch and THEN retreated in the same turn, the two
+    // undoing each other. A switch is only worth a card when it is an upgrade.
+    if (/將自己的戰鬥寶可夢與備戰寶可夢互換/.test(text) && !this.switchIsAnUpgrade(G, playerIndex)) return POINTLESS;
     // 從自己的牌庫, not 從牌庫: the printed phrasing is 「從自己的牌庫選擇…」, and the shorter form
     // also matched opponent-deck mill cards, which must NOT be penalized for our thin deck.
     if (/抽\S*張|從自己的牌庫/.test(text)) return this.deckDepletionAdjust(player, score);
@@ -422,19 +431,26 @@ export class HeuristicAI implements IAIPlayer {
     // is already the best attacker we have — and every ability scoring a flat 750 meant the AI
     // used it anyway, every turn, undoing the retreat it had just paid for and never attacking.
     // Watched as a multi-turn retreat/swap loop in a real game.
-    if (/與戰鬥寶可夢互換|換上場/.test(text)) {
-      const defender = G.players[(1 - playerIndex) as 0 | 1].active;
-      const active = player.active;
-      if (defender && active) {
-        const mine = bestPayableAttack(G, playerIndex, active, defender, this.cache)?.expected ?? 0;
-        const sw = bestSwitchIn(G, playerIndex, this.cache)?.expected ?? 0;
-        if (sw <= mine) return 2;   // below end_turn: displacing our own attacker is a downgrade
-      }
-    }
+    if (/與戰鬥寶可夢互換|換上場/.test(text) && !this.switchIsAnUpgrade(G, playerIndex)) return POINTLESS;
     let score = 750;
     if (/恢復|傷害|能量/.test(text)) score += 30;
     if (/抽\S*張|從自己的牌庫/.test(text)) return this.deckDepletionAdjust(player, score);
     return score;
+  }
+
+  /** Would putting our best Benched Pokémon in the Active spot actually improve things?
+   *
+   * Shared by every effect that swaps our own Active — the Trainers and the abilities alike —
+   * because "replace the Active" is worth exactly nothing when the Active is already the best
+   * attacker we have, and both were scoring a flat several-hundred and being taken every turn. */
+  private switchIsAnUpgrade(G: PtcgGameState, playerIndex: 0 | 1): boolean {
+    const player = G.players[playerIndex];
+    const defender = G.players[(1 - playerIndex) as 0 | 1].active;
+    const active = player.active;
+    if (!defender || !active) return true;   // nothing to compare against: leave the card alone
+    const mine = bestPayableAttack(G, playerIndex, active, defender, this.cache)?.expected ?? 0;
+    const sw = bestSwitchIn(G, playerIndex, this.cache)?.expected ?? 0;
+    return sw > mine;
   }
 
   private scorePlayPokemon(G: PtcgGameState, playerIndex: 0 | 1): number {
@@ -498,20 +514,20 @@ export class HeuristicAI implements IAIPlayer {
       case 'spike_town_gym_search':
         return this.deckDepletionAdjust(player, 760);
       case 'resident_hall_heal':
-        return field.some(c => c.damage > 0) ? 750 : 2;
+        return field.some(c => c.damage > 0) ? 750 : POINTLESS;
       case 'mystery_garden_draw':   // pays 1 energy, draws to the Psychic count
         return field.filter(c => (c.cardData.types || []).includes('Psychic')).length >= 2
-          ? this.deckDepletionAdjust(player, 730) : 2;
+          ? this.deckDepletionAdjust(player, 730) : POINTLESS;
       case 'surf_beach_swap': {
         const sw = bestSwitchIn(G, playerIndex, this.cache);
         const defender = G.players[(1 - playerIndex) as 0 | 1].active;
         const mine = player.active && defender
           ? bestPayableAttack(G, playerIndex, player.active, defender, this.cache) : null;
-        return sw && sw.expected >= (mine?.expected ?? 0) + 30 ? 720 : 2;
+        return sw && sw.expected >= (mine?.expected ?? 0) + 30 ? 720 : POINTLESS;
       }
       // 稜鏡塔 (discard 2 to draw 1) and 夜間學院 (hand card to the top of the deck) are card
       // disadvantage — the old default of 10 made the AI take them every turn, for nothing.
-      default: return 2;
+      default: return POINTLESS;
     }
   }
 
