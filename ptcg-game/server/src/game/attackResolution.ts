@@ -227,6 +227,27 @@ function raiseAttackPick(
   return true;
 }
 
+/**
+ * Ask this once whatever question is already standing has been answered.
+ *
+ * Two attacks need it, both because the printed text names an order: 駭客攻擊 discards a card from
+ * each hand and the opponent's half is raised first, and 幸福禮物's 「（對手先選擇。）」 says so
+ * outright. `raiseAttackPick` refuses while a choice is pending — correctly, one question at a
+ * time — so the second one rides along on the first, and resolveChoice raises it on the way out.
+ */
+function queueAttackPick(
+  G: PtcgGameState,
+  seat: 0 | 1,
+  opts: { prompt: string; options: { id: string; label: string }[]; count?: number; minCount?: number; maxCount?: number; context: Record<string, unknown> },
+): boolean {
+  if (opts.options.length === 0) return false;
+  if (!G.pendingChoice) return raiseAttackPick(G, seat, opts);
+  const standing = G.pendingChoice.context as Record<string, unknown> | undefined;
+  if (!standing || standing.then) return false;   // one queued follow-up is enough
+  standing.then = { seat, ...opts };
+  return true;
+}
+
 export function applyAttackOutcome(
   G: PtcgGameState,
   player: PtcgPlayerState,
@@ -555,6 +576,8 @@ export function applyAttackOutcome(
     // computed once, gates every defender-targeted NON-damage outcome below. Damage itself is
     // never an "effect" — that's isDamageBlocked's axis.
     const defenderEffectImmune = isImmuneToOpponentAttackEffects(G, defender, attacker);
+    // Set when the self-switch has to wait for this attack’s Energy question (see below).
+    let pendingSelfSwitch = false;
     if ((damage > 0 || genericOutcome.statusEvenAtZeroDamage) && genericOutcome.statusToInflict && !defenderEffectImmune) {
       for (const status of genericOutcome.statusToInflict) applyStatusCondition(G, defender, status);
     }
@@ -732,7 +755,18 @@ export function applyAttackOutcome(
     }
     if (genericOutcome.selfSwitchToRandomBench) {
       const benchIdxs = player.bench.map((c, i) => c ? i : -1).filter(i => i >= 0);
-      if (benchIdxs.length > 0 && player.active) {
+      // Real rules: switching with "a Benched Pokémon" is the player choosing which one. Deferred
+      // when this attack also attaches Energy from hand (迴旋充能), because that half raises its
+      // own question further down — asking here would swallow it.
+      const deferSwitch = !!(genericOutcome.attachNamedFromHandCount || genericOutcome.attachAllBasicEnergyFromHand);
+      const askedSwitch = !deferSwitch && benchIdxs.length > 0 && !!player.active && raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: '選擇要與戰鬥寶可夢互換的備戰寶可夢',
+        options: benchIdxs.map(i => ({ id: player.bench[i]!.id, label: player.bench[i]!.cardData.name })),
+        count: 1,
+        context: { kind: 'self_switch' },
+      });
+      if (deferSwitch && benchIdxs.length > 0 && player.active) pendingSelfSwitch = true;
+      if (!askedSwitch && !deferSwitch && benchIdxs.length > 0 && player.active) {
         const idx = benchIdxs[Math.floor(Math.random() * benchIdxs.length)];
         const b = player.bench[idx]!;
         clearStatusConditionsOnLeaveActive(player.active);
@@ -1444,15 +1478,29 @@ export function applyAttackOutcome(
     }
     if (genericOutcome.revealTopAttachEnergiesCount) {
       const targets = [player.active, ...player.bench].filter((c): c is GameCard => c !== null);
-      const top = player.deck.splice(-genericOutcome.revealTopAttachEnergiesCount);
-      for (const card of top) {
-        if (card.cardData.supertype === 'Energy' && targets.length > 0) {
-          targets[Math.floor(Math.random() * targets.length)].attachedEnergy.push(asAttachedEnergy(card));
-        } else {
-          player.deck.push(card);
+      // 「選擇任意數量…以任意方式附於」 — which Energy, and where each one goes, are both the
+      // player's. The cards stay in the deck until their destination is answered (see
+      // deck_attach_spread), so nothing sits in no zone at all mid-choice.
+      const revealed = player.deck.slice(-genericOutcome.revealTopAttachEnergiesCount);
+      const energies = revealed.filter(c => c.cardData.supertype === 'Energy');
+      const asked = targets.length > 0 && energies.length > 0 && raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `從牌庫上方 ${revealed.length} 張中選擇要附加的能量卡`,
+        options: energies.map(c => ({ id: c.id, label: c.cardData.name })),
+        minCount: 0,
+        maxCount: energies.length,
+        context: { kind: 'deck_attach_spread', phase: 'cards' },
+      });
+      if (!asked) {
+        const top = player.deck.splice(-genericOutcome.revealTopAttachEnergiesCount);
+        for (const card of top) {
+          if (card.cardData.supertype === 'Energy' && targets.length > 0) {
+            targets[Math.floor(Math.random() * targets.length)].attachedEnergy.push(asAttachedEnergy(card));
+          } else {
+            player.deck.push(card);
+          }
         }
+        shuffleDeck(player.deck);
       }
-      shuffleDeck(player.deck);
     }
     if (genericOutcome.koDefender && !defenderEffectImmune && opponent.active?.id === defender.id) {
       handleKo(G, 1 - G.currentPlayer, defender.id, attacker);
@@ -1720,6 +1768,24 @@ export function applyAttackOutcome(
         remaining--;
       }
     }
+    // 迴旋充能 switches AND attaches, and the printed order is switch first — but the Energy half
+    // is what raises a question, so the switch queues up behind it rather than pre-empting it.
+    if (pendingSelfSwitch) {
+      const benchNow = player.bench.map((c, i) => (c ? i : -1)).filter(i => i >= 0);
+      const asked = benchNow.length > 0 && !!player.active && queueAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: '選擇要與戰鬥寶可夢互換的備戰寶可夢',
+        options: benchNow.map(i => ({ id: player.bench[i]!.id, label: player.bench[i]!.cardData.name })),
+        count: 1,
+        context: { kind: 'self_switch' },
+      });
+      if (!asked && benchNow.length > 0 && player.active) {
+        const idx = benchNow[Math.floor(Math.random() * benchNow.length)];
+        const b = player.bench[idx]!;
+        clearStatusConditionsOnLeaveActive(player.active);
+        player.bench[idx] = player.active;
+        player.active = b;
+      }
+    }
     if (genericOutcome.koOpponentBasicCoinSplit) {
       const heads = Math.random() < 0.5;
       if (heads) {
@@ -1891,7 +1957,18 @@ export function applyAttackOutcome(
     }
     if (genericOutcome.attachOpponentDiscardEnergyToTheirPokemonCount) {
       const targets = [opponent.active, ...opponent.bench].filter((c): c is GameCard => c !== null);
-      for (let i = 0; i < genericOutcome.attachOpponentDiscardEnergyToTheirPokemonCount && targets.length > 0; i++) {
+      // The ATTACKER chooses — it is their attack — even though both the Energy and the Pokémon
+      // it lands on belong to the opponent. 「最多」 means declining is allowed.
+      const pool = opponent.discardPile.filter(c => c.cardData.supertype === 'Energy');
+      const want = genericOutcome.attachOpponentDiscardEnergyToTheirPokemonCount;
+      const askedOppAttach = targets.length > 0 && pool.length > 0 && raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `從對手的棄牌區選擇最多 ${Math.min(want, pool.length)} 張能量卡，附於對手的寶可夢`,
+        options: pool.map(c => ({ id: c.id, label: c.cardData.name })),
+        minCount: 0,
+        maxCount: Math.min(want, pool.length),
+        context: { kind: 'opponent_discard_attach_spread', phase: 'cards' },
+      });
+      for (let i = 0; !askedOppAttach && i < genericOutcome.attachOpponentDiscardEnergyToTheirPokemonCount && targets.length > 0; i++) {
         const di = opponent.discardPile.findIndex(c => c.cardData.supertype === 'Energy');
         if (di === -1) break;
         targets[Math.floor(Math.random() * targets.length)].attachedEnergy.push(asAttachedEnergy(opponent.discardPile.splice(di, 1)[0]));
@@ -2014,7 +2091,27 @@ export function applyAttackOutcome(
       }
     }
     if (genericOutcome.bothAttachHandBasicsCount) {
-      for (const p of [player, opponent] as PtcgPlayerState[]) {
+      // 「（對手先選擇。）」 — the printed order, and each side picks from their own hand and puts
+      // the Energy where they like. Asked as two questions, opponent first.
+      const want = genericOutcome.bothAttachHandBasicsCount;
+      const seats: [0 | 1, PtcgPlayerState][] = [
+        [(1 - G.currentPlayer) as 0 | 1, opponent],
+        [G.currentPlayer as 0 | 1, player],
+      ];
+      let anyAsked = false;
+      for (const [seat, p] of seats) {
+        const basics = p.hand.filter(c => c.cardData.subtypes.includes('Basic Energy'));
+        const hasTarget = [p.active, ...p.bench].some(c => c !== null);
+        if (!hasTarget || basics.length === 0) continue;
+        anyAsked = queueAttackPick(G, seat, {
+          prompt: `若希望，從自己的手牌選擇最多 ${Math.min(want, basics.length)} 張基本能量卡附加`,
+          options: basics.map(c => ({ id: c.id, label: c.cardData.name })),
+          minCount: 0,
+          maxCount: Math.min(want, basics.length),
+          context: { kind: 'hand_attach_spread', phase: 'cards' },
+        }) || anyAsked;
+      }
+      if (!anyAsked) for (const p of [player, opponent] as PtcgPlayerState[]) {
         const targets = [p.active, ...p.bench].filter((c): c is GameCard => c !== null);
         let left = genericOutcome.bothAttachHandBasicsCount;
         for (let i = p.hand.length - 1; i >= 0 && left > 0 && targets.length > 0; i--) {
@@ -2161,10 +2258,22 @@ export function applyAttackOutcome(
         .filter(a => !/^[‌​\s]*\[特性\]/.test(a.name));
       opponent.deck.push(...top);
       shuffleDeck(opponent.deck);
-      const pick = candidates[Math.floor(Math.random() * candidates.length)];
-      if (pick && opponent.active?.id === defender.id) {
-        const subBoard = buildAttackBoard(G, player, opponent, attacker, defender, pick);
-        applyAttackOutcome(G, player, opponent, attacker, defender, pick, subBoard);
+      // 「若希望，選擇1個…」 — the whole point of turning ten cards face up is that the player reads
+      // them and picks. The candidates are snapshotted into the choice because the cards go back
+      // into a shuffled deck immediately; resolving from the snapshot is what makes that safe.
+      const askedCopy = candidates.length > 0 && opponent.active?.id === defender.id && raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: '若希望，選擇1個翻開的寶可夢招式使用',
+        options: candidates.map((a, i) => ({ id: String(i), label: `${a.name}（${a.damage || '—'}）` })),
+        minCount: 0,
+        maxCount: 1,
+        context: { kind: 'copy_revealed_attack', attacks: candidates },
+      });
+      if (!askedCopy) {
+        const pick = candidates[Math.floor(Math.random() * candidates.length)];
+        if (pick && opponent.active?.id === defender.id) {
+          const subBoard = buildAttackBoard(G, player, opponent, attacker, defender, pick);
+          applyAttackOutcome(G, player, opponent, attacker, defender, pick, subBoard);
+        }
       }
     }
     if (genericOutcome.setBonusPrizeNextKo) {
@@ -2261,7 +2370,18 @@ export function applyAttackOutcome(
       }
     }
     if (genericOutcome.discardRandomSelfHandCount) {
-      for (let i = 0; i < genericOutcome.discardRandomSelfHandCount && player.hand.length > 0; i++) {
+      // 「選擇1張自己的手牌」 when the text says so; 「在不看正面的情況下」 stays random.
+      const chooses = /選擇1張自己的手牌|選擇自己的手牌/.test(attack.text ?? '');
+      const count = Math.min(genericOutcome.discardRandomSelfHandCount, player.hand.length);
+      // queueAttackPick, not raiseAttackPick: 駭客攻擊 also discards from the opponent's hand and
+      // that half is raised first, so this one rides along behind it.
+      const askedSelfDiscard = chooses && count > 0 && queueAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `選擇 ${count} 張自己的手牌丟棄`,
+        options: player.hand.map(c => ({ id: c.id, label: c.cardData.name })),
+        count,
+        context: { kind: 'self_hand_discard' },
+      });
+      for (let i = 0; !askedSelfDiscard && i < genericOutcome.discardRandomSelfHandCount && player.hand.length > 0; i++) {
         player.discardPile.push(player.hand.splice(Math.floor(Math.random() * player.hand.length), 1)[0]);
       }
     }

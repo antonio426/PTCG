@@ -140,3 +140,58 @@ describe('選擇 texts the engine used to answer for you', () => {
     });
   });
 });
+
+/**
+ * Two attacks ask TWO questions in a printed order. `raiseAttackPick` refuses while a choice is
+ * pending — correctly, one at a time — so the second rides along on the first (`queueAttackPick`)
+ * and `resolveChoice` raises it on the way out.
+ */
+describe('attacks that ask two questions in a printed order', () => {
+  it('駭客攻擊: the opponent picks from their hand first, then the attacker from theirs', () => {
+    const G = board(attacker('多邊獸似', '選擇1張自己的手牌，將其丟棄。然後，對手選擇1張對手自己的手牌，將其丟棄。'));
+    G.players[0].hand = [makeGameCard(makeCard({ name: '我的甲' }), 0), makeGameCard(makeCard({ name: '我的乙' }), 0)];
+    G.players[1].hand = [makeGameCard(makeCard({ name: '敵的甲' }), 1), makeGameCard(makeCard({ name: '敵的乙' }), 1)];
+    const ctx = ctxFor(G);
+
+    moves.attack({ G, ctx }, 0);
+    // 「對手選擇對手自己的1張手牌」 — the defender answers first, on the attacker's turn.
+    expect(G.pendingChoice?.player).toBe(1);
+    const oppCard = G.players[1].hand[0].id;
+    moves.resolveChoice({ G, ctx: { ...ctx, playerID: '1' } }, [oppCard]);
+
+    // …and the attacker's own discard is the queued follow-up, not a random pick.
+    expect(G.pendingChoice?.player).toBe(0);
+    expect(G.pendingChoice?.context?.kind).toBe('self_hand_discard');
+    const myCard = G.players[0].hand[1].id;
+    moves.resolveChoice({ G, ctx }, [myCard]);
+
+    expect(G.players[1].discardPile.some(c => c.id === oppCard)).toBe(true);
+    expect(G.players[0].discardPile.some(c => c.id === myCard)).toBe(true);
+    expect(G.players[0].hand).toHaveLength(1);
+  });
+
+  it('幸福禮物: both players choose, and 「對手先選擇」 is honoured', () => {
+    const G = board(attacker('信使鳥似', '雙方玩家若希望，各自從自己的手牌選擇最多3張基本能量卡，以任意方式附於自己的寶可夢身上。（對手先選擇。）'));
+    const basic = (owner: 0 | 1, n: string) => makeGameCard(makeCard({ name: n, supertype: 'Energy', subtypes: ['Basic Energy'], types: ['Grass'] }), owner);
+    G.players[0].hand = [basic(0, '我的能量')];
+    G.players[1].hand = [basic(1, '敵的能量')];
+    const ctx = ctxFor(G);
+
+    moves.attack({ G, ctx }, 0);
+    expect(G.pendingChoice?.player).toBe(1);       // 對手先選擇
+    moves.resolveChoice({ G, ctx: { ...ctx, playerID: '1' } }, [G.players[1].hand[0].id]);
+    // Single card, single target — the follow-up target question resolves without another prompt.
+    while (G.pendingChoice?.player === 1) {
+      moves.resolveChoice({ G, ctx: { ...ctx, playerID: '1' } }, [G.pendingChoice.options![0].id]);
+    }
+
+    expect(G.pendingChoice?.player).toBe(0);       // then the attacker
+    moves.resolveChoice({ G, ctx }, [G.players[0].hand[0].id]);
+    while (G.pendingChoice) {
+      moves.resolveChoice({ G, ctx }, [G.pendingChoice.options![0].id]);
+    }
+
+    expect(G.players[1].active!.attachedEnergy).toHaveLength(1);
+    expect(G.players[0].active!.attachedEnergy).toHaveLength(1);
+  });
+});

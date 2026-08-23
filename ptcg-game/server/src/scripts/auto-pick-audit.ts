@@ -41,7 +41,9 @@ function autoPickFields(): Set<string> {
     const body = src.slice(m.index, end);
     // A block that calls raiseAttackPick has been converted: it asks the player, and only falls
     // back to picking when there is nothing to decide (no candidates, or a choice already up).
-    if (/Math\.random\(\)/.test(body) && !/raiseAttackPick\(/.test(body)) found.add(m[1]);
+    // queueAttackPick counts too — it is the same hand-back, for an attack that asks a SECOND
+    // question, where raiseAttackPick would (correctly) refuse because one is already standing.
+    if (/Math\.random\(\)/.test(body) && !/(raise|queue)AttackPick\(/.test(body)) found.add(m[1]);
   }
   return found;
 }

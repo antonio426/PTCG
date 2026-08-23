@@ -903,6 +903,53 @@ const rawMoves = {
           if (deckIdx >= 0) seat.hand.push(seat.deck.splice(deckIdx, 1)[0]);
         }
         shuffleDeck(seat.deck);
+      } else if (kind === 'self_hand_discard') {
+        for (const id of selection) {
+          const i = seat.hand.findIndex(c => c.id === id);
+          if (i >= 0) seat.discardPile.push(seat.hand.splice(i, 1)[0]);
+        }
+      } else if (kind === 'self_switch') {
+        const idx = seat.bench.findIndex(c => c?.id === selection[0]);
+        if (idx >= 0 && seat.active) {
+          const promoted = seat.bench[idx]!;
+          clearStatusConditionsOnLeaveActive(seat.active);
+          seat.bench[idx] = seat.active;
+          seat.active = promoted;
+        }
+      } else if (kind === 'copy_revealed_attack') {
+        // The revealed cards went straight back into a shuffled deck, so the attack is resolved
+        // from the snapshot the choice carried rather than looked up again.
+        const borrowed = (context.attacks as Attack[] | undefined)?.[parseInt(selection[0] ?? '', 10)];
+        const me = G.players[chooser];
+        const opp = G.players[(1 - chooser) as 0 | 1];
+        if (borrowed && me.active && opp.active) {
+          const subBoard = buildAttackBoard(G, me, opp, me.active, opp.active, borrowed);
+          applyAttackOutcome(G, me, opp, me.active, opp.active, borrowed, subBoard);
+        }
+      } else if (kind === 'opponent_discard_attach_spread') {
+        // 惡作劇作畫: the attacker chooses, but every card and every destination belongs to the
+        // opponent — same two-phase walk as deck_attach_spread, on the other player's board.
+        const opp = G.players[(1 - chooser) as 0 | 1];
+        const targets = [opp.active, ...opp.bench].filter((c): c is GameCard => c !== null);
+        const queue = context.phase === 'cards' ? [...selection] : (context.queue as string[]);
+        if (context.phase !== 'cards') {
+          const cardId = (context.queue as string[])[0];
+          const target = targets.find(c => c.id === selection[0]);
+          const di = opp.discardPile.findIndex(c => c.id === cardId);
+          if (target && di >= 0) target.attachedEnergy.push(asAttachedEnergy(opp.discardPile.splice(di, 1)[0]));
+          queue.shift();
+        }
+        if (queue.length > 0 && targets.length > 0) {
+          const next = opp.discardPile.find(c => c.id === queue[0]);
+          G.pendingChoice = {
+            player: chooser, owner: chooser, effectKey: 'attack_pick',
+            prompt: `選擇要附加「${next?.cardData.name ?? '能量'}」的對手寶可夢`,
+            choiceType: 'select_pokemon', count: 1,
+            options: targets.map(c => ({ id: c.id, label: c.cardData.name })),
+            context: { kind: 'opponent_discard_attach_spread', phase: 'target', queue, then: context.then },
+          };
+          return;
+        }
       } else if (kind === 'deck_to_top') {
         // 時間掌控: the picked cards go on TOP, in the order they were picked, and the rest of the
         // deck is shuffled first — so shuffle, then stack. Pushing to the end IS the top here
@@ -1083,7 +1130,9 @@ const rawMoves = {
             prompt: `選擇要附加「${next?.cardData.name ?? '能量'}」的寶可夢`,
             choiceType: 'select_pokemon', count: 1,
             options: targets.map(c => ({ id: c.id, label: c.cardData.name })),
-            context: { kind: 'hand_attach_spread', phase: 'target', queue },
+            // A queued follow-up has to survive the intermediate steps of a multi-step pick,
+            // or 幸福禮物's second player never gets asked (see queueAttackPick).
+            context: { kind: 'hand_attach_spread', phase: 'target', queue, then: context.then },
           };
           return;
         }
@@ -1159,7 +1208,7 @@ const rawMoves = {
             prompt: `選擇要附加「${next?.cardData.name ?? '能量'}」的寶可夢`,
             choiceType: 'select_pokemon', count: 1,
             options: targets.map(c => ({ id: c.id, label: c.cardData.name })),
-            context: { kind: 'deck_attach_spread', phase: 'target', queue, benchOnly: context.benchOnly },
+            context: { kind: 'deck_attach_spread', phase: 'target', queue, benchOnly: context.benchOnly, then: context.then },
           };
           return;   // more to answer: the turn stays open
         }
@@ -1190,7 +1239,19 @@ const rawMoves = {
       }
       const picked = selection.map(id => findCardNameById(G, id) ?? id);
       addLog(G, chooser, 'resolve_choice', `${G.pendingChoice.prompt}：${picked.join('、') || '(未選擇)'}`);
+      // An attack that asks two questions in a printed order (駭客攻擊's two hands, 幸福禮物's
+      // 「對手先選擇」) parks the second one here — see queueAttackPick in attackResolution.ts.
+      const follow = context.then as { seat: 0 | 1; prompt: string; options: { id: string; label: string }[]; count?: number; minCount?: number; maxCount?: number; context: Record<string, unknown> } | undefined;
       G.pendingChoice = null;
+      if (follow && follow.options.length > 0) {
+        G.pendingChoice = {
+          player: follow.seat, owner: follow.seat, effectKey: 'attack_pick',
+          prompt: follow.prompt, choiceType: 'select_from_list',
+          count: follow.count, minCount: follow.minCount, maxCount: follow.maxCount,
+          options: follow.options, context: follow.context,
+        };
+        return;
+      }
       // The attack was waiting on this, so it finishes now — same hand-off moves.attack does when
       // no choice is pending. It resolves for the ATTACKER even when the opponent answered.
       finishAttack(G, ctx);
