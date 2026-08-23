@@ -300,3 +300,110 @@ describe('decide() — each spec is a board the old scorer got wrong', () => {
     expect(chosen.description).toBe('磨對手的牌');
   });
 });
+
+/* ------------------------------------------------------------------ */
+/*  resolve_choice — answering the question that was actually asked    */
+/* ------------------------------------------------------------------ */
+
+describe('resolve_choice answers', () => {
+  const withChoice = (G: PtcgGameState, choice: Partial<NonNullable<PtcgGameState['pendingChoice']>>) => {
+    G.pendingChoice = {
+      player: 0, owner: 0, effectKey: 'attack_pick', prompt: '選擇',
+      choiceType: 'select_from_list', options: [], context: {}, ...choice,
+    } as PtcgGameState['pendingChoice'];
+    return G;
+  };
+
+  it('damage_targets: hits the Pokémon it can actually finish, not the healthiest', async () => {
+    // 30 damage to distribute; A is one hit from down, B is full — the old scorer picked B.
+    const G = duel(mon({ name: '散彈手' }));
+    const nearlyDead = makeGameCard(mon({ name: '殘血目標', hp: '60' }), 1, { damage: 30 });
+    const full = makeGameCard(mon({ name: '滿血目標', hp: '120' }), 1);
+    G.players[1].bench = [nearlyDead, full, null, null, null];
+    withChoice(G, {
+      prompt: '選擇 1 次對手的寶可夢（每次各 30 點傷害）', count: 1,
+      options: [{ id: nearlyDead.id, label: '殘血目標' }, { id: full.id, label: '滿血目標' }],
+      context: { kind: 'damage_targets', amount: 30 },
+    });
+    const chosen = await pick(G, [
+      mv('resolve_choice', { selection: [nearlyDead.id] }, '打殘血'),
+      mv('resolve_choice', { selection: [full.id] }, '打滿血'),
+    ]);
+    expect(chosen.description).toBe('打殘血');
+  });
+
+  it('ko_target: takes the multi-prize body over the ordinary one', async () => {
+    const G = duel(mon({ name: '殺手' }));
+    const big = makeGameCard(mon({ name: '大獎ex', subtypes: ['Basic', 'ex'] }), 1);
+    const small = makeGameCard(mon({ name: '小獎' }), 1);
+    G.players[1].bench = [small, big, null, null, null];
+    withChoice(G, {
+      prompt: '選擇1隻使其昏厥', count: 1,
+      options: [{ id: small.id, label: '小獎' }, { id: big.id, label: '大獎ex' }],
+      context: { kind: 'ko_target' },
+    });
+    const chosen = await pick(G, [
+      mv('resolve_choice', { selection: [small.id] }, '殺小的'),
+      mv('resolve_choice', { selection: [big.id] }, '殺大的'),
+    ]);
+    expect(chosen.description).toBe('殺大的');
+  });
+
+  it('retreat pick_bench promotes the SAME Pokémon that justified retreating', async () => {
+    // A loaded attacker and an empty wall: the retreat logic wants the attacker, so the
+    // promotion answer must too — the old scorer used a different heuristic for each half.
+    const hitter = mon({ name: '打手', hp: '80', attacks: [attack('重擊', ['Grass'], '90')] });
+    const wall = mon({ name: '肉牆', hp: '200' });
+    const G = duel(mon({ name: '前排' }));
+    const hitterCard = makeGameCard(hitter, 0, { attachedEnergy: [energy('e9')] });
+    const wallCard = makeGameCard(wall, 0);
+    G.players[0].bench = [wallCard, hitterCard, null, null, null];
+    withChoice(G, {
+      effectKey: 'retreat', prompt: '選擇要換上場的備戰寶可夢',
+      choiceType: 'select_bench_pokemon', count: 1,
+      options: [{ id: wallCard.id, label: '肉牆' }, { id: hitterCard.id, label: '打手' }],
+      context: { step: 'pick_bench' },
+    });
+    const chosen = await pick(G, [
+      mv('resolve_choice', { selection: [wallCard.id] }, '上肉牆'),
+      mv('resolve_choice', { selection: [hitterCard.id] }, '上打手'),
+    ]);
+    expect(chosen.description).toBe('上打手');
+  });
+
+  it('pays a retreat cost with the energy its attacks cannot even use', async () => {
+    const active = makeGameCard(mon({ name: '撤退者', attacks: [attack('草擊', ['Grass'], '50')] }), 0, {
+      attachedEnergy: [energy('g1', 'Grass'), energy('f1', 'Fire')],
+    });
+    const G = duel(mon({ name: 'x' }));
+    G.players[0].active = active;
+    withChoice(G, {
+      effectKey: 'retreat', prompt: '選擇 1 張要棄置的能量（撤退費用）', count: 1,
+      options: [{ id: 'g1', label: '草' }, { id: 'f1', label: '火' }],
+      context: { step: 'pick_energy', benchIdx: 0 },
+    });
+    const chosen = await pick(G, [
+      mv('resolve_choice', { selection: ['g1'] }, '棄草'),
+      mv('resolve_choice', { selection: ['f1'] }, '棄火'),
+    ]);
+    // The Grass energy pays 草擊; the Fire energy pays nothing this Pokémon does.
+    expect(chosen.description).toBe('棄火');
+  });
+
+  it('discards the opponent hand card that hurts them most', async () => {
+    const G = duel(mon({ name: '搶匪' }));
+    const supporter = makeGameCard(makeCard({ name: '對手的支援者', supertype: 'Trainer', subtypes: ['Supporter'] }), 1);
+    const energyCard = makeGameCard(BASIC_ENERGY, 1);
+    G.players[1].hand = [supporter, energyCard];
+    withChoice(G, {
+      prompt: '選擇 1 張丟棄', count: 1, revealsOpponentHand: true,
+      options: [{ id: supporter.id, label: '對手的支援者' }, { id: energyCard.id, label: '基礎草能量' }],
+      context: { kind: 'discard_opponent_hand' },
+    });
+    const chosen = await pick(G, [
+      mv('resolve_choice', { selection: [supporter.id] }, '丟支援者'),
+      mv('resolve_choice', { selection: [energyCard.id] }, '丟能量'),
+    ]);
+    expect(chosen.description).toBe('丟支援者');
+  });
+});

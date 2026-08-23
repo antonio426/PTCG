@@ -514,41 +514,187 @@ export class HeuristicAI implements IAIPlayer {
       - 5 * (card.cardData.retreatCost?.length ?? 0);
   }
 
-  /** Ultra-Ball-style discard/search steps, retreat/KO bench-promotion, bench-distribution
-   * damage picks, etc. all resolve through here — approximated, not a per-effect evaluator
-   * (see plan doc's explicit scope note). */
+  /**
+   * Answering a pendingChoice. The old scorer never read `context.kind` — its select_pokemon
+   * branch picked the HEALTHIEST candidate even when the question was "which of the opponent's
+   * Pokémon takes the damage", which is precisely the worst answer. Now the kind names the
+   * question, so the answer can be about the question:
+   *
+   *   hurting the opponent   → KO if possible, else the weakest / most invested target
+   *   picking a promotion    → the same bestSwitchIn that justifies retreats
+   *   taking a reward        → the most useful cards (cardValue)
+   *   paying a cost          → the least useful cards
+   *
+   * Choices raised mid-effect by named trainer/ability handlers ('trainer:X' / 'ability:X') have
+   * no kind — those fall to the prompt classifier at the bottom, deliberately: hundreds of cards,
+   * no per-card table.
+   */
   private scoreResolveChoice(G: PtcgGameState, playerIndex: 0 | 1, move: LegalAction): number {
     const choice = G.pendingChoice;
     const selection = (move.payload?.selection as string[] | undefined) ?? [];
     if (!choice) return 10;
-    const player = G.players[playerIndex];
+    const me = G.players[playerIndex];
+    const opp = G.players[(1 - playerIndex) as 0 | 1];
+    const ctx = (choice.context ?? {}) as Record<string, unknown>;
+    const kind = ctx.kind as string | undefined;
 
-    // Board-target choices (bench promotion, damage distribution, etc.) — prefer the
-    // healthiest/most-invested Pokémon among the candidates actually offered.
-    if (choice.choiceType === 'select_pokemon' || choice.choiceType === 'select_bench_pokemon') {
-      if (selection.length === 0) return 5;
-      let total = 0;
-      for (const id of selection) {
-        const target = findPokemon(player, id) ?? findPokemon(G.players[(1 - playerIndex) as 0 | 1], id);
+    const findAnywhere = (id: string): GameCard | null =>
+      findPokemon(me, id) ?? findPokemon(opp, id)
+      ?? me.hand.find(c => c.id === id) ?? opp.hand.find(c => c.id === id)
+      ?? me.deck.find(c => c.id === id)
+      ?? me.discardPile.find(c => c.id === id) ?? opp.discardPile.find(c => c.id === id) ?? null;
+
+    // ---- Hurting the opponent: KO first, then finish the weakest. -----------------------------
+    if (kind === 'damage_targets') {
+      const amount = (ctx.amount as number) ?? 0;
+      const hits = new Map<string, number>();
+      for (const id of selection) hits.set(id, (hits.get(id) ?? 0) + 1);
+      let score = 10;
+      for (const [id, times] of hits) {
+        const target = findPokemon(opp, id);
         if (!target) continue;
-        total += (remainingHp(G, target) / Math.max(1, effectiveMaxHp(G, target))) * 50 + target.attachedEnergy.length * 10;
+        const dealt = amount * times;
+        if (dealt >= remainingHp(G, target)) score += 100 * prizesForKo(target) + 20;
+        else score += dealt / 10 + Math.max(0, 50 - remainingHp(G, target) / 10);
       }
-      return 10 + total;
+      return score;
+    }
+    if (kind === 'ko_target' || kind === 'devolve_targets') {
+      let score = 10;
+      for (const id of selection) {
+        const target = findPokemon(opp, id);
+        if (!target) continue;
+        score += 100 * prizesForKo(target) + targetValue(G, target) / 10;
+      }
+      return score;
+    }
+    if (kind === 'keep_opponent_bench') {
+      // The picked Pokémon SURVIVE — keep their worst, so the score is what gets removed.
+      let kept = 0;
+      for (const id of selection) {
+        const target = findPokemon(opp, id);
+        if (target) kept += targetValue(G, target);
+      }
+      return 200 - kept;
+    }
+    if (kind === 'opponent_energy_discard') {
+      const holder = [opp.active, ...opp.bench].find(c => c?.id === (ctx.targetId as string)) ?? opp.active;
+      let score = 10 + selection.length * 8;
+      for (const id of selection) {
+        const e = holder?.attachedEnergy.find(x => x.id === id);
+        if (e?.cardData?.subtypes?.includes('Special Energy')) score += 10;   // rip the good ones
+      }
+      return score;
+    }
+    if (kind === 'discard_opponent_hand' || kind === 'opponent_hand_to_deck_bottom') {
+      // Take their engine: Supporters and Pokémon over Items over Energy.
+      let score = 10;
+      for (const id of selection) {
+        const card = opp.hand.find(c => c.id === id)?.cardData;
+        if (!card) continue;
+        score += card.subtypes?.includes('Supporter') ? 25 : card.supertype === 'Pokémon' ? 20
+          : card.supertype === 'Trainer' ? 12 : 8;
+      }
+      return score;
+    }
+    if (kind === 'opponent_discard_attach_spread' && ctx.phase === 'target') {
+      // Attaching to THEIR board: dump it on the least valuable body.
+      const target = findPokemon(opp, selection[0] ?? '');
+      return target ? 60 - targetValue(G, target) / 10 : 5;
     }
 
-    // Hand-card / deck-search-style choices: cheap keyword heuristic. A prompt mentioning
-    // "丟棄" is a cost being paid (prefer discarding LOW-value cards); anything else is a
-    // reward pick (prefer HIGH-value cards).
-    const isDiscardCost = /丟棄|discard/i.test(choice.prompt);
-    const labelFor = (id: string): string => {
-      if (choice.choiceType === 'select_hand_cards') return player.hand.find(c => c.id === id)?.cardData.name ?? '';
-      return choice.options?.find(o => o.id === id)?.label ?? '';
-    };
-    const isValuableLabel = (label: string) => /基礎|Basic|能量|Energy/.test(label);
-    let score = 10 + selection.length;
+    // ---- Copying an attack: evaluate each candidate for real. ---------------------------------
+    if (kind === 'copy_revealed_attack' || kind === 'copy_defender_attack') {
+      if (selection.length === 0) return 5;   // declining is legal, but usually weak
+      const idxPicked = parseInt(selection[0] ?? '', 10);
+      const candidates = kind === 'copy_revealed_attack'
+        ? (ctx.attacks as Attack[] | undefined) ?? []
+        : opp.active?.cardData.attacks ?? [];
+      const borrowed = candidates[idxPicked];
+      if (!borrowed || !me.active || !opp.active) return 5;
+      const ev = evaluateAttack(G, playerIndex, me.active, opp.active, borrowed, this.cache);
+      return 20 + ev.expected / 2;
+    }
+
+    // ---- Promotions and switches: one definition of "who should come in". ---------------------
+    const isPromotion = kind === 'opponent_switch' || kind === 'self_switch'
+      || choice.effectKey === 'ko_promotion' || choice.effectKey === 'attack_self_return_promotion'
+      || choice.effectKey === 'mulligan_bonus_bench'
+      || (choice.effectKey === 'retreat' && ctx.step === 'pick_bench');
+    if (isPromotion && choice.choiceType !== 'select_from_list') {
+      const mon = findPokemon(me, selection[0] ?? '');
+      if (!mon) return 5;
+      const defender = opp.active;
+      const output = defender ? (bestPayableAttack(G, playerIndex, mon, defender, this.cache)?.expected ?? 0) : 0;
+      return 20 + output / 2 + remainingHp(G, mon) / 50;
+    }
+
+    // ---- Paying a cost: give up the least. ----------------------------------------------------
+    const energyCostKinds = new Set(['self_energy_discard', 'self_energy_to_deck']);
+    if (energyCostKinds.has(kind ?? '')
+      || (choice.effectKey === 'retreat' && ctx.step === 'pick_energy')
+      || choice.effectKey === 'attack_self_energy_discard') {
+      // All options are energy on one of our Pokémon: prefer shedding Basic energy whose type
+      // none of the holder's attacks even ask for; hold on to Special Energy.
+      const holderId = (ctx.attackerId as string) ?? me.active?.id ?? '';
+      const holder = findPokemon(me, holderId) ?? me.active;
+      const wantedTypes = new Set((holder ? usableAttacks(G, holder) : []).flatMap(a => a.cost));
+      let score = 60;
+      for (const id of selection) {
+        const e = holder?.attachedEnergy.find(x => x.id === id);
+        if (!e) continue;
+        if (e.cardData?.subtypes?.includes('Special Energy')) score -= 12;
+        else if (wantedTypes.has(e.type as never) || wantedTypes.has('Colorless' as never)) score -= 5;
+        else score += 3;   // an off-type energy is exactly the one to pay with
+      }
+      return score;
+    }
+    const handCostKinds = new Set(['self_hand_discard', 'hand_to_deck']);
+    if (handCostKinds.has(kind ?? '')) {
+      let score = 60;
+      for (const id of selection) {
+        const card = me.hand.find(c => c.id === id)?.cardData;
+        if (card) score -= cardValue(G, playerIndex, card) / 2;
+      }
+      return score;
+    }
+
+    // ---- Taking a reward: pick the most useful cards, and more of them. -----------------------
+    const rewardKinds = new Set([
+      'deck_to_hand', 'deck_to_bench', 'deck_attach', 'deck_attach_spread', 'hand_attach_spread',
+      'discard_to_hand', 'discard_to_bench', 'discard_attach', 'attach_from_hand_heal',
+      'deck_evolve', 'deck_to_top', 'move_energy',
+    ]);
+    if (kind && rewardKinds.has(kind)) {
+      if (ctx.phase === 'target' || (kind === 'move_energy' && ctx.phase !== 'energy')) {
+        // Destination step of a multi-part pick: our most invested body, active first.
+        const mon = findPokemon(me, selection[0] ?? '');
+        if (!mon) return 5;
+        return 20 + targetValue(G, mon) / 10 + (me.active?.id === mon.id ? 10 : 0);
+      }
+      let score = 20 + selection.length * 5;
+      for (const id of selection) {
+        const card = findAnywhere(id);
+        if (card) score += cardValue(G, playerIndex, card.cardData) / 2;
+      }
+      return score;
+    }
+
+    // ---- mulligan compensation: free cards, unless the deck can't afford them. ----------------
+    if (choice.effectKey === 'mulligan_bonus') {
+      const n = parseInt(selection[0] ?? '0', 10) || 0;
+      return me.deck.length < 8 ? 20 - n : 20 + n;
+    }
+
+    // ---- Everything else (named trainer/ability resume steps): classify by the prompt. --------
+    // 丟棄/放回 in the prompt = a cost being paid (give up the least value); otherwise a reward.
+    const isCost = /丟棄|棄置|放回/.test(choice.prompt);
+    let score = 10 + (isCost ? 0 : selection.length);
     for (const id of selection) {
-      const valuable = isValuableLabel(labelFor(id));
-      score += (isDiscardCost ? !valuable : valuable) ? 15 : -5;
+      const card = findAnywhere(id);
+      if (!card) continue;
+      const v = cardValue(G, playerIndex, card.cardData) / 3;
+      score += isCost ? -v : v;
     }
     return score;
   }
