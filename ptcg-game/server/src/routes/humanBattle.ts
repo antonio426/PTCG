@@ -5,7 +5,7 @@ import type { PtcgGameState, PendingChoice } from '../game/GameState';
 import type { GameCard } from '@ptcg/shared';
 import { setup } from '../game/setup';
 import { getLegalMoves } from '../game/validation';
-import { applyTurnBegin } from '../game/turnLifecycle';
+import { beginNextTurn } from '../game/turnLifecycle';
 import { applyMove } from '../game/moveDispatch';
 import { applyWinner, applyStuckSeatLoss } from '../game/winConditions';
 import { effectiveMaxHp } from '../game/damage';
@@ -281,13 +281,10 @@ async function runAiTurns(session: BattleSession): Promise<void> {
     if (checkAndApplyWin(G)) break;
     // Resolving a choice the AI owed during the HUMAN's turn hands control straight back.
     if (G.currentPlayer === 0 && G.pendingChoice?.player !== 1) break;
-    if (G.phase === 'end') {
-      // Advance turn
-      G.currentPlayer = 0;
-      G.turn++;
-      applyTurnBegin(G);
-      if (checkAndApplyWin(G)) break;
-    }
+    // The AI's turn is over, so the turn goes back to the human. This used to hardcode
+    // `G.currentPlayer = 0`, which was right only because runAiTurns bails out for local 2P
+    // before ever reaching here — a latent bug the moment that stops being true.
+    if (G.phase === 'end' && beginNextTurn(G)) break;
   }
   if (aiMoveSafety >= 500 && G.winner === null) {
     G.winner = 0;
@@ -440,10 +437,7 @@ router.post('/:id/move', async (ctx) => {
     }
     // If the turn ended, advance to the next turn (the opponent's — AI or the other human)
     if (G.phase === 'end') {
-      G.currentPlayer = 1 - G.currentPlayer;
-      G.turn++;
-      applyTurnBegin(G);
-      if (checkAndApplyWin(G)) {
+      if (beginNextTurn(G)) {
         ctx.body = { sessionId: session.id, state: buildResponse(session) };
         return;
       }

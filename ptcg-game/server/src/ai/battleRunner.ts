@@ -1,7 +1,7 @@
 import type { PtcgGameState } from '../game/GameState';
 import { setup } from '../game/setup';
 import { getLegalMoves } from '../game/validation';
-import { applyTurnBegin } from '../game/turnLifecycle';
+import { applyTurnBegin, beginNextTurn } from '../game/turnLifecycle';
 import { applyMove } from '../game/moveDispatch';
 import { applyWinner, applyStuckSeatLoss } from '../game/winConditions';
 import { IAIPlayer } from './aiPlayer';
@@ -36,11 +36,6 @@ export function checkEndCondition(G: PtcgGameState): void {
 }
 
 export { applyTurnBegin };
-
-export function advanceTurn(G: PtcgGameState): void {
-  G.currentPlayer = (1 - G.currentPlayer) as 0 | 1;
-  G.turn++;
-}
 
 export function executeMove(G: PtcgGameState, action: { type: string; payload?: Record<string, any> }, actor?: 0 | 1): boolean {
   let turnEnded = false;
@@ -106,10 +101,7 @@ async function runSingleGame(
     checkEndCondition(G);
     if (G.winner !== null) break;
 
-    if (turnEnded) {
-      advanceTurn(G);
-      applyTurnBegin(G);
-    }
+    if (turnEnded && beginNextTurn(G)) break;
   }
   if (G.winner === null) {
     G.winner = 0;

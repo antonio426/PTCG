@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { setup } from '../src/game/setup';
-import { basicOnlyDeckIds, testCardData } from './fixtures';
+import { beginNextTurn } from '../src/game/turnLifecycle';
+import { BASIC_MON, basicOnlyDeckIds, makeGameCard, makeState, testCardData } from './fixtures';
 
 const SRC = join(__dirname, '..', 'src');
 const SHARED = join(SRC, 'game', 'turnLifecycle.ts');
@@ -36,11 +37,23 @@ const stripComments = (src: string) =>
   src.replace(/\/\/[^\n]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
 
 describe('turn-begin lifecycle has exactly one implementation', () => {
-  it.each(Object.entries(ENGINES))('%s calls the shared applyTurnBegin', (_name, file) => {
+  it.each(Object.entries(ENGINES))('%s calls into the shared lifecycle', (_name, file) => {
     const src = readFileSync(file, 'utf8');
-    expect(src).toMatch(/applyTurnBegin\(G\)/);
+    expect(src).toMatch(/(applyTurnBegin|beginNextTurn)\(G\)/);
     expect(src).toContain("turnLifecycle'");
   });
+
+  // Advancing the turn is three lines — flip the seat, count it, run turn-begin — and every engine
+  // wrote its own, none of which re-checked the win afterwards except humanBattle. Since handleKo
+  // never sets G.winner, a between-turns Poison/Burn KO could take the sixth prize and the
+  // already-defeated player would still get one more action. beginNextTurn does all four steps.
+  // PtcgGame is exempt: boardgame.io owns seat order (TurnOrder) and re-evaluates endIf itself.
+  it.each(Object.entries(ENGINES).filter(([name]) => name !== 'PtcgGame.ts'))(
+    '%s does not advance the turn by hand', (_name, file) => {
+      const src = stripComments(readFileSync(file, 'utf8'));
+      expect(src, 'seat flipping belongs in beginNextTurn').not.toMatch(/currentPlayer\s*=\s*\(?\s*1\s*-/);
+      expect(src, 'turn counting belongs in beginNextTurn').not.toMatch(/G\.turn\+\+/);
+    });
 
   it.each(Object.entries(ENGINES))('%s does not re-implement the per-turn reset', (_name, file) => {
     const src = stripComments(readFileSync(file, 'utf8'));
@@ -113,5 +126,39 @@ describe('setup()', () => {
   it('throws rather than looping forever on a deck with no Basic Pokémon', () => {
     const energyOnly = Array.from({ length: 60 }, () => 'TEST-003');
     expect(() => setup({ ...base, decks: [energyOnly, basicOnlyDeckIds()] })).toThrow(/no Basic Pok/i);
+  });
+});
+
+describe('beginNextTurn', () => {
+  /** Player 1's Active dies to its own Poison during the turn transition, handing player 0 their
+   * sixth prize. `handleKo` never writes `G.winner`, so before beginNextTurn owned this step only
+   * humanBattle noticed — battleRunner and battles.ts let the defeated player take one more
+   * action, which also put their reported turn counts out by one. */
+  function poisonedIntoLastPrize() {
+    const G = makeState({ turn: 4, currentPlayer: 0, phase: 'end' });
+    G.players[0].takenPrizes = 5;
+    G.players[0].prizes = [makeGameCard(BASIC_MON, 0)];
+    const dying = makeGameCard(BASIC_MON, 1, { damage: 50, statusConditions: ['Poisoned'] });
+    G.players[1].active = dying;
+    G.players[1].bench = [makeGameCard(BASIC_MON, 1), null, null, null, null];
+    return G;
+  }
+
+  it('ends the game when the between-turns tick takes the last prize', () => {
+    const G = poisonedIntoLastPrize();
+    expect(beginNextTurn(G)).toBe(true);
+    expect(G.winner).toBe(0);
+    expect(G.winReason).toBe('took all prizes');
+  });
+
+  it('otherwise hands the turn over and reports the game is still on', () => {
+    const G = makeState({ turn: 4, currentPlayer: 0, phase: 'end' });
+    // Fixture decks are empty, and beginNextTurn moves to the draw phase — which is itself a
+    // loss condition. Give the incoming player something to draw.
+    G.players[1].deck = [makeGameCard(BASIC_MON, 1)];
+    expect(beginNextTurn(G)).toBe(false);
+    expect(G.currentPlayer).toBe(1);
+    expect(G.turn).toBe(5);
+    expect(G.phase).toBe('draw');
   });
 });

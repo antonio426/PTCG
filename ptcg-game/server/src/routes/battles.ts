@@ -5,7 +5,7 @@ import type { PtcgGameState } from '../game/GameState';
 import { setup } from '../game/setup';
 import { getLegalMoves } from '../game/validation';
 import { fetchCardsByIds } from '../card-api/tcgdex';
-import { applyTurnBegin } from '../game/turnLifecycle';
+import { applyTurnBegin, beginNextTurn } from '../game/turnLifecycle';
 import { applyMove } from '../game/moveDispatch';
 import { applyWinner, applyStuckSeatLoss } from '../game/winConditions';
 import { IAIPlayer, RandomAI, MockAI, ClaudeAI } from '../ai/aiPlayer';
@@ -86,10 +86,7 @@ async function simulateBattle(decks: string[][], seed: number, aiTypeA: string |
       executeMove(G, move, player);
       if (applyWinner(G)) break;
     }
-    if (G.winner !== null) break;
-    G.currentPlayer = (1 - G.currentPlayer) as 0 | 1;
-    G.turn++;
-    applyTurnBegin(G);
+    if (G.winner !== null || beginNextTurn(G)) break;
   }
   return { winner: G.winner ?? 0, winReason: G.winReason, turns: G.turn, logs: [...G.turnLog] };
 }

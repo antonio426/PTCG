@@ -18,7 +18,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { setup } from '../game/setup';
 import { getLegalMoves } from '../game/validation';
-import { applyTurnBegin, advanceTurn, checkEndCondition, executeMove } from '../ai/battleRunner';
+import { checkEndCondition, executeMove } from '../ai/battleRunner';
+import { applyTurnBegin, beginNextTurn } from '../game/turnLifecycle';
 import { HeuristicAI } from '../ai/heuristicAI';
 import { RandomAI } from '../ai/aiPlayer';
 import { boardFingerprint, checkAllInvariants, checkMoveHadEffect, Violation } from '../game/invariants';
@@ -166,7 +167,7 @@ async function main() {
 
         checkEndCondition(G);
         if (G.winner !== null) break;
-        if (turnEnded) { advanceTurn(G); applyTurnBegin(G); }
+        if (turnEnded && beginNextTurn(G)) break;
       }
       games++;
       if (verbose) process.stdout.write(`\r  ${games} games, ${movesChecked} moves, ${findings.length} distinct findings   `);

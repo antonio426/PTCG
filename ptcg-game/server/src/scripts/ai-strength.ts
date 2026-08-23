@@ -23,7 +23,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { setup } from '../game/setup';
 import { getLegalMoves } from '../game/validation';
-import { applyTurnBegin, advanceTurn, checkEndCondition, executeMove } from '../ai/battleRunner';
+import { checkEndCondition, executeMove } from '../ai/battleRunner';
+import { applyTurnBegin, beginNextTurn } from '../game/turnLifecycle';
 import { HeuristicAI } from '../ai/heuristicAI';
 import { RandomAI } from '../ai/aiPlayer';
 import type { IAIPlayer } from '../ai/aiPlayer';
@@ -105,7 +106,7 @@ async function main() {
       const turnEnded = executeMove(G, action, seat);
       checkEndCondition(G);
       if (G.winner !== null) break;
-      if (turnEnded) { advanceTurn(G); applyTurnBegin(G); }
+      if (turnEnded && beginNextTurn(G)) break;
     }
     restoreRandom();
     totalTurns += G.turn;

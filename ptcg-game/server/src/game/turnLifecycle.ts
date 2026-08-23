@@ -1,6 +1,7 @@
 import type { PtcgGameState } from './GameState';
 import { promoteActiveIfNeeded } from './damage';
 import { processBetweenTurns, processWakeUpCheck } from './statusConditions';
+import { applyWinner } from './winConditions';
 
 /**
  * The start-of-turn work every engine has to do, in one place.
@@ -51,4 +52,25 @@ export function applyTurnBegin(G: PtcgGameState): void {
   player.incomingDamageReduction = [];
   player.retreatedThisTurn = false;
   player.stadiumActionUsedThisTurn = false;
+}
+
+/**
+ * Hand the turn to the other player: flip the seat, count the turn, run the start-of-turn work,
+ * and re-check the win. Returns whether the game ended.
+ *
+ * That last step is why this exists rather than each engine writing the three lines itself.
+ * `handleKo` never sets `G.winner`, so a between-turns Poison/Burn KO inside `applyTurnBegin` can
+ * take the sixth prize or empty a board without ending anything. Only humanBattle re-checked;
+ * battleRunner and battles.ts let the already-defeated player take one more action, which also
+ * put their reported turn counts out by one.
+ *
+ * boardgame.io is the one caller that can't use this — it owns seat order and turn counting
+ * itself (`TurnOrder`) and re-evaluates `endIf` on its own — so `PtcgGame.ts` still calls
+ * `applyTurnBegin` directly inside `turn.onBegin`.
+ */
+export function beginNextTurn(G: PtcgGameState): boolean {
+  G.currentPlayer = (1 - G.currentPlayer) as 0 | 1;
+  G.turn++;
+  applyTurnBegin(G);
+  return applyWinner(G);
 }
