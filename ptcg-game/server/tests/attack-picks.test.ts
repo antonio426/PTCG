@@ -195,3 +195,94 @@ describe('attacks that ask two questions in a printed order', () => {
     expect(G.players[0].active!.attachedEnergy).toHaveLength(1);
   });
 });
+
+/**
+ * 「將…任意數量的X丟棄，造成其張數×N點傷害」 — how much you spend IS the decision, and the answer
+ * is what the damage is computed from, so the question has to be asked BEFORE the breakdown runs
+ * and the resolution re-entered once it is answered. Reported from a real game: 超級噴火龍Xex's
+ * 烈獄狂火X was discarding every Fire Energy on the board.
+ */
+describe('spending 「任意數量」 for damage is the player\'s call', () => {
+  const fire = (id: string) => ({ id, type: 'Fire', cardData: makeCard({ name: '基本【火】能量', supertype: 'Energy', subtypes: ['Basic Energy'], types: ['Fire'] }) });
+
+  function charizardBoard() {
+    const zard = makeCard({
+      name: '超級噴火龍Xex', hp: '360', types: ['Fire'], subtypes: ['Stage 2', 'ex'],
+      attacks: [attack('烈獄狂火X', [], '90×', '將自己的場上寶可夢身上附加的任意數量的【火】能量卡丟棄，造成其張數×90點傷害。')],
+    });
+    const benched = makeCard({ name: '幫手', hp: '90', types: ['Fire'] });
+    const G = makeState({
+      turn: 6, currentPlayer: 0, phase: 'main',
+      players: [
+        makePlayer({
+          active: makeGameCard(zard, 0, { attachedEnergy: [fire('a1'), fire('a2'), fire('a3')] }),
+          bench: [makeGameCard(benched, 0, { attachedEnergy: [fire('b1')] }), null, null, null, null],
+          prizes: [makeGameCard(BASIC_MON, 0), makeGameCard(BASIC_MON, 0)],
+        }),
+        makePlayer({ active: makeGameCard(makeCard({ name: '對手', hp: '340', types: ['Colorless'] }), 1), prizes: [makeGameCard(BASIC_MON, 1)] }),
+      ],
+    });
+    return G;
+  }
+
+  it('asks which Energy to spend instead of taking every one on the board', () => {
+    const G = charizardBoard();
+    const ctx = ctxFor(G);
+    moves.attack({ G, ctx }, 0);
+
+    expect(G.pendingChoice?.context?.kind).toBe('spend_for_damage');
+    expect(G.pendingChoice?.minCount).toBe(0);        // 「任意數量」 includes none
+    expect(G.pendingChoice?.maxCount).toBe(4);        // 3 on the Active + 1 on the Bench
+    // Nothing has been spent and no damage dealt while the question stands.
+    expect(G.players[0].active!.attachedEnergy).toHaveLength(3);
+    expect(G.players[1].active!.damage).toBe(0);
+  });
+
+  it('spends exactly what was picked, and scales the damage to it', () => {
+    const G = charizardBoard();
+    const ctx = ctxFor(G);
+    moves.attack({ G, ctx }, 0);
+    moves.resolveChoice({ G, ctx }, ['a1', 'b1']);
+
+    // Two cards spent — one off the Active, one off the Bench — so 2 x 90.
+    expect(G.players[0].active!.attachedEnergy.map(e => e.id)).toEqual(['a2', 'a3']);
+    expect(G.players[0].bench[0]!.attachedEnergy).toHaveLength(0);
+    expect(G.players[1].active!.damage).toBe(180);
+  });
+
+  it('honours spending none — no Energy gone, no damage', () => {
+    const G = charizardBoard();
+    const ctx = ctxFor(G);
+    moves.attack({ G, ctx }, 0);
+    moves.resolveChoice({ G, ctx }, []);
+
+    expect(G.players[0].active!.attachedEnergy).toHaveLength(3);
+    expect(G.players[0].bench[0]!.attachedEnergy).toHaveLength(1);
+    expect(G.players[1].active!.damage).toBe(0);
+  });
+
+  it('the same question for an attack that spends only its own Energy', () => {
+    const beast = makeCard({
+      name: '電擊魔獸似', hp: '120', types: ['Lightning'],
+      attacks: [attack('電壓錘', [], '60×', '將這隻寶可夢身上附加的任意數量的基本能量卡丟棄，造成其張數×60點傷害。')],
+    });
+    const G = makeState({
+      turn: 6, currentPlayer: 0, phase: 'main',
+      players: [
+        makePlayer({
+          active: makeGameCard(beast, 0, { attachedEnergy: [fire('x1'), fire('x2')] }),
+          bench: [makeGameCard(BASIC_MON, 0, { attachedEnergy: [fire('y1')] }), null, null, null, null],
+          prizes: [makeGameCard(BASIC_MON, 0)],
+        }),
+        makePlayer({ active: makeGameCard(makeCard({ name: '對手', hp: '200', types: ['Colorless'] }), 1), prizes: [makeGameCard(BASIC_MON, 1)] }),
+      ],
+    });
+    const ctx = ctxFor(G);
+    moves.attack({ G, ctx }, 0);
+    // Only the attacker's own Energy is on offer — the Bench's is not this attack's to spend.
+    expect(G.pendingChoice?.options?.map(o => o.id)).toEqual(['x1', 'x2']);
+    moves.resolveChoice({ G, ctx }, ['x1']);
+    expect(G.players[1].active!.damage).toBe(60);
+    expect(G.players[0].bench[0]!.attachedEnergy).toHaveLength(1);
+  });
+});

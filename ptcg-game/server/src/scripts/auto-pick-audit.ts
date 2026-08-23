@@ -23,7 +23,19 @@ const DATA = path.resolve(__dirname, '../../data');
 const cards = (JSON.parse(fs.readFileSync(path.join(DATA, 'cards.json'), 'utf-8')).data as MapCard[])
   .filter(c => c.legalities?.standard === 'Legal');
 
-/** Outcome fields whose apply block picks at random. */
+/**
+ * Outcome fields whose apply block takes the decision away from the player.
+ *
+ * Two ways that happens, and only the first was modelled for a long time:
+ *  1. the block picks at RANDOM (`Math.random()`), the classic auto-pick;
+ *  2. the block decides DETERMINISTICALLY — spends everything eligible, or the first N — which is
+ *     just as much a decision when the card says 「任意數量」. 烈獄狂火X was discarding every Fire
+ *     Energy on the board this way, and a random-only detector could never see it.
+ *
+ * (2) is recognised by the shape those effects share: the block ends by setting `baseDamage` from
+ * the COUNT of what it just spent (`… .length * amount`), i.e. "how much you pay is how hard you
+ * hit" — which is precisely the decision being made for the player.
+ */
 function autoPickFields(): Set<string> {
   const src = fs.readFileSync(path.resolve(__dirname, '../game/attackResolution.ts'), 'utf-8');
   const found = new Set<string>();
@@ -43,13 +55,22 @@ function autoPickFields(): Set<string> {
     // back to picking when there is nothing to decide (no candidates, or a choice already up).
     // queueAttackPick counts too — it is the same hand-back, for an attack that asks a SECOND
     // question, where raiseAttackPick would (correctly) refuse because one is already standing.
-    if (/Math\.random\(\)/.test(body) && !/(raise|queue)AttackPick\(/.test(body)) found.add(m[1]);
+    if (/(raise|queue)AttackPick\(/.test(body)) continue;
+    const picksAtRandom = /Math\.random\(\)/.test(body);
+    const spendsToScaleDamage = /baseDamage\s*=\s*[^;]*\.length\s*\*/.test(body)
+      || /baseDamage\s*=\s*discarded\s*\*/.test(body);
+    if (picksAtRandom || spendsToScaleDamage) found.add(m[1]);
   }
   return found;
 }
 
 const AUTO = autoPickFields();
-const CHOOSES = /選擇/;
+// 「任意數量」/「任意張數」 is a player decision every bit as much as 「選擇」 is — the card is
+// telling you to pick how many, and how many is the whole point when the count scales the damage.
+// Reported by a player: 超級噴火龍Xex's 烈獄狂火X (「將自己的場上寶可夢身上附加的任意數量的【火】
+// 能量卡丟棄，造成其張數×90點傷害」) was discarding EVERY Fire Energy on the board, and this audit
+// could not see it because the text never says 選擇.
+const CHOOSES = /選擇|任意數量|任意張數/;
 /** 「隨機」 texts are supposed to be random; so are coin flips. */
 const REALLY_RANDOM = /隨機|不看.{0,4}正面/;
 

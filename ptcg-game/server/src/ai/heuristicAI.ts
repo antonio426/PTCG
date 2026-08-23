@@ -632,6 +632,19 @@ export class HeuristicAI implements IAIPlayer {
       return target ? 60 - targetValue(G, target) / 10 : 5;
     }
 
+    // ---- 「任意數量」 spend-for-damage: how much you pay IS how hard you hit. -----------------
+    if (kind === 'spend_for_damage') {
+      // The generic classifier would read this as a cost (own cards, prompt says 丟棄) and answer
+      // with an empty selection — i.e. attack for zero. Spend the least that still knocks the
+      // defender out; if nothing does, commit everything, since unspent resources score nothing.
+      const defender = opp.active;
+      const perCard = (choice.prompt.match(/每張 (d+) 點/)?.[1] ?? '0');
+      const dmg = selection.length * parseInt(perCard, 10);
+      const need = defender ? remainingHp(G, defender) : 0;
+      if (need > 0 && dmg >= need) return 200 - selection.length;   // enough: prefer paying less
+      return 100 + selection.length;                                 // not enough: hit as hard as we can
+    }
+
     // ---- Copying an attack: evaluate each candidate for real. ---------------------------------
     if (kind === 'copy_revealed_attack' || kind === 'copy_defender_attack') {
       if (selection.length === 0) return 5;   // declining is legal, but usually weak

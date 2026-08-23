@@ -916,6 +916,21 @@ const rawMoves = {
           seat.bench[idx] = seat.active;
           seat.active = promoted;
         }
+      } else if (kind === 'spend_for_damage') {
+        // 「將…任意數量的X丟棄，造成其張數×N點傷害」: the answer IS the damage, so the attack could
+        // not be resolved before it was given. Re-enter the resolution with the picked ids and let
+        // attackResolution do the spending and the damage exactly as it would have — the rules are
+        // not re-implemented here, only handed the answer.
+        const me = G.players[chooser];
+        const opp = G.players[(1 - chooser) as 0 | 1];
+        const attacker = me.active;
+        const atk = attacker && attacker.id === context.attackerId
+          ? usableAttacks(G, attacker).find(a => a.name === context.attackName)
+          : undefined;
+        if (attacker && atk && opp.active) {
+          const board = buildAttackBoard(G, me, opp, attacker, opp.active, atk);
+          applyAttackOutcome(G, me, opp, attacker, opp.active, atk, board, selection);
+        }
       } else if (kind === 'copy_revealed_attack') {
         // The revealed cards went straight back into a shuffled deck, so the attack is resolved
         // from the snapshot the choice carried rather than looked up again.

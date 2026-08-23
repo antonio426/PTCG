@@ -248,6 +248,16 @@ function queueAttackPick(
   return true;
 }
 
+/**
+ * 「將…任意數量的X丟棄，造成其張數×N點傷害」 — how much you spend IS the decision, and the card
+ * says it is the player's. There is no way to ask it after the fact the way every other attack
+ * choice is asked, because the answer is what the damage is computed FROM: the question has to be
+ * raised before the breakdown runs, and the whole resolution re-entered once it is answered.
+ *
+ * `prepaidSpend` is that re-entry: the ids the player picked, handed straight back to the block
+ * that asked. Everything else — the discard itself, the damage, weakness, the KO — stays exactly
+ * where it was, so the rules are not forked into moves.ts to serve one question.
+ */
 export function applyAttackOutcome(
   G: PtcgGameState,
   player: PtcgPlayerState,
@@ -256,6 +266,7 @@ export function applyAttackOutcome(
   defender: GameCard,
   attack: Attack,
   attackBoard: AttackBoardContext,
+  prepaidSpend?: string[],
 ): void {
   // Re-derived rather than passed in: buildAttackBoard computes the same list, and threading it
   // through would tie the two functions together for no gain.
@@ -318,10 +329,20 @@ export function applyAttackOutcome(
   }
   if (genericOutcome?.attachAllNamedFromHandThenTypedScaled) {
     const { handName, type, per } = genericOutcome.attachAllNamedFromHandThenTypedScaled;
-    for (let i = player.hand.length - 1; i >= 0; i--) {
-      if (player.hand[i].cardData.name.includes(handName) && player.hand[i].cardData.supertype === 'Energy') {
-        attacker.attachedEnergy.push(asAttachedEnergy(player.hand.splice(i, 1)[0]));
-      }
+    // 「若希望…選擇任意數量」 — attaching more hits harder, but the Energy is spent out of hand
+    // either way, so how much to commit is the player's call, not "all of it".
+    const eligible = player.hand.filter(c => c.cardData.name.includes(handName) && c.cardData.supertype === 'Energy');
+    if (!prepaidSpend && eligible.length > 0 && raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+      prompt: `若希望，選擇要附加的「${handName}」（每張 ${per} 點傷害）`,
+      options: eligible.map(c => ({ id: c.id, label: c.cardData.name })),
+      minCount: 0,
+      maxCount: eligible.length,
+      context: { kind: 'spend_for_damage', attackerId: attacker.id, attackName: attack.name },
+    })) return;
+    const chosen = prepaidSpend ? eligible.filter(c => prepaidSpend.includes(c.id)) : eligible;
+    for (const c of chosen) {
+      const idx = player.hand.findIndex(x => x.id === c.id);
+      if (idx >= 0) attacker.attachedEnergy.push(asAttachedEnergy(player.hand.splice(idx, 1)[0]));
     }
     genericOutcome.baseDamage = attacker.attachedEnergy.filter(e => e.type === type).length * per;
   }
@@ -351,26 +372,48 @@ export function applyAttackOutcome(
   if (genericOutcome?.selfEnergyDiscardScaledDamage) {
     const { type, max, amount } = genericOutcome.selfEnergyDiscardScaledDamage;
     const eligible = attacker.attachedEnergy.filter(e => !type || e.type === type);
-    const toDiscard = eligible.slice(0, max ?? eligible.length);
-    for (const e of toDiscard) {
+    const cap = Math.min(max ?? eligible.length, eligible.length);
+    if (!prepaidSpend && eligible.length > 0 && raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+      prompt: `選擇要丟棄的能量（每張 ${amount} 點傷害，可不選）`,
+      options: eligible.map(e => ({ id: e.id, label: ENERGY_TYPE_ZH_LABEL[e.type] || e.type })),
+      minCount: 0,
+      maxCount: cap,
+      context: { kind: 'spend_for_damage', attackerId: attacker.id, attackName: attack.name },
+    })) return;   // the damage is computed FROM the answer — nothing else may run yet
+    const chosen = prepaidSpend
+      ? eligible.filter(e => prepaidSpend.includes(e.id)).slice(0, cap)
+      : eligible.slice(0, cap);
+    for (const e of chosen) {
       const idx = attacker.attachedEnergy.findIndex(x => x.id === e.id);
       if (idx >= 0) discardAttachedEnergy(G, attacker.owner, attacker.attachedEnergy.splice(idx, 1)[0]);
     }
-    genericOutcome.baseDamage = toDiscard.length * amount;
+    genericOutcome.baseDamage = chosen.length * amount;
   }
   if (genericOutcome?.ownFieldEnergyDiscardScaledDamage) {
     const { type, max, amount } = genericOutcome.ownFieldEnergyDiscardScaledDamage;
-    let remaining = max ?? Infinity;
-    let discarded = 0;
-    for (const c of [player.active, ...player.bench]) {
-      if (!c || remaining <= 0) continue;
-      const eligible = c.attachedEnergy.filter(e => !type || e.type === type).slice(0, remaining);
-      for (const e of eligible) {
-        const idx = c.attachedEnergy.findIndex(x => x.id === e.id);
-        if (idx >= 0) { discardAttachedEnergy(G, c.owner, c.attachedEnergy.splice(idx, 1)[0]); discarded++; remaining--; }
-      }
+    const field = [player.active, ...player.bench].filter((c): c is GameCard => c !== null);
+    const eligible = field.flatMap(c => c.attachedEnergy
+      .filter(e => !type || e.type === type)
+      .map(e => ({ energy: e, holder: c })));
+    const cap = Math.min(max ?? eligible.length, eligible.length);
+    if (!prepaidSpend && eligible.length > 0 && raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+      prompt: `選擇要丟棄的能量（每張 ${amount} 點傷害，可不選）`,
+      options: eligible.map(({ energy, holder }) => ({
+        id: energy.id,
+        label: `${holder.cardData.name}：${ENERGY_TYPE_ZH_LABEL[energy.type] || energy.type}`,
+      })),
+      minCount: 0,
+      maxCount: cap,
+      context: { kind: 'spend_for_damage', attackerId: attacker.id, attackName: attack.name },
+    })) return;
+    const chosen = prepaidSpend
+      ? eligible.filter(x => prepaidSpend.includes(x.energy.id)).slice(0, cap)
+      : eligible.slice(0, cap);
+    for (const { energy, holder } of chosen) {
+      const idx = holder.attachedEnergy.findIndex(x => x.id === energy.id);
+      if (idx >= 0) discardAttachedEnergy(G, holder.owner, holder.attachedEnergy.splice(idx, 1)[0]);
     }
-    genericOutcome.baseDamage = discarded * genericOutcome.ownFieldEnergyDiscardScaledDamage.amount;
+    genericOutcome.baseDamage = chosen.length * amount;
   }
   if (genericOutcome?.handDiscardScaledDamage) {
     const { filter, max, amount } = genericOutcome.handDiscardScaledDamage;
@@ -380,7 +423,17 @@ export function applyAttackOutcome(
       return c.cardData.name.includes(filter.name);
     };
     const eligible = player.hand.filter(matchesFilter);
-    const toDiscard = eligible.slice(0, max ?? eligible.length);
+    const cap = Math.min(max ?? eligible.length, eligible.length);
+    if (!prepaidSpend && eligible.length > 0 && raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+      prompt: `選擇要從手牌丟棄的卡（每張 ${amount} 點傷害，可不選）`,
+      options: eligible.map(c => ({ id: c.id, label: c.cardData.name })),
+      minCount: 0,
+      maxCount: cap,
+      context: { kind: 'spend_for_damage', attackerId: attacker.id, attackName: attack.name },
+    })) return;
+    const toDiscard = prepaidSpend
+      ? eligible.filter(c => prepaidSpend.includes(c.id)).slice(0, cap)
+      : eligible.slice(0, cap);
     for (const c of toDiscard) {
       const idx = player.hand.findIndex(x => x.id === c.id);
       if (idx >= 0) player.discardPile.push(player.hand.splice(idx, 1)[0]);
