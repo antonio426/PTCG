@@ -1,20 +1,207 @@
-import { GameCard, LegalAction } from '@ptcg/shared';
+import { Attack, Card, GameCard, LegalAction } from '@ptcg/shared';
 import type { PtcgGameState, PtcgPlayerState } from '../game/GameState';
-import { canPayEnergyCost } from '../game/validation';
+import { canPayEnergyCost, usableAttacks } from '../game/validation';
 import { calculateDamageBreakdown, effectiveMaxHp } from '../game/damage';
+import { buildAttackBoard } from '../game/attackResolution';
+import { resolveGenericAttackEffect, GenericAttackOutcome } from '../game/effects/genericAttacks';
 import type { IAIPlayer } from './aiPlayer';
 
 // Moves within this many points of the top score are treated as equally good and tie-broken
 // randomly — keeps the AI from being a fully deterministic, memorizable opponent.
 const TIE_EPSILON = 5;
 
-function remainingHp(G: PtcgGameState, card: GameCard): number {
+export function remainingHp(G: PtcgGameState, card: GameCard): number {
   return Math.max(0, effectiveMaxHp(G, card) - card.damage);
 }
 
 function findPokemon(player: PtcgPlayerState, id: string): GameCard | null {
   if (player.active?.id === id) return player.active;
   return player.bench.find(c => c?.id === id) ?? null;
+}
+
+/** The engine's REAL payability question, not the flattened 2-arg one. Passing the holder and `G`
+ * is what makes Special Energy resolve into its printed units (火箭隊能量's two, 古舊能量's
+ * wildcard) instead of collapsing to one Colorless — see canPayEnergyCost's own comment. The
+ * passive Colorless reductions still aren't threaded through (they need the specific attack's
+ * name), which under-estimates: the documented safe direction for what-if scoring. */
+export function canPayAsHolder(G: PtcgGameState, mon: GameCard, cost: Attack['cost']): boolean {
+  return canPayEnergyCost(mon.attachedEnergy, cost, 0, mon, G);
+}
+
+export interface AttackEvaluation {
+  /** Mean finalDamage across the bounded coin branches — the number a non-KO attack is worth. */
+  expected: number;
+  /** Min across branches — only this may claim a KO, so a coin-gated kill is never banked on. */
+  guaranteed: number;
+  /** Whether any branch applied weakness (already inside the damage — informational only). */
+  weaknessApplied: boolean;
+  /** The resolved outcomes, for reading side-effects (status, bench damage, recoil…). */
+  outcomes: GenericAttackOutcome[];
+}
+
+/** Mirrors the handful of scaled-damage fields `applyAttackOutcome` computes at apply time from
+ * PURE reads of the board (attackResolution.ts's pre-breakdown phase). The destructive/random
+ * ones (self-mill counts, reveal-and-discard) are left at the resolver's own baseDamage — a
+ * conservative under-estimate, which for scoring is the safe direction. */
+export function scaledOutcomeDamage(o: GenericAttackOutcome, player: PtcgPlayerState, attacker: GameCard): number {
+  const field = [player.active, ...player.bench].filter((c): c is GameCard => c !== null);
+  if (o.familyScaledDamage) {
+    const { name, amount } = o.familyScaledDamage;
+    return field.filter(c => c.cardData.name.includes(name)).length * amount;
+  }
+  if (o.ownBenchFamilyScaledDamage) {
+    const { name, amount } = o.ownBenchFamilyScaledDamage;
+    return player.bench.filter(c => c?.cardData.name.includes(name)).length * amount;
+  }
+  if (o.ownFieldAttackScaledDamage) {
+    const { attackName, amount } = o.ownFieldAttackScaledDamage;
+    return field.filter(c => c.cardData.attacks?.some(a => a.name === attackName)).length * amount;
+  }
+  if (o.discardPileAttackScaledDamage) {
+    const { attackName, amount } = o.discardPileAttackScaledDamage;
+    return player.discardPile.filter(c => c.cardData.attacks?.some(a => a.name === attackName)).length * amount;
+  }
+  if (o.discardOwnFieldTypedEnergyForDamage) {
+    const { type, per } = o.discardOwnFieldTypedEnergyForDamage;
+    return field.reduce((n, c) => n + c.attachedEnergy.filter(e => e.type === type).length, 0) * per;
+  }
+  if (o.selfEnergyDiscardScaledDamage) {
+    const { type, max, amount } = o.selfEnergyDiscardScaledDamage;
+    const eligible = attacker.attachedEnergy.filter(e => !type || e.type === type).length;
+    return Math.min(eligible, max ?? eligible) * amount;
+  }
+  if (o.handDiscardScaledDamage) {
+    const { filter, max, amount } = o.handDiscardScaledDamage;
+    const eligible = player.hand.filter(c => {
+      if (filter.kind === 'anyEnergy') return c.cardData.supertype === 'Energy';
+      if (filter.kind === 'energyType') return c.cardData.supertype === 'Energy' && (c.cardData.types || []).includes(filter.type as never);
+      return c.cardData.name.includes(filter.name);
+    }).length;
+    return Math.min(eligible, max ?? eligible) * amount;
+  }
+  return o.baseDamage;
+}
+
+/**
+ * What is this attack actually worth against this defender, effects included?
+ *
+ * The engine's own text resolver answers that — `resolveGenericAttackEffect` is a pure
+ * computation of the outcome, exactly what `applyAttackOutcome` executes — so the scorer calls
+ * it rather than re-reading the printed damage field, which is 0 for every 「40×」 multiplier
+ * form and every effect-only attack (22.5% of printed attacks; the old scorer let `end_turn`
+ * beat all of them).
+ *
+ * Coin texts call Math.random inline, so the resolver runs under two BOUNDED stubs — a run of
+ * one face then the other, never a constant (「擲硬幣直到出現反面為止」 is a
+ * `while (Math.random() < 0.5)` loop that never terminates against all-heads; same pattern as
+ * attack-clause-audit.ts). The real Math.random is restored in a `finally`: a leak here would
+ * silently break every seeded measurement and soak.
+ */
+export function evaluateAttack(
+  G: PtcgGameState, attackerIdx: 0 | 1, attacker: GameCard, defender: GameCard, attack: Attack,
+): AttackEvaluation {
+  const player = G.players[attackerIdx];
+  const opponent = G.players[(1 - attackerIdx) as 0 | 1];
+  const runs: GenericAttackOutcome[] = [];
+  if (attack.text) {
+    const board = buildAttackBoard(G, player, opponent, attacker, defender, attack);
+    const real = Math.random;
+    const seq = (first: number, other: number, n = 8) => {
+      let i = 0;
+      return () => (i++ < n ? first : other);
+    };
+    try {
+      for (const stub of [seq(0.99, 0), seq(0, 0.99)]) {
+        Math.random = stub as typeof Math.random;
+        try {
+          const o = resolveGenericAttackEffect(attack.text, attack.damage, board);
+          if (o) runs.push(o);
+        } catch { /* a recognized-but-throwing branch: fall through to the plain breakdown */ }
+      }
+    } finally {
+      Math.random = real;
+    }
+  }
+  if (runs.length === 0) {
+    const b = calculateDamageBreakdown(G, attackerIdx, attacker, attack, defender);
+    return { expected: b.finalDamage, guaranteed: b.finalDamage, weaknessApplied: b.weaknessApplied, outcomes: [] };
+  }
+  let weaknessApplied = false;
+  const damages = runs.map(o => {
+    const base = scaledOutcomeDamage(o, player, attacker);
+    const b = calculateDamageBreakdown(
+      G, attackerIdx, attacker, { ...attack, damage: String(base) }, defender, o.ignoreResistance, o.ignoreWeakness,
+    );
+    if (b.weaknessApplied) weaknessApplied = true;
+    return b.finalDamage;
+  });
+  return {
+    expected: damages.reduce((a, d) => a + d, 0) / damages.length,
+    guaranteed: Math.min(...damages),
+    weaknessApplied,
+    outcomes: runs,
+  };
+}
+
+/** Best attack `mon` can pay for right now against `defender` — expected damage, via the full
+ * evaluator, over the same index-stable `usableAttacks` list the engine executes from. */
+export function bestPayableAttack(
+  G: PtcgGameState, ownerIdx: 0 | 1, mon: GameCard, defender: GameCard,
+): { attack: Attack; expected: number; guaranteed: number } | null {
+  let best: { attack: Attack; expected: number; guaranteed: number } | null = null;
+  for (const atk of usableAttacks(G, mon)) {
+    if (!canPayAsHolder(G, mon, atk.cost)) continue;
+    const ev = evaluateAttack(G, ownerIdx, mon, defender, atk);
+    if (!best || ev.expected > best.expected) best = { attack: atk, expected: ev.expected, guaranteed: ev.guaranteed };
+  }
+  return best;
+}
+
+/** The Benched Pokémon most worth promoting against the opponent's current Active: highest
+ * payable expected damage, remaining HP as the tie-break. ONE definition, used both to justify a
+ * retreat and to answer the bench-promotion choice that follows it — the old scorer used two
+ * different notions of "best" for those two halves of the same decision. */
+export function bestSwitchIn(G: PtcgGameState, idx: 0 | 1): { card: GameCard; expected: number } | null {
+  const player = G.players[idx];
+  const defender = G.players[(1 - idx) as 0 | 1].active;
+  let best: { card: GameCard; expected: number } | null = null;
+  for (const c of player.bench) {
+    if (!c) continue;
+    const expected = defender ? (bestPayableAttack(G, idx, c, defender)?.expected ?? 0) : 0;
+    if (!best || expected > best.expected
+      || (expected === best.expected && remainingHp(G, c) > remainingHp(G, best.card))) {
+      best = { card: c, expected };
+    }
+  }
+  return best;
+}
+
+/** How much board presence a Pokémon represents — used to pick KO/disruption targets on the
+ * opponent's side and to protect investments on our own. */
+export function targetValue(G: PtcgGameState, mon: GameCard): number {
+  const stage = mon.cardData.subtypes.includes('Stage 2') ? 2 : mon.cardData.subtypes.includes('Stage 1') ? 1 : 0;
+  return remainingHp(G, mon) + 10 * mon.attachedEnergy.length + 15 * stage;
+}
+
+/** Rough worth of a card OUT of play (hand/deck/discard picks): what would taking it do for us? */
+export function cardValue(G: PtcgGameState, idx: 0 | 1, card: Card): number {
+  const player = G.players[idx];
+  const field = [player.active, ...player.bench].filter((c): c is GameCard => c !== null);
+  if (card.supertype === 'Pokémon') {
+    // An evolution of something we already have in play is the best pick there is.
+    if (card.evolvesFrom && field.some(c => c.cardData.name === card.evolvesFrom)) return 35;
+    if (card.subtypes.includes('Basic') && player.bench.filter(Boolean).length <= 1) return 25;
+    return 12;
+  }
+  if (card.supertype === 'Energy') {
+    // Energy an in-play attacker's costs can actually spend beats generic Energy.
+    const types = card.types || [];
+    const wanted = field.some(c => (c.cardData.attacks || []).some(a =>
+      a.cost.some(sym => sym === 'Colorless' || types.includes(sym))));
+    return wanted ? 15 : 8;
+  }
+  if (card.subtypes.includes('Supporter')) return 10;
+  return 5;
 }
 
 /**
