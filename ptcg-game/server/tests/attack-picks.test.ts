@@ -248,6 +248,10 @@ describe('spending 「任意數量」 for damage is the player\'s call', () => {
     expect(G.players[0].active!.attachedEnergy.map(e => e.id)).toEqual(['a2', 'a3']);
     expect(G.players[0].bench[0]!.attachedEnergy).toHaveLength(0);
     expect(G.players[1].active!.damage).toBe(180);
+    // Spent Energy is DISCARDED, not deleted: it has to be sitting in the discard pile, where
+    // 夜間擔架 / 奇跡修正檔 can find it again. discardAttachedEnergy silently drops an attachment
+    // with no cardData behind it, so this is the assertion that keeps that from going unnoticed.
+    expect(G.players[0].discardPile.map(c => c.id).sort()).toEqual(['a1', 'b1']);
   });
 
   it('honours spending none — no Energy gone, no damage', () => {

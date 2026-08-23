@@ -161,7 +161,15 @@ export interface PendingChoice {
    * card in a zone visible to this player — lets the client show actual card art instead of a
    * bare text button. Options that aren't real cards (energy already attached to a Pokémon,
    * abstract numeric choices like "move N counters") are left without it. */
-  options?: { id: string; label: string; cardData?: Card }[];
+  options?: { id: string; label: string; cardData?: Card;
+    /** Which bucket this option belongs to, for cards worded 「最多各 1 張 A／B／C」 — see
+     * `maxPerGroup`. Absent means the option is not group-limited. */
+    group?: string;
+  }[];
+  /** At most this many options from any one `group` may be selected together. 小光 offers a
+   * Basic, a Stage 1 and a Stage 2 under one maxCount of 3, and without this the move generator
+   * happily enumerated three Basics — a selection the card does not allow. */
+  maxPerGroup?: number;
   context: Record<string, unknown>;
   /** The trainer/pokemon/tool instance id that started this effect — restored into EffectContext on resume. */
   sourceCardId?: string;

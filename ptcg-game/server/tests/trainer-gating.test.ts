@@ -166,3 +166,67 @@ describe('納莉: the drawback half of its draw 4', () => {
     expect(G.players[0].hand).toHaveLength(5);
   });
 });
+
+
+/* ------------------------------------------------------------------ */
+/*  「最多各 1 張 A／B／C」 — several limits sharing one maxCount        */
+/* ------------------------------------------------------------------ */
+
+import { startTrainerEffect } from '../src/game/effects/trainers';
+import { getLegalMoves as legalMoves } from '../src/game/validation';
+
+/**
+ * 小光 reads 「從牌庫選最多各 1 張基礎／1階／2階寶可夢卡加入手牌」 — three limits of one, not one
+ * limit of three. Reported from a real game: it was letting three Basics through, because the
+ * choice only carried a total. The stage is the bucket; PendingChoice.maxPerGroup enforces it,
+ * and the move generator prunes during enumeration rather than filtering afterwards (with 小光
+ * listing every Basic before the first Stage 1, post-filtering could burn the whole 40-combo cap
+ * on selections the card forbids and offer none that it allows).
+ */
+describe('小光 — at most one of EACH stage', () => {
+  const poke = (name: string, stage: 'Basic' | 'Stage 1' | 'Stage 2') =>
+    makeCard({ name, hp: '80', types: ['Colorless'], subtypes: [stage] as never });
+
+  function boardWithDeck() {
+    const G = makeState({ turn: 3, currentPlayer: 0, phase: 'main' });
+    G.players[0].deck = [
+      makeGameCard(poke('基礎甲', 'Basic'), 0),
+      makeGameCard(poke('基礎乙', 'Basic'), 0),
+      makeGameCard(poke('基礎丙', 'Basic'), 0),
+      makeGameCard(poke('一階甲', 'Stage 1'), 0),
+      makeGameCard(poke('二階甲', 'Stage 2'), 0),
+    ];
+    return G;
+  }
+
+  it('groups every option by its stage and caps each at one', () => {
+    const G = boardWithDeck();
+    const step = startTrainerEffect('小光', { G, playerIndex: 0, sourceCardId: 'src' });
+    expect(step).not.toBe('done');
+    const choice = step as Exclude<typeof step, 'done'>;
+    expect(choice.maxPerGroup).toBe(1);
+    expect(choice.maxCount).toBe(3);
+    const groups = (choice.options ?? []).map(o => (o as { group?: string }).group);
+    expect(groups.filter(g => g === 'Basic')).toHaveLength(3);
+    expect(groups.filter(g => g === 'Stage 1')).toHaveLength(1);
+    expect(groups.filter(g => g === 'Stage 2')).toHaveLength(1);
+  });
+
+  it('never offers two cards of the same stage as a legal selection', () => {
+    const G = boardWithDeck();
+    const step = startTrainerEffect('小光', { G, playerIndex: 0, sourceCardId: 'src' });
+    G.pendingChoice = { player: 0, owner: 0, effectKey: 'trainer:小光', sourceCardId: 'src', ...(step as object) } as never;
+
+    const byId = new Map(G.players[0].deck.map(c => [c.id, c.cardData.subtypes[0]]));
+    const selections = legalMoves(G, 0)
+      .filter(m => m.type === 'resolve_choice')
+      .map(m => (m.payload?.selection as string[]) ?? []);
+    expect(selections.length).toBeGreaterThan(0);
+    for (const sel of selections) {
+      const stages = sel.map(id => byId.get(id));
+      expect(new Set(stages).size, `offered ${stages.join('+')}`).toBe(stages.length);
+    }
+    // And the full one-of-each pick is still on the table.
+    expect(selections.some(s => s.length === 3)).toBe(true);
+  });
+});

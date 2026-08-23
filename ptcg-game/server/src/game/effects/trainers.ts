@@ -10,6 +10,21 @@ function deckOptions(deck: GameCard[], filter: (c: GameCard) => boolean): { id: 
   return deck.filter(filter).map(c => ({ id: c.id, label: c.cardData.name }));
 }
 
+/** Same, but tagging each option with the bucket it counts against — see PendingChoice.maxPerGroup.
+ * A card reading 「最多各 1 張基礎／1階／2階」 is three separate limits sharing one maxCount, and a
+ * choice that only knows the total will happily offer three of the same bucket. */
+function groupedDeckOptions(
+  deck: GameCard[],
+  groupOf: (c: GameCard) => string | undefined,
+): { id: string; label: string; group: string }[] {
+  const out: { id: string; label: string; group: string }[] = [];
+  for (const c of deck) {
+    const group = groupOf(c);
+    if (group !== undefined) out.push({ id: c.id, label: c.cardData.name, group });
+  }
+  return out;
+}
+
 /**
  * The player's hand WITHOUT the Trainer currently being played — the only count a `canPlay` gate
  * for a "discard/return N cards from your hand" cost may use.
@@ -670,12 +685,13 @@ const shuffleDrawConditional8: EffectHandler = {
 const toshi: EffectHandler = {
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
-    const options = deckOptions(p.deck, c =>
-      (c.cardData.supertype === 'Pokémon' && (c.cardData.subtypes.includes('Stage 1') || c.cardData.subtypes.includes('Stage 2'))) ||
-      c.cardData.supertype === 'Energy'
-    );
+    const options = groupedDeckOptions(p.deck, c => {
+      if (c.cardData.supertype === 'Pokémon' && (c.cardData.subtypes.includes('Stage 1') || c.cardData.subtypes.includes('Stage 2'))) return 'Pokémon';
+      if (c.cardData.supertype === 'Energy') return 'Energy';
+      return undefined;
+    });
     if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
-    return { prompt: '鬥子：從牌庫選 1 張進化寶可夢卡與 1 張能量卡加入手牌', choiceType: 'select_from_list', maxCount: 2, options, context: {} };
+    return { prompt: '鬥子：從牌庫選 1 張進化寶可夢卡與 1 張能量卡加入手牌', choiceType: 'select_from_list', maxCount: 2, maxPerGroup: 1, options, context: {} };
   },
   resume(ctx, _context, selection) {
     const p = player(ctx.G, ctx.playerIndex);
@@ -690,9 +706,12 @@ const durand: EffectHandler = {
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     const top = p.deck.slice(-7);
-    const options = top.filter(c => c.cardData.supertype === 'Pokémon' || c.cardData.supertype === 'Trainer');
+    const options = groupedDeckOptions(top, c =>
+      c.cardData.supertype === 'Pokémon' ? 'Pokémon'
+      : c.cardData.supertype === 'Trainer' ? 'Trainer'
+      : undefined);
     if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
-    return { prompt: '杜若：查看牌庫上方 7 張，選最多 1 張寶可夢卡與 1 張訓練家卡加入手牌', choiceType: 'select_from_list', maxCount: 2, options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+    return { prompt: '杜若：查看牌庫上方 7 張，選最多 1 張寶可夢卡與 1 張訓練家卡加入手牌', choiceType: 'select_from_list', maxCount: 2, maxPerGroup: 1, options, context: {} };
   },
   resume(ctx, _context, selection) {
     const p = player(ctx.G, ctx.playerIndex);
@@ -706,9 +725,12 @@ const durand: EffectHandler = {
 const akromasPersistence: EffectHandler = {
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
-    const options = deckOptions(p.deck, c => c.cardData.subtypes.includes('Stadium') || c.cardData.supertype === 'Energy');
+    const options = groupedDeckOptions(p.deck, c =>
+      c.cardData.subtypes.includes('Stadium') ? 'Stadium'
+      : c.cardData.supertype === 'Energy' ? 'Energy'
+      : undefined);
     if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
-    return { prompt: '阿克羅瑪的執著：從牌庫選 1 張競技場卡與 1 張能量卡加入手牌', choiceType: 'select_from_list', maxCount: 2, options, context: {} };
+    return { prompt: '阿克羅瑪的執著：從牌庫選 1 張競技場卡與 1 張能量卡加入手牌', choiceType: 'select_from_list', maxCount: 2, maxPerGroup: 1, options, context: {} };
   },
   resume: toshi.resume,
 };
@@ -940,12 +962,16 @@ const megaSignal: EffectHandler = {
 const hikari: EffectHandler = {
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
-    const options = deckOptions(p.deck, c =>
-      c.cardData.supertype === 'Pokémon' &&
-      (c.cardData.subtypes.includes('Basic') || c.cardData.subtypes.includes('Stage 1') || c.cardData.subtypes.includes('Stage 2'))
-    );
+    // 「各 1 張」 — three limits, not one limit of three. The stage IS the bucket.
+    const options = groupedDeckOptions(p.deck, c => {
+      if (c.cardData.supertype !== 'Pokémon') return undefined;
+      if (c.cardData.subtypes.includes('Stage 2')) return 'Stage 2';
+      if (c.cardData.subtypes.includes('Stage 1')) return 'Stage 1';
+      if (c.cardData.subtypes.includes('Basic')) return 'Basic';
+      return undefined;
+    });
     if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
-    return { prompt: '小光：從牌庫選最多各 1 張基礎／1階／2階寶可夢卡加入手牌', choiceType: 'select_from_list', maxCount: 3, options, context: {} };
+    return { prompt: '小光：從牌庫選最多各 1 張基礎／1階／2階寶可夢卡加入手牌', choiceType: 'select_from_list', maxCount: 3, maxPerGroup: 1, options, context: {} };
   },
   resume: toshi.resume,
 };
@@ -966,12 +992,14 @@ const bugCatchingSet: EffectHandler = {
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
     const top = p.deck.slice(-7);
-    const options = top.filter(c =>
-      (c.cardData.supertype === 'Pokémon' && (c.cardData.types || []).includes('Grass')) ||
-      (c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes('Grass'))
-    );
+    // 「1 張草寶可夢卡與 1 張基本草能量卡」 — again two limits under one maxCount.
+    const options = groupedDeckOptions(top, c => {
+      if (c.cardData.supertype === 'Pokémon' && (c.cardData.types || []).includes('Grass')) return 'Pokémon';
+      if (c.cardData.subtypes.includes('Basic Energy') && (c.cardData.types || []).includes('Grass')) return 'Energy';
+      return undefined;
+    });
     if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
-    return { prompt: '捕蟲組合：查看牌庫上方 7 張，選最多 1 張草寶可夢卡與 1 張基本草能量卡加入手牌', choiceType: 'select_from_list', maxCount: 2, options: options.map(c => ({ id: c.id, label: c.cardData.name })), context: {} };
+    return { prompt: '捕蟲組合：查看牌庫上方 7 張，選最多 1 張草寶可夢卡與 1 張基本草能量卡加入手牌', choiceType: 'select_from_list', maxCount: 2, maxPerGroup: 1, options, context: {} };
   },
   resume: durand.resume,
 };
@@ -2668,9 +2696,13 @@ const deliciousRiceBall: EffectHandler = {
 const adventureLantern: EffectHandler = {
   start(ctx) {
     const p = player(ctx.G, ctx.playerIndex);
-    const options = deckOptions(p.deck, c => c.cardData.subtypes.includes('Basic Energy') && ((c.cardData.types || []).includes('Fire') || (c.cardData.types || []).includes('Lightning')));
+    const options = groupedDeckOptions(p.deck, c => {
+      if (!c.cardData.subtypes.includes('Basic Energy')) return undefined;
+      const types = c.cardData.types || [];
+      return types.includes('Fire') ? 'Fire' : types.includes('Lightning') ? 'Lightning' : undefined;
+    });
     if (options.length === 0) { shuffleDeck(p.deck); return 'done'; }
-    return { prompt: '冒險提燈：從牌庫選最多各 1 張基本火／雷能量卡加入手牌', choiceType: 'select_from_list', maxCount: Math.min(2, options.length), options, context: {} };
+    return { prompt: '冒險提燈：從牌庫選最多各 1 張基本火／雷能量卡加入手牌', choiceType: 'select_from_list', maxCount: Math.min(2, options.length), maxPerGroup: 1, options, context: {} };
   },
   resume: hibikisAdventure.resume,
 };

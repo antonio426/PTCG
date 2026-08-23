@@ -11,16 +11,33 @@ import { canOpenAsSetupActive } from './setup';
 import { benchLimit, isStadiumActive } from './effects/stadiums';
 import { energyUnitsProvided } from './effects/specialEnergy';
 
-/** All k-sized combinations of `items`, capped so huge hands can't explode the move list. */
-function combinations<T>(items: T[], k: number, cap = 40): T[][] {
+/**
+ * All k-sized combinations of `items`, capped so huge hands can't explode the move list.
+ *
+ * `groupCap` prunes DURING the walk rather than filtering afterwards, and that matters because of
+ * the cap: 小光 lists every Basic in the deck before the first Stage 1, so post-filtering could
+ * spend all 40 slots on all-Basic combos the card forbids and come back with nothing legal — a
+ * standing choice no move can resolve is a soft-locked match.
+ */
+function combinations<T>(
+  items: T[],
+  k: number,
+  cap = 40,
+  groupCap?: { groupOf: (item: T) => string | undefined; max: number },
+): T[][] {
   const result: T[][] = [];
+  const used = new Map<string, number>();
   function go(start: number, chosen: T[]) {
     if (result.length >= cap) return;
     if (chosen.length === k) { result.push([...chosen]); return; }
     for (let i = start; i < items.length && result.length < cap; i++) {
+      const g = groupCap?.groupOf(items[i]);
+      if (g !== undefined && (used.get(g) ?? 0) >= groupCap!.max) continue;
+      if (g !== undefined) used.set(g, (used.get(g) ?? 0) + 1);
       chosen.push(items[i]);
       go(i + 1, chosen);
       chosen.pop();
+      if (g !== undefined) used.set(g, (used.get(g) ?? 0) - 1);
     }
   }
   go(0, []);
@@ -52,9 +69,17 @@ function legalMovesForPendingChoice(G: PtcgGameState, playerIndex: number, choic
     for (let n = min; n <= max; n++) counts.push(n);
   }
 
+  // 「最多各 1 張基礎／1階／2階」 (小光, 捕蟲組合…): one maxCount covers several buckets, and
+  // without this the generator happily offered three Basics — a selection the card forbids.
+  const groupById = new Map<string, string>();
+  for (const o of choice.options || []) if (o.group) groupById.set(o.id, o.group);
+  const groupCap = choice.maxPerGroup !== undefined && groupById.size > 0
+    ? { groupOf: (id: string) => groupById.get(id), max: choice.maxPerGroup }
+    : undefined;
+
   const moves: LegalAction[] = [];
   for (const n of counts) {
-    for (const combo of combinations(pool, n)) {
+    for (const combo of combinations(pool, n, 40, groupCap)) {
       const names = combo.map(id => labelById.get(id) ?? id);
       moves.push({
         type: 'resolve_choice',
