@@ -274387,7 +274387,20 @@
       },
       "localId": "078",
       "_enriched": true,
-      "rarity": "無標記"
+      "rarity": "無標記",
+      "attacks": [
+        {
+          "name": "雙刃劍",
+          "cost": [
+            "Psychic",
+            "Colorless",
+            "Colorless"
+          ],
+          "convertedEnergyCost": 3,
+          "damage": "",
+          "text": "對手的2隻寶可夢各受到50點傷害。這個招式的傷害不計算弱點・抵抗力與受到傷害的寶可夢身上的附加效果。"
+        }
+      ]
     },
     {
       "id": "SV5K-078",

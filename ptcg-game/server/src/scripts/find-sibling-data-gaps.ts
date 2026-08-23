@@ -17,6 +17,42 @@ import * as path from 'path';
 import type { MapCard } from '../card-api/types';
 
 const CARDS_CACHE = path.resolve(__dirname, '../../data/cards.json');
+const OFFICIAL_SCRAPE = path.resolve(__dirname, '../../data/scraped-cards-all.json');
+
+const clean = (s: string) => (s || '').replace(/[​-‏⁠]/g, '').replace(/^[特性]s*/, '');
+const numerator = (s: string) => String(s || '').split('/')[0].replace(/^0+/, '');
+
+/**
+ * What the official card-search page lists for a print, as a set of skill names.
+ *
+ * This is the check that turns a 'medium' candidate into a verdict. The page keeps abilities and
+ * attacks in the SAME .skill block and only sometimes prefixes 「[特性] 」, so a name in this set
+ * is a name the card really has — and a name that is NOT in it, on a print the page does cover,
+ * is a name the card does NOT have. Seven of the eight Standard candidates this tool used to
+ * propose failed exactly that way: same name, same HP, genuinely different designs. Backfilling
+ * them would have repeated the 振翼髮 SV8-059 mistake seven times over.
+ *
+ * Prints the scrape has no record for (promos are filed differently — see CLAUDE.md) return
+ * undefined, which means "no opinion", not "contradicted".
+ */
+function officialSkillNames(cards: MapCard[]): (card: MapCard) => Set<string> | undefined {
+  let index: Map<string, Set<string>> | null = null;
+  return (card: MapCard) => {
+    if (!index) {
+      index = new Map();
+      if (!fs.existsSync(OFFICIAL_SCRAPE)) return undefined;
+      const list = JSON.parse(fs.readFileSync(OFFICIAL_SCRAPE, 'utf-8')).data as any[];
+      for (const r of list) {
+        if (!r?.set?.id || r.number === undefined) continue;
+        const key = `${r.set.id}-${numerator(r.number)}`;
+        const names = new Set<string>((r.attacks || []).map((a: any) => clean(a.name)));
+        if (names.size > 0) index.set(key, names);
+      }
+    }
+    const dash = card.id.lastIndexOf('-');
+    return index.get(`${card.id.slice(0, dash)}-${numerator(card.id.slice(dash + 1))}`);
+  };
+}
 
 interface Gap {
   name: string;
@@ -35,6 +71,8 @@ function attackSignature(card: MapCard): string | null {
   if (isEmpty(card.attacks)) return null;
   return card.attacks!.map(a => `${a.name}:${a.cost.join(',')}:${a.damage}`).sort().join('|');
 }
+
+const officialSkills = officialSkillNames([]);
 
 function main() {
   const cards = (JSON.parse(fs.readFileSync(CARDS_CACHE, 'utf-8')).data as MapCard[])
@@ -60,12 +98,18 @@ function main() {
       const source = withAbilities.find(s => s.hp === missing.hp
         && (attackSignature(s) === null || attackSignature(missing) === null || attackSignature(s) === attackSignature(missing)));
       if (!source) continue;
+      // The official page settles it where it covers the print: an ability it does not list is
+      // one this print does not have, however well the sibling matches.
+      const listed = officialSkills(missing);
+      if (listed && (source.abilities || []).some(a => !listed.has(clean(a.name)))) continue;
       const confidence = attackSignature(source) !== null && attackSignature(missing) !== null ? 'high' : 'medium';
       gaps.push({ name: missing.name, field: 'abilities', missingId: missing.id, missingStandardLegal: missing.legalities?.standard === 'Legal', sourceId: source.id, confidence });
     }
     for (const missing of withoutAttacks) {
       const source = withAttacks.find(s => s.hp === missing.hp);
       if (!source) continue;
+      const listed = officialSkills(missing);
+      if (listed && (source.attacks || []).some(a => !listed.has(clean(a.name)))) continue;
       gaps.push({ name: missing.name, field: 'attacks', missingId: missing.id, missingStandardLegal: missing.legalities?.standard === 'Legal', sourceId: source.id, confidence: 'medium' });
     }
   }
