@@ -406,4 +406,158 @@ describe('resolve_choice answers', () => {
     ]);
     expect(chosen.description).toBe('丟支援者');
   });
+  it('answers a 「由對手選擇」 forced switch with its best attacker, not at random', async () => {
+    // The choice raiseAttackPick raises is ALWAYS choiceType select_from_list — an earlier guard
+    // on the choiceType excluded exactly this kind from the promotion branch.
+    const hitter = mon({ name: '打手', hp: '80', attacks: [attack('重擊', ['Grass'], '90')] });
+    const wall = mon({ name: '肉牆', hp: '200' });
+    const G = duel(mon({ name: '前排' }));
+    const hitterCard = makeGameCard(hitter, 0, { attachedEnergy: [energy('e9')] });
+    const wallCard = makeGameCard(wall, 0);
+    G.players[0].bench = [wallCard, hitterCard, null, null, null];
+    withChoice(G, {
+      prompt: '對手的招式效果：選擇要換上戰鬥場的寶可夢', count: 1,
+      choiceType: 'select_from_list',
+      options: [{ id: wallCard.id, label: '肉牆' }, { id: hitterCard.id, label: '打手' }],
+      context: { kind: 'opponent_switch' },
+    });
+    const chosen = await pick(G, [
+      mv('resolve_choice', { selection: [wallCard.id] }, '上肉牆'),
+      mv('resolve_choice', { selection: [hitterCard.id] }, '上打手'),
+    ]);
+    expect(chosen.description).toBe('上打手');
+  });
+
+  it('takes every free mulligan bench placement it is offered', async () => {
+    const G = duel(mon({ name: '主戰' }));
+    const b1 = makeGameCard(BASIC_MON, 0);
+    const b2 = makeGameCard(BASIC_MON, 0);
+    G.players[0].hand = [b1, b2];
+    withChoice(G, {
+      effectKey: 'mulligan_bonus_bench', prompt: '可將補抽到的基礎寶可夢直接放上備戰區（可不選）',
+      minCount: 0, maxCount: 2,
+      options: [{ id: b1.id, label: '測試鼠' }, { id: b2.id, label: '測試鼠' }],
+      context: {},
+    });
+    const chosen = await pick(G, [
+      mv('resolve_choice', { selection: [] }, '不放'),
+      mv('resolve_choice', { selection: [b1.id] }, '放一隻'),
+      mv('resolve_choice', { selection: [b1.id, b2.id] }, '放兩隻'),
+    ]);
+    expect(chosen.description).toBe('放兩隻');
+  });
+  it('takes the free deck search instead of declining it', async () => {
+    // Watched in a real game: 高級球 and 集客 both answered 「(不選)」 with real picks on offer,
+    // because the value term was damped to within the 5-point random tie band.
+    const G = duel(mon({ name: '主戰' }));
+    const found = makeGameCard(mon({ name: '牌庫裡的寶可夢' }), 0);
+    G.players[0].deck = [found];
+    withChoice(G, {
+      effectKey: 'trainer:高級球', prompt: '高級球：從牌庫選 1 張寶可夢加入手牌（可不選）',
+      minCount: 0, maxCount: 1,
+      options: [{ id: found.id, label: '牌庫裡的寶可夢' }],
+      context: {},
+    });
+    const chosen = await pick(G, [
+      mv('resolve_choice', { selection: [] }, '不選'),
+      mv('resolve_choice', { selection: [found.id] }, '拿牌'),
+    ]);
+    expect(chosen.description).toBe('拿牌');
+  });
+
+  it('does not read 「丟棄」 as a cost when the cards being discarded are the opponent\'s', async () => {
+    // 枇琶: 「查看對手手牌，選最多2張物品卡丟棄」 — the prompt says 丟棄, so the classifier
+    // minimized, and minimizing meant declining to strip their hand. Ownership settles it.
+    const G = duel(mon({ name: '主戰' }));
+    const theirItem = makeGameCard(makeCard({ name: '神奇糖果', supertype: 'Trainer', subtypes: ['Item'] }), 1);
+    G.players[1].hand = [theirItem];
+    withChoice(G, {
+      effectKey: 'trainer:枇琶', prompt: '枇琶：查看對手手牌，選最多 2 張物品卡丟棄',
+      minCount: 0, maxCount: 2, revealsOpponentHand: true,
+      options: [{ id: theirItem.id, label: '神奇糖果' }],
+      context: {},
+    });
+    const chosen = await pick(G, [
+      mv('resolve_choice', { selection: [] }, '不選'),
+      mv('resolve_choice', { selection: [theirItem.id] }, '丟對手的道具'),
+    ]);
+    expect(chosen.description).toBe('丟對手的道具');
+  });
+  it('reads a 「其餘放回」 prompt as the reward it is, and keeps the better card', async () => {
+    // 偵查指令: 「查看牌庫上方2張，選1張加手牌，其餘放回牌庫下方」 — the 放回 describes the cards
+    // NOT selected, and the AI minimized on it, picking the worse of the two it was handed.
+    const G = duel(mon({ name: '主戰' }));
+    G.players[0].active = makeGameCard(mon({ name: '小火龍' }), 0);
+    const evo = makeGameCard(makeCard({ name: '火恐龍', subtypes: ['Stage 1'], evolvesFrom: '小火龍' }), 0);
+    const junk = makeGameCard(makeCard({ name: '路人卡', supertype: 'Trainer', subtypes: ['Item'] }), 0);
+    G.players[0].deck = [evo, junk];
+    withChoice(G, {
+      effectKey: 'ability:偵查指令', prompt: '偵查指令：查看牌庫上方 2 張，選 1 張加手牌，其餘放回牌庫下方',
+      count: 1, options: [{ id: evo.id, label: '火恐龍' }, { id: junk.id, label: '路人卡' }],
+      context: {},
+    });
+    const chosen = await pick(G, [
+      mv('resolve_choice', { selection: [evo.id] }, '拿進化'),
+      mv('resolve_choice', { selection: [junk.id] }, '拿路人'),
+    ]);
+    expect(chosen.description).toBe('拿進化');
+  });
+
+  it('still pays a hand-discard cost with its least useful card', async () => {
+    const G = duel(mon({ name: '小火龍' }));
+    const evo = makeGameCard(makeCard({ name: '火恐龍', subtypes: ['Stage 1'], evolvesFrom: '小火龍' }), 0);
+    const junk = makeGameCard(makeCard({ name: '路人卡', supertype: 'Trainer', subtypes: ['Item'] }), 0);
+    G.players[0].hand = [evo, junk];
+    withChoice(G, {
+      effectKey: 'trainer:高級球', prompt: '高級球：選擇 2 張手牌丟棄',
+      count: 1, options: [{ id: evo.id, label: '火恐龍' }, { id: junk.id, label: '路人卡' }],
+      context: {},
+    });
+    const chosen = await pick(G, [
+      mv('resolve_choice', { selection: [evo.id] }, '丟進化'),
+      mv('resolve_choice', { selection: [junk.id] }, '丟路人'),
+    ]);
+    expect(chosen.description).toBe('丟路人');
+  });
+
+  it('answers an ability-driven switch with bestSwitchIn like every other promotion', async () => {
+    // 支配鎖鏈 raises select_pokemon with an empty context and no kind, so it fell to the generic
+    // card-value classifier — watched swapping a non-attacker in and undoing the AI's own retreat.
+    const hitter = mon({ name: '打手', hp: '80', attacks: [attack('重擊', ['Grass'], '90')] });
+    const idler = mon({ name: '閒人', hp: '200', attacks: [attack('大招', ['Grass', 'Grass', 'Grass'], '150')] });
+    const G = duel(mon({ name: '前排' }));
+    const hitterCard = makeGameCard(hitter, 0, { attachedEnergy: [energy('e9')] });
+    const idlerCard = makeGameCard(idler, 0);   // no energy: its attack is unpayable
+    G.players[0].bench = [idlerCard, hitterCard, null, null, null];
+    withChoice(G, {
+      effectKey: 'ability:支配鎖鏈', prompt: '支配鎖鏈：選擇要換上場的惡寶可夢',
+      choiceType: 'select_pokemon', count: 1,
+      options: [{ id: idlerCard.id, label: '閒人' }, { id: hitterCard.id, label: '打手' }],
+      context: {},
+    });
+    const chosen = await pick(G, [
+      mv('resolve_choice', { selection: [idlerCard.id] }, '換閒人'),
+      mv('resolve_choice', { selection: [hitterCard.id] }, '換打手'),
+    ]);
+    expect(chosen.description).toBe('換打手');
+  });
+
+  it('will not use a swap ability that displaces its own best attacker', async () => {
+    const striker = mon({ name: '主攻手', attacks: [attack('猛擊', ['Grass'], '120')] });
+    const weakling = mon({ name: '弱雞', hp: '60' });
+    const G = duel(striker, mon({ name: '對手', hp: '300' }));
+    G.players[0].active!.attachedEnergy = [energy('e1')];
+    const holder = makeGameCard(mon({
+      name: '鎖鏈持有者',
+      abilities: [{ name: '支配鎖鏈', type: 'Ability', text: '選擇1隻自己的備戰區的寶可夢，與戰鬥寶可夢互換。' }],
+    }), 0);
+    G.players[0].bench = [holder, makeGameCard(weakling, 0), null, null, null];
+    const chosen = await pick(G, [
+      mv('use_ability', { cardId: holder.id }, '用支配鎖鏈'),
+      mv('end_turn'),
+    ]);
+    // Every ability scoring a flat 750 meant the AI took this every turn, swapping its loaded
+    // attacker out for nothing and never attacking — a real multi-turn loop.
+    expect(chosen.description).toBe('end_turn');
+  });
 });

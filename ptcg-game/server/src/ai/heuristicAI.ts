@@ -418,6 +418,19 @@ export class HeuristicAI implements IAIPlayer {
     // Self-bounce with an empty bench removes the player's last Pokémon from play — instant loss.
     if (/放回自己的牌庫|放回手牌/.test(text) && player.bench.every(c => c === null)
       && player.active?.id === cardId) return -1000;
+    // An ability that swaps the Active (支配鎖鏈 「與戰鬥寶可夢互換」) is not free when the Active
+    // is already the best attacker we have — and every ability scoring a flat 750 meant the AI
+    // used it anyway, every turn, undoing the retreat it had just paid for and never attacking.
+    // Watched as a multi-turn retreat/swap loop in a real game.
+    if (/與戰鬥寶可夢互換|換上場/.test(text)) {
+      const defender = G.players[(1 - playerIndex) as 0 | 1].active;
+      const active = player.active;
+      if (defender && active) {
+        const mine = bestPayableAttack(G, playerIndex, active, defender, this.cache)?.expected ?? 0;
+        const sw = bestSwitchIn(G, playerIndex, this.cache)?.expected ?? 0;
+        if (sw <= mine) return 2;   // below end_turn: displacing our own attacker is a downgrade
+      }
+    }
     let score = 750;
     if (/恢復|傷害|能量/.test(text)) score += 30;
     if (/抽\S*張|從自己的牌庫/.test(text)) return this.deckDepletionAdjust(player, score);
@@ -617,11 +630,26 @@ export class HeuristicAI implements IAIPlayer {
     }
 
     // ---- Promotions and switches: one definition of "who should come in". ---------------------
+    // No choiceType filter here: raiseAttackPick labels EVERYTHING select_from_list, including
+    // opponent_switch/self_switch — an earlier guard on the choiceType excluded exactly the two
+    // kinds this branch is named after, and they fell through to the generic prompt classifier.
+    // Every non-promotion select_from_list choice is already routed by its own kind/step above
+    // and below, so the kind/effectKey tests alone are the discriminator.
+    // mulligan_bonus_bench is NOT a promotion — its options are hand cards going to a free bench
+    // slot for nothing, so the only question is "how many", and the answer is "all of them".
+    if (choice.effectKey === 'mulligan_bonus_bench') return 20 + 10 * selection.length;
+    // "Which of my Benched Pokémon becomes Active" has one right way to be answered no matter
+    // which card asked it. Named ability/trainer handlers raise it with no kind at all (支配鎖鏈:
+    // choiceType select_pokemon, empty context), so those fell to the generic card-value
+    // classifier and swapped in whatever — watched undoing the AI's own retreat, turn after turn.
+    const asksWhoComesIn = /換上場|上場|互換/.test(choice.prompt)
+      && selection.length === 1
+      && G.players[playerIndex].bench.some(c => c?.id === selection[0]);
     const isPromotion = kind === 'opponent_switch' || kind === 'self_switch'
       || choice.effectKey === 'ko_promotion' || choice.effectKey === 'attack_self_return_promotion'
-      || choice.effectKey === 'mulligan_bonus_bench'
-      || (choice.effectKey === 'retreat' && ctx.step === 'pick_bench');
-    if (isPromotion && choice.choiceType !== 'select_from_list') {
+      || (choice.effectKey === 'retreat' && ctx.step === 'pick_bench')
+      || asksWhoComesIn;
+    if (isPromotion) {
       const mon = findPokemon(me, selection[0] ?? '');
       if (!mon) return 5;
       const defender = opp.active;
@@ -683,17 +711,39 @@ export class HeuristicAI implements IAIPlayer {
     // ---- mulligan compensation: free cards, unless the deck can't afford them. ----------------
     if (choice.effectKey === 'mulligan_bonus') {
       const n = parseInt(selection[0] ?? '0', 10) || 0;
-      return me.deck.length < 8 ? 20 - n : 20 + n;
+      // Amplified past the tie band, same reason as the classifier below.
+      return me.deck.length < 8 ? 20 - 6 * n : 20 + 6 * n;
     }
 
-    // ---- Everything else (named trainer/ability resume steps): classify by the prompt. --------
-    // 丟棄/放回 in the prompt = a cost being paid (give up the least value); otherwise a reward.
-    const isCost = /丟棄|棄置|放回/.test(choice.prompt);
-    let score = 10 + (isCost ? 0 : selection.length);
+    // ---- Everything else (named trainer/ability resume steps). --------------------------------
+    // Cost or reward? The prompt's verb alone is not enough, because a prompt routinely describes
+    // what happens to the cards NOT selected: 偵查指令 reads 「選1張加手牌，其餘放回牌庫下方」 and
+    // the 放回 made the AI minimize — it picked the WORST of the two cards it was being handed.
+    // 枇琶 (「查看對手手牌，選最多2張物品卡丟棄」) failed the mirror way and declined entirely.
+    //
+    // The ZONE the options come from settles it: giving up something already ours (hand, board)
+    // is a cost; anything pulled out of a deck, a discard pile, or the opponent's side is a gain,
+    // whatever the sentence says about the leftovers.
+    const myField = [me.active, ...me.bench].filter((c): c is GameCard => c !== null);
+    const isOwnedZone = (id: string) =>
+      me.hand.some(c => c.id === id)
+      || findPokemon(me, id) !== null
+      // Energy already attached to one of ours is just as much "already ours" as a hand card —
+      // without this, a named handler's energy-discard prompt reads as a reward and the AI hands
+      // over its most valuable Energy.
+      || myField.some(c => c.attachedEnergy.some(e => e.id === id));
+    const isCost = /丟棄|棄置|放回/.test(choice.prompt)
+      && selection.length > 0 && selection.every(isOwnedZone);
+    // Full cardValue, not a fraction of it: with TIE_EPSILON at 5, a damped value term put
+    // "take the free Pokémon" and "take nothing" 4-5 points apart — inside the random tie band —
+    // so the AI declined about half of its deck searches. Watched happening in real games
+    // (高級球 and 集客 both answered 「(不選)」 with picks on offer). The gap has to clear the
+    // band, and choice scores only ever compete with each other, so scaling up is free.
+    let score = 10 + (isCost ? 0 : 3 * selection.length);
     for (const id of selection) {
       const card = findAnywhere(id);
       if (!card) continue;
-      const v = cardValue(G, playerIndex, card.cardData) / 3;
+      const v = cardValue(G, playerIndex, card.cardData);
       score += isCost ? -v : v;
     }
     return score;
