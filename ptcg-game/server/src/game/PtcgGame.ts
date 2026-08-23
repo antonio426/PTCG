@@ -16,7 +16,15 @@ import { applyWinner } from './winConditions';
  * file the other two engines also rely on: wrap every move so its `ctx` gets `events` copied
  * onto it before the shared implementation ever runs. */
 function withEventsOnCtx(fn: (...args: any[]) => any) {
-  return (context: any, ...args: any[]) => fn({ ...context, ctx: { ...context.ctx, events: context.events } }, ...args);
+  return (context: any, ...args: any[]) => fn(
+    // `playerID` is a sibling of `ctx` in 0.50 for the same reason `events` is, and it matters for
+    // the same reason: moves.resolveChoice validates the answering seat against `ctx.playerID`
+    // (`if (chooser !== actor) return`). Without this it was always undefined, so the check fell
+    // back to "the chooser is whoever asked" and could never fire — on this engine alone, an
+    // 「由對手選擇」 effect was decided by the attacker.
+    { ...context, ctx: { ...context.ctx, events: context.events, playerID: context.playerID } },
+    ...args,
+  );
 }
 const bgioMoves = Object.fromEntries(Object.entries(moves).map(([name, fn]) => [name, withEventsOnCtx(fn as any)]));
 
@@ -76,6 +84,26 @@ export const PtcgGame: Game<PtcgGameState> = {
 
     play: {
       turn: {
+        // Real boardgame.io only accepts a move from `ctx.currentPlayer` unless stages say
+        // otherwise, and this phase declared none — so when a PendingChoice named the OTHER seat
+        // (「由對手選擇」), the seat that had to answer was the one seat that could not, while the
+        // turn player could answer it unchallenged. The other three engines re-read the actor
+        // from `pendingChoice.player` every iteration; this is that, in boardgame.io's own terms.
+        activePlayers: { currentPlayer: 'play' },
+        stages: {
+          // No `moves` of its own: the phase's whole move set stays available to the turn player.
+          play: {},
+          // The answering seat may do exactly one thing — answer.
+          answering: { moves: { resolveChoice: bgioMoves.resolveChoice } },
+        },
+        onMove: ({ G, events }: { G: PtcgGameState; events: any }) => {
+          const owed = G.pendingChoice?.player;
+          if (owed !== undefined && owed !== null && owed !== G.currentPlayer) {
+            events.setActivePlayers({ value: { [String(owed)]: 'answering' } });
+          } else {
+            events.setActivePlayers({ currentPlayer: 'play' });
+          }
+        },
         order: {
           // Real rules: the coin-flip winner picks who takes turn 1. By the time setupPhase's
           // endIf above goes true, moves.ts (chooseActive/resolveChoice) has already resolved
