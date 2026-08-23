@@ -4,6 +4,7 @@ import { getLegalMoves } from '../game/validation';
 import { applyTurnBegin, beginNextTurn } from '../game/turnLifecycle';
 import { applyMove } from '../game/moveDispatch';
 import { applyWinner, applyStuckSeatLoss } from '../game/winConditions';
+import { MAX_MOVES_PER_GAME, SAFETY_CAP_REASON } from '../game/engineLimits';
 import { IAIPlayer } from './aiPlayer';
 import { AIThought, AIPlayerResult } from './types';
 
@@ -71,7 +72,7 @@ async function runSingleGame(
   applyTurnBegin(G);
 
   let moveSafety = 0;
-  while (G.winner === null && moveSafety < 2000) {
+  while (G.winner === null && moveSafety < MAX_MOVES_PER_GAME) {
     moveSafety++;
     // A pendingChoice can belong to the player whose turn it ISN'T ("the opponent chooses"), and
     // getLegalMoves returns nothing for anyone else while one is standing — polling only
@@ -103,10 +104,12 @@ async function runSingleGame(
 
     if (turnEnded && beginNextTurn(G)) break;
   }
-  if (G.winner === null) {
-    G.winner = 0;
-    G.winReason = 'safety cap exceeded';
-  }
+  // Hitting the cap means the game never resolved — recording it as a player-0 win is a lie that
+  // inflated seat A's rate in every measurement this runner feeds (BattleLab, ai-strength.ts),
+  // and it also made BattleStats.draws — which counts `winner === null` — permanently zero, so
+  // the number that would have exposed the problem could never move. The reason is still
+  // recorded; the winner stays null.
+  if (G.winner === null) G.winReason = SAFETY_CAP_REASON;
 
   return {
     gameId,

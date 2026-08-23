@@ -7,6 +7,9 @@ import Badge from '../components/Badge';
 interface TestResult {
   deckAWins: number;
   deckBWins: number;
+  /** Games that hit the engine's move cap without resolving. The server used to hand these to
+   * deck A, which tilted every win rate shown here towards whichever deck sat in seat A. */
+  draws: number;
   totalGames: number;
   averageTurns: number;
   gameLogs: GameLogEntry[];
@@ -14,7 +17,7 @@ interface TestResult {
 
 interface GameLogEntry {
   game: number;
-  winner: 0 | 1;
+  winner: 0 | 1 | null;
   turns: number;
   events: { turn: number; player: number; action: string; thought?: string }[];
 }
@@ -67,9 +70,10 @@ export default function BattleLab() {
       const numGames = effectiveNumGames;
 
       const batchSize = Math.min(numGames, involvesClaude ? 3 : 10);
-      let allResults: { game: number; winner: 0 | 1; turns: number; events: GameLogEntry['events'] }[] = [];
+      let allResults: { game: number; winner: 0 | 1 | null; turns: number; events: GameLogEntry['events'] }[] = [];
       let deckAWins = 0;
       let deckBWins = 0;
+      let draws = 0;
       let totalTurns = 0;
 
       for (let batch = 0; batch < numGames; batch += batchSize) {
@@ -96,8 +100,9 @@ export default function BattleLab() {
             thought: '',
           }));
 
-          const winner = gameResult.winner as 0 | 1;
-          if (winner === 0) deckAWins++;
+          const winner = gameResult.winner as 0 | 1 | null;
+          if (winner === null) draws++;
+          else if (winner === 0) deckAWins++;
           else deckBWins++;
 
           totalTurns += gameResult.turns;
@@ -111,6 +116,7 @@ export default function BattleLab() {
       setResult({
         deckAWins,
         deckBWins,
+        draws,
         totalGames: numGames,
         averageTurns: numGames > 0 ? Math.round((totalTurns / numGames) * 10) / 10 : 0,
         gameLogs: allResults.slice(-100),
@@ -255,6 +261,9 @@ export default function BattleLab() {
               <div className="flex flex-col items-center gap-1">
                 <StatBox value={result.totalGames} label="總場次" colorClassName="bg-black/30 border-slate-600 text-slate-100" />
                 <p className="text-[11px] text-slate-500">平均 {result.averageTurns} 回合</p>
+                {result.draws > 0 && (
+                  <p className="text-[11px] text-amber-400">{result.draws} 場未分勝負</p>
+                )}
               </div>
               <div className="text-center">
                 <div className="flex items-center justify-center gap-1.5 mb-1">
@@ -318,8 +327,8 @@ export default function BattleLab() {
                         <span className="text-sm font-medium text-slate-200">第 {log.game} 場</span>
                         <div className="flex items-center gap-2">
                           <Badge
-                            label={`${log.winner === 0 ? deckAName : deckBName} 勝`}
-                            className={log.winner === 0 ? 'bg-emerald-900/50 border-emerald-700/50 text-emerald-300' : 'bg-red-900/50 border-red-700/50 text-red-300'}
+                            label={log.winner === null ? '未分勝負' : `${log.winner === 0 ? deckAName : deckBName} 勝`}
+                            className={log.winner === null ? 'bg-amber-900/50 border-amber-700/50 text-amber-300' : log.winner === 0 ? 'bg-emerald-900/50 border-emerald-700/50 text-emerald-300' : 'bg-red-900/50 border-red-700/50 text-red-300'}
                           />
                           <span className="text-xs text-slate-500">{log.turns} 回合 · {log.events.length} 個行動</span>
                         </div>
@@ -349,8 +358,8 @@ export default function BattleLab() {
         >
           <div className="flex items-center gap-2 mb-3">
             <Badge
-              label={`${detailGame.winner === 0 ? deckAName : deckBName} 勝`}
-              className={detailGame.winner === 0 ? 'bg-emerald-900/50 border-emerald-700/50 text-emerald-300' : 'bg-red-900/50 border-red-700/50 text-red-300'}
+              label={detailGame.winner === null ? '未分勝負' : `${detailGame.winner === 0 ? deckAName : deckBName} 勝`}
+              className={detailGame.winner === null ? 'bg-amber-900/50 border-amber-700/50 text-amber-300' : detailGame.winner === 0 ? 'bg-emerald-900/50 border-emerald-700/50 text-emerald-300' : 'bg-red-900/50 border-red-700/50 text-red-300'}
             />
             <span className="text-xs text-emerald-500/70">{detailGame.turns} 回合</span>
           </div>

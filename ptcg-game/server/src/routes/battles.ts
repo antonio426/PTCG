@@ -8,6 +8,7 @@ import { fetchCardsByIds } from '../card-api/tcgdex';
 import { applyTurnBegin, beginNextTurn } from '../game/turnLifecycle';
 import { applyMove } from '../game/moveDispatch';
 import { applyWinner, applyStuckSeatLoss } from '../game/winConditions';
+import { MAX_MOVES_PER_GAME, SAFETY_CAP_REASON } from '../game/engineLimits';
 import { IAIPlayer, RandomAI, MockAI, ClaudeAI } from '../ai/aiPlayer';
 import { HeuristicAI } from '../ai/heuristicAI';
 
@@ -27,7 +28,7 @@ function resolveAiPlayer(type: string | undefined): IAIPlayer {
 
 interface BattleRecord {
   matchId: string; deckA: string[]; deckB: string[];
-  winner: number; winReason: string | null; turns: number;
+  winner: number | null; winReason: string | null; turns: number;
   logs: any[]; createdAt: number;
 }
 const battleStore = new Map<string, BattleRecord>();
@@ -57,22 +58,20 @@ function executeMove(G: PtcgGameState, move: LegalAction, player: number): void 
   applyMove(G, move, ctx);
 }
 
-async function simulateBattle(decks: string[][], seed: number, aiTypeA: string | undefined, aiTypeB: string | undefined): Promise<{ winner: number; winReason: string | null; turns: number; logs: any[] }> {
+async function simulateBattle(decks: string[][], seed: number, aiTypeA: string | undefined, aiTypeB: string | undefined): Promise<{ winner: number | null; winReason: string | null; turns: number; logs: any[] }> {
   const allIds = [...new Set([...decks[0], ...decks[1]])];
   const cardData = await fetchCardsByIds(allIds);
   const cardDataMap = cardData as unknown as Record<string, Card>;
   const G = setup({ decks, cardData: cardDataMap, seed });
   const ais: [IAIPlayer, IAIPlayer] = [resolveAiPlayer(aiTypeA), resolveAiPlayer(aiTypeB)];
   applyTurnBegin(G);
-  let safety = 0;
-  while (G.winner === null && safety < 200) {
-    safety++;
-    let moveSafety = 0;
-    // Bounds a single turn's move count — belt-and-suspenders against any move type that
-    // `executeMove` doesn't recognize (a silent no-op would otherwise spin this loop forever,
-    // since `G.phase` never reaches 'end' without genuine progress).
-    while (G.winner === null && G.phase !== 'end' && moveSafety < 500) {
-      moveSafety++;
+  // One budget for the whole game, in the same unit as every other engine (see engineLimits.ts).
+  // This used to be 200 turns x 500 moves per turn — about fifty times battleRunner's allowance,
+  // so BattleLab kept grinding on games the headless runner had already written off.
+  let moves = 0;
+  while (G.winner === null && moves < MAX_MOVES_PER_GAME) {
+    while (G.winner === null && G.phase !== 'end' && moves < MAX_MOVES_PER_GAME) {
+      moves++;
       // See battleRunner's loop: a pendingChoice can name the player whose turn it ISN'T, and
       // while one stands nobody else has a legal move — so the actor is re-read every iteration.
       const player = (G.pendingChoice?.player ?? G.currentPlayer) as 0 | 1;
@@ -88,7 +87,9 @@ async function simulateBattle(decks: string[][], seed: number, aiTypeA: string |
     }
     if (G.winner !== null || beginNextTurn(G)) break;
   }
-  return { winner: G.winner ?? 0, winReason: G.winReason, turns: G.turn, logs: [...G.turnLog] };
+  if (G.winner === null) G.winReason = SAFETY_CAP_REASON;
+  // `winner` stays null for an unresolved game rather than defaulting to 0 — see engineLimits.ts.
+  return { winner: G.winner, winReason: G.winReason, turns: G.turn, logs: [...G.turnLog] };
 }
 
 const router = new Router();
@@ -105,15 +106,20 @@ router.post('/ai-vs-ai', async (ctx) => {
     const matchId = randomUUID();
     const results: any[] = [];
     const aggregated: Record<number, number> = { 0: 0, 1: 0 };
+    // Games that never resolved are counted apart, not handed to deck A. Folding them in is what
+    // made every win rate BattleLab reported lean towards whichever deck sat in seat A.
+    let draws = 0;
     for (let i = 0; i < numGames; i++) {
       const result = await simulateBattle([deckA, deckB], Date.now() + i, aiTypeA, aiTypeB);
       results.push(result);
-      aggregated[result.winner] = (aggregated[result.winner] || 0) + 1;
+      if (result.winner === null) draws++;
+      else aggregated[result.winner] = (aggregated[result.winner] || 0) + 1;
     }
+    const overallWinner = aggregated[0] === aggregated[1] ? null : aggregated[1] > aggregated[0] ? 1 : 0;
     const totalTurns = results.reduce((s, r) => s + r.turns, 0);
     const record: BattleRecord = {
       matchId, deckA, deckB,
-      winner: aggregated[1] > aggregated[0] ? 1 : 0,
+      winner: overallWinner,
       winReason: results[results.length - 1].winReason,
       turns: totalTurns,
       logs: results.map(r => r.logs).flat(),
@@ -126,7 +132,7 @@ router.post('/ai-vs-ai', async (ctx) => {
       if (oldest === undefined) break;
       battleStore.delete(oldest);
     }
-    ctx.body = { matchId, results, summary: { games: numGames, aggregated, overall_winner: record.winner, avg_turns: numGames > 0 ? totalTurns / numGames : 0 } };
+    ctx.body = { matchId, results, summary: { games: numGames, aggregated, draws, overall_winner: record.winner, avg_turns: numGames > 0 ? totalTurns / numGames : 0 } };
   } catch (err: any) {
     ctx.status = 500;
     ctx.body = { error: err.message || 'Battle simulation failed' };

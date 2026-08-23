@@ -8,6 +8,7 @@ import { getLegalMoves } from '../game/validation';
 import { beginNextTurn } from '../game/turnLifecycle';
 import { applyMove } from '../game/moveDispatch';
 import { applyWinner, applyStuckSeatLoss } from '../game/winConditions';
+import { MAX_MOVES_PER_GAME } from '../game/engineLimits';
 import { effectiveMaxHp } from '../game/damage';
 import { fetchCardsByIds } from '../card-api/tcgdex';
 import { RandomAI, ClaudeAI, IAIPlayer } from '../ai/aiPlayer';
@@ -99,6 +100,8 @@ interface BattleSession {
    * state before the player's last action, which in a vs-AI game also rewinds any AI turns
    * that followed it (the only sensible undo semantics against an AI). */
   history: PtcgGameState[];
+  /** AI moves spent on this game so far — see runAiTurns. */
+  aiMovesUsed: number;
 }
 
 const MAX_UNDO_HISTORY = 20;
@@ -268,9 +271,12 @@ async function runAiTurns(session: BattleSession): Promise<void> {
   // already been executed) — without this cap, the loop spins forever, pushing to G.turnLog on
   // every iteration until the process OOMs. Mirrors the moveSafety cap in battles.ts, which never
   // got applied here.
-  let aiMoveSafety = 0;
-  while (G.winner === null && (G.currentPlayer === 1 || G.pendingChoice?.player === 1) && aiMoveSafety < 500) {
-    aiMoveSafety++;
+  // Counted on the SESSION, not per call: the counter used to reset on every human move, so a
+  // game could run unbounded so long as the player kept acting between AI turns — the one engine
+  // with no per-game bound at all. Same budget as everyone else now (engineLimits.ts).
+  while (G.winner === null && (G.currentPlayer === 1 || G.pendingChoice?.player === 1)
+    && session.aiMovesUsed < MAX_MOVES_PER_GAME) {
+    session.aiMovesUsed++;
     const legalMoves = getLegalMoves(G, 1);
     if (legalMoves.length === 0) {
       applyStuckSeatLoss(G, 1);
@@ -286,7 +292,11 @@ async function runAiTurns(session: BattleSession): Promise<void> {
     // before ever reaching here — a latent bug the moment that stops being true.
     if (G.phase === 'end' && beginNextTurn(G)) break;
   }
-  if (aiMoveSafety >= 500 && G.winner === null) {
+  // The headless engines leave an unresolved game with no winner and let their caller report a
+  // draw. A live session can't: it's the AI's turn, so the player would be left staring at a board
+  // they have no legal move on. This one path therefore still ends the match, with a reason that
+  // says what actually happened rather than pretending someone won on the rules.
+  if (session.aiMovesUsed >= MAX_MOVES_PER_GAME && G.winner === null) {
     G.winner = 0;
     G.winReason = 'AI turn safety cap exceeded';
   }
@@ -338,6 +348,7 @@ router.post('/', async (ctx) => {
       aiPlayer,
       createdAt: Date.now(),
       history: [],
+      aiMovesUsed: 0,
     };
     sessions.set(session.id, session);
     // Map iteration order is insertion order, so the first key is the oldest.
