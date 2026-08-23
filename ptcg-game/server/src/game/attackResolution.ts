@@ -1728,8 +1728,16 @@ export function applyAttackOutcome(
         }
       } else {
         const pool = opponent.bench.filter((c): c is GameCard => c !== null && c.cardData.subtypes.includes('Basic'));
-        const target = pool[Math.floor(Math.random() * pool.length)];
-        if (target) handleKo(G, 1 - G.currentPlayer, target.id, attacker);
+        // The coin decides WHERE (Active vs Bench); on tails the attacker still chooses WHICH.
+        if (!raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+          prompt: '選擇1隻對手的備戰【基礎】寶可夢使其昏厥',
+          options: pool.map(c => ({ id: c.id, label: c.cardData.name })),
+          count: 1,
+          context: { kind: 'ko_target' },
+        })) {
+          const target = pool[Math.floor(Math.random() * pool.length)];
+          if (target) handleKo(G, 1 - G.currentPlayer, target.id, attacker);
+        }
       }
     }
     if (genericOutcome.winGameIfOnePrizeLeft && player.prizes.length === 1 && G.winner === null) {
@@ -2217,8 +2225,18 @@ export function applyAttackOutcome(
     }
     if (genericOutcome.optionalEnergyToDeckForBenchDamage && attacker.attachedEnergy.length > 0) {
       const { max, benchDamage } = genericOutcome.optionalEnergyToDeckForBenchDamage;
+      // 「若希望，選擇3個…」 — both halves are the player's call: whether to do it at all
+      // (minCount 0) and which Energy goes back. This always did it, with whichever sat first.
+      const asked = raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `若希望，選擇最多 ${Math.min(max, attacker.attachedEnergy.length)} 個能量放回牌庫（對手1隻備戰寶可夢受到 ${benchDamage} 點傷害）`,
+        options: attacker.attachedEnergy.map(e => ({ id: e.id, label: ENERGY_TYPE_ZH_LABEL[e.type] || e.type })),
+        minCount: 0,
+        maxCount: Math.min(max, attacker.attachedEnergy.length),
+        context: { kind: 'self_energy_to_deck', attackerId: attacker.id, benchDamage },
+      });
       let moved = 0;
-      for (let i = 0; i < max && attacker.attachedEnergy.length > 0; i++) {
+      if (asked) moved = -1;
+      for (let i = 0; !asked && i < max && attacker.attachedEnergy.length > 0; i++) {
         const [energy] = attacker.attachedEnergy.splice(0, 1);
         if (energy.cardData) player.deck.push({ id: energy.id, cardData: energy.cardData, owner: G.currentPlayer as 0 | 1, damage: 0, statusConditions: [], attachedEnergy: [] });
         moved++;
@@ -2273,9 +2291,18 @@ export function applyAttackOutcome(
     if (genericOutcome.flipUntilTailsDiscardOpponentEnergy) {
       let heads = 0;
       for (let i = 0; i < 20 && Math.random() < 0.5; i++) heads++;
-      for (let i = 0; i < heads && defender.attachedEnergy.length > 0; i++) {
-        const [energy] = defender.attachedEnergy.splice(Math.floor(Math.random() * defender.attachedEnergy.length), 1);
-        discardAttachedEnergy(G, (1 - G.currentPlayer) as 0 | 1, energy);
+      // Coins decide how many; the ATTACKER chooses which of the defender's Energy go.
+      const count = Math.min(heads, defender.attachedEnergy.length);
+      if (count > 0 && !raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `選擇 ${count} 個對手戰鬥寶可夢身上的能量丟棄`,
+        options: defender.attachedEnergy.map(e => ({ id: e.id, label: ENERGY_TYPE_ZH_LABEL[e.type] || e.type })),
+        count,
+        context: { kind: 'opponent_energy_discard', targetId: defender.id },
+      })) {
+        for (let i = 0; i < count; i++) {
+          const [energy] = defender.attachedEnergy.splice(Math.floor(Math.random() * defender.attachedEnergy.length), 1);
+          discardAttachedEnergy(G, (1 - G.currentPlayer) as 0 | 1, energy);
+        }
       }
     }
     if (genericOutcome.shuffleAllSelfEnergyToDeck && attacker.attachedEnergy.length > 0) {
@@ -2285,13 +2312,22 @@ export function applyAttackOutcome(
       shuffleDeck(player.deck);
     }
     if (genericOutcome.deckSearchAnyCardsToTopOfDeck) {
+      // 「任意選擇」 — a deck search exists so the player can pick; the order they pick in is also
+      // the order the cards end up in on top of the deck.
       let remaining = Math.min(genericOutcome.deckSearchAnyCardsToTopOfDeck, player.deck.length);
-      const picked: GameCard[] = [];
-      while (remaining > 0 && player.deck.length > 0) {
-        picked.push(player.deck.splice(Math.floor(Math.random() * player.deck.length), 1)[0]);
-        remaining--;
+      if (remaining > 0 && !raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `從自己的牌庫選擇 ${remaining} 張卡放回牌庫上方`,
+        options: player.deck.map(c => ({ id: c.id, label: c.cardData.name })),
+        count: remaining,
+        context: { kind: 'deck_to_top' },
+      })) {
+        const picked: GameCard[] = [];
+        while (remaining > 0 && player.deck.length > 0) {
+          picked.push(player.deck.splice(Math.floor(Math.random() * player.deck.length), 1)[0]);
+          remaining--;
+        }
+        player.deck.push(...picked);
       }
-      player.deck.push(...picked);
     }
     if (genericOutcome.shuffleRandomOpponentHandCardsIntoDeckCount) {
       const want = genericOutcome.shuffleRandomOpponentHandCardsIntoDeckCount;
@@ -2311,9 +2347,18 @@ export function applyAttackOutcome(
       }
     }
     if (genericOutcome.flipCoinsDiscardSelfEnergyByTailsCount) {
-      for (let i = 0; i < genericOutcome.flipCoinsDiscardSelfEnergyByTailsCount && attacker.attachedEnergy.length > 0; i++) {
-        const [energy] = attacker.attachedEnergy.splice(Math.floor(Math.random() * attacker.attachedEnergy.length), 1);
-        discardAttachedEnergy(G, G.currentPlayer as 0 | 1, energy);
+      // The coins decide HOW MANY; the player decides WHICH. Only the count was ever rolled.
+      const count = Math.min(genericOutcome.flipCoinsDiscardSelfEnergyByTailsCount, attacker.attachedEnergy.length);
+      if (count > 0 && !raiseAttackPick(G, G.currentPlayer as 0 | 1, {
+        prompt: `選擇 ${count} 個要丟棄的能量`,
+        options: attacker.attachedEnergy.map(e => ({ id: e.id, label: ENERGY_TYPE_ZH_LABEL[e.type] || e.type })),
+        count,
+        context: { kind: 'self_energy_discard', attackerId: attacker.id },
+      })) {
+        for (let i = 0; i < count; i++) {
+          const [energy] = attacker.attachedEnergy.splice(Math.floor(Math.random() * attacker.attachedEnergy.length), 1);
+          discardAttachedEnergy(G, G.currentPlayer as 0 | 1, energy);
+        }
       }
     }
     if (genericOutcome.opponentAllBenchSplashDamage && !benchDamageFromEffectsBlocked(G)) {

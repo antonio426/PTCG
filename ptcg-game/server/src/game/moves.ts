@@ -903,6 +903,54 @@ const rawMoves = {
           if (deckIdx >= 0) seat.hand.push(seat.deck.splice(deckIdx, 1)[0]);
         }
         shuffleDeck(seat.deck);
+      } else if (kind === 'deck_to_top') {
+        // 時間掌控: the picked cards go on TOP, in the order they were picked, and the rest of the
+        // deck is shuffled first — so shuffle, then stack. Pushing to the end IS the top here
+        // (drawCards pops from the end).
+        const picked: GameCard[] = [];
+        for (const id of selection) {
+          const deckIdx = seat.deck.findIndex(c => c.id === id);
+          if (deckIdx >= 0) picked.push(seat.deck.splice(deckIdx, 1)[0]);
+        }
+        shuffleDeck(seat.deck);
+        // Reversed so the FIRST card picked is the first one drawn.
+        seat.deck.push(...picked.reverse());
+      } else if (kind === 'self_energy_discard' || kind === 'self_energy_to_deck') {
+        const holder = [seat.active, ...seat.bench].find(c => c?.id === context.attackerId);
+        for (const id of selection) {
+          const idx = holder?.attachedEnergy.findIndex(e => e.id === id) ?? -1;
+          if (!holder || idx < 0) continue;
+          const [energy] = holder.attachedEnergy.splice(idx, 1);
+          if (kind === 'self_energy_discard') {
+            discardAttachedEnergy(G, chooser, energy);
+          } else if (energy.cardData) {
+            seat.deck.push({ id: energy.id, cardData: energy.cardData, owner: chooser, damage: 0, statusConditions: [], attachedEnergy: [] });
+          }
+        }
+        if (kind === 'self_energy_to_deck') {
+          shuffleDeck(seat.deck);
+          // 激流水泵: the Bench damage is conditional on having actually sent Energy back, which is
+          // why declining (an empty selection — the text reads 「若希望」) does nothing at all.
+          const benchDamage = context.benchDamage as number | undefined;
+          if (benchDamage && selection.length > 0) {
+            const opp = G.players[(1 - chooser) as 0 | 1];
+            const targets = opp.bench.filter((c): c is GameCard => c !== null);
+            const target = targets[Math.floor(Math.random() * targets.length)];
+            if (target) {
+              target.damage += benchDamage;
+              const hp = effectiveMaxHp(G, target);
+              if (hp > 0 && target.damage >= hp) handleKo(G, (1 - chooser) as 0 | 1, target.id, seat.active ?? undefined);
+            }
+          }
+        }
+      } else if (kind === 'opponent_energy_discard') {
+        // The attacker picks, but the Energy belongs to the defender — so it goes to THEIR discard.
+        const opp = G.players[(1 - chooser) as 0 | 1];
+        const holder = [opp.active, ...opp.bench].find(c => c?.id === context.targetId);
+        for (const id of selection) {
+          const idx = holder?.attachedEnergy.findIndex(e => e.id === id) ?? -1;
+          if (holder && idx >= 0) discardAttachedEnergy(G, (1 - chooser) as 0 | 1, holder.attachedEnergy.splice(idx, 1)[0]);
+        }
       } else if (kind === 'deck_attach') {
         const target = [seat.active, ...seat.bench].find(c => c?.id === context.targetId);
         for (const id of selection) {
