@@ -171,14 +171,9 @@ function HoverPreview({ card, children, placement = 'above' }: { card: Card; chi
 /*  Section header (main-phase action panel)                */
 /* ====================================================== */
 
-function SectionHeader({ icon, label }: { icon: ReactNode; label: string }) {
-  return (
-    <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400/90 uppercase tracking-wider mb-1.5 pl-2 border-l-2 border-emerald-500/60">
-      {icon}
-      <span>{label}</span>
-    </div>
-  );
-}
+/** The action-dock categories that live behind tabs; the turn-defining actions are not one
+ * of these — they sit in the always-visible row above them. */
+type ActionTabId = 'trainer' | 'ability' | 'field';
 
 /* ====================================================== */
 /*  HP Bar                                                */
@@ -755,6 +750,45 @@ export default function Battle() {
     if (!battleState) return [];
     return battleState.legalMoves.filter(m => m.type === 'use_ability');
   }, [battleState]);
+
+  /* ---- Action dock tabs (see the dock's own comment down in the JSX) ---------------------- */
+
+  const [actionTab, setActionTab] = useState<ActionTabId>('ability');
+
+  const actionTabs = useMemo(() => {
+    const fieldCount = buckets.quickActions.filter(
+      m => m.type === 'use_stadium_action' || m.type === 'discard_fossil',
+    ).length;
+    return ([
+      // No 手牌 tab: the player area below already renders the whole hand, ringing the playable
+      // cards in yellow and carrying the same click handler. A second, filtered copy of the hand
+      // inside the dock was ~95px of duplicated surface, and it was what pushed the player's own
+      // board off screen.
+      // Trainers are normally played by clicking them in the hand row; this tab only exists for
+      // the case where the hand surface isn't rendering them, which is what the old layout did too.
+      { id: 'trainer', label: '訓練家', icon: <IconWrench className="w-3.5 h-3.5" />, count: handCardActions.length === 0 ? trainerActions.length : 0 },
+      { id: 'ability', label: '特性', icon: <IconSparkle className="w-3.5 h-3.5" />, count: abilityActions.length },
+      { id: 'field', label: '場地', icon: <IconBuilding className="w-3.5 h-3.5" />, count: fieldCount },
+    ] as const).filter(t => t.count > 0);
+  }, [buckets.quickActions, handCardActions.length, trainerActions.length, abilityActions.length]);
+
+  // Derived, not stored: a tab that just emptied (last card played) can't stay selected, and
+  // storing the correction in an effect would render one frame of an empty panel first.
+  const activeActionTab = actionTabs.some(t => t.id === actionTab) ? actionTab : actionTabs[0]?.id;
+
+  /** Standard tablist keyboard behaviour — arrows move, Home/End jump. */
+  const onActionTabKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
+    const keys = ['ArrowLeft', 'ArrowRight', 'Home', 'End'];
+    if (!keys.includes(e.key) || actionTabs.length === 0) return;
+    e.preventDefault();
+    const at = actionTabs.findIndex(t => t.id === activeActionTab);
+    const next = e.key === 'Home' ? 0
+      : e.key === 'End' ? actionTabs.length - 1
+      : (at + (e.key === 'ArrowRight' ? 1 : -1) + actionTabs.length) % actionTabs.length;
+    const id = actionTabs[next].id;
+    setActionTab(id);
+    (e.currentTarget.querySelector(`[data-action-tab="${id}"]`) as HTMLElement | null)?.focus();
+  }, [actionTabs, activeActionTab]);
 
   const viewerIndex = battleState?.viewerIndex ?? 0;
   useEffect(() => {
@@ -1560,212 +1594,6 @@ export default function Battle() {
           </div>
         </div>
 
-        {/* Middle: Actions. `min-h-[130px]` guarantees room for at least the quick-action button
-            row (attack/retreat/end-turn) even when the opponent/player rows above/below are at
-            their full flex-shrink-0 size — the inner scroll wrapper above absorbs whatever
-            overflow that reservation causes instead of this panel collapsing to ~0px again. */}
-        <div className="relative bg-black/25 backdrop-blur-sm p-3 flex-1 min-h-[130px] flex flex-col">
-
-          {/* Error display */}
-          {error && (
-            <div className="mb-2 p-2 bg-red-900/50 border border-red-700 rounded text-red-300 text-xs">
-              {error}
-            </div>
-          )}
-
-          {/* Waiting for AI */}
-          {!isOver && !bs.isPlayerTurn && (
-            <div className="flex-1 flex items-center justify-center gap-2 text-slate-400">
-              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-blue-500" />
-              AI 思考中...
-            </div>
-          )}
-
-          {/* Player actions: Main / Attack phase */}
-          {!isOver && bs.isPlayerTurn && (bs.phase === 'main' || bs.phase === 'attack') && (
-            <div className="flex-1 overflow-y-auto min-h-0">
-                <div className="space-y-2">
-
-                  {/* Quick actions section */}
-                  <section>
-                    <SectionHeader icon={<IconBolt className="w-3.5 h-3.5" />} label="快捷行動" />
-                    <div className="flex flex-wrap gap-1.5">
-                      {quickActions.filter(m => m.type === 'attack').map((m, i) => {
-                        const atkIdx = m.payload?.attackIndex as number;
-                        const atk = bs.player.active?.cardData.attacks?.[atkIdx];
-                        const btn = (
-                          <button
-                            key={i}
-                            onClick={() => handleSubmitMove(m)}
-                          data-move={m.type}
-                            disabled={loading}
-                            className="px-3 py-2 bg-gradient-to-b from-red-600 to-red-800 text-white rounded-lg text-xs font-medium hover:from-red-500 hover:to-red-700 transition-colors flex items-center gap-1.5 shadow-md shadow-red-950/50 border border-red-500/30 ring-1 ring-inset ring-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
-                          >
-                            <IconSword className="w-3.5 h-3.5" />
-                            {atk?.cost.map((c, ci) => <EnergyIcon key={ci} type={c} />)}
-                            <span>{atk?.name || m.description}</span>
-                            {atk?.damage && <span className="text-yellow-300 font-bold">{atk.damage}</span>}
-                          </button>
-                        );
-                        return atk && bs.player.active ? (
-                          <HoverPreview key={i} card={bs.player.active.cardData} placement="above">{btn}</HoverPreview>
-                        ) : btn;
-                      })}
-                      {quickActions.filter(m => m.type === 'retreat').map((m, i) => {
-                        const cost = (m.payload?.retreatCost as number) ?? 0;
-                        return (
-                          <button
-                            key={i}
-                            onClick={() => handleSubmitMove(m)}
-                          data-move={m.type}
-                            disabled={loading}
-                            className="px-3 py-2 bg-orange-700 text-white rounded-lg text-xs font-medium hover:bg-orange-600 transition-colors border border-orange-500/30 flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
-                          >
-                            <IconUndo className="w-3.5 h-3.5" />
-                            <span>撤退</span>
-                            {cost > 0 && (
-                              <span className="flex gap-0.5">
-                                {Array.from({ length: cost }, (_, ci) => <EnergyIcon key={ci} type="Colorless" />)}
-                              </span>
-                            )}
-                          </button>
-                        );
-                      })}
-                      {quickActions.filter(m => m.type === 'use_stadium_action').map((m, i) => (
-                        <button
-                          key={i}
-                          onClick={() => handleSubmitMove(m)}
-                          data-move={m.type}
-                          disabled={loading}
-                          className="px-3 py-2 bg-purple-800 text-white rounded-lg text-xs font-medium hover:bg-purple-700 transition-colors border border-purple-500/30 flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                          <IconBuilding className="w-3.5 h-3.5" />
-                          <span>{m.description}</span>
-                        </button>
-                      ))}
-                      {/* Fossils are discarded voluntarily from play; the server has always offered this,
-                          but no surface rendered it, so a Fossil in play could never be cleared by hand. */}
-                      {quickActions.filter(m => m.type === 'discard_fossil').map((m, i) => (
-                        <button
-                          key={i}
-                          onClick={() => handleSubmitMove(m)}
-                          data-move={m.type}
-                          disabled={loading}
-                          className="px-3 py-2 bg-amber-800 text-white rounded-lg text-xs font-medium hover:bg-amber-700 transition-colors border border-amber-500/30 flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                          <span>{m.description}</span>
-                        </button>
-                      ))}
-                      {quickActions.filter(m => m.type === 'end_turn').map((m, i) => (
-                        <button
-                          key={i}
-                          onClick={() => handleSubmitMove(m)}
-                          data-move={m.type}
-                          disabled={loading}
-                          className="px-3 py-2 bg-slate-700 text-white rounded-lg text-xs font-medium hover:bg-slate-600 transition-colors ml-auto border border-slate-500/30 ring-1 ring-inset ring-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                          結束回合 →
-                        </button>
-                      ))}
-                    </div>
-                  </section>
-
-                  {/* Hand card actions */}
-                  {handCardActions.length > 0 && (
-                    <section>
-                      <SectionHeader icon={<IconCards className="w-3.5 h-3.5" />} label="手牌（點擊卡片選擇動作，滑鼠移入可預覽效果）" />
-                      <div className="flex flex-wrap gap-2">
-                        {handCardActions.map((hca) => {
-                          const isTargetingSource = manualTargeting?.sourceCardId === hca.cardData.id;
-                          return (
-                            <div key={hca.cardData.id} className="flex flex-col items-center animate-card-enter">
-                              <HoverPreview card={hca.cardData} placement="above">
-                                <img
-                                  src={hca.cardData.images.small}
-                                  alt={hca.cardData.name}
-                                  onError={handleCardImgError}
-                                  className={`w-12 sm:w-14 aspect-[63/88] rounded-lg transition-all object-contain border-2
-                                    ${isTargetingSource ? 'border-sky-400 -translate-y-1 shadow-lg shadow-sky-500/30' : 'border-slate-600 hover:border-slate-400'}
-                                    ${loading ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
-                                    focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 focus-visible:outline-offset-2`}
-                                  onClick={() => handleCardClick(hca.cardData.id)}
-                                  role="button"
-                                  // Opens this card's action list (or plays it, when it has exactly
-                                  // one action). Not data-move — it may submit nothing at all — but
-                                  // the e2e harness has to be able to reach the hand.
-                                  data-hand-card={hca.cardData.id}
-                                  tabIndex={loading ? -1 : 0}
-                                  onKeyDown={keyActivate(() => handleCardClick(hca.cardData.id))}
-                                />
-                              </HoverPreview>
-                              <span className="text-[10px] text-slate-400 mt-0.5 truncate max-w-16 text-center">
-                                {hca.cardData.name}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </section>
-                  )}
-
-                  {/* Trainer card actions (separate row) */}
-                  {trainerActions.length > 0 && handCardActions.length === 0 && (
-                    <section>
-                      <SectionHeader icon={<IconWrench className="w-3.5 h-3.5" />} label="訓練家卡（點擊使用）" />
-                      <div className="flex flex-wrap gap-2">
-                        {trainerActions.map((m, i) => {
-                          const cardData = bs.player.hand.find(c => c.id === m.payload?.cardId);
-                          const btn = (
-                            <button
-                              onClick={() => handleSubmitMove(m)}
-                          data-move={m.type}
-                              disabled={loading}
-                              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-700 text-white rounded-lg text-xs font-medium hover:bg-indigo-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                            >
-                              {cardData && <img src={cardData.images.small} alt="" onError={handleCardImgError} className="w-5 h-7 object-contain rounded-sm" />}
-                              {m.description}
-                            </button>
-                          );
-                          return cardData ? <HoverPreview key={i} card={cardData} placement="above">{btn}</HoverPreview> : <div key={i}>{btn}</div>;
-                        })}
-                      </div>
-                    </section>
-                  )}
-
-                  {/* Ability actions (separate row) */}
-                  {abilityActions.length > 0 && (
-                    <section>
-                      <SectionHeader icon={<IconSparkle className="w-3.5 h-3.5" />} label="特性（點擊使用）" />
-                      <div className="flex flex-wrap gap-2">
-                        {abilityActions.map((m, i) => {
-                          const cardId = m.payload?.cardId as string | undefined;
-                          const cardData = [bs.player.active, ...bs.player.bench].find(c => c?.id === cardId)?.cardData;
-                          const btn = (
-                            <button
-                              onClick={() => handleSubmitMove(m)}
-                          data-move={m.type}
-                              disabled={loading}
-                              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-700 text-white rounded-lg text-xs font-medium hover:bg-emerald-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                            >
-                              {cardData && <img src={cardData.images.small} alt="" onError={handleCardImgError} className="w-5 h-7 object-contain rounded-sm" />}
-                              {m.description}
-                            </button>
-                          );
-                          return cardData ? <HoverPreview key={i} card={cardData} placement="above">{btn}</HoverPreview> : <div key={i}>{btn}</div>;
-                        })}
-                      </div>
-                    </section>
-                  )}
-
-                  {/* No legal moves indicator */}
-                  {battleState.legalMoves.filter(m => m.type !== 'forfeit').length === 0 && (
-                    <p className="text-slate-500 text-xs text-center py-8">沒有可行的行動</p>
-                  )}
-                </div>
-            </div>
-          )}
-        </div>
-
         {/* Player area */}
         <div className="relative flex-shrink-0 p-2.5 border-t border-emerald-900/40">
           <div className="flex items-center justify-between mb-1.5">
@@ -1896,6 +1724,238 @@ export default function Battle() {
           </div>
         </div>
         </div>
+      {/* Action dock — OUTSIDE the scrolling board column on purpose.
+
+          It used to be the middle child of that column, sized `flex-1 min-h-[130px]`, i.e. given
+          whatever the two board rows left over — which is the floor, 130px. Measured in a real
+          1280x800 battle: the tabs and the primary row ate 92 of it and the content area was left
+          with FOURTEEN pixels holding 95px of cards. So the panel had its own scrollbar, nested
+          inside the column's own scrollbar (686px of viewport holding 906px of board), and an
+          action you had not scrolled to simply did not exist as far as the player was concerned.
+
+          Two scroll regions competing is the anti-pattern; the fix is to take the actions out of
+          the competition. The dock is now a sibling BELOW the scroller, `flex-shrink-0`, sized by
+          its own content: the boards scroll behind it, the actions never move, and nothing here
+          needs a scrollbar of its own. */}
+      <div data-action-dock="1" className="relative flex-shrink-0 bg-black/40 backdrop-blur-sm border-t border-emerald-900/50 p-2.5 sm:p-3 flex flex-col">
+
+          {/* Error display */}
+          {error && (
+            <div className="mb-2 p-2 bg-red-900/50 border border-red-700 rounded text-red-300 text-xs">
+              {error}
+            </div>
+          )}
+
+          {/* Waiting for AI */}
+          {!isOver && !bs.isPlayerTurn && (
+            <div className="flex items-center justify-center gap-2 py-2 text-slate-400 text-sm">
+              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-blue-500" />
+              AI 思考中...
+            </div>
+          )}
+
+          {/* Player actions: Main / Attack phase.
+
+              Laid out as a DOCK, not a scrolling column. The four action groups used to be stacked
+              vertically inside one `overflow-y-auto` box wedged between the two board rows, which
+              in practice is ~130px tall — so only 快捷行動 was ever on screen and everything below
+              it was silently missed. A nested scroll region competing with the page is the exact
+              anti-pattern; the fix is not a taller box but fewer things in it at once:
+
+                row 1  the turn-defining actions, ALWAYS visible, never scrolled (attack is the
+                       primary CTA; 撤退 and 結束回合 are visually subordinate to it)
+                row 2  one tab per remaining group, each carrying a COUNT — so "you have 3 abilities
+                       you haven't looked at" is legible without opening anything
+                row 3  only the selected group
+
+              Nothing is hidden by scroll position any more; it is hidden by a control that says how
+              much is behind it. */}
+          {!isOver && bs.isPlayerTurn && (bs.phase === 'main' || bs.phase === 'attack') && (
+            <div className="flex flex-col gap-2">
+
+              {/* ---- Row 1: the turn-defining actions ---------------------------------------- */}
+              <div className="flex flex-wrap items-center gap-1.5 flex-shrink-0">
+                {quickActions.filter(m => m.type === 'attack').map((m, i) => {
+                  const atkIdx = m.payload?.attackIndex as number;
+                  const atk = bs.player.active?.cardData.attacks?.[atkIdx];
+                  const btn = (
+                    <button
+                      key={i}
+                      onClick={() => handleSubmitMove(m)}
+                      data-move={m.type}
+                      disabled={loading}
+                      className="min-h-[40px] px-3 py-2 bg-gradient-to-b from-red-600 to-red-800 text-white rounded-lg text-xs font-semibold hover:from-red-500 hover:to-red-700 active:scale-[0.98] transition-[transform,background-color] duration-150 flex items-center gap-1.5 shadow-md shadow-red-950/50 border border-red-500/30 ring-1 ring-inset ring-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <IconSword className="w-3.5 h-3.5" />
+                      {atk?.cost.map((c, ci) => <EnergyIcon key={ci} type={c} />)}
+                      <span>{atk?.name || m.description}</span>
+                      {atk?.damage && <span className="text-yellow-300 font-bold tabular-nums">{atk.damage}</span>}
+                    </button>
+                  );
+                  return atk && bs.player.active ? (
+                    <HoverPreview key={i} card={bs.player.active.cardData} placement="above">{btn}</HoverPreview>
+                  ) : btn;
+                })}
+                {quickActions.filter(m => m.type === 'retreat').map((m, i) => {
+                  const cost = (m.payload?.retreatCost as number) ?? 0;
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => handleSubmitMove(m)}
+                      data-move={m.type}
+                      disabled={loading}
+                      className="min-h-[40px] px-3 py-2 bg-orange-800/80 text-orange-100 rounded-lg text-xs font-medium hover:bg-orange-700 active:scale-[0.98] transition-[transform,background-color] duration-150 border border-orange-600/40 flex items-center gap-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-300 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <IconUndo className="w-3.5 h-3.5" />
+                      <span>撤退</span>
+                      {cost > 0 && (
+                        <span className="flex gap-0.5">
+                          {Array.from({ length: cost }, (_, ci) => <EnergyIcon key={ci} type="Colorless" />)}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+                {quickActions.filter(m => m.type === 'end_turn').map((m, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleSubmitMove(m)}
+                    data-move={m.type}
+                    disabled={loading}
+                    className="min-h-[40px] px-3 py-2 bg-slate-800 text-slate-200 rounded-lg text-xs font-medium hover:bg-slate-700 active:scale-[0.98] transition-[transform,background-color] duration-150 ml-auto border border-slate-600/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    結束回合 →
+                  </button>
+                ))}
+                {battleState.legalMoves.filter(m => m.type !== 'forfeit').length === 0 && (
+                  <p className="text-slate-500 text-xs py-2">沒有可行的行動</p>
+                )}
+              </div>
+
+              {/* ---- Row 2: one tab per group, each showing how much is inside ---------------- */}
+              {actionTabs.length > 0 && (
+                <div
+                  role="tablist"
+                  aria-label="行動分類"
+                  onKeyDown={onActionTabKeyDown}
+                  className="flex items-center gap-1 flex-shrink-0 border-b border-slate-700/60"
+                >
+                  {actionTabs.map(t => {
+                    const selected = t.id === activeActionTab;
+                    return (
+                      <button
+                        key={t.id}
+                        role="tab"
+                        id={`action-tab-${t.id}`}
+                        aria-selected={selected}
+                        aria-controls="action-tabpanel"
+                        tabIndex={selected ? 0 : -1}
+                        onClick={() => setActionTab(t.id)}
+                        data-action-tab={t.id}
+                        className={`relative min-h-[36px] px-3 py-1.5 -mb-px flex items-center gap-1.5 text-xs font-medium rounded-t-lg transition-colors duration-150
+                          focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-emerald-300
+                          ${selected
+                            ? 'text-emerald-200 bg-emerald-950/40 border-b-2 border-emerald-400'
+                            : 'text-slate-400 hover:text-slate-200 border-b-2 border-transparent'}`}
+                      >
+                        {t.icon}
+                        <span>{t.label}</span>
+                        {/* The count is the whole point of the tab: it makes an action you have not
+                            opened yet countable, where scroll position made it invisible. */}
+                        <span className={`px-1.5 rounded-full text-[10px] font-bold tabular-nums ${selected ? 'bg-emerald-400/20 text-emerald-200' : 'bg-slate-700/70 text-slate-300'}`}>
+                          {t.count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* ---- Row 3: the selected group ------------------------------------------------ */}
+              {activeActionTab && (
+                <div
+                  role="tabpanel"
+                  id="action-tabpanel"
+                  aria-labelledby={`action-tab-${activeActionTab}`}
+                  className="max-h-[26vh] overflow-y-auto"
+                >
+                  {activeActionTab === 'trainer' && (
+                    <div className="flex flex-wrap gap-2">
+                      {trainerActions.map((m, i) => {
+                        const cardData = bs.player.hand.find(c => c.id === m.payload?.cardId);
+                        const btn = (
+                          <button
+                            onClick={() => handleSubmitMove(m)}
+                            data-move={m.type}
+                            disabled={loading}
+                            className="min-h-[40px] flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-700 text-white rounded-lg text-xs font-medium hover:bg-indigo-600 active:scale-[0.98] transition-[transform,background-color] duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300 disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            {cardData && <img src={cardData.images.small} alt="" onError={handleCardImgError} className="w-5 h-7 object-contain rounded-sm" />}
+                            {m.description}
+                          </button>
+                        );
+                        return cardData ? <HoverPreview key={i} card={cardData} placement="above">{btn}</HoverPreview> : <div key={i}>{btn}</div>;
+                      })}
+                    </div>
+                  )}
+
+                  {activeActionTab === 'ability' && (
+                    <div className="flex flex-wrap gap-2">
+                      {abilityActions.map((m, i) => {
+                        const cardId = m.payload?.cardId as string | undefined;
+                        const cardData = [bs.player.active, ...bs.player.bench].find(c => c?.id === cardId)?.cardData;
+                        const btn = (
+                          <button
+                            onClick={() => handleSubmitMove(m)}
+                            data-move={m.type}
+                            disabled={loading}
+                            className="min-h-[40px] flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-700 text-white rounded-lg text-xs font-medium hover:bg-emerald-600 active:scale-[0.98] transition-[transform,background-color] duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300 disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            {cardData && <img src={cardData.images.small} alt="" onError={handleCardImgError} className="w-5 h-7 object-contain rounded-sm" />}
+                            {m.description}
+                          </button>
+                        );
+                        return cardData ? <HoverPreview key={i} card={cardData} placement="above">{btn}</HoverPreview> : <div key={i}>{btn}</div>;
+                      })}
+                    </div>
+                  )}
+
+                  {activeActionTab === 'field' && (
+                    <div className="flex flex-wrap gap-2">
+                      {quickActions.filter(m => m.type === 'use_stadium_action').map((m, i) => (
+                        <button
+                          key={i}
+                          onClick={() => handleSubmitMove(m)}
+                          data-move={m.type}
+                          disabled={loading}
+                          className="min-h-[40px] px-3 py-2 bg-purple-800 text-white rounded-lg text-xs font-medium hover:bg-purple-700 active:scale-[0.98] transition-[transform,background-color] duration-150 border border-purple-500/30 flex items-center gap-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-300 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          <IconBuilding className="w-3.5 h-3.5" />
+                          <span>{m.description}</span>
+                        </button>
+                      ))}
+                      {/* Fossils are discarded voluntarily from play; the server has always offered
+                          this, but no surface rendered it, so a Fossil in play could never be
+                          cleared by hand. */}
+                      {quickActions.filter(m => m.type === 'discard_fossil').map((m, i) => (
+                        <button
+                          key={i}
+                          onClick={() => handleSubmitMove(m)}
+                          data-move={m.type}
+                          disabled={loading}
+                          className="min-h-[40px] px-3 py-2 bg-amber-800 text-white rounded-lg text-xs font-medium hover:bg-amber-700 active:scale-[0.98] transition-[transform,background-color] duration-150 border border-amber-500/30 flex items-center gap-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          <span>{m.description}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
       </div>
 
       {/* Right column: Turn log — a persistent sidebar at `lg` (1024px) and up. Below that it's

@@ -82,18 +82,20 @@ const AVOID = ['投降', '重新開始', '重開', '悔棋', '離開', '返回',
   '規則', '說明', '牌組', '首頁', '縮放', '記錄', '紀錄'];
 
 /**
- * Four markers, because the board is not made of plain buttons: `[data-move]` submits a move,
+ * Five markers, because the board is not made of plain buttons: `[data-move]` submits a move,
  * `[data-hand-card]` is a hand card that either plays or answers a select_hand_cards choice,
  * `[data-board-target]` is a Pokémon that is a legal target for what is being resolved — which is
  * where a select_pokemon choice gets answered — and `[data-choice-option]` is one option inside
- * the pendingChoice picker (a deck search's results, say).
+ * the pendingChoice picker (a deck search's results, say). `[data-action-tab]` is the fifth: the
+ * action dock shows one category at a time, so an ability sitting behind an unselected tab is
+ * reachable only by opening it — which is exactly the click a player has to make.
  *
  * That last one was missing, and its absence is why runs hung: the picker is a dialog, its option
  * buttons were invisible to this scan, so every lap took the "close a stray dialog" branch — which
  * could not close it either. A choice the UI can't answer is exactly what this harness exists to
  * report, so the marker has to be on the control that answers it.
  */
-const CANDIDATE_SELECTOR = 'button[data-move]:not([disabled]), [data-hand-card], [data-board-target], [data-choice-option]:not([disabled])';
+const CANDIDATE_SELECTOR = 'button[data-move]:not([disabled]), [data-hand-card], [data-board-target], [data-choice-option]:not([disabled]), [data-action-tab]';
 
 async function clickableActions(page) {
   const probe = await page.evaluate((sel) => {
@@ -107,7 +109,8 @@ async function clickableActions(page) {
       visible: visible(el),
       kind: el.hasAttribute('data-choice-option') ? 'choice'
         : el.hasAttribute('data-move') ? 'move'
-        : el.hasAttribute('data-board-target') ? 'target' : 'hand',
+        : el.hasAttribute('data-board-target') ? 'target'
+        : el.hasAttribute('data-action-tab') ? 'tab' : 'hand',
       picked: el.hasAttribute('data-picked'),
       // A choice option is a card image with the name in a child <span>/<img alt>, so innerText
       // alone logs a row of blanks — which is unreadable exactly when the log matters most.
@@ -126,7 +129,9 @@ async function clickableActions(page) {
   // the run can't spend the whole game toggling the same card open and shut.
   // A choice option outranks everything: while the picker is open its own confirm/skip button is
   // also a `[data-move]`, and taking that first would answer every deck search with "不選（跳過）".
-  const rank = { choice: 0, move: 1, target: 2, hand: 3 };
+  // A tab reveals actions rather than being one, so it ranks last — the run only opens another
+  // category once it has exhausted what the open one offers, which is how a player uses it too.
+  const rank = { choice: 0, move: 1, target: 2, hand: 3, tab: 4 };
   const actions = probe.items
     .filter(it => it.visible && !AVOID.some(a => it.label.includes(a)))
     .sort((a, b) => rank[a.kind] - rank[b.kind])
