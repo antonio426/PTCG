@@ -7,6 +7,7 @@ import { setup } from '../game/setup';
 import { getLegalMoves } from '../game/validation';
 import { applyTurnBegin } from '../game/turnLifecycle';
 import { applyMove } from '../game/moveDispatch';
+import { applyWinner, applyStuckSeatLoss } from '../game/winConditions';
 import { effectiveMaxHp } from '../game/damage';
 import { fetchCardsByIds } from '../card-api/tcgdex';
 import { RandomAI, ClaudeAI, IAIPlayer } from '../ai/aiPlayer';
@@ -241,34 +242,10 @@ function enrichPendingChoice(G: PtcgGameState, choice: PendingChoice | null): Pe
   return enriched;
 }
 
+/** Kept as a named export because the routes and tests call it; the rule itself lives in
+ * game/winConditions.ts so all four engines decide the game the same way. */
 export function checkAndApplyWin(G: PtcgGameState): boolean {
-  if (G.winner !== null) return true;
-  // During setup phases the human legitimately has no Pokémon in play yet — evaluating the
-  // "opponent has no pokemon" condition here declared the AI winner right after the new
-  // choose_first move (the pre-coin-flip flow never ran a win check mid-setup, so this was
-  // latent). Direct winners (forfeit) are still honored by the G.winner check above.
-  if (G.phase === 'choose_first' || G.phase === 'choose_active') return false;
-  for (let p = 0; p < 2; p++) {
-    const pState = G.players[p as 0 | 1];
-    const opponent = G.players[(1 - p) as 0 | 1];
-    if (pState.takenPrizes >= 6) {
-      G.winner = p as 0 | 1;
-      G.winReason = 'took all prizes';
-      return true;
-    }
-    if (!opponent.active && opponent.bench.every(s => s === null)) {
-      G.winner = p as 0 | 1;
-      G.winReason = 'opponent has no pokemon';
-      return true;
-    }
-  }
-  const cur = G.players[G.currentPlayer];
-  if (cur.deck.length === 0 && G.phase === 'draw') {
-    G.winner = (1 - G.currentPlayer) as 0 | 1;
-    G.winReason = 'deck empty at draw';
-    return true;
-  }
-  return false;
+  return applyWinner(G);
 }
 
 function executeGameAction(G: PtcgGameState, action: { type: string; payload?: Record<string, any> }, actor?: 0 | 1): void {
@@ -296,8 +273,7 @@ async function runAiTurns(session: BattleSession): Promise<void> {
     aiMoveSafety++;
     const legalMoves = getLegalMoves(G, 1);
     if (legalMoves.length === 0) {
-      G.winner = 0;
-      G.winReason = 'no legal moves';
+      applyStuckSeatLoss(G, 1);
       break;
     }
     const { action } = await ai.decide(G, 1, legalMoves);

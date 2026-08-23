@@ -1,11 +1,10 @@
 import { Game, Ctx } from 'boardgame.io';
 import { TurnOrder } from 'boardgame.io/core';
-import { GameCard } from '@ptcg/shared';
 import { PtcgGameState } from './GameState';
 import { setup } from './setup';
 import { moves } from './moves';
 import { applyTurnBegin } from './turnLifecycle';
-import { promoteActiveIfNeeded } from './damage';
+import { applyWinner } from './winConditions';
 
 /** The shared `moves.ts` calls `ctx.events?.endTurn?.()` to end a turn — that was boardgame.io's
  * pre-0.50 API shape. This project's other two engines (humanBattle.ts, battleRunner.ts) build
@@ -21,28 +20,14 @@ function withEventsOnCtx(fn: (...args: any[]) => any) {
 }
 const bgioMoves = Object.fromEntries(Object.entries(moves).map(([name, fn]) => [name, withEventsOnCtx(fn as any)]));
 
-/** Shared game-over check, independent of phase — reused as the top-level `endIf` so it's
- * evaluated after every move regardless of which phase (setup or play) is active. */
+/** boardgame.io's top-level `endIf`, evaluated after every move regardless of phase.
+ *
+ * Unlike the other three engines this one used to leave `G.winner`/`G.winReason` untouched and
+ * only hand boardgame.io a number — so shared code that gates on `G.winner` (moves.ts's post-move
+ * wrapper, getLegalMoves) kept treating a finished match as live, and no reason was ever recorded.
+ * It records the result now, exactly like the other three. */
 export function checkGameOver({ G }: { G: PtcgGameState; ctx?: Ctx }): number | undefined {
-  if (G.winner !== null) return G.winner;
-  // During the setup phases a player legitimately has no Pokémon in play yet, so the "opponent
-  // has no pokemon" condition below is meaningless there — and because this is the top-level
-  // endIf, it runs before the first move of an interactive game, where setup() deliberately
-  // leaves the interactive seat's Active null for it to choose. Without this guard boardgame.io
-  // ended every human match instantly, handing the win to the opposite seat. humanBattle.ts's
-  // checkAndApplyWin has carried the same guard since it hit exactly this bug; battleRunner.ts's
-  // checkEndCondition carries it too so all three copies agree. Direct winners (forfeit) are
-  // still honored by the G.winner check above.
-  if (G.phase === 'choose_first' || G.phase === 'choose_active') return undefined;
-  for (let p = 0; p < 2; p++) {
-    const player = G.players[p as 0 | 1];
-    const opponent = G.players[(1 - p) as 0 | 1];
-    if (player.takenPrizes >= 6) return p;
-    if (!opponent.active && opponent.bench.every((s: GameCard | null) => s === null)) return p;
-  }
-  const cur = G.players[G.currentPlayer];
-  if (cur.deck.length === 0 && G.phase === 'draw') return 1 - G.currentPlayer;
-  return undefined;
+  return applyWinner(G) ? G.winner ?? undefined : undefined;
 }
 
 export const PtcgGame: Game<PtcgGameState> = {

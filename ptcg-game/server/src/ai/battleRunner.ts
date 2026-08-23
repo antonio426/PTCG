@@ -3,6 +3,7 @@ import { setup } from '../game/setup';
 import { getLegalMoves } from '../game/validation';
 import { applyTurnBegin } from '../game/turnLifecycle';
 import { applyMove } from '../game/moveDispatch';
+import { applyWinner, applyStuckSeatLoss } from '../game/winConditions';
 import { IAIPlayer } from './aiPlayer';
 import { AIThought, AIPlayerResult } from './types';
 
@@ -28,32 +29,10 @@ export interface BattleStats {
   gameResults: AIPlayerResult[];
 }
 
+/** Kept as a named export because the scripts and tests call it; the rule itself lives in
+ * game/winConditions.ts so all four engines decide the game the same way. */
 export function checkEndCondition(G: PtcgGameState): void {
-  if (G.winner !== null) return;
-  // A player legitimately has no Pokémon in play during the setup phases — see the fuller
-  // comment on PtcgGame.ts's checkGameOver. Headless runs auto-place both Actives in setup() so
-  // this is unreachable today, but the three win-check copies are kept identical on purpose:
-  // the documented failure mode here is one copy getting a rule right that the others don't.
-  if (G.phase === 'choose_first' || G.phase === 'choose_active') return;
-  for (let p = 0; p < 2; p++) {
-    const player = G.players[p as 0 | 1];
-    const opponent = G.players[(1 - p) as 0 | 1];
-    if (player.takenPrizes >= 6) {
-      G.winner = p as 0 | 1;
-      G.winReason = 'took all prizes';
-      return;
-    }
-    if (!opponent.active && opponent.bench.every(s => s === null)) {
-      G.winner = p as 0 | 1;
-      G.winReason = 'opponent has no pokemon';
-      return;
-    }
-  }
-  const cur = G.players[G.currentPlayer];
-  if (cur.deck.length === 0 && G.phase === 'draw') {
-    G.winner = (1 - G.currentPlayer) as 0 | 1;
-    G.winReason = 'deck empty at draw';
-  }
+  applyWinner(G);
 }
 
 export { applyTurnBegin };
@@ -108,8 +87,7 @@ async function runSingleGame(
     const legalMoves = getLegalMoves(G, playerIdx);
 
     if (legalMoves.length === 0) {
-      G.winner = (1 - playerIdx) as 0 | 1;
-      G.winReason = 'no legal moves';
+      applyStuckSeatLoss(G, playerIdx);
       break;
     }
 

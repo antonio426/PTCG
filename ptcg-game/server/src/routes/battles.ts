@@ -5,9 +5,9 @@ import type { PtcgGameState } from '../game/GameState';
 import { setup } from '../game/setup';
 import { getLegalMoves } from '../game/validation';
 import { fetchCardsByIds } from '../card-api/tcgdex';
-import { promoteActiveIfNeeded } from '../game/damage';
 import { applyTurnBegin } from '../game/turnLifecycle';
 import { applyMove } from '../game/moveDispatch';
+import { applyWinner, applyStuckSeatLoss } from '../game/winConditions';
 import { IAIPlayer, RandomAI, MockAI, ClaudeAI } from '../ai/aiPlayer';
 import { HeuristicAI } from '../ai/heuristicAI';
 
@@ -52,18 +52,6 @@ setInterval(() => {
   }
 }, RECORD_SWEEP_INTERVAL_MS).unref();
 
-function checkWinner(G: PtcgGameState): number | null {
-  for (let p = 0; p < 2; p++) {
-    const player = G.players[p as 0 | 1];
-    const opponent = G.players[(1 - p) as 0 | 1];
-    if (player.takenPrizes >= 6) return p;
-    if (!opponent.active && opponent.bench.every(s => s === null)) return p;
-  }
-  const cur = G.players[G.currentPlayer as 0 | 1];
-  if (cur.deck.length === 0 && G.phase === 'draw') return (1 - G.currentPlayer) as 0 | 1;
-  return null;
-}
-
 function executeMove(G: PtcgGameState, move: LegalAction, player: number): void {
   const ctx: any = { currentPlayer: String(player), playerID: String(player), turn: G.turn, events: { endTurn: () => { G.phase = 'end'; } } };
   applyMove(G, move, ctx);
@@ -89,12 +77,14 @@ async function simulateBattle(decks: string[][], seed: number, aiTypeA: string |
       // while one stands nobody else has a legal move — so the actor is re-read every iteration.
       const player = (G.pendingChoice?.player ?? G.currentPlayer) as 0 | 1;
       const legalMoves = getLegalMoves(G, player);
-      if (legalMoves.length === 0) break;
+      // A seat with nothing legal to play has lost — the same rule battleRunner applies. This
+      // used to be a bare `break`, so BattleLab shrugged off a soft-locked board that the
+      // headless runner scored as a decisive loss.
+      if (legalMoves.length === 0) { applyStuckSeatLoss(G, player); break; }
       const { action: move } = await ais[player].decide(G, player, legalMoves);
       if (!move) break;
       executeMove(G, move, player);
-      const winner = checkWinner(G);
-      if (winner !== null) { G.winner = winner; break; }
+      if (applyWinner(G)) break;
     }
     if (G.winner !== null) break;
     G.currentPlayer = (1 - G.currentPlayer) as 0 | 1;
