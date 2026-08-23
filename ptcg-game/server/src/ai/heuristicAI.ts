@@ -1,9 +1,10 @@
 import { Attack, Card, GameCard, LegalAction } from '@ptcg/shared';
 import type { PtcgGameState, PtcgPlayerState } from '../game/GameState';
-import { canPayEnergyCost, usableAttacks } from '../game/validation';
-import { calculateDamageBreakdown, effectiveMaxHp } from '../game/damage';
+import { canPayEnergyCost, usableAttacks, effectiveRetreatCost } from '../game/validation';
+import { calculateDamageBreakdown, effectiveMaxHp, prizesForKo } from '../game/damage';
 import { buildAttackBoard } from '../game/attackResolution';
 import { resolveGenericAttackEffect, GenericAttackOutcome } from '../game/effects/genericAttacks';
+import { getBonusPrizesForAttackKo } from '../game/effects/passiveAbilities';
 import type { IAIPlayer } from './aiPlayer';
 
 // Moves within this many points of the top score are treated as equally good and tie-broken
@@ -33,6 +34,8 @@ export interface AttackEvaluation {
   expected: number;
   /** Min across branches — only this may claim a KO, so a coin-gated kill is never banked on. */
   guaranteed: number;
+  /** Max across branches — a KO that only the lucky branch reaches is worth a nudge, not the bank. */
+  best: number;
   /** Whether any branch applied weakness (already inside the damage — informational only). */
   weaknessApplied: boolean;
   /** The resolved outcomes, for reading side-effects (status, bench damage, recoil…). */
@@ -99,6 +102,23 @@ export function scaledOutcomeDamage(o: GenericAttackOutcome, player: PtcgPlayerS
  */
 export function evaluateAttack(
   G: PtcgGameState, attackerIdx: 0 | 1, attacker: GameCard, defender: GameCard, attack: Attack,
+  cache?: Map<string, AttackEvaluation>,
+): AttackEvaluation {
+  // decide() evaluates the same attacks repeatedly (retreat scoring, switch-in ranking, the
+  // attack moves themselves) against a state that is frozen for the duration of the call — the
+  // caller hands in a per-decide cache so a soak's thousands of decides stay cheap.
+  const key = cache && `${attacker.id}|${attack.name}|${defender.id}|${defender.damage}`;
+  if (cache && key) {
+    const hit = cache.get(key);
+    if (hit) return hit;
+  }
+  const result = evaluateAttackUncached(G, attackerIdx, attacker, defender, attack);
+  if (cache && key) cache.set(key, result);
+  return result;
+}
+
+function evaluateAttackUncached(
+  G: PtcgGameState, attackerIdx: 0 | 1, attacker: GameCard, defender: GameCard, attack: Attack,
 ): AttackEvaluation {
   const player = G.players[attackerIdx];
   const opponent = G.players[(1 - attackerIdx) as 0 | 1];
@@ -124,7 +144,7 @@ export function evaluateAttack(
   }
   if (runs.length === 0) {
     const b = calculateDamageBreakdown(G, attackerIdx, attacker, attack, defender);
-    return { expected: b.finalDamage, guaranteed: b.finalDamage, weaknessApplied: b.weaknessApplied, outcomes: [] };
+    return { expected: b.finalDamage, guaranteed: b.finalDamage, best: b.finalDamage, weaknessApplied: b.weaknessApplied, outcomes: [] };
   }
   let weaknessApplied = false;
   const damages = runs.map(o => {
@@ -138,6 +158,7 @@ export function evaluateAttack(
   return {
     expected: damages.reduce((a, d) => a + d, 0) / damages.length,
     guaranteed: Math.min(...damages),
+    best: Math.max(...damages),
     weaknessApplied,
     outcomes: runs,
   };
@@ -147,11 +168,12 @@ export function evaluateAttack(
  * evaluator, over the same index-stable `usableAttacks` list the engine executes from. */
 export function bestPayableAttack(
   G: PtcgGameState, ownerIdx: 0 | 1, mon: GameCard, defender: GameCard,
+  cache?: Map<string, AttackEvaluation>,
 ): { attack: Attack; expected: number; guaranteed: number } | null {
   let best: { attack: Attack; expected: number; guaranteed: number } | null = null;
   for (const atk of usableAttacks(G, mon)) {
     if (!canPayAsHolder(G, mon, atk.cost)) continue;
-    const ev = evaluateAttack(G, ownerIdx, mon, defender, atk);
+    const ev = evaluateAttack(G, ownerIdx, mon, defender, atk, cache);
     if (!best || ev.expected > best.expected) best = { attack: atk, expected: ev.expected, guaranteed: ev.guaranteed };
   }
   return best;
@@ -161,13 +183,15 @@ export function bestPayableAttack(
  * payable expected damage, remaining HP as the tie-break. ONE definition, used both to justify a
  * retreat and to answer the bench-promotion choice that follows it — the old scorer used two
  * different notions of "best" for those two halves of the same decision. */
-export function bestSwitchIn(G: PtcgGameState, idx: 0 | 1): { card: GameCard; expected: number } | null {
+export function bestSwitchIn(
+  G: PtcgGameState, idx: 0 | 1, cache?: Map<string, AttackEvaluation>,
+): { card: GameCard; expected: number } | null {
   const player = G.players[idx];
   const defender = G.players[(1 - idx) as 0 | 1].active;
   let best: { card: GameCard; expected: number } | null = null;
   for (const c of player.bench) {
     if (!c) continue;
-    const expected = defender ? (bestPayableAttack(G, idx, c, defender)?.expected ?? 0) : 0;
+    const expected = defender ? (bestPayableAttack(G, idx, c, defender, cache)?.expected ?? 0) : 0;
     if (!best || expected > best.expected
       || (expected === best.expected && remainingHp(G, c) > remainingHp(G, best.card))) {
       best = { card: c, expected };
@@ -205,18 +229,35 @@ export function cardValue(G: PtcgGameState, idx: 0 | 1, card: Card): number {
 }
 
 /**
- * Greedy, 0-ply move scorer — for each legal move, reads the real game state (damage numbers,
- * HP, energy payability) to assign a score, then picks the best (random tie-break among
- * near-equal top scores). Deliberately NOT a game-tree search: no state cloning/simulation,
- * except one narrow allowance in `scoreRetreat` (a single reverse damage-breakdown query against
- * the opponent's active, since "am I about to die" is cheap to check and unusually high-value).
- * This replaces MockAI, whose entire "logic" was a hardcoded move-TYPE priority list that never
- * read gameState at all (blind to damage, HP, lethality, or payability).
+ * Greedy, 0-ply move scorer — for each legal move, reads the real game state to assign a score,
+ * then picks the best (random tie-break among near-equal top scores). Deliberately NOT a
+ * game-tree search: no state cloning or simulation, just the engine's own evaluators
+ * (evaluateAttack, canPayAsHolder) asked what-if questions.
+ *
+ * The scores live in NON-OVERLAPPING BANDS, because the one structural fact about a turn is that
+ * ATTACKING ENDS IT (moves.ts finishAttack). The old scorer ranked attacks purely by damage, so
+ * any hit above ~120 outbid evolving, attaching and every Trainer — the AI attacked first and
+ * threw away its whole setup phase, every turn. Now:
+ *
+ *   WIN_NOW (10000)   the KO that takes the last prize / the last Pokémon — nothing outranks it
+ *   SETUP (700-950)   everything that develops the board and does NOT end the turn
+ *   ATTACK (100-600)  KOs above non-KOs, prizes weighted in
+ *   FLOOR (~5)        end_turn, harmless unknowns
+ *   HARMFUL (<0)      self-mill when the deck is thin, discarding own fossils, suicide
+ *
+ * Setup moves deplete on their own (one energy attach a turn, one Supporter, a bench cap), so the
+ * greedy loop naturally converges to "set up, then attack" — a KO deliberately does NOT jump the
+ * queue, because it is still there after the setup band empties. The one exception is the
+ * game-winning KO.
  */
 export class HeuristicAI implements IAIPlayer {
   name = 'HeuristicAI';
 
+  /** Frozen-state memo for evaluateAttack, cleared per decide() — see evaluateAttack. */
+  private cache = new Map<string, AttackEvaluation>();
+
   async decide(gameState: PtcgGameState, playerIndex: number, legalMoves: LegalAction[]) {
+    this.cache.clear();
     const idx = playerIndex as 0 | 1;
     const usable = legalMoves.filter(m => m.type !== 'forfeit');
     const pool = usable.length > 0 ? usable : legalMoves;
@@ -236,11 +277,24 @@ export class HeuristicAI implements IAIPlayer {
       case 'play_trainer': return this.scorePlayTrainer(G, playerIndex, move);
       case 'use_ability': return this.scoreUseAbility(G, playerIndex, move);
       case 'retreat': return this.scoreRetreat(G, playerIndex);
-      case 'draw_card': return 20;
-      case 'end_turn': return this.scoreEndTurn(G, playerIndex);
+      case 'draw_card': return 500;   // the only non-forfeit move in the draw phase anyway
+      case 'end_turn': return 5;
       case 'resolve_choice': return this.scoreResolveChoice(G, playerIndex, move);
-      default: return 10;
+      case 'discard_fossil': return this.scoreDiscardFossil(G, playerIndex, move);
+      case 'use_stadium_action': return this.scoreStadiumAction(G, playerIndex, move);
+      case 'choose_active': return this.scoreChooseActive(G, playerIndex, move);
+      // Harmless unknowns sit BELOW end_turn — the old default of 10 sat above it, which is how
+      // the AI came to discard its own fossils and mill itself on stadium actions for no reason.
+      default: return 2;
     }
+  }
+
+  /** Draw/search moves spend the player's own deck; once it is thin that is how the AI decks
+   * itself out of games it was winning. Below 8 cards they drop under end_turn outright. */
+  private deckDepletionAdjust(player: PtcgPlayerState, base: number): number {
+    if (player.deck.length < 8) return -50;
+    if (player.deck.length < 16) return base - 60;
+    return base;
   }
 
   private scoreAttack(G: PtcgGameState, playerIndex: 0 | 1, move: LegalAction): number {
@@ -250,15 +304,56 @@ export class HeuristicAI implements IAIPlayer {
     const defender = opponent.active;
     if (!attacker || !defender) return 0;
     const attackIndex = move.payload?.attackIndex as number;
-    const attack = attacker.cardData.attacks?.[attackIndex];
+    // The same index-stable list the engine generates, validates and executes this index against —
+    // reading cardData.attacks here made every 潛入記憶-borrowed attack score 0.
+    const attack = usableAttacks(G, attacker)[attackIndex];
     if (!attack) return 0;
-    const breakdown = calculateDamageBreakdown(G, playerIndex, attacker, attack, defender);
-    let score = breakdown.finalDamage;
+    const ev = evaluateAttack(G, playerIndex, attacker, defender, attack, this.cache);
     const defenderRemaining = remainingHp(G, defender);
-    // A guaranteed KO always wins out over any other candidate move this turn.
-    if (defenderRemaining > 0 && breakdown.finalDamage >= defenderRemaining) score += 1000;
-    if (breakdown.weaknessApplied) score += 30;
+
+    if (defenderRemaining > 0 && ev.guaranteed >= defenderRemaining) {
+      // How many prizes this KO is actually worth — an ex is 2, a 超級…ex is 3, plus any standing
+      // bonus, never more than are left to take.
+      const prizes = Math.min(
+        prizesForKo(defender) + getBonusPrizesForAttackKo(G, playerIndex, attacker, defender) + player.bonusPrizeNextKo,
+        player.prizes.length,
+      );
+      const wipesBoard = !opponent.bench.some(c => c !== null);
+      if (player.takenPrizes + prizes >= 6 || wipesBoard) return 10000;   // WIN_NOW
+      return 450 + 40 * prizes;
+    }
+
+    let score = 100 + Math.min(150, ev.expected / 2);
+    if (ev.weaknessApplied) score += 10;
+    // A KO only the lucky coin branch reaches is a nudge, not a promise.
+    if (defenderRemaining > 0 && ev.best >= defenderRemaining) score += 30;
+    score += this.attackSideEffects(G, playerIndex, attacker, ev);
     return score;
+  }
+
+  /** Bonuses/penalties for what the attack DOES besides damage, read off the resolved outcomes.
+   * Capped small: they order attacks within the band, they must not outbid raw damage 2:1. */
+  private attackSideEffects(G: PtcgGameState, playerIndex: 0 | 1, attacker: GameCard, ev: AttackEvaluation): number {
+    let bonus = 0;
+    let penalty = 0;
+    for (const o of ev.outcomes) {
+      let b = 0;
+      for (const st of o.statusToInflict ?? []) b += (st === 'Paralyzed' || st === 'Asleep') ? 12 : 8;
+      b += (o.discardOpponentEnergyCount ?? 0) * 6;
+      b += ((o.benchSplashDamage ?? 0) + (o.opponentAllBenchSplashDamage ?? 0)) / 10;
+      b += (o.healSelfAmount ?? 0) / 10;
+      if (o.healSelfByDamageDealt) b += ev.expected / 10;
+      bonus = Math.max(bonus, b);
+
+      let pen = 0;
+      if (o.selfDamage) {
+        pen += o.selfDamage / 10;
+        if (o.selfDamage >= remainingHp(G, attacker)) pen += 300;   // do not KO yourself
+      }
+      if (o.discardAllSelfEnergy) pen += 15;
+      penalty = Math.max(penalty, pen);
+    }
+    return Math.min(40, bonus) - penalty;
   }
 
   private scoreEvolve(G: PtcgGameState, playerIndex: 0 | 1, move: LegalAction): number {
@@ -266,12 +361,12 @@ export class HeuristicAI implements IAIPlayer {
     const targetId = move.payload?.targetId as string;
     const cardId = move.payload?.cardId as string;
     const target = findPokemon(player, targetId);
-    const isActiveTarget = player.active?.id === targetId;
-    let score = isActiveTarget ? 100 : 75;
+    let score = player.active?.id === targetId ? 850 : 830;
     const evolvedCard = player.hand.find(c => c.id === cardId);
     if (evolvedCard && target) {
-      const unlocksAttack = (evolvedCard.cardData.attacks || []).some(a => canPayEnergyCost(target.attachedEnergy, a.cost));
-      if (unlocksAttack) score += 20;
+      const unlocks = (evolvedCard.cardData.attacks || []).some(a =>
+        canPayEnergyCost(target.attachedEnergy, a.cost, 0, target, G));
+      if (unlocks) score += 20;
     }
     return score;
   }
@@ -281,128 +376,142 @@ export class HeuristicAI implements IAIPlayer {
     const targetId = move.payload?.targetId as string;
     const cardId = move.payload?.cardId as string;
     const target = findPokemon(player, targetId);
-    if (!target) return 45;
+    if (!target) return 760;
     const isActive = player.active?.id === targetId;
-    let score = isActive ? 55 : 45;
-    const attacks = target.cardData.attacks || [];
-    if (attacks.length === 0) return score;
+    const attacks = usableAttacks(G, target);
+    if (attacks.length === 0) return isActive ? 780 : 760;
     const energyCard = player.hand.find(c => c.id === cardId);
-    const energyType = energyCard?.cardData.types?.[0] ?? 'Colorless';
-    const hypotheticalEnergy = [...target.attachedEnergy, { type: energyType }];
-    const unlocksAttack = attacks.some(a => !canPayEnergyCost(target.attachedEnergy, a.cost) && canPayEnergyCost(hypotheticalEnergy, a.cost));
-    if (unlocksAttack) score += 40;
-    else if (attacks.every(a => canPayEnergyCost(target.attachedEnergy, a.cost))) score -= 25;
-    return score;
-  }
-
-  /** Draw/search effects (Supporters, deck-search abilities like a repeatable "trade" ability)
-   * consume the player's own deck to gain card advantage — real value early, but worthless-to-
-   * actively-harmful once the deck is thin, since drawing/searching it down further is exactly
-   * what causes a self-inflicted "deck empty at draw" loss. Confirmed via BattleLab testing:
-   * without this, HeuristicAI would repeatedly favor draw/search moves turn after turn (each one
-   * scoring higher than attacking) and deck itself out in games it was otherwise winning. */
-  private deckDepletionKeywordBonus(player: PtcgPlayerState): number {
-    const deckLeft = player.deck.length;
-    if (deckLeft < 8) return -20;
-    if (deckLeft < 20) return 0;
-    return 20;
+    // The hypothetical carries the real cardData so Special Energy resolves into its printed
+    // units — the engine's asAttachedEnergy will do exactly this on the real attach.
+    const hypothetical = [
+      ...target.attachedEnergy,
+      { type: energyCard?.cardData.types?.[0] ?? 'Colorless', cardData: energyCard?.cardData },
+    ];
+    const unlocks = attacks.some(a =>
+      !canPayEnergyCost(target.attachedEnergy, a.cost, 0, target, G)
+      && canPayEnergyCost(hypothetical, a.cost, 0, target, G));
+    if (unlocks) return isActive ? 860 : 820;
+    if (attacks.every(a => canPayEnergyCost(target.attachedEnergy, a.cost, 0, target, G))) return 730;
+    return isActive ? 780 : 760;
   }
 
   private scorePlayTrainer(G: PtcgGameState, playerIndex: 0 | 1, move: LegalAction): number {
     const player = G.players[playerIndex];
-    const cardId = move.payload?.cardId as string;
-    const card = player.hand.find(c => c.id === cardId);
-    if (!card) return 50;
+    const card = player.hand.find(c => c.id === (move.payload?.cardId as string));
+    if (!card) return 770;
     const subtypes = card.cardData.subtypes || [];
-    // Supporters are once-per-turn (scarcer, usually the highest-impact effect a hand offers);
-    // Tools/Items are unrestricted; Stadiums affect the whole board but are often more situational.
-    let score = subtypes.includes('Supporter') ? 60 : subtypes.includes('Stadium') ? 45 : 50;
+    const score = subtypes.includes('Supporter') ? 790 : subtypes.includes('Stadium') ? 740 : 770;
     const text = (card.cardData.rules || []).join(' ');
-    if (/抽\S*張|搜尋|從牌庫/.test(text)) score += this.deckDepletionKeywordBonus(player);
+    // 從自己的牌庫, not 從牌庫: the printed phrasing is 「從自己的牌庫選擇…」, and the shorter form
+    // also matched opponent-deck mill cards, which must NOT be penalized for our thin deck.
+    if (/抽\S*張|從自己的牌庫/.test(text)) return this.deckDepletionAdjust(player, score);
     return score;
   }
 
   private scoreUseAbility(G: PtcgGameState, playerIndex: 0 | 1, move: LegalAction): number {
     const player = G.players[playerIndex];
     const cardId = move.payload?.cardId as string;
-    const target = findPokemon(player, cardId);
-    const text = target?.cardData.abilities?.[0]?.text ?? '';
-    // Self-bounce abilities (e.g. 瞬間移動者: shuffle self + attached cards back into the deck)
-    // auto-promote a benched Pokémon to replace themselves — but with an EMPTY bench there's
-    // nothing to promote, so using it removes the player's last Pokémon from play and is an
-    // immediate loss ("opponent has no Pokémon"). Confirmed via BattleLab testing: with no
-    // safeguard, HeuristicAI would pick this move (nothing else scored higher in a stalled-out
-    // matchup) and instantly forfeit an otherwise-normal game.
-    const isSelfBounce = /放回自己的牌庫|放回手牌/.test(text);
-    if (isSelfBounce && player.bench.every(c => c === null)) return -1000;
-    let score = 40;
-    if (/恢復|傷害|能量/.test(text)) score += 20;
-    if (/抽\S*張|搜尋/.test(text)) score += this.deckDepletionKeywordBonus(player);
+    // From-hand abilities (FROM_HAND_ABILITY_NAMES) name a card in HAND, not in play — the old
+    // lookup missed those entirely, so their text (and the self-bounce guard) never applied.
+    const holder = findPokemon(player, cardId) ?? player.hand.find(c => c.id === cardId) ?? null;
+    const text = holder?.cardData.abilities?.[0]?.text ?? '';
+    // Self-bounce with an empty bench removes the player's last Pokémon from play — instant loss.
+    if (/放回自己的牌庫|放回手牌/.test(text) && player.bench.every(c => c === null)
+      && player.active?.id === cardId) return -1000;
+    let score = 750;
+    if (/恢復|傷害|能量/.test(text)) score += 30;
+    if (/抽\S*張|從自己的牌庫/.test(text)) return this.deckDepletionAdjust(player, score);
     return score;
-  }
-
-  /** Once the deck is critically low, passing must be able to outscore a merely-generic trainer
-   * play (base ~45-60 with no keyword bonus) — otherwise the AI keeps burning hand cards on
-   * marginal/no-op plays it can't actually evaluate the effect of, purely because "play a card"
-   * always beats a flat score of 1, and decks itself out. Confirmed via BattleLab testing: this
-   * was the dominant cause of HeuristicAI losing otherwise-fine games via "deck empty at draw". */
-  private scoreEndTurn(G: PtcgGameState, playerIndex: 0 | 1): number {
-    const deckLeft = G.players[playerIndex].deck.length;
-    if (deckLeft < 8) return 65;
-    if (deckLeft < 16) return 25;
-    return 1;
   }
 
   private scorePlayPokemon(G: PtcgGameState, playerIndex: 0 | 1): number {
     const benchCount = G.players[playerIndex].bench.filter(Boolean).length;
-    return Math.max(10, 45 - 8 * benchCount);
-  }
-
-  /** Highest damage `attacker` can currently deal to `defender` among attacks it can actually
-   * pay for right now with its own attached energy (0 if none are payable). */
-  private bestPayableDamage(G: PtcgGameState, attackerIdx: 0 | 1, attacker: GameCard, defender: GameCard): number {
-    let best = 0;
-    for (const atk of attacker.cardData.attacks || []) {
-      if (!canPayEnergyCost(attacker.attachedEnergy, atk.cost)) continue;
-      const breakdown = calculateDamageBreakdown(G, attackerIdx, attacker, atk, defender);
-      if (breakdown.finalDamage > best) best = breakdown.finalDamage;
-    }
-    return best;
+    // An empty bench is one KO away from losing the game — filling it is board-wipe insurance.
+    if (benchCount === 0) return 890;
+    return 800 - 15 * benchCount;
   }
 
   private scoreRetreat(G: PtcgGameState, playerIndex: 0 | 1): number {
     const player = G.players[playerIndex];
     const opponent = G.players[(1 - playerIndex) as 0 | 1];
     const active = player.active;
-    if (!active) return -10;
-    const opponentActive = opponent.active;
-    const benchMons = player.bench.filter((c): c is GameCard => c !== null);
+    const defender = opponent.active;
+    if (!active || !defender) return -10;
+    const sw = bestSwitchIn(G, playerIndex, this.cache);
+    if (!sw) return -10;
 
-    if (opponentActive) {
-      const activeRemaining = remainingHp(G, active);
-      const incomingBest = this.bestPayableDamage(G, (1 - playerIndex) as 0 | 1, opponentActive, active);
-      if (activeRemaining > 0 && incomingBest >= activeRemaining) {
-        // Lethal danger — swap out if a healthier replacement exists, otherwise nothing helps.
-        if (benchMons.length === 0) return -10;
-        const bestBench = benchMons.reduce((best, c) => (remainingHp(G, c) > remainingHp(G, best) ? c : best));
-        return remainingHp(G, bestBench) > remainingHp(G, active) ? 200 : -5;
-      }
+    const mine = bestPayableAttack(G, playerIndex, active, defender, this.cache);
+    const defenderRemaining = remainingHp(G, defender);
+    // Never retreat away a kill we can take right now.
+    if (mine && defenderRemaining > 0 && mine.guaranteed >= defenderRemaining) return -10;
 
-      // Not in danger — still worth proactively swapping in a benched Pokémon that can
-      // clearly hit harder right now, as long as the current Active can't already win the
-      // exchange outright (in which case attacking beats retreating).
-      const opponentRemaining = remainingHp(G, opponentActive);
-      const myBest = this.bestPayableDamage(G, playerIndex, active, opponentActive);
-      if (myBest < opponentRemaining) {
-        let bestUpgrade = 0;
-        for (const c of benchMons) {
-          const candidateBest = this.bestPayableDamage(G, playerIndex, c, opponentActive);
-          if (candidateBest > bestUpgrade) bestUpgrade = candidateBest;
-        }
-        if (bestUpgrade >= myBest + 30) return 60;
+    const cost = 25 * effectiveRetreatCost(G, active);
+    const incoming = bestPayableAttack(G, (1 - playerIndex) as 0 | 1, defender, active, this.cache);
+    if (incoming && incoming.expected >= remainingHp(G, active)) {
+      // Lethal danger: swap only for a replacement that actually improves the position — better
+      // output, or the same output on a body that survives. "More absolute HP" alone traded a
+      // loaded attacker for an empty 60 HP Basic.
+      const myOut = mine?.expected ?? 0;
+      if (sw.expected > myOut
+        || (sw.expected === myOut && remainingHp(G, sw.card) > remainingHp(G, active))) {
+        return 950 - cost;
       }
+      return -5;
     }
+    // Proactive upgrade: a bench attacker that clearly outdamages the current Active.
+    if (sw.expected >= (mine?.expected ?? 0) + 30) return 900 - cost;
     return -10;
+  }
+
+  /** Voluntarily discarding an own in-play fossil is almost always self-harm — the ONE good case
+   * is clearing a do-nothing fossil out of the Active spot for a real attacker. The old flat
+   * default of 10 beat end_turn(1), so the AI shed its fossils for fun. */
+  private scoreDiscardFossil(G: PtcgGameState, playerIndex: 0 | 1, move: LegalAction): number {
+    const player = G.players[playerIndex];
+    const cardId = move.payload?.cardId as string;
+    if (player.active?.id === cardId) {
+      const sw = bestSwitchIn(G, playerIndex, this.cache);
+      if (sw && sw.expected > 0) return 710;
+    }
+    return -50;
+  }
+
+  private scoreStadiumAction(G: PtcgGameState, playerIndex: 0 | 1, move: LegalAction): number {
+    const player = G.players[playerIndex];
+    const field = [player.active, ...player.bench].filter((c): c is GameCard => c !== null);
+    switch (move.payload?.effectKey as string) {
+      case 'rocket_factory_draw':   // draw 2, no cost
+        return this.deckDepletionAdjust(player, 780);
+      case 'spike_town_gym_search':
+        return this.deckDepletionAdjust(player, 760);
+      case 'resident_hall_heal':
+        return field.some(c => c.damage > 0) ? 750 : 2;
+      case 'mystery_garden_draw':   // pays 1 energy, draws to the Psychic count
+        return field.filter(c => (c.cardData.types || []).includes('Psychic')).length >= 2
+          ? this.deckDepletionAdjust(player, 730) : 2;
+      case 'surf_beach_swap': {
+        const sw = bestSwitchIn(G, playerIndex, this.cache);
+        const defender = G.players[(1 - playerIndex) as 0 | 1].active;
+        const mine = player.active && defender
+          ? bestPayableAttack(G, playerIndex, player.active, defender, this.cache) : null;
+        return sw && sw.expected >= (mine?.expected ?? 0) + 30 ? 720 : 2;
+      }
+      // 稜鏡塔 (discard 2 to draw 1) and 夜間學院 (hand card to the top of the deck) are card
+      // disadvantage — the old default of 10 made the AI take them every turn, for nothing.
+      default: return 2;
+    }
+  }
+
+  /** The opening Active pick used to fall to default:10 — a pure coin toss among the hand's
+   * Basics. Prefer a body that can fight and doesn't cost the world to retreat off later. */
+  private scoreChooseActive(G: PtcgGameState, playerIndex: 0 | 1, move: LegalAction): number {
+    const player = G.players[playerIndex];
+    const card = player.hand.find(c => c.id === (move.payload?.cardId as string));
+    if (!card) return 10;
+    const hp = parseInt(card.cardData.hp || '0', 10);
+    return hp / 10
+      + ((card.cardData.attacks?.length ?? 0) > 0 ? 20 : 0)
+      - 5 * (card.cardData.retreatCost?.length ?? 0);
   }
 
   /** Ultra-Ball-style discard/search steps, retreat/KO bench-promotion, bench-distribution
